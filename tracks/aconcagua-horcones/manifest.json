@@ -1,0 +1,176 @@
+{
+  "schema": "asfalto-track/v1",
+  "id": "aconcagua_horcones",
+  "displayName": "Aconcagua — Corredor de Horcones",
+  "format": "point_to_point",
+  "lengthM": 21000,
+  "defaultEnvironment": "clear",
+  "environment": {
+    "profile": "./environment.json",
+    "defaultPreset": "golden-hour",
+    "availablePresets": ["clear", "overcast", "golden-hour", "sunset", "moonrise", "night"]
+  },
+  "route": "./route.json",
+  "visual": [
+    "./scene.glb"
+  ],
+  "collision": [
+    "./scene.glb"
+  ],
+  "collisionMode": "embedded",
+  "collisionNodes": [
+    "COLLISION_ROAD",
+    "COLLISION_TRACK_LIMITS"
+  ],
+  "integrity": {
+    "route": {
+      "bytes": 778488,
+      "sha256": "82830CCF1FD9687B0D1F0577D51ED6DB2E9819E7041FF20BC623FF680A71AE34"
+    },
+    "visual": {
+      "./scene.glb": {
+        "bytes": 30462168,
+        "sha256": "BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92"
+      }
+    },
+    "collision": {
+      "./scene.glb": {
+        "bytes": 30462168,
+        "sha256": "BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92"
+      }
+    }
+  },
+  "glb": {
+    "version": 2,
+    "nodes": 60,
+    "meshes": 51,
+    "materials": 21,
+    "textures": 30,
+    "images": 18
+  },
+  "lod": {
+    "railway": {
+      "sectorCount": 12,
+      "lod0MaxM": 220,
+      "lod1MinM": 260,
+      "hysteresisM": 40,
+      "groups": [
+        {
+          "id": "S00",
+          "lod0": "RAILWAY_SLEEPERS_S00_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S00_LOD1"
+        },
+        {
+          "id": "S01",
+          "lod0": "RAILWAY_SLEEPERS_S01_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S01_LOD1"
+        },
+        {
+          "id": "S02",
+          "lod0": "RAILWAY_SLEEPERS_S02_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S02_LOD1"
+        },
+        {
+          "id": "S03",
+          "lod0": "RAILWAY_SLEEPERS_S03_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S03_LOD1"
+        },
+        {
+          "id": "S04",
+          "lod0": "RAILWAY_SLEEPERS_S04_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S04_LOD1"
+        },
+        {
+          "id": "S05",
+          "lod0": "RAILWAY_SLEEPERS_S05_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S05_LOD1"
+        },
+        {
+          "id": "S06",
+          "lod0": "RAILWAY_SLEEPERS_S06_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S06_LOD1"
+        },
+        {
+          "id": "S07",
+          "lod0": "RAILWAY_SLEEPERS_S07_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S07_LOD1"
+        },
+        {
+          "id": "S08",
+          "lod0": "RAILWAY_SLEEPERS_S08_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S08_LOD1"
+        },
+        {
+          "id": "S09",
+          "lod0": "RAILWAY_SLEEPERS_S09_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S09_LOD1"
+        },
+        {
+          "id": "S10",
+          "lod0": "RAILWAY_SLEEPERS_S10_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S10_LOD1"
+        },
+        {
+          "id": "S11",
+          "lod0": "RAILWAY_SLEEPERS_S11_LOD0",
+          "lod1": "RAILWAY_SLEEPERS_S11_LOD1"
+        }
+      ]
+    }
+  },
+  "profile": {
+    "id": "aconcagua_horcones",
+    "name": "Aconcagua — Corredor de Horcones",
+    "description": "Corredor andino de alta montaña, asfalto frío y seco.",
+    "biome": "andes_mountain",
+    "environment": "clear",
+    "palette": {
+      "rock": "#756957",
+      "dust": "#9A8061",
+      "asphalt": "#34383A",
+      "snow": "#D9E1E3"
+    },
+    "shoulder": 1.8,
+    "barrier": 3.2,
+    "recommendedFarPlaneM": 30000,
+    "surface": {
+      "road": "dry_cold_asphalt",
+      "shoulder": "mineral_gravel",
+      "barrier": "galvanized_guardrail"
+    }
+  },
+  "provenance": {
+    "source": "Circuitos/Aconcagua_Horcones.zip",
+    "archive": {
+      "bytes": 49346864,
+      "sha256": "39224E309CCACC546170CD4B8D7FB6573427BD983E5D657D76728B3DBC3CB0F9"
+    },
+    "centerlineEntry": {
+      "name": "track_centerline.json",
+      "bytes": 294492,
+      "sha256": "5C58A4D2DD0C81F768551A72079D641115589B075F787FD8F48B062D925059C5"
+    },
+    "manifestEntry": {
+      "name": "track_manifest_realism_p1.json",
+      "bytes": 5786,
+      "sha256": "F43CEB7DE285F8322DA6825D3CD93F3FF264124EADE5BDFFA2125AE924673E09"
+    },
+    "sceneEntry": {
+      "name": "aconcagua_horcones_realism_p1.glb",
+      "bytes": 30462168,
+      "sha256": "BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92"
+    },
+    "axis": "Y_UP",
+    "units": "meters",
+    "collisionEmbedded": true,
+    "assetsRecompressed": false,
+    "sourceManifestDiscrepancies": [
+      {
+        "field": "required_nodes",
+        "declared": "RAILWAY_DESIGN_PROXY",
+        "actual": "RAILWAY_RAIL_LEFT/RIGHT plus RAILWAY_SLEEPERS_S00..S11_LOD0/LOD1",
+        "resolution": "locked P1 GLB binary identity is authoritative"
+      }
+    ]
+  }
+}

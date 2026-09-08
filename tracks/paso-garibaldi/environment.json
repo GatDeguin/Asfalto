@@ -1,0 +1,111 @@
+{
+  "schema": "asfalto-environment-profile/v1",
+  "trackId": "paso_garibaldi",
+  "defaultPreset": "overcast",
+  "allowedSurfaceStates": [
+    "dry",
+    "damp",
+    "wet",
+    "light-snow",
+    "heavy-snow"
+  ],
+  "climateBounds": {
+    "minTemperatureC": -22,
+    "maxTemperatureC": 20
+  },
+  "presets": {
+    "clear": {
+      "surfaceState": "dry",
+      "temperatureC": 8,
+      "precipitation": "none"
+    },
+    "overcast": {
+      "surfaceState": "dry",
+      "temperatureC": 5,
+      "precipitation": "none"
+    },
+    "golden-hour": {
+      "surfaceState": "dry",
+      "temperatureC": 7,
+      "precipitation": "none"
+    },
+    "sunset": {
+      "surfaceState": "dry",
+      "temperatureC": 4,
+      "precipitation": "none"
+    },
+    "moonrise": {
+      "surfaceState": "dry",
+      "temperatureC": -1,
+      "precipitation": "none"
+    },
+    "night": {
+      "surfaceState": "dry",
+      "temperatureC": -4,
+      "precipitation": "none"
+    }
+  },
+  "defaultWeather": "clear",
+  "availableWeatherIds": [
+    "clear",
+    "cloudy",
+    "rain",
+    "storm",
+    "fog",
+    "light-snow",
+    "heavy-snow"
+  ],
+  "weatherProfiles": {
+    "clear": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0,
+      "surfaceState": "dry",
+      "fogDensityMin": 0
+    },
+    "cloudy": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0.35,
+      "surfaceState": "damp",
+      "fogDensityMin": 0.004
+    },
+    "rain": {
+      "precipitation": "rain",
+      "precipitationIntensity": 0.65,
+      "roadWetness": 0.7,
+      "surfaceState": "wet",
+      "fogDensityMin": 0.006
+    },
+    "storm": {
+      "precipitation": "storm",
+      "precipitationIntensity": 1,
+      "roadWetness": 0.9,
+      "surfaceState": "wet",
+      "fogDensityMin": 0.009
+    },
+    "fog": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0.35,
+      "surfaceState": "damp",
+      "fogDensityMin": 0.018
+    },
+    "light-snow": {
+      "precipitation": "light-snow",
+      "precipitationIntensity": 0.35,
+      "roadWetness": 0.1,
+      "surfaceState": "light-snow",
+      "fogDensityMin": 0.006,
+      "maxTemperatureC": -1
+    },
+    "heavy-snow": {
+      "precipitation": "heavy-snow",
+      "precipitationIntensity": 1,
+      "roadWetness": 0.12,
+      "surfaceState": "heavy-snow",
+      "fogDensityMin": 0.014,
+      "maxTemperatureC": -3
+    }
+  }
+}

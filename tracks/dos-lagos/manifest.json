@@ -1,0 +1,103 @@
+{
+  "schema": "asfalto-track/v1",
+  "id": "dos_lagos",
+  "displayName": "Dos Lagos",
+  "format": "point_to_point",
+  "lengthM": 10250,
+  "defaultEnvironment": "clear",
+  "environment": {
+    "profile": "./environment.json",
+    "defaultPreset": "clear",
+    "availablePresets": ["clear", "overcast", "golden-hour", "sunset", "moonrise", "night"]
+  },
+  "route": "./route.json",
+  "visual": [
+    "./scene.glb"
+  ],
+  "collision": [
+    "./collision.glb"
+  ],
+  "integrity": {
+    "route": {
+      "bytes": 533187,
+      "sha256": "27ace7aae436122021c7d43caaffa1ad28fab841fde8d680c605dabf5e91699b"
+    },
+    "visual": {
+      "./scene.glb": {
+        "bytes": 24238072,
+        "sha256": "69e76b196f6735b02b7464fcab3f9b1ea1248a974d09677b818b77cda5f475f4"
+      }
+    },
+    "collision": {
+      "./collision.glb": {
+        "bytes": 522300,
+        "sha256": "591e79a9a299a1eb21bc05ec37985ceca924de3f79d0dbc6b19fe651c84cc2f1"
+      }
+    }
+  },
+  "glb": {
+    "visual": {
+      "nodes": 64,
+      "meshes": 63,
+      "materials": 26,
+      "textures": 55
+    },
+    "collision": {
+      "nodes": 4,
+      "meshes": 3,
+      "materials": 1,
+      "textures": 0
+    }
+  },
+  "lod": {
+    "groups": {
+      "geology": [
+        "ROCK_Outcrops_v3",
+        "ROCK_Talus_v3"
+      ],
+      "heroVegetation": [
+        "VEG_HeroTrunks_v3",
+        "VEG_HeroCanopies_v3"
+      ],
+      "shoreDetail": [
+        "DETAIL_ShoreFoam_v3",
+        "DETAIL_Driftwood_v3"
+      ]
+    },
+    "nodes": {
+      "ROCK_Outcrops_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 650
+      },
+      "ROCK_Talus_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 260
+      },
+      "VEG_HeroTrunks_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 520
+      },
+      "VEG_HeroCanopies_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 420
+      },
+      "DETAIL_ShoreFoam_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 240
+      },
+      "DETAIL_Driftwood_v3": {
+        "minDistanceM": 0,
+        "maxDistanceM": 180
+      }
+    }
+  },
+  "provenance": {
+    "source": "Circuitos/Dos_Lagos.zip",
+    "visualEntry": "DosLagos_BlenderPass_v3/dos_lagos_scene_hyperreal_blender_pass_v3.glb",
+    "collisionEntry": "DosLagos_BlenderPass_v3/dos_lagos_collision.glb",
+    "axis": "Y_UP",
+    "units": "meters",
+    "collisionSeparate": true,
+    "assetsRecompressed": false
+  }
+}

@@ -1,0 +1,57 @@
+[
+  {
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_asphalt_01/aerial_asphalt_01_disp_1k.png",
+    "license": "CC0-1.0",
+    "convention": "white=high; inward relief under the original render hull",
+    "licenseSource": "https://polyhaven.com/license",
+    "md5": "1560b8b1f1afcd4e2596fbfb7ebfc695",
+    "asset": "aerial_asphalt_01",
+    "role": "height",
+    "bytes": 1930160,
+    "resolution": 1024
+  },
+  {
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/gravel_floor/gravel_floor_disp_1k.png",
+    "license": "CC0-1.0",
+    "convention": "white=high; inward relief under the original render hull",
+    "licenseSource": "https://polyhaven.com/license",
+    "md5": "e8d09393250751c65be17eb237d322ad",
+    "asset": "gravel_floor",
+    "role": "height",
+    "bytes": 1858698,
+    "resolution": 1024
+  },
+  {
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_rocks_04/aerial_rocks_04_disp_1k.png",
+    "license": "CC0-1.0",
+    "convention": "white=high; inward relief under the original render hull",
+    "licenseSource": "https://polyhaven.com/license",
+    "md5": "48f856b451d7b6c24b2b24596a0868b1",
+    "asset": "aerial_rocks_04",
+    "role": "height",
+    "bytes": 1789693,
+    "resolution": 1024
+  },
+  {
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/aerial_grass_rock/aerial_grass_rock_disp_1k.png",
+    "license": "CC0-1.0",
+    "convention": "white=high; inward relief under the original render hull",
+    "licenseSource": "https://polyhaven.com/license",
+    "md5": "1fe85f6e82e3e62a1e5f143a7a31971c",
+    "asset": "aerial_grass_rock",
+    "role": "height",
+    "bytes": 1951317,
+    "resolution": 1024
+  },
+  {
+    "source": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rock_face/rock_face_disp_1k.png",
+    "license": "CC0-1.0",
+    "convention": "white=high; inward relief under the original render hull",
+    "licenseSource": "https://polyhaven.com/license",
+    "md5": "8bf91d98c1a607239630e21968821621",
+    "asset": "rock_face",
+    "role": "height",
+    "bytes": 1642402,
+    "resolution": 1024
+  }
+]

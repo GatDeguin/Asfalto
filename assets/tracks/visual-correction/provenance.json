@@ -1,0 +1,96 @@
+[
+  {
+    "asset": "aerial_grass_rock",
+    "source": "https://polyhaven.com/a/aerial_grass_rock",
+    "license": "CC0-1.0",
+    "maps": [
+      "diff",
+      "normal",
+      "rough"
+    ],
+    "resolution": 1024,
+    "downloaded": "2026-09-06",
+    "licenseSource": "https://polyhaven.com/license"
+  },
+  {
+    "asset": "aerial_rocks_04",
+    "source": "https://polyhaven.com/a/aerial_rocks_04",
+    "license": "CC0-1.0",
+    "maps": [
+      "diff",
+      "normal",
+      "rough"
+    ],
+    "resolution": 1024,
+    "downloaded": "2026-09-06",
+    "licenseSource": "https://polyhaven.com/license"
+  },
+  {
+    "asset": "aerial_asphalt_01",
+    "source": "https://polyhaven.com/a/aerial_asphalt_01",
+    "license": "CC0-1.0",
+    "maps": [
+      "diff",
+      "normal",
+      "rough"
+    ],
+    "resolution": 1024,
+    "downloaded": "2026-09-06",
+    "licenseSource": "https://polyhaven.com/license"
+  },
+  {
+    "asset": "island_tree_01",
+    "source": "https://polyhaven.com/a/island_tree_01",
+    "license": "CC0-1.0",
+    "use": "Rendered orthographic foliage impostors from authored 3D model; no intro/reference image used as scenery.",
+    "derivation": "render-tree-impostor.py: original CC0 model rendered in Blender 5.2 Cycles, three orthographic angles, transparent RGBA, 1024 x 1024. Used as an approximate broadleaf forest silhouette, not botanical validation.",
+    "downloaded": "2026-09-06",
+    "licenseSource": "https://polyhaven.com/license"
+  },
+  {
+    "asset": "gravel_floor",
+    "source": "https://polyhaven.com/a/gravel_floor",
+    "license": "CC0-1.0",
+    "licenseSource": "https://polyhaven.com/license",
+    "maps": [
+      "diff",
+      "normal",
+      "rough"
+    ],
+    "resolution": 1024,
+    "downloaded": "2026-09-06"
+  },
+  {
+    "asset": "rock_face",
+    "source": "https://polyhaven.com/a/rock_face",
+    "license": "CC0-1.0",
+    "licenseSource": "https://polyhaven.com/license",
+    "maps": [
+      "diff",
+      "normal",
+      "rough"
+    ],
+    "resolution": 1024,
+    "downloaded": "2026-09-06"
+  },
+  {
+    "asset": "roadside-details.glb",
+    "author": "Asfalto Nacional visual correction",
+    "created": "2026-09-06",
+    "derivation": "Blender 5.2 library: CC0 island_tree_01 reduced from 1,599,403 to 16,973 triangles with loose-vertex cleanup, normalized to a 16m tree; one shared prototype with three orientation groups. Four original eroded rock meshes and two original curved grass tufts. Source scripts simplify-source-tree.py and package-roadside-source-tree.py; reference photos never used as scenery.",
+    "units": "metres",
+    "axis": "Y_UP",
+    "textures": [
+      "detail-bark.jpg",
+      "detail-leaf.jpg"
+    ],
+    "textureSource": "https://polyhaven.com/a/island_tree_01",
+    "textureLicense": "CC0-1.0",
+    "licenseSource": "https://polyhaven.com/license",
+    "geometryTriangles": 18133,
+    "geometrySources": [
+      "https://polyhaven.com/a/island_tree_01"
+    ],
+    "treeGeometryLicense": "CC0-1.0"
+  }
+]

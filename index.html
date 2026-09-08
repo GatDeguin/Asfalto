@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta name="asfalto-persistence" content="browser">
+<script type="module" src="./src/runtime/asset-core.mjs"></script>
+<meta name="asfalto-v6-source-sha256" content="A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA">
+<meta name="description" content="Asfalto Nacional v6 · Realismo clásico argentino · rutas nacionales">
+<meta name="asfalto-v5-source-sha256" content="29bd13e525861ee21ec066d2c3460480a9e200ad790a837f4f247ee5c2fb8288">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'/%3E">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#090b0e">
+<title>Asfalto Nacional v6</title>
+<link rel="stylesheet" href="./assets/styles/inline-01.css">
+
+
+<!-- COCKPIT_V4_SECOND_GEN_HEAD_END -->
+
+<meta name="cockpit-v5-build" content="5.0.0-unified-racing">
+<script id="cockpit-v5-preflight" src="./src/legacy/cockpit-v5-preflight.js"></script>
+<link id="cockpit-v5-style" rel="stylesheet" href="./assets/styles/cockpit-v5-style.css">
+
+<link id="v6-complete-style" rel="stylesheet" href="./assets/styles/v6-complete-style.css">
+<link rel="stylesheet" href="./assets/styles/menu-presentation.css">
+<link rel="stylesheet" href="./assets/styles/race-pause-menu.css">
+<link rel="stylesheet" href="./assets/styles/lighting-editor.css">
+<link rel="stylesheet" href="./assets/styles/loading-presentation.css">
+<script src="./src/menu/loading-presentation.js"></script>
+<script type="module" src="./src/menu/race-session-presentation.mjs"></script>
+<script type="module" src="./src/menu/menu-presentation.mjs"></script>
+
+<meta name="chevy-hud-3d-build" content="1.0.0">
+<link id="chevy-hud-3d-style" rel="stylesheet" href="./assets/styles/chevy-hud-3d-style.css">
+
+<meta name="asfalto-nacional-build" content="3.0.0-chevy-v3-cameras">
+<link id="asfalto-v3-camera-style" rel="stylesheet" href="./assets/styles/asfalto-v3-camera-style.css">
+<meta name="asfalto-nacional-radio-build" content="4.1.1-radio-functional-parity">
+<meta name="radio-display-sha256" content="c905422e0425c551679b6f6348507cf743a1348415b67a1c7d34e33f0162caed">
+<meta name="radio-functional-core-sha256" content="c6fd688274d4ccd324982c9db9dfbb956f2a6f43cf48dad801fa815c5e65e70d">
+<link id="asfalto-v4-1-radio-style" rel="stylesheet" href="./assets/styles/asfalto-v4-1-radio-style.css">
+<link id="asfalto-v4-1-hud-adjustments" rel="stylesheet" href="./assets/styles/asfalto-v4-1-hud-adjustments.css">
+<script id="asfalto-v5-track-manifest" type="application/json">{"version":6,"defaultCircuit":"dos_lagos","circuits":[{"id":"dos_lagos","name":"Dos Lagos","status":"ready"},{"id":"aconcagua_horcones","name":"Aconcagua · Horcones","status":"ready"},{"id":"cuesta_lipan","name":"Cuesta de Lipán","status":"ready"},{"id":"paso_garibaldi","name":"Paso Garibaldi","status":"ready"}]}</script>
+<script  id="asfalto-v5-dos-lagos-route" type="application/octet-stream" data-filename="dos_lagos_route.json" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-route/dos_lagos_route.json" data-bytes="533187" data-sha256="27ACE7AAE436122021C7D43CAAFFA1AD28FAB841FDE8D680C605DABF5E91699B"></script>
+<script id="asfalto-v5-track-runtime" src="./src/legacy/asfalto-v5-track-runtime.js"></script>
+<script id="asfalto-v5-environment-runtime" src="./src/legacy/asfalto-v5-environment-runtime.js"></script>
+<script id="asfalto-v5-glb-runtime" src="./src/legacy/asfalto-v5-glb-runtime.js"></script>
+<script  id="asfalto-v5-dos-lagos-visual" type="application/octet-stream" data-filename="dos_lagos_scene_hyperreal_blender_pass_v3.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-visual/dos_lagos_scene_hyperreal_blender_pass_v3.glb" data-bytes="24238072" data-sha256="69E76B196F6735B02B7464FCAB3F9B1EA1248A974D09677B818B77CDA5F475F4"></script>
+<script  id="asfalto-v5-dos-lagos-collision" type="application/octet-stream" data-filename="dos_lagos_collision.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-collision/dos_lagos_collision.glb" data-bytes="522300" data-sha256="591E79A9A299A1EB21BC05EC37985CECA924DE3F79D0DBC6B19FE651C84CC2F1"></script>
+<script  id="asfalto-v5-hdri-clear" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="clear" data-source="Cielos/runtime/clear.av3hdri" data-width="1024" data-height="512" data-filename="clear.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-clear/clear.av3hdri" data-bytes="3145744" data-sha256="4FAE12BD002076D36C1390BCF9B07F5251BB699AE60147D20BA28B2F4F61DD94"></script>
+<script  id="asfalto-v5-hdri-overcast" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="overcast" data-source="Cielos/runtime/overcast.av3hdri" data-width="1024" data-height="512" data-filename="overcast.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-overcast/overcast.av3hdri" data-bytes="3145744" data-sha256="B047E339DD95935AAE51E65F39359ABD52148144872644E0918B7464C5A35CBF"></script>
+<script  id="asfalto-v5-hdri-golden" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="golden" data-source="Cielos/runtime/golden.av3hdri" data-width="1024" data-height="512" data-filename="golden.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-golden/golden.av3hdri" data-bytes="3145744" data-sha256="603C3F7DD38C850BCA04D9C532B1787D78D77AB480EA3129FDA3E2D3D1A5F29E"></script>
+<script  id="asfalto-v5-hdri-sunset" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="sunset" data-source="Cielos/runtime/sunset.av3hdri" data-width="1024" data-height="512" data-filename="sunset.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-sunset/sunset.av3hdri" data-bytes="3145744" data-sha256="9B83B12E2E0AB7E6F9933E920B49BA0DE8F662829AEC562D9E7B974AFF6D253A"></script>
+<script  id="asfalto-v5-hdri-moonrise" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="moonrise" data-source="Cielos/runtime/moonrise.av3hdri" data-width="1024" data-height="512" data-filename="moonrise.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-moonrise/moonrise.av3hdri" data-bytes="3145744" data-sha256="DE48E823ED893A8999622AC8E5873337EDA7114237E650B739C9CE47F178CD3B"></script>
+<script  id="asfalto-v5-hdri-night" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="night" data-source="Cielos/runtime/night.av3hdri" data-width="1024" data-height="512" data-filename="night.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-night/night.av3hdri" data-bytes="3145744" data-sha256="B7DA232FB2F34C595F2C2519DEF9A03537850123E33C93B25F1066935869A94E"></script>
+<script id="asfalto-v6-manifest" type="application/json">{"version":6,"name":"Asfalto Nacional v6","baseVersion":5,"defaultCircuit":"dos_lagos","defaultProfile":"original","physics":{"engine":"Rapier 3D deterministic","fixedHz":120,"preset":"realismo-clasico-argentino"},"profiles":{"original":{"label":"Chevy Serie 2 Original","forwardGears":4,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}},"restomod":{"label":"Chevy Serie 2 Restomod","forwardGears":5,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}}},"rivals":[{"id":"falcon","count":1}],"sourceLocks":{"v5":"A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA","manual":"7F6C10A1692440DBA5566A0637DB26003B196463B4F698BA511E397F76F9410E","falcon":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"}}</script>
+<script id="asfalto-v6-rapier" src="./src/legacy/asfalto-v6-rapier.js"></script>
+<script  id="asfalto-v6-falcon" type="application/octet-stream" data-role="single-physical-rival" data-filename="Falcon.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-falcon/Falcon.glb" data-bytes="28216660" data-sha256="51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"></script>
+<script id="asfalto-v6-falcon-rig" type="application/json">{"version":1,"source":{"sha256":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006","byteLength":28216660,"gltfVersion":"2.0","generator":"gltfpack 1.2","positionCount":674391,"indexCount":3329274},"axes":{"front":"+X","up":"+Y","side":"+Z"},"authoredBounds":{"minimum":[-0.950797021,-0.300976992,-0.381623],"maximum":[0.948652143899,0.29994133929899996,0.379988521957],"dimensions":[1.899449164899,0.600918331299,0.761611521957]},"targetDimensionsM":{"length":4.65,"width":1.78,"height":1.42},"uniformScale":2.4480781512503684,"bones":[{"name":"body","index":0,"center":[0,0,0]},{"name":"frontLeft","index":1,"center":[0.62,-0.18,0.31]},{"name":"frontRight","index":2,"center":[0.62,-0.18,-0.31]},{"name":"rearLeft","index":3,"center":[-0.58,-0.18,0.31]},{"name":"rearRight","index":4,"center":[-0.58,-0.18,-0.31]}],"wheels":{"frontLeft":{"center":[0.62,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11898,"bounds":{"minimum":[0.46019585800999996,-0.300629171241,0.23506320570699996],"maximum":[0.7713794970619999,-0.022024743281999992,0.37222052500599995]}},"frontRight":{"center":[0.62,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11677,"bounds":{"minimum":[0.4612393202870001,-0.300049469976,-0.373970943302],"maximum":[0.7714954373149999,-0.021445042016999982,-0.235074520208]}},"rearLeft":{"center":[-0.58,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11838,"bounds":{"minimum":[-0.7379307164919999,-0.300976992,0.23506320570699996],"maximum":[-0.421761646561,-0.020169699234000027,0.37894505968]}},"rearRight":{"center":[-0.58,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":12131,"bounds":{"minimum":[-0.738858238516,-0.300745111494,-0.38046359746999997],"maximum":[-0.42118194529599995,-0.020285639487000018,-0.235074520208]}}},"assignment":{"bodyVertexCount":626847,"overlapCount":0,"totalVertexCount":674391}}</script>
+<script id="asfalto-v6-vehicle-model" src="./src/legacy/asfalto-v6-vehicle-model.js"></script>
+<script id="asfalto-v6-physics-runtime" src="./src/legacy/asfalto-v6-physics-runtime.js"></script>
+<script id="asfalto-v6-input-runtime" src="./src/legacy/asfalto-v6-input-runtime.js"></script>
+<script id="asfalto-v6-falcon-runtime" src="./src/legacy/asfalto-v6-falcon-runtime.js"></script>
+<script id="asfalto-v6-feedback-runtime" src="./src/legacy/asfalto-v6-feedback-runtime.js"></script>
+<script id="asfalto-v6-recovery-guard" src="./src/legacy/asfalto-v6-recovery-guard.js"></script>
+<script id="asfalto-v6-integration-runtime" src="./src/legacy/asfalto-v6-integration-runtime.js"></script>
+<link rel="stylesheet" href="./assets/styles/menu-refinements.css">
+<link rel="stylesheet" href="assets/styles/workshop-chassis.css">
+</head>
+<body>
+<main id="app">
+  <div id="scene-background" aria-hidden="true"><img id="scene-background-image" alt=""></div>
+  <section id="viewport" aria-label="Vista 3D del cockpit"></section>
+
+  <div class="topbar" aria-hidden="true">
+    <div class="brand">
+      <strong>Cockpit Chevy Racing POV · edición 100 mejoras</strong>
+      <span>Chevrolet 250 seis en línea · cabina 3D integrada · síntesis física PTR v2</span>
+    </div>
+    <div class="telemetry">
+      <div class="readout"><b><span id="speed-value">000</span></b><small>km/h</small></div>
+      <div class="readout rpm"><b><span id="rpm-value">820</span></b><small>rpm</small></div>
+      <div class="readout gear"><b id="gear-value">N</b><small>marcha</small></div>
+      <div class="readout mode"><b id="mode-value">MAN</b><small>caja</small></div>
+      <div class="angle-card"><span id="angle">0°</span><span id="direction">CENTRO</span></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="controls">
+      <div class="control-group">
+        <span id="key-a" class="key">A</span><span id="key-d" class="key">D</span><span class="hint">dirección</span>
+      </div>
+      <span class="control-sep">·</span>
+      <div class="control-group">
+        <span id="key-w" class="key">W</span><span id="key-s" class="key">S</span><span class="hint">acelerar / frenar</span>
+      </div>
+      <span class="control-sep">·</span>
+      <div id="manual-gear-controls" class="control-group" aria-label="Marchas manuales">
+        <button class="key gear-key" data-gear="1" type="button">1</button>
+        <button class="key gear-key" data-gear="2" type="button">2</button>
+        <button class="key gear-key" data-gear="3" type="button">3</button>
+        <button class="key gear-key" data-gear="4" type="button">4</button>
+        <button class="key gear-key" data-gear="5" type="button">5</button>
+        <button class="key gear-key" data-gear="R" type="button">R</button>
+        <button class="key gear-key active" data-gear="N" type="button">N</button>
+        <span id="gear-hint" class="hint">caja H manual</span>
+      </div>
+    </div>
+    <div class="meter"><div id="meter-fill"></div></div>
+  </div>
+
+  <button id="settings-toggle" class="settings-toggle" type="button" aria-label="Abrir configuración" aria-controls="settings-panel" aria-expanded="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.7 7.7 0 0 0 .05-1 7.7 7.7 0 0 0-.05-1l2.05-1.6-2-3.46-2.48 1a7.6 7.6 0 0 0-1.72-1L14.87 3h-4l-.38 2.94a7.6 7.6 0 0 0-1.72 1l-2.48-1-2 3.46L6.34 11a7.7 7.7 0 0 0-.05 1 7.7 7.7 0 0 0 .05 1l-2.05 1.6 2 3.46 2.48-1a7.6 7.6 0 0 0 1.72 1l.38 2.94h4l.38-2.94a7.6 7.6 0 0 0 1.72-1l2.48 1 2-3.46L19.4 13ZM12.87 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
+  </button>
+
+  <aside id="settings-panel" class="settings-panel" hidden aria-label="Configuración del cockpit">
+    <header class="settings-header">
+      <div><strong>Configuración</strong><span id="audio-status">Audio listo para activar</span></div>
+      <button id="settings-close" type="button" aria-label="Cerrar configuración">×</button>
+    </header>
+
+    <div class="settings-scroll">
+      <section class="settings-section">
+        <h2>Conducción</h2>
+        <div class="segmented" role="group" aria-label="Modo de transmisión">
+          <button type="button" data-transmission="manual" class="active">Manual</button>
+          <button type="button" data-transmission="automatic">Automático</button>
+        </div>
+        <p class="mode-help">En automático usás acelerador y freno; la palanca recorre sola la H. En manual, cada relación modifica de forma directa la respuesta del motor.</p>
+        <label id="auto-aggression-row" class="slider-row"><span>Régimen de cambios<output id="auto-aggression-value">56%</output></span><input id="auto-aggression" type="range" min="0" max="1" step="0.01" value="0.56" aria-label="Agresividad de la transmisión automática"></label>
+      </section>
+
+      <section class="settings-section">
+        <h2>Sintetizador físico de motor</h2>
+        <label class="setting-row switch-row"><span>Motor y vehículo<small>Se activa después de tocar, hacer clic o pulsar una tecla.</small></span><input id="sound-enabled" type="checkbox" checked><i></i></label>
+        <label class="setting-row select-row audio-select-row"><span>Perfil acústico<small>Voicing global del Chevrolet 250.</small></span><select id="audio-profile"><option value="original">Original Chevrolet 250</option><option value="sport">Deportivo</option><option value="race">Competición</option></select></label>
+        <p class="audio-model-note"><strong>PTR v2:</strong> seis cilindros individualizados, colector, escape, admisión, mecánica, caja, rodadura, viento y frenos sintetizados en tiempo real.</p>
+        <label class="slider-row"><span>Volumen maestro<output id="master-volume-value">78%</output></span><input id="master-volume" type="range" min="0" max="1" step="0.01" value="0.78"></label>
+        <label class="slider-row"><span>Ralentí orgánico<output id="idle-roughness-value">38%</output></span><input id="idle-roughness" type="range" min="0" max="1" step="0.01" value="0.38"></label>
+        <label class="slider-row"><span>Carácter del escape<output id="exhaust-character-value">52%</output></span><input id="exhaust-character" type="range" min="0" max="1" step="0.01" value="0.52"></label>
+        <label class="slider-row"><span>Carácter de admisión<output id="intake-character-value">48%</output></span><input id="intake-character" type="range" min="0" max="1" step="0.01" value="0.48"></label>
+        <label class="slider-row"><span>Transmisión y engranajes<output id="transmission-character-value">42%</output></span><input id="transmission-character" type="range" min="0" max="1" step="0.01" value="0.42"></label>
+        <label class="slider-row"><span>Petardeo en retención<output id="pops-level-value">24%</output></span><input id="pops-level" type="range" min="0" max="1" step="0.01" value="0.24"></label>
+        <label class="slider-row"><span>Apertura estéreo<output id="stereo-width-value">68%</output></span><input id="stereo-width" type="range" min="0" max="1" step="0.01" value="0.68"></label>
+        <label class="slider-row"><span>Combustión y bloque<output id="engine-volume-value">100%</output></span><input id="engine-volume" type="range" min="0" max="1.25" step="0.01" value="1"></label>
+        <label class="slider-row"><span>Escape<output id="exhaust-volume-value">92%</output></span><input id="exhaust-volume" type="range" min="0" max="1.25" step="0.01" value="0.92"></label>
+        <label class="slider-row"><span>Admisión<output id="intake-volume-value">62%</output></span><input id="intake-volume" type="range" min="0" max="1.25" step="0.01" value="0.62"></label>
+        <label class="slider-row"><span>Mecánica<output id="mechanical-volume-value">38%</output></span><input id="mechanical-volume" type="range" min="0" max="1.25" step="0.01" value="0.38"></label>
+        <label class="slider-row"><span>Rodadura y viento<output id="road-volume-value">44%</output></span><input id="road-volume" type="range" min="0" max="1.25" step="0.01" value="0.44"></label>
+        <label class="slider-row"><span>Frenos<output id="brake-volume-value">56%</output></span><input id="brake-volume" type="range" min="0" max="1.25" step="0.01" value="0.56"></label>
+        <label class="slider-row"><span>Acústica de cabina<output id="cabin-amount-value">55%</output></span><input id="cabin-amount" type="range" min="0" max="1" step="0.01" value="0.55"></label>
+        <label class="setting-row select-row audio-select-row"><span>Calidad de audio<small>Auto reduce modos DSP sólo en equipos limitados.</small></span><select id="audio-quality"><option value="auto">Auto</option><option value="high">Alta</option><option value="efficient">Eficiente</option></select></label>
+      </section>
+
+      <section class="settings-section">
+        <h2>Respuesta y gráficos</h2>
+        <label class="slider-row"><span>Retorno del volante<output id="steering-sensitivity-value">100%</output></span><input id="steering-sensitivity" type="range" min="0.55" max="1.6" step="0.01" value="1"></label>
+        <label class="slider-row"><span>Respuesta de pedales<output id="pedal-response-value">100%</output></span><input id="pedal-response" type="range" min="0.65" max="1.45" step="0.01" value="1"></label>
+        <label class="slider-row"><span>Fuerza de freno<output id="brake-strength-value">100%</output></span><input id="brake-strength" type="range" min="0.55" max="1.55" step="0.01" value="1"></label>
+        <label class="slider-row"><span>Velocidad de cambio<output id="shift-speed-value">100%</output></span><input id="shift-speed" type="range" min="0.65" max="1.45" step="0.01" value="1"></label>
+        <label class="setting-row select-row"><span>Calidad gráfica<small>Ajusta la resolución interna según el dispositivo.</small></span><select id="graphics-quality"><option value="auto">Auto</option><option value="high">Alta</option><option value="balanced">Balanceada</option><option value="eco">Ahorro</option></select></label>
+        <label class="setting-row select-row"><span>Ray tracing<small>Oclusión ambiental en geometría opaca cercana. Puede reducir los FPS.</small></span><select name="settings-ray-tracing" data-ray-tracing-select aria-label="Calidad de ray tracing"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><small data-ray-tracing-status role="status">Desactivado</small>
+      </section>
+
+      <section class="settings-section" id="editor-settings-section">
+        <h2>Composición 3D</h2>
+        <button id="editor-mode-toggle" class="editor-mode-button" type="button" aria-pressed="false" aria-controls="editor-controls">
+          <span><b>Modo editor</b><small>Seleccioná, mové, rotá y escalá cada modelo por separado.</small></span><em>Entrar</em>
+        </button>
+        <div id="editor-controls" hidden>
+          <label class="editor-select-row"><span>Objeto</span><select id="editor-element-select" aria-label="Objeto 3D a editar"></select></label>
+          <p id="editor-availability" class="editor-availability" aria-live="polite" hidden></p>
+          <label class="setting-row switch-row editor-guide-row"><span>Guías 3D<small>Ejes X/Y/Z y caja de selección.</small></span><input id="editor-show-guides" type="checkbox" checked><i></i></label>
+          <p class="editor-tip">También podés tocar directamente un modelo en la escena para seleccionarlo. Los cambios se guardan automáticamente.</p>
+
+          <div id="editor-camera-lens" class="editor-lens-row" hidden>
+            <div class="editor-vector-title">Lente <span>horizontal</span></div>
+            <label class="editor-select-row"><span>Preset</span><select id="editor-camera-lens-preset" aria-label="Preset de lente"><option value="original">Original</option><option value="28mm">28 mm</option><option value="35mm">35 mm</option><option value="50mm">50 mm</option><option value="80mm">80 mm</option><option value="manual">Manual</option></select></label>
+            <label class="editor-axis-row"><b>mm</b><input id="editor-camera-focal-length" type="number" min="18" max="120" step="0.1" inputmode="decimal" aria-label="Longitud focal manual en milímetros"></label>
+          </div>
+
+          <div id="editor-front-cut-card" class="editor-front-cut-card" aria-label="Corte ajustable del frente de la Chevy" hidden>
+            <div class="editor-vector-title">Corte del frente <span>longitudinal</span></div>
+            <label class="slider-row"><span>Lugar del corte<output id="editor-front-cut-value">36.9%</output></span><input id="editor-front-cut" type="range" min="5" max="100" step="0.1" value="36.9" aria-label="Lugar del corte del frente desde la trompa"></label>
+            <div class="editor-front-cut-scale" aria-hidden="true"><span>Trompa</span><span>Parabrisas</span><span>Parte trasera</span></div>
+            <p class="editor-front-cut-help">Define hasta dónde se conserva la carrocería, medido desde la trompa. Al moverlo hacia la derecha se revela una porción mayor del auto.</p>
+            <button id="editor-front-cut-reset" type="button">Restablecer corte original</button>
+          </div>
+
+          <div class="editor-background-card" aria-label="Configuración del fondo">
+            <div class="editor-vector-title">Fondo <span>imagen 2D</span></div>
+            <label class="setting-row switch-row"><span>Mostrar fondo<small>Activa la imagen detrás del cockpit.</small></span><input id="editor-background-enabled" type="checkbox" checked><i></i></label>
+            <label class="editor-select-row"><span>Ajuste</span><select id="editor-background-fit" aria-label="Ajuste del fondo"><option value="cover">Cubrir</option><option value="contain">Contener</option><option value="fill">Estirar</option></select></label>
+            <label class="slider-row"><span>Opacidad<output id="editor-background-opacity-value">100%</output></span><input id="editor-background-opacity" type="range" min="0" max="1" step="0.01" value="1"></label>
+            <label class="slider-row"><span>Zoom<output id="editor-background-zoom-value">100%</output></span><input id="editor-background-zoom" type="range" min="0.5" max="2.5" step="0.01" value="1"></label>
+            <label class="slider-row"><span>Encuadre horizontal<output id="editor-background-position-x-value">50%</output></span><input id="editor-background-position-x" type="range" min="0" max="100" step="1" value="50"></label>
+            <label class="slider-row"><span>Encuadre vertical<output id="editor-background-position-y-value">50%</output></span><input id="editor-background-position-y" type="range" min="0" max="100" step="1" value="50"></label>
+            <div class="editor-background-actions">
+              <button id="editor-background-upload" type="button">Agregar / cambiar fondo</button>
+              <button id="editor-background-default" type="button">Usar fondo incluido</button>
+              <button id="editor-background-remove" type="button">Quitar fondo</button>
+            </div>
+            <input id="editor-background-file" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
+            <p id="editor-background-status" class="editor-background-status" aria-live="polite">Fondo nocturno incluido</p>
+          </div>
+
+          <div id="editor-position-group" class="editor-vector">
+            <div class="editor-vector-title">Posición <span>unidades 3D</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-position-x-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="x" aria-label="Posición X"><input name="editor-position-x-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="x" aria-label="Posición X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-position-y-number" class="editor-number" type="number" inputmode="decimal" min="-2.5" max="2.5" step="0.001" data-editor-kind="position" data-editor-axis="y" aria-label="Posición Y"><input name="editor-position-y-range" class="editor-range" type="range" min="-2.5" max="2.5" step="0.001" data-editor-range-kind="position" data-editor-range-axis="y" aria-label="Posición Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-position-z-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="z" aria-label="Posición Z"><input name="editor-position-z-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="z" aria-label="Posición Z deslizante"></label>
+          </div>
+
+          <div id="editor-rotation-group" class="editor-vector">
+            <div class="editor-vector-title">Rotación <span>grados</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-rotation-x-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="x" aria-label="Rotación X"><input name="editor-rotation-x-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="x" aria-label="Rotación X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-rotation-y-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="y" aria-label="Rotación Y"><input name="editor-rotation-y-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="y" aria-label="Rotación Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-rotation-z-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="z" aria-label="Rotación Z"><input name="editor-rotation-z-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="z" aria-label="Rotación Z deslizante"></label>
+          </div>
+
+          <div id="editor-scale-group" class="editor-vector">
+            <div class="editor-vector-title">Escala <span>factor</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-scale-x-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="x" aria-label="Escala X"><input name="editor-scale-x-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="x" aria-label="Escala X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-scale-y-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="y" aria-label="Escala Y"><input name="editor-scale-y-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="y" aria-label="Escala Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-scale-z-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="z" aria-label="Escala Z"><input name="editor-scale-z-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="z" aria-label="Escala Z deslizante"></label>
+            <label class="setting-row switch-row editor-scale-link-row"><span>Escala uniforme<small>Al modificar un eje, aplica el mismo factor a X/Y/Z.</small></span><input id="editor-lock-scale" type="checkbox" checked><i></i></label>
+          </div>
+
+          <div class="editor-actions">
+            <button id="editor-save" type="button">Guardar composición</button>
+            <button id="editor-reset-element" type="button">Restablecer elemento</button>
+            <button id="editor-reset-all" type="button">Restablecer todo</button>
+          </div>
+          <p id="editor-save-status" class="editor-save-status" aria-live="polite">Diseño original cargado</p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="settings-footer"><button id="settings-reset" type="button">Restablecer</button><span>Los cambios se guardan en este dispositivo.</span></footer>
+  </aside>
+
+<section id="race-hud" class="race-hud" data-profile="competition" aria-label="Instrumentos de carrera" style="--race-hud-scale:1;--race-hud-opacity:.94">
+  <div class="race-command-strip">
+    <label class="race-select-chip"><span>Circuito</span><select id="race-circuit" aria-label="Circuito"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></label>
+    <label class="race-select-chip race-mode-chip"><span>Modo</span><select id="race-mode" aria-label="Modo de carrera">
+      <option value="timeTrial">Contrarreloj</option><option value="race">Carrera rápida</option><option value="practice">Práctica</option><option value="speedTrap">Velocidad</option><option value="sectors">Sectores</option>
+    </select></label>
+    <label class="race-select-chip race-laps-chip"><span>Vueltas</span><select id="race-laps" aria-label="Cantidad de vueltas">
+      <option value="1" selected>1</option><option value="2">2</option><option value="3">3</option><option value="5">5</option>
+    </select></label>
+    <button id="race-start" class="race-primary-button" type="button">INICIAR</button>
+    <button id="race-pause" class="race-icon-button" type="button" aria-label="Pausar carrera" title="Pausa (P)">Ⅱ</button>
+    <button id="race-recover" class="race-icon-button" type="button" aria-label="Volver al último checkpoint" title="Recuperar vehículo (Backspace)">↺</button>
+  </div>
+
+  <div class="race-timing-strip" aria-label="Cronometraje">
+    <span class="race-stat race-lap-stat"><small>Vuelta</small><b id="race-lap">1/1</b></span>
+    <span class="race-stat race-time-stat"><small>Tiempo</small><b id="race-time">00:00.000</b></span>
+    <span class="race-stat"><small>Mejor</small><b id="race-best">—</b></span>
+    <span class="race-stat" title="Delta temporal contra la mejor vuelta"><small>Delta</small><b id="race-delta">±0.000</b></span>
+    <span class="race-stat"><small>Sector</small><b id="race-sector">S1</b></span>
+    <span class="race-stat"><small>Posición</small><b id="race-position">1/1</b></span>
+    <span class="race-surface" id="race-surface" data-surface="asphalt">ASFALTO</span>
+  </div>
+
+  <canvas id="race-minimap" class="race-minimap" width="220" height="150" aria-label="Minimapa del circuito"></canvas>
+  <div id="race-ideal-line-hint" class="race-ideal-line-hint" aria-hidden="true"><i></i><span>Línea ideal</span></div>
+</section>
+
+<button id="race-settings-toggle" class="race-settings-toggle" type="button" aria-controls="race-settings" aria-expanded="false" aria-label="Abrir ajustes de carrera" title="Ajustes de carrera">🏁</button>
+
+<aside id="race-settings" class="race-settings" role="dialog" aria-modal="false" aria-labelledby="race-settings-title" hidden>
+  <header class="race-panel-header"><div><strong id="race-settings-title">Configuración de carrera</strong><span>Entorno, ayudas, HUD y controles</span></div><button id="race-settings-close" type="button" aria-label="Cerrar ajustes">×</button></header>
+  <div class="race-panel-scroll">
+    <section class="race-panel-section">
+      <h2>Prueba y entorno</h2>
+      <label class="race-setting-row"><span>Cielo / momento</span><select id="race-environment-preset" aria-label="Cielo y momento del día" aria-describedby="race-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select></label>
+      <label class="race-setting-row"><span>Paso del tiempo</span><select id="race-day-cycle" data-race-day-cycle aria-label="Ciclo día y noche"><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select></label>
+      <label class="race-setting-row"><span>Clima</span><select id="race-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
+      <small id="race-sky-note">Cielo inicial. El ciclo dura 12 min de carrera, se detiene en pausa y conserva el clima elegido.</small>
+      <label class="race-setting-row" hidden><span>Momento compatible</span><select id="race-time-of-day"><option value="day">Día</option><option value="afternoon">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option><option value="dawn">Tarde dorada · guardado anterior</option></select></label>
+      <label class="race-range-row"><span>Dificultad <output id="race-difficulty-value">62%</output></span><input id="race-difficulty" type="range" min="0" max="1" step="0.01" value="0.62"></label>
+      <label class="race-range-row" hidden><span>Rival <output id="race-rivals-value">1</output></span><input id="race-rivals" type="range" min="1" max="1" step="1" value="1" disabled aria-disabled="true"></label>
+      <label class="race-switch-row"><span>Línea ideal<small>Trazo dinámico de frenada y aceleración.</small></span><input id="race-ideal-line" type="checkbox" checked><i></i></label>
+    </section>
+
+    <section class="race-panel-section">
+      <h2>Ayudas de conducción</h2>
+      <label class="race-switch-row"><span>Dirección sensible a velocidad</span><input name="race-assist-steering" type="checkbox" data-assist="steering" checked><i></i></label>
+      <label class="race-switch-row"><span>ABS</span><input name="race-assist-abs" type="checkbox" data-assist="abs" checked><i></i></label>
+      <label class="race-switch-row"><span>Control de tracción</span><input name="race-assist-tcs" type="checkbox" data-assist="tcs" checked><i></i></label>
+      <label class="race-switch-row"><span>Control de estabilidad</span><input name="race-assist-stability" type="checkbox" data-assist="stability" checked><i></i></label>
+    </section>
+
+    <section class="race-panel-section">
+      <h2>HUD</h2>
+      <label class="race-setting-row"><span>Perfil</span><select id="race-hud-profile"><option value="competition">Competición</option><option value="full">Completo</option><option value="compact">Compacto</option><option value="hidden">Oculto</option></select></label>
+      <label class="race-range-row"><span>Escala <output id="race-hud-scale-value">100%</output></span><input id="race-hud-scale" type="range" min="0.72" max="1.35" step="0.01" value="1"></label>
+      <label class="race-range-row"><span>Opacidad <output id="race-hud-opacity-value">94%</output></span><input id="race-hud-opacity" type="range" min="0.4" max="1" step="0.01" value="0.94"></label>
+    </section>
+
+    <section class="race-panel-section">
+      <h2>Dispositivo</h2>
+      <label class="race-switch-row"><span>Controles táctiles<small>Volante y pedales multitáctiles.</small></span><input id="race-touch-enabled" type="checkbox"><i></i></label>
+      <label class="race-switch-row"><span>Dirección por inclinación<small>Solicita permiso del sensor cuando corresponde.</small></span><input id="race-gyro-enabled" type="checkbox"><i></i></label>
+      <button id="race-fullscreen" class="race-wide-button" type="button">Pantalla completa</button>
+    </section>
+
+    <section class="race-panel-section">
+      <h2>Mezcla de carrera</h2>
+      <label class="race-range-row"><span>Ambiente <output id="race-audio-ambient-value">65%</output></span><input id="race-audio-ambient" type="range" min="0" max="1" step="0.01" value="0.65"></label>
+      <label class="race-range-row"><span>Neumáticos <output id="race-audio-tires-value">75%</output></span><input id="race-audio-tires" type="range" min="0" max="1" step="0.01" value="0.75"></label>
+      <label class="race-range-row"><span>Impactos <output id="race-audio-impacts-value">78%</output></span><input id="race-audio-impacts" type="range" min="0" max="1" step="0.01" value="0.78"></label>
+      <label class="race-range-row"><span>Señales <output id="race-audio-signals-value">82%</output></span><input id="race-audio-signals" type="range" min="0" max="1" step="0.01" value="0.82"></label>
+    </section>
+
+    <section class="race-panel-section">
+      <h2>Asignación de teclas</h2>
+      <div class="race-bindings-grid">
+        <span>Izquierda</span><button type="button" data-binding="steerLeft">A</button>
+        <span>Derecha</span><button type="button" data-binding="steerRight">D</button>
+        <span>Acelerar</span><button type="button" data-binding="accelerate">W</button>
+        <span>Frenar</span><button type="button" data-binding="brake">S</button>
+        <span>Embrague</span><button type="button" data-binding="clutch">Shift izq.</button>
+        <span>Freno de mano</span><button type="button" data-binding="handbrake">Espacio</button>
+        <span>Pausa</span><button type="button" data-binding="pause">P</button>
+        <span>Recuperar</span><button type="button" data-binding="recover">Retroceso</button>
+        <span>Mirar atrás</span><button type="button" data-binding="lookBack">C</button>
+      </div>
+      <button id="race-reset-bindings" class="race-wide-button" type="button">Restablecer teclas</button>
+    </section>
+  </div>
+</aside>
+
+<div id="race-message" class="race-message" role="status" aria-live="polite" aria-atomic="true">PAMPA GP</div>
+<div id="race-live" class="race-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="race-offroad" class="race-offroad" aria-hidden="true"></div>
+
+<section id="race-results" class="race-results" role="dialog" aria-modal="true" aria-labelledby="race-results-title" hidden>
+  <div class="race-results-card">
+    <header><span>Bandera a cuadros</span><strong id="race-results-title">Resultados</strong></header>
+    <div id="race-results-summary" class="race-results-summary"></div>
+    <div class="race-results-actions"><button id="race-results-restart" class="race-primary-button" type="button">Repetir</button><button id="race-results-close" type="button">Cerrar</button></div>
+  </div>
+</section>
+
+<div id="race-touch-controls" class="race-touch-controls" aria-label="Controles táctiles de carrera" hidden>
+  <div class="race-touch-steering" aria-label="Dirección"><button id="race-touch-left" data-race-action="steerLeft" type="button" aria-label="Girar a la izquierda">◀</button><button id="race-touch-right" data-race-action="steerRight" type="button" aria-label="Girar a la derecha">▶</button></div>
+  <div class="race-touch-pedals"><button id="race-touch-handbrake" data-race-action="handbrake" type="button" aria-label="Freno de mano">F.M.</button><button id="race-touch-brake" data-race-action="brake" type="button">FRENO</button><button id="race-touch-accelerate" data-race-action="accelerate" type="button">GAS</button></div>
+</div>
+
+  <div id="loading"><div class="an-loading-card"><span class="an-loading-kicker">ASFALTO NACIONAL / 1973</span><div class="an-loading-gauge" aria-hidden="true"><span class="an-loading-needle"></span><b>RPM</b></div><h2>Todo empieza en el taller</h2><p id="loading-text" class="an-loading-stage" role="status" aria-live="polite">Preparando el auto y la ruta…</p><div class="an-loading-road" aria-hidden="true"><i></i></div><span class="an-loading-caption">La próxima curva te espera.</span></div></div>
+  <div id="error" hidden role="alert"></div>
+</main>
+<script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
+<script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
+<script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
+<script type="module" src="./src/legacy/module-02.mjs"></script>
+
+
+
+<script id="cockpit-v5-manifest" type="application/json">{"name":"Cockpit Chevy Racing POV V5 Unificado","version":"5.0.0","generated":"2026-08-18","architecture":{"simulations":1,"renderer":"Three.js embebido","simulationOwner":"RaceSimulation integrada en raceWorld","ui":"DOM V5 accesible","fixedStepSeconds":0.016666666666666666},"delivery":{"selfContained":true,"externalDependencies":0,"format":"single-html"},"improvements":["simulación única compartida por física, IA, cronometraje, HUD y controles","hub de carrera V5 con cuatro circuitos y cinco modos","práctica abierta sin final artificial por vueltas","Speed Trap con zona, intentos y récord propio","práctica de sectores reiniciable por parcial elegido","checkpoints específicos por circuito","dificultad conectada con velocidad, habilidad, agresividad y reacción de IA","IA con anticipación de curva, clima, superficie y maniobras laterales","fantasma muestreado a 25 Hz con orientación y deriva","búsqueda binaria e interpolación de fantasma por tiempo y distancia","delta temporal calculado en la misma posición del trazado","recuperación que invalida la vuelta y aplica penalización","trompos completos mediante ángulo envuelto","temperatura y desgaste de neumáticos opcionales","detección de cortes por tiempo y distancia fuera de pista","estado de carrera clonado sin serialización JSON por frame","récords V5 versionados por configuración relevante","almacenamiento con cuota, exportación e importación","ingeniero de carrera con prioridades y control de spam","gobernador de rendimiento con histéresis","HUD de competición escalable con cuatro perfiles","minimapa, banderas, tablero digital y telemetría de pedales","retrovisor auxiliar adaptable y marco de cockpit opcional","controles táctiles analógicos para volante y pedales","modales accesibles con foco atrapado e inert del fondo","paleta accesible para daltonismo y foco visible","breakpoints para escritorio, teléfono, 320 px y horizontal bajo","preflight V5 de WebGL, memoria, codecs, caché y LOD","decodificación Base64 fragmentada y descompresión en worker transferible","liberación temprana de payloads comprimidos para reducir picos de memoria","imágenes de fondo y retrovisor convertidas a WebP preservando transparencia","un único AudioContext y bus maestro compartido por motor y ambiente de carrera","calibración giroscópica compatible con centro cero y filtrado por tiempo real del sensor","retrovisor 3D configurable y limitado a 30/22/15 Hz según presupuesto gráfico","parser GLB multimesh y clasificación semántica del recurso del RAR","eliminación de la segunda simulación y de la interfaz V4 duplicada","API pública con raceWorld y trazado para diagnóstico","entrega sin dependencias HTTP externas"],"verification":{"logicTests":19,"buildTests":5,"javascriptSyntaxChecks":3,"responsiveViewports":["1440x900","390x844","844x390","320x568","1440x900-garage"],"webglRuntime":"requires a browser-provided WebGL context"}}</script>
+<script id="cockpit-v5-core" src="./src/legacy/cockpit-v5-core.js"></script>
+<script id="cockpit-v5-browser" src="./src/legacy/cockpit-v5-browser.js"></script>
+
+
+
+
+
+
+
+<script  id="chevy-v3-payload" type="application/octet-stream" data-filename="Chevy v3.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-v3-payload/Chevy v3.glb" data-bytes="11504756" data-sha256="DD1B33E5743EB33288952E16AAC9C45894EA153E27A5DFDD8F5BE3772C6B127C"></script>
+<script id="asfalto-v3-camera-state" src="./src/legacy/asfalto-v3-camera-state.js"></script>
+<script id="asfalto-v3-workshop-editor-state" src="./src/legacy/asfalto-v3-workshop-editor-state.js"></script>
+<script  id="v6-workshop-payload" type="application/octet-stream" data-encoding="external-url" data-external-url="./assets/extracted/v6-workshop-payload/v6-workshop-payload.bin" data-bytes="8740856" data-sha256="AB0F0A69EDA0CAF58682CD602D04AFD1D3C72FABF95093EA7BE4B32EFD5998A7"></script>
+
+<div id="v6-game-shell" aria-live="off">
+  <section id="v6-main-menu" role="dialog" aria-modal="true" aria-label="Menú principal Chevy Serie 2">
+    <div id="v6-workshop-stage" aria-hidden="true">
+      <canvas id="v6-workshop-canvas"></canvas>
+      <div id="v6-workshop-fallback"><div class="v6-fallback-car"><i class="v6-wheel w1"></i><i class="v6-wheel w2"></i></div></div>
+      <div id="v6-workshop-loading">Preparando taller mecánico 1973<div class="v6-progress"><i></i></div></div>
+      <div class="v6-camera-dock" aria-label="Focos de cámara del taller">
+        <button type="button" data-workshop-camera="general" aria-pressed="true">Vista general</button>
+        <button type="button" data-workshop-camera="front">Frente</button>
+        <button type="button" data-workshop-camera="engine">Motor</button>
+        <button type="button" data-workshop-camera="wheel">Rueda</button>
+        <button type="button" data-workshop-camera="interior">Interior</button>
+        <button type="button" data-workshop-camera="bench">Banco</button>
+      </div>
+      <div class="v6-ambient-status">Motor apagado · metal enfriándose · fluorescente distante</div>
+    </div>
+
+    <aside id="v6-menu-sidebar">
+      <header class="v6-brand">
+        <div><span class="v6-kicker">Asfalto Nacional · 1973</span><h1>Chevy<br>Serie 2</h1></div>
+        <p>Inspirado en pruebas, vehículos y cultura automotriz argentina de la década de 1970.</p>
+      </header>
+      <nav id="v6-primary-nav" role="tablist" aria-label="Secciones principales">
+        <button class="v6-nav-btn" id="v6-tab-drive" role="tab" aria-controls="v6-drive-panel" aria-selected="true" data-v6-panel="drive">Conducir</button>
+        <button class="v6-nav-btn" id="v6-tab-tests" role="tab" aria-controls="v6-roadtest-panel" aria-selected="false" data-v6-panel="tests">Pruebas</button>
+        <button class="v6-nav-btn" id="v6-tab-competition" role="tab" aria-controls="v6-competition-panel" aria-selected="false" data-v6-panel="competition">Competencia</button>
+        <button class="v6-nav-btn" id="v6-tab-workshop" role="tab" aria-controls="v6-workshop-panel" aria-selected="false" data-v6-panel="workshop">Taller</button>
+        <button class="v6-nav-btn" id="v6-tab-collection" role="tab" aria-controls="v6-collection-panel" aria-selected="false" data-v6-panel="collection">Colección</button>
+        <button class="v6-nav-btn" id="v6-tab-settings" role="tab" aria-controls="v6-settings-panel" aria-selected="false" data-v6-panel="settings">Ajustes</button>
+      </nav>
+      <footer class="v6-profile-strip">
+        <b id="v6-profile-name">Propietario · Taller Central</b>
+        <span id="v6-profile-class">Clase histórica · Original</span>
+        <div class="v6-profile-level"><span>Dominio general</span><span id="v6-profile-level">1</span></div>
+        <div class="v6-axis-mini"><i id="v6-profile-progress"></i></div>
+      </footer>
+    </aside>
+
+    <main id="v6-menu-content">
+      <section class="v6-panel v6-active" id="v6-drive-panel" role="tabpanel" aria-labelledby="v6-tab-drive">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Salir del taller</span><h2>Conducir</h2></div><p>Elegí el propósito antes de girar la llave. El auto conserva configuración, condición y clase mecánica.</p></header>
+        <div class="v6-section-title">Sesiones</div>
+        <div class="v6-grid v6-grid-3" id="v6-drive-cards">
+          <article class="v6-card" tabindex="0" role="button" data-drive-mode="free"><h3>Conducción libre</h3><p>Rodar sin presión, ajustar clima y descubrir el comportamiento de la Chevy.</p><div class="v6-card-meta"><span class="v6-chip">Sin límite</span><span class="v6-chip">Ruta abierta</span></div></article>
+          <article class="v6-card" tabindex="0" role="button" data-drive-mode="journey"><h3>Viaje</h3><p>Trayecto largo con combustible, clima, fatiga mecánica y decisiones de ritmo.</p><div class="v6-card-meta"><span class="v6-chip">35–60 min</span><span class="v6-chip">Mantenimiento</span></div></article>
+          <article class="v6-card" tabindex="0" role="button" data-drive-mode="practice"><h3>Práctica de circuito</h3><p>Vueltas abiertas, puesta a punto activa y retorno rápido a boxes.</p><div class="v6-card-meta"><span class="v6-chip">Circuito</span><span class="v6-chip">Sin presión</span></div></article>
+        </div>
+        <div class="v6-section-title">Preparación</div>
+        <div class="v6-tech-plate">
+          <div class="v6-tech-row"><span>Configuración</span><strong id="v6-drive-config">Original Chevrolet 250</strong><span class="v6-class-badge" id="v6-drive-class">Histórica</span></div>
+          <div class="v6-tech-row"><span>Condición</span><strong id="v6-drive-condition">Lista para salir</strong><small id="v6-drive-condition-detail">Aceite, frenos y neumáticos verificados</small></div>
+          <div class="v6-tech-row"><span>Ruta / clima</span><strong><select id="v6-drive-route" aria-label="Ruta"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></strong><select id="v6-drive-weather" aria-label="Clima"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></div>
+          <div class="v6-tech-row"><label for="v6-drive-sky">Cielo / momento</label><select id="v6-drive-sky" aria-describedby="v6-drive-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-drive-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></div>
+          <div class="v6-tech-row"><label for="v6-drive-day-cycle">Paso del tiempo</label><select id="v6-drive-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></div>
+        </div>
+        <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-drive-start" type="button">Girar la llave</button><button class="v6-btn" type="button" data-open-panel="workshop">Revisar en taller</button></div>
+      </section>
+
+      <section class="v6-panel" id="v6-roadtest-panel" role="tabpanel" aria-labelledby="v6-tab-tests">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Ficha medible</span><h2>Road Test</h2></div><p>Prepará, calentá, alineá, medí y compará. Una invalidación se comunica temprano sin cortar necesariamente la conducción.</p></header>
+        <div class="v6-section-title">Pruebas disponibles</div>
+        <div class="v6-grid v6-grid-3" id="v6-test-cards"></div>
+        <div class="v6-section-title">Protocolo</div>
+        <div class="v6-tech-plate" id="v6-test-protocol">
+          <div class="v6-tech-row"><span>1 · Configuración</span><strong id="v6-test-config">Original</strong><small>Clase y ayudas registradas</small></div>
+          <div class="v6-tech-row"><span>2 · Condición</span><strong id="v6-test-warmup">Motor frío</strong><small>Calentar antes de medir</small></div>
+          <div class="v6-tech-row"><span>3 · Tolerancia</span><strong id="v6-test-validity">Viento y pendiente dentro de norma</strong><small>Choque, atajo o ayuda prohibida invalidan</small></div>
+        </div>
+        <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-test-start" type="button" disabled>Preparar prueba</button><button class="v6-btn" id="v6-test-history" type="button">Ver fichas anteriores</button></div>
+      </section>
+
+      <section class="v6-panel" id="v6-competition-panel" role="tabpanel" aria-labelledby="v6-tab-competition">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Club y cronómetro</span><h2>Competencia</h2></div><p>Pruebas con reglamento, rivales y clasificación. La configuración histórica y la Restomod compiten en tablas separadas.</p></header>
+        <div class="v6-section-title">Formatos</div>
+        <div class="v6-grid v6-grid-3" id="v6-competition-cards"></div>
+        <div class="v6-section-title">Inscripción</div>
+        <div class="v6-form-grid">
+          <label class="v6-field"><span>Circuito</span><select id="v6-comp-track"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></label>
+          <label class="v6-field"><span>Dificultad</span><select id="v6-comp-difficulty"><option value="rookie">Club</option><option value="normal" selected>Competitivo</option><option value="hard">Experto</option></select></label>
+          <label class="v6-field"><span>Vueltas</span><select id="v6-comp-laps"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></label>
+          <label class="v6-field"><span>Clima</span><select id="v6-comp-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
+          <label class="v6-field"><span>Cielo / momento</span><select id="v6-comp-sky" aria-describedby="v6-comp-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-comp-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></label>
+          <label class="v6-field"><span>Paso del tiempo</span><select id="v6-comp-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></label>
+        </div>
+        <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-competition-start" type="button" disabled>Inscribirse y salir</button><button class="v6-btn" id="v6-championship-view" type="button">Campeonato de club</button></div>
+      </section>
+
+      <section class="v6-panel" id="v6-workshop-panel" role="tabpanel" aria-labelledby="v6-tab-workshop">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Santuario técnico</span><h2>Taller mecánico</h2></div><p>Inspeccionar, mantener, documentar y ajustar. Cada cambio declara beneficio, contrapartida y clase.</p></header>
+        <div class="an-workshop-vehicle-select"><label for="v6-workshop-vehicle">Auto en el taller</label><select id="v6-workshop-vehicle"><option value="chevy">Chevy 250 Serie 2 · 1973</option><option value="chevy_400_1957">Chevrolet 400 · 1957</option><option value="chevrolet_1969">Chevrolet · 1969</option></select><span id="v6-workshop-vehicle-status" role="status">Chevy 250 Serie 2 · 1973</span></div>
+        <div class="v6-originality"><span class="v6-class-badge" id="v6-workshop-class">Original</span><div><b id="v6-originality-title">Configuración histórica preservada</b><div id="v6-originality-copy">Sin conversiones modernas instaladas.</div></div></div>
+        <nav id="v6-workshop-rail" role="tablist" aria-label="Secciones del taller">
+          <button class="v6-rail-btn" role="tab" aria-selected="true" data-workshop-tab="appearance">Apariencia</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="mechanics">Mecánica</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="chassis">Ruedas y frenos</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="tuning">Puesta a punto</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="condition">Estado</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="history">Historial</button>
+          <button class="v6-rail-btn" role="tab" aria-selected="false" data-workshop-tab="photo">Fotografía</button>
+        </nav>
+        <div class="v6-workshop-tab v6-active" id="v6-workshop-appearance" data-workshop-page="appearance">
+          <div class="v6-section-title">Personalización histórica</div>
+          <div class="v6-form-grid">
+            <div class="v6-field"><span>Color de carrocería</span><div class="v6-color-swatches" id="v6-body-swatches"></div></div>
+            <label class="v6-field"><span>Combinación de franja</span><select id="v6-stripe-select"><option value="black">Negra original</option><option value="white">Blanca de época</option><option value="delete">Sin franja</option></select></label>
+            <label class="v6-field"><span>Altura plausible <span class="v6-range-line"><output id="v6-height-output">0 mm</output></span></span><input id="v6-height-range" type="range" min="-25" max="18" value="0" step="1"></label>
+            <label class="v6-field"><span>Patente y detalle</span><input id="v6-plate-input" maxlength="8" value="C-1973" type="text"></label>
+          </div>
+          <p>Configurá neumáticos, llantas, dirección y frenos en <button class="v6-btn v6-btn-small" type="button" data-open-chassis>Ruedas y frenos</button>.</p>
+          <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-appearance-apply" type="button">Aplicar apariencia</button><button class="v6-btn" id="v6-clean-car" type="button">Limpiar</button><button class="v6-btn" id="v6-appearance-original" type="button">Restaurar apariencia</button></div>
+        </div>
+        <div class="v6-workshop-tab" id="v6-workshop-mechanics" data-workshop-page="mechanics"><div class="v6-section-title">Original / Restomod</div><div class="v6-part-list" id="v6-parts-list"></div><p>Los conjuntos de frenos y la asistencia de dirección se eligen en <button class="v6-btn v6-btn-small" type="button" data-open-chassis>Ruedas y frenos</button>.</p></div>
+        <div class="v6-workshop-tab" id="v6-workshop-chassis" data-workshop-page="chassis"><p role="status">Preparando el conjunto de ruedas, dirección y frenos…</p></div>
+        <div class="v6-workshop-tab" id="v6-workshop-tuning" data-workshop-page="tuning"><div class="v6-section-title">Escalas mecánicas</div><div class="v6-form-grid" id="v6-tuning-controls"></div><p>Ajustá presión de neumáticos, reparto de frenada y relación de dirección en <button class="v6-btn v6-btn-small" type="button" data-open-chassis>Ruedas y frenos</button>.</p><div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-tuning-save" type="button">Guardar puesta a punto</button><button class="v6-btn" id="v6-tuning-reset" type="button">Base de fábrica</button><button class="v6-btn" id="v6-tuning-road" type="button">Probar en ruta</button></div></div>
+        <div class="v6-workshop-tab" id="v6-workshop-condition" data-workshop-page="condition"><div class="v6-section-title">Inspección</div><div class="v6-condition-grid" id="v6-condition-grid"></div><div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-service-recommended" type="button">Hacer servicio recomendado</button><button class="v6-btn" id="v6-inspect-all" type="button">Inspeccionar</button></div></div>
+        <div class="v6-workshop-tab" id="v6-workshop-history" data-workshop-page="history"><div class="v6-section-title">Documentación y oficio</div><div class="v6-history-list" id="v6-history-list"></div><div class="v6-button-row"><button class="v6-btn" id="v6-export-profile" type="button">Exportar archivo</button><button class="v6-btn" id="v6-import-profile" type="button">Importar archivo</button><input id="v6-import-file" type="file" accept="application/json" hidden></div></div>
+        <div class="v6-workshop-tab" id="v6-workshop-photo" data-workshop-page="photo">
+          <div class="v6-section-title">Cámara de taller</div>
+          <div class="v6-form-grid">
+            <label class="v6-field"><span>Foco</span><select id="v6-photo-focus"><option value="general">General</option><option value="front">Frente</option><option value="engine">Motor</option><option value="wheel">Rueda</option><option value="interior">Interior</option><option value="bench">Banco</option></select></label>
+            <label class="v6-field"><span>Lente</span><select id="v6-photo-lens"><option value="35">35 mm</option><option value="50" selected>50 mm</option><option value="85">85 mm macro</option></select></label>
+            <label class="v6-field"><span>Exposición <span class="v6-range-line"><output id="v6-photo-exposure-output">0.0 EV</output></span></span><input id="v6-photo-exposure" type="range" min="-1.5" max="1.5" value="0" step="0.1"></label>
+            <label class="v6-field"><span>Profundidad de campo</span><select id="v6-photo-dof"><option value="off">Vista técnica</option><option value="soft" selected>Suave</option><option value="macro">Macro</option></select></label>
+          </div>
+          <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-photo-capture" type="button">Tomar fotografía</button><button class="v6-btn" id="v6-photo-reset" type="button">Restablecer cámara</button></div>
+        </div>
+      </section>
+
+      <section class="v6-panel" id="v6-collection-panel" role="tabpanel" aria-labelledby="v6-tab-collection">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Conocer, mantener, documentar</span><h2>Colección</h2></div><p>El progreso abre pruebas, piezas originales, documentos, herramientas, cámaras y contextos coherentes; nunca cajas aleatorias.</p></header>
+        <div class="v6-section-title">Ejes de progreso</div><div class="v6-axis-grid" id="v6-axis-grid"></div>
+        <div class="v6-section-title">Archivo del propietario</div><div class="v6-collection-grid" id="v6-collection-grid"></div>
+        <div class="v6-section-title">Próximo objetivo</div><div class="v6-note" id="v6-next-objective"><strong>Primera inspección:</strong> revisá el estado general en el taller y completá una prueba 0–100 válida.</div>
+      </section>
+
+      <section class="v6-panel" id="v6-settings-panel" role="tabpanel" aria-labelledby="v6-tab-settings">
+        <header class="v6-panel-head"><div><span class="v6-kicker">Placa técnica</span><h2>Ajustes</h2></div><p>Consecuencias claras, controles discretos y accesibilidad sin romper la lectura mecánica.</p></header>
+        <div class="v6-setting-group"><h3>Realismo gráfico</h3><label class="v6-tech-row"><span>Materiales e iluminación<small>Relieve, reflejos de pintura y metal, telas, vegetación y luz ambiental.</small></span><select name="v6-advanced-graphics-quality" data-advanced-graphics-quality aria-label="Calidad del realismo gráfico"><option value="auto">Adaptativo</option><option value="high">Alto</option><option value="balanced" selected>Equilibrado</option><option value="low">Bajo</option><option value="off">Apagado</option></select></label><p data-advanced-graphics-status role="status">Equilibrado · preparando materiales e iluminación.</p></div>
+        <div class="v6-setting-group"><h3>Ray tracing</h3><label class="v6-tech-row"><span>Oclusión ambiental<small>Sombras de contacto sobre geometría opaca cercana. Mayor calidad puede reducir los FPS.</small></span><select name="v6-ray-tracing" data-ray-tracing-select aria-label="Ray tracing del juego"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><p data-ray-tracing-status role="status">Desactivado</p></div>
+        <div class="v6-setting-group"><h3>Preset integral</h3><div class="v6-button-row"><button class="v6-btn v6-btn-small" data-v6-preset="original">Original</button><button class="v6-btn v6-btn-small" data-v6-preset="balanced">Equilibrado</button><button class="v6-btn v6-btn-small" data-v6-preset="assisted">Asistido</button><button class="v6-btn v6-btn-small" data-v6-preset="restomod">Restomod</button></div></div>
+        <div class="v6-setting-group"><h3>Interfaz y accesibilidad</h3>
+          <label class="v6-switch"><span>Interfaz grande<small> Aumenta lectura y áreas de interacción.</small></span><input id="v6-ui-large" type="checkbox"></label>
+          <label class="v6-switch"><span>Movimiento reducido<small> Reduce transiciones y movimiento ambiental no esencial.</small></span><input id="v6-reduce-motion" type="checkbox"></label>
+          <label class="v6-switch"><span>Paleta de alto contraste<small> Refuerza formas además del color.</small></span><input id="v6-high-contrast" type="checkbox"></label>
+          <label class="v6-switch"><span>Subtítulos ambientales<small> Identifica señales, taller y eventos importantes.</small></span><input id="v6-captions" type="checkbox" checked></label>
+          <label class="v6-switch"><span>Protección fotosensible<small> Elimina flashes y rayos intensos.</small></span><input id="v6-photosafe" type="checkbox" checked></label>
+        </div>
+        <div class="v6-setting-group"><h3>Sistema</h3><div class="v6-button-row"><button class="v6-btn" id="v6-open-original-settings" type="button">Ajustes avanzados del cockpit</button><button class="v6-btn" id="v6-fullscreen" type="button">Pantalla completa</button><button class="v6-btn" id="v6-reset-profile" type="button">Restablecer progreso</button></div></div>
+      </section>
+    </main>
+  </section>
+
+  <button id="v6-menu-toggle" type="button" aria-label="Abrir menú principal">Menú</button>
+  <button id="v6-return-menu" type="button" aria-label="Volver al taller">Volver al taller</button>
+  <div id="v6-objective-hud" aria-live="polite"><div class="v6-objective-label">Objetivo</div><div class="v6-objective-main" id="v6-objective-main">Conducción libre</div><div class="v6-objective-sub" id="v6-objective-sub">Sin medición activa</div></div>
+  <section id="v6-results-sheet" role="dialog" aria-modal="true" aria-labelledby="v6-results-title">
+    <article class="v6-sheet">
+      <header class="v6-sheet-head"><div><h2 id="v6-results-title">Ficha de Road Test</h2><p id="v6-results-subtitle">Chevy Serie 2 · Asfalto Nacional</p></div><div class="v6-sheet-number"><b id="v6-results-main">—</b><small id="v6-results-unit">resultado</small></div></header>
+      <div class="v6-sheet-body"><div class="v6-sheet-primary"><p class="v6-sheet-verdict" id="v6-results-verdict">Intento registrado.</p><div class="v6-sheet-metrics" id="v6-results-metrics"></div><canvas class="v6-sheet-chart" id="v6-results-chart" width="720" height="180"></canvas></div><aside class="v6-sheet-detail"><h3>Desglose técnico</h3><ul id="v6-results-details"></ul><h3 style="margin-top:18px">Progreso</h3><div id="v6-results-progress"></div></aside></div>
+      <footer class="v6-sheet-actions"><button class="v6-btn" id="v6-results-repeat" type="button">Repetir</button><button class="v6-btn" id="v6-results-workshop" type="button">Volver al taller</button><button class="v6-btn v6-btn-primary" id="v6-results-close" type="button">Continuar</button></footer>
+    </article>
+  </section>
+  <div id="v6-confirm" role="dialog" aria-modal="true" aria-labelledby="v6-confirm-title"><div class="v6-dialog"><h2 id="v6-confirm-title">Confirmar</h2><p id="v6-confirm-copy"></p><div class="v6-button-row"><button class="v6-btn" id="v6-confirm-cancel" type="button">Cancelar</button><button class="v6-btn v6-btn-primary" id="v6-confirm-ok" type="button">Confirmar</button></div></div></div>
+  <div id="v6-toast-stack" aria-live="polite" aria-atomic="false"></div>
+  <div id="v6-a11y-live" class="v6-sr-only" aria-live="assertive"></div>
+</div>
+
+
+<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js"></script>
+
+
+<canvas id="chevy-hud-webgl-canvas" aria-hidden="true"></canvas>
+<section id="chevy-hud-overlay" aria-label="Instrumentos Chevy 3D">
+  <section id="chevy-hud-objective" class="chevy-hud-host" data-hud-asset="objective" data-render-state="loading" role="status" aria-live="polite">
+    <div class="chevy-hud-copy">
+      <p id="chevy-hud-objective-label">//&nbsp; OBJETIVO</p>
+      <p id="chevy-hud-objective-main">CONDUCCIÓN LIBRE</p>
+      <p id="chevy-hud-objective-sub">SIN MEDICIÓN ACTIVA</p>
+    </div>
+  </section>
+  <section id="chevy-hud-timer" class="chevy-hud-host" data-hud-asset="timer" data-render-state="loading">
+    <div class="chevy-hud-copy" role="timer" aria-label="Tiempo transcurrido">
+      <span id="chevy-hud-timer-label">TIEMPO</span>
+      <output id="chevy-hud-timer-value">00:00.000</output>
+    </div>
+  </section>
+  <section id="chevy-hud-navigation" class="chevy-hud-host" data-hud-asset="navigation" data-render-state="loading" aria-label="Navegación">
+    <div class="chevy-hud-copy">
+      <span id="chevy-hud-navigation-heading">N</span>
+      <output id="chevy-hud-navigation-value">0,0 KM</output>
+      <span id="chevy-hud-navigation-mode">RECORRIDO</span>
+    </div>
+  </section>
+  <section id="chevy-hud-telemetry" class="chevy-hud-host" data-hud-asset="telemetry" data-render-state="loading" aria-label="Telemetría del vehículo">
+    <div class="chevy-hud-copy">
+      <output id="chevy-hud-gear">N</output>
+      <span id="chevy-hud-gear-label">MARCHA</span>
+      <output id="chevy-hud-rpm">0820 RPM</output>
+      <div id="chevy-hud-statuses">
+        <span id="chevy-hud-oil" data-level="normal">ACEITE NORMAL</span>
+        <span id="chevy-hud-temperature" data-level="normal">TEMPERATURA 88°</span>
+      </div>
+    </div>
+  </section>
+  <p id="chevy-hud-render-notice" class="chevy-hud-sr" role="status" aria-live="polite"></p>
+</section>
+<script  id="chevy-hud-asset-objective" type="application/octet-stream" data-filename="chevy-objective.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-objective/chevy-objective.glb" data-bytes="239812" data-sha256="6AC5D3A396AA84B2FD62A1FC9CAE00DA4CB56DA0B33D31EF87D328A0A6786FE9"></script>
+<script  id="chevy-hud-asset-timer" type="application/octet-stream" data-filename="chevy-timer.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-timer/chevy-timer.glb" data-bytes="211116" data-sha256="4D65D89B6ADC0FEFA318130D21B7D9001E0493251ECF5F6AD2139EBBD7AEE8A3"></script>
+<script  id="chevy-hud-asset-navigation" type="application/octet-stream" data-filename="chevy-navigation.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-navigation/chevy-navigation.glb" data-bytes="609908" data-sha256="41AA91A47071A7589920D5A646C74E439329F6053AE27FAD9846C892DF7D0F0B"></script>
+<script  id="chevy-hud-asset-telemetry" type="application/octet-stream" data-filename="chevy-telemetry.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-telemetry/chevy-telemetry.glb" data-bytes="602412" data-sha256="FC8CBA16935B7ECE010769DDFA8DD362DCE311069F17D935E86DC6A7714B7F36"></script>
+<script id="chevy-hud-3d-runtime" src="./src/legacy/chevy-hud-3d-runtime.js"></script>
+
+<script id="asfalto-v3-workshop-editor-runtime" src="./src/legacy/asfalto-v3-workshop-editor-runtime.js"></script>
+
+<script  id="asfalto-v4-1-radio-model" type="application/octet-stream" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v4-1-radio-model/asfalto-v4-1-radio-model.bin" data-bytes="654164" data-sha256="E1420899D96511943B9F9E014E30A1F06B639A43FDBBA77EF481BD41EFD45710"></script>
+<script id="asfalto-v4-1-radio-manifest" type="application/json">{"version":1,"name":"Radio Chevrolet 1973","tracks":[{"id":"6e6477c63e9ec6d3","filename":"Artaud - Pescado Rabioso.mp3","title":"Artaud","artist":"Pescado Rabioso","mime":"audio/mpeg","duration":0,"payloadId":"6e6477c63e9ec6d3"},{"id":"f36cc240a96359e6","filename":"Gulp - Patricio Rey y sus Redonditos de Ricota.mp3","title":"Gulp","artist":"Patricio Rey y sus Redonditos de Ricota","mime":"audio/mpeg","duration":0,"payloadId":"f36cc240a96359e6"},{"id":"acd609abea19fc15","filename":"La grasa de las capitales - Seru Giran.mp3","title":"La grasa de las capitales","artist":"Seru Giran","mime":"audio/mpeg","duration":0,"payloadId":"acd609abea19fc15"}]}</script>
+<script id="asfalto-v4-1-radio-state" src="./src/legacy/asfalto-v4-1-radio-state.js"></script>
+<script id="asfalto-v4-1-radio-display" src="./src/legacy/asfalto-v4-1-radio-display.js"></script>
+<script id="asfalto-v4-1-radio-functional-core" src="./src/legacy/asfalto-v4-1-radio-functional-core.js"></script>
+<script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="6e6477c63e9ec6d3" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/6e6477c63e9ec6d3/6e6477c63e9ec6d3.bin" data-bytes="29668439" data-sha256="6E6477C63E9EC6D3F515DDC2C61CC7EA3EA19114B59C6F464AADD279D48AA30E"></script>
+<script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="f36cc240a96359e6" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/f36cc240a96359e6/f36cc240a96359e6.bin" data-bytes="56603931" data-sha256="F36CC240A96359E65C964E216382170F93B13D683B355A657273BED56B049F71"></script>
+<script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="acd609abea19fc15" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/acd609abea19fc15/acd609abea19fc15.bin" data-bytes="16790824" data-sha256="ACD609ABEA19FC1570BE81A19D6E7091A8F663214CA77C6633A348FE65CD3823"></script>
+<script type="module" src="./src/ui/race-day-cycle-controls.mjs"></script>
+</body>
+</html>

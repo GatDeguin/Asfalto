@@ -1,0 +1,137 @@
+{
+  "schema": "asfalto-track/v1",
+  "id": "paso_garibaldi",
+  "displayName": "RN3 Paso Garibaldi — Lago Escondido",
+  "format": "point_to_point",
+  "lengthM": 24000,
+  "defaultEnvironment": "overcast",
+  "environment": {
+    "profile": "./environment.json",
+    "defaultPreset": "overcast",
+    "availablePresets": [
+      "clear",
+      "overcast",
+      "golden-hour",
+      "sunset",
+      "moonrise",
+      "night"
+    ]
+  },
+  "route": "./route.json",
+  "visual": [
+    "./scene.glb"
+  ],
+  "collision": [
+    "./collision.glb"
+  ],
+  "collisionMode": "separate",
+  "collisionNodes": [
+    "COLLISION_ROAD",
+    "COLLISION_TRACK_LIMIT_LEFT",
+    "COLLISION_TRACK_LIMIT_RIGHT"
+  ],
+  "sensorNodes": [
+    "COLLISION_WATER_EXCLUSION",
+    "COLLISION_WETLAND_EXCLUSION",
+    "COLLISION_CHECKPOINT_00",
+    "COLLISION_CHECKPOINT_01",
+    "COLLISION_CHECKPOINT_02",
+    "COLLISION_CHECKPOINT_03",
+    "COLLISION_CHECKPOINT_04",
+    "COLLISION_CHECKPOINT_05",
+    "COLLISION_CHECKPOINT_06",
+    "COLLISION_CHECKPOINT_07",
+    "COLLISION_CHECKPOINT_08",
+    "COLLISION_CHECKPOINT_09"
+  ],
+  "integrity": {
+    "route": {
+      "bytes": 1808485,
+      "sha256": "B4776AAF39C2DD146F91ADCF666FF353F1662629947E44C623EE05A7ABB03894"
+    },
+    "visual": {
+      "./scene.glb": {
+        "bytes": 13892196,
+        "sha256": "BC62529005836556D5CE2A321CAFC9B9AF4AC4791A0CA7C426D39F1CC8CB339A"
+      }
+    },
+    "collision": {
+      "./collision.glb": {
+        "bytes": 450760,
+        "sha256": "AEC06938556EFE17877306DA1E02F2EF1F38553928BCD24D471B3DF4EA11E0A2"
+      }
+    }
+  },
+  "glb": {
+    "visual": {
+      "version": 2,
+      "nodes": 49,
+      "meshes": 27,
+      "materials": 15,
+      "textures": 24,
+      "images": 9,
+      "requiredExtensions": []
+    },
+    "collision": {
+      "version": 2,
+      "nodes": 15,
+      "meshes": 5,
+      "materials": 0,
+      "textures": 0,
+      "images": 0,
+      "requiredExtensions": []
+    }
+  },
+  "profile": {
+    "id": "paso_garibaldi",
+    "name": "RN3 Paso Garibaldi — Lago Escondido",
+    "description": "Corredor fueguino de montaña, bosque húmedo, nieve y asfalto frío.",
+    "biome": "tierra_del_fuego_mountain",
+    "environment": "overcast",
+    "palette": {
+      "forest": "#354238",
+      "peat": "#5D5944",
+      "asphalt": "#30383B",
+      "snow": "#DCE3E4",
+      "lake": "#526C78"
+    },
+    "shoulder": 1.8,
+    "barrier": 3.2,
+    "recommendedFarPlaneM": 32000,
+    "surface": {
+      "road": "cold_variable_asphalt",
+      "shoulder": "wet_gravel",
+      "barrier": "galvanized_guardrail"
+    }
+  },
+  "provenance": {
+    "source": "Circuitos/Garibaldi",
+    "sourceManifest": {
+      "bytes": 12878,
+      "sha256": "2E52BFEACC53737643C5B490D165C1BE2991D91C351DBF042E36D2AB7E160737"
+    },
+    "sourceRoute": {
+      "bytes": 1987697,
+      "sha256": "C8B1FFC36B415CF554086D67248516D65A448C9C696DD7A2098FCF22AD860C3D"
+    },
+    "sourceVisual": {
+      "bytes": 13892196,
+      "sha256": "BC62529005836556D5CE2A321CAFC9B9AF4AC4791A0CA7C426D39F1CC8CB339A"
+    },
+    "sourceCollision": {
+      "bytes": 450760,
+      "sha256": "AEC06938556EFE17877306DA1E02F2EF1F38553928BCD24D471B3DF4EA11E0A2"
+    },
+    "axis": "Y_UP",
+    "units": "metres",
+    "assetsRecompressed": false,
+    "localOrigin": {
+      "easting_m": 2575115.7832398443,
+      "gameplay_elevation_m": 323.13416430901174,
+      "latitude": -54.70990278355305,
+      "longitude": -67.83457805412499,
+      "northing_m": 3936406.3650642685,
+      "source_elevation_m": 322.5775605329725
+    }
+  }
+}

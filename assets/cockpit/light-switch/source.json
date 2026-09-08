@@ -1,0 +1,18 @@
+{
+  "source": "Selector_Luces/Nova73_Banco_Interactivo.html#assetData",
+  "sourceSha256": "c5872a6a7b5a17e168f8de697988b38c708f15d213f7a22e5f3cdf91982b6d49",
+  "sourceBytes": 34139896,
+  "sha256": "83e39ca1d12ed3f889d2f8a62e502f84d5a181a4b3a0769d5a889d0b97e9d152",
+  "bytes": 6610164,
+  "textureSize": 512,
+  "geometryAndAnimationsUnchanged": true,
+  "nodes": 77,
+  "meshes": 62,
+  "clips": [
+    "01_Off_Park_Headlights",
+    "02_Rheostat_Rotation",
+    "03_Release_Button",
+    "04_Shaft_Removal",
+    "05_Exploded_Assembly"
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "sourceProject": "Cerradura_Chevy_250",
+  "sourceGenerator": "Cerradura_Chevy_250/blender/build_assets.py",
+  "reproducibleScript": "tools/cockpit_ignition/build_ignition.py",
+  "sourceBlend": "tools/cockpit_ignition/Cockpit_Ignition.blend",
+  "derivation": "Existing original project geometry. Lock extracted before dashboard joining; front-centre pivot. Key and ring unchanged. Fob reexport retains geometry/materials and resamples only packed maps to256px. No outside assets, no browser runtime modifications.",
+  "coordinateSystem": "X right; Y up; +Z driver; metres",
+  "attachment": {
+    "rotorNode": "ignition-rotor",
+    "rotorPivot": [
+      0,
+      0,
+      0
+    ],
+    "rotorAxis": [
+      0,
+      0,
+      1
+    ],
+    "keyInsertedPosition": [
+      0,
+      0,
+      -0.03
+    ],
+    "keyTip": [
+      0,
+      0,
+      0
+    ],
+    "keyBowHole": [
+      0,
+      0,
+      0.052
+    ],
+    "ringPosition": [
+      0,
+      -0.014,
+      0.022
+    ],
+    "ringRotationXYZ": [
+      0,
+      0,
+      0
+    ],
+    "fobPosition": [
+      -0.009,
+      -0.051,
+      0.023
+    ],
+    "fobRotationXYZ": [
+      0,
+      0.1,
+      -0.16
+    ]
+  },
+  "files": [
+    {
+      "file": "lock.glb",
+      "bytes": 1375632,
+      "sha256": "095519ffdf51769cfe7bb14b660e7525c0addab462b873e20016396e172e3ba0",
+      "triangles": 25130,
+      "primitives": 10
+    },
+    {
+      "file": "key.glb",
+      "bytes": 629508,
+      "sha256": "41648c291e89d5a6eb357b4b9f2bf331db42288bc63d0a0eeda0e9d6a5371d85",
+      "triangles": 8422,
+      "primitives": 5
+    },
+    {
+      "file": "ring.glb",
+      "bytes": 378660,
+      "sha256": "21d1196c54c17039d6767a98b84e17f7ba09ce19cce56b36d804282d77091df0",
+      "triangles": 9660,
+      "primitives": 2
+    },
+    {
+      "file": "fob.glb",
+      "bytes": 1324376,
+      "sha256": "0b9434dc50415a3fc876e5963fd3643a85537b21454fa1f4ee400d5946b20771",
+      "triangles": 16286,
+      "primitives": 6
+    }
+  ]
+}

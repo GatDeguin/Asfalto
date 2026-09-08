@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "acquiredAt": "2026-08-26T15:12:53.018Z",
+  "package": {
+    "name": "@dimforge/rapier3d-deterministic-compat",
+    "version": "0.20.0",
+    "tarball": "https://registry.npmjs.org/@dimforge/rapier3d-deterministic-compat/-/rapier3d-deterministic-compat-0.20.0.tgz",
+    "shasum": "1c9a2c8bf52becfb4767056d02a7d497fcf5fe3f",
+    "integrity": "sha512-kODprI9mdSm6idjbCuyRmwyVbSqFL3wvY7wOvu//eJqbqRjYc9pUMI0bSLBZt/IV+Vwzkh/Xi9nGVBJLnJgWOg=="
+  },
+  "archive": {
+    "shasum": "1c9a2c8bf52becfb4767056d02a7d497fcf5fe3f",
+    "integrity": "sha512-kODprI9mdSm6idjbCuyRmwyVbSqFL3wvY7wOvu//eJqbqRjYc9pUMI0bSLBZt/IV+Vwzkh/Xi9nGVBJLnJgWOg==",
+    "bytes": 3346978
+  },
+  "files": {
+    "LICENSE": {
+      "bytes": 11343,
+      "sha256": "4C05555705E3EFDE601FB1252AE48F1D63992AF8A8FB8947745B7FA834E8F519"
+    },
+    "rapier.cjs": {
+      "bytes": 2895984,
+      "sha256": "3C12E300F86CF98561E7527E0BE71E32BD186710FFADF2DE34F5E495DE61C2B4"
+    },
+    "package.json": {
+      "bytes": 828,
+      "sha256": "F154179C636F4A1B207F299F35E8993DDEBB6DC9FA8EBB221BD81924EE6E9D82"
+    }
+  }
+}

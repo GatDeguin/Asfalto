@@ -1,0 +1,172 @@
+{
+  "version": 1,
+  "created": "2026-09-06",
+  "assets": [
+    {
+      "path": "wood-baseColor-1k.jpg",
+      "bytes": 754754,
+      "sha256": "d68da31655bf47024af893156a6a01a6c95bb60f55d97e2dc9bdd47be320e5b5",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/dark_wood",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_diff_1k.jpg",
+      "authors": {
+        "Dario Barresi": "Baking",
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Tiling"
+      },
+      "sourcePhysicalMillimeters": [
+        2000,
+        2000
+      ],
+      "appliedTileMeters": 1.2,
+      "colorSpace": "sRGB"
+    },
+    {
+      "path": "wood-normal-1k.jpg",
+      "bytes": 344338,
+      "sha256": "c42541f1bda0a14b39f120c24407eeba699af8ac85b371c7cef98ffd7d7b13bf",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/dark_wood",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_nor_gl_1k.jpg",
+      "authors": {
+        "Dario Barresi": "Baking",
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Tiling"
+      },
+      "sourcePhysicalMillimeters": [
+        2000,
+        2000
+      ],
+      "appliedTileMeters": 1.2,
+      "colorSpace": "linear data",
+      "normalConvention": "OpenGL +Y"
+    },
+    {
+      "path": "wood-roughness-1k.jpg",
+      "bytes": 574415,
+      "sha256": "47ea12dbf649109b02eaa164dde9732a74e839957f29ad0ec7f5266b575d1835",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/dark_wood",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_rough_1k.jpg",
+      "authors": {
+        "Dario Barresi": "Baking",
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Tiling"
+      },
+      "sourcePhysicalMillimeters": [
+        2000,
+        2000
+      ],
+      "appliedTileMeters": 1.2,
+      "colorSpace": "linear data"
+    },
+    {
+      "path": "steel-baseColor-1k.jpg",
+      "bytes": 564932,
+      "sha256": "adaf094391518b6afe787a123942110aa88ef521c844f970b124420f5ed5d3d9",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/rusty_metal_02",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_diff_1k.jpg",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourcePhysicalMillimeters": [
+        1000,
+        1000
+      ],
+      "appliedTileMeters": 0.75,
+      "colorSpace": "sRGB"
+    },
+    {
+      "path": "steel-normal-1k.jpg",
+      "bytes": 403156,
+      "sha256": "995197a62cac6fbb000e6e6591a3330a3b77ef069c4ac58f505b586b9bdbd97b",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/rusty_metal_02",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_nor_gl_1k.jpg",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourcePhysicalMillimeters": [
+        1000,
+        1000
+      ],
+      "appliedTileMeters": 0.75,
+      "colorSpace": "linear data",
+      "normalConvention": "OpenGL +Y"
+    },
+    {
+      "path": "steel-roughness-1k.jpg",
+      "bytes": 135023,
+      "sha256": "178deb5896232f0498555676e55a3be1d6d197e2211d8d17cb8386a868bfd54a",
+      "pixelDimensions": [
+        1024,
+        1024
+      ],
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/rusty_metal_02",
+      "download": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_rough_1k.jpg",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "sourcePhysicalMillimeters": [
+        1000,
+        1000
+      ],
+      "appliedTileMeters": 0.75,
+      "colorSpace": "linear data"
+    },
+    {
+      "path": "workshop_2k.hdr",
+      "bytes": 6902401,
+      "sha256": "c6bba26e7511d94c9c9251fbeeb365a369e489baa44f9cf4f2fc7a900541fdc6",
+      "license": "CC0-1.0",
+      "sourcePage": "https://polyhaven.com/a/workshop",
+      "download": "https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/2k/workshop_2k.hdr",
+      "authors": {
+        "Dimitrios Savva": "Photography",
+        "Jarod Guest": "Processing"
+      },
+      "pixelDimensions": [
+        2048,
+        1024
+      ],
+      "format": "Radiance RGBE equirectangular, unmodified source",
+      "runtime": "Half-float decode -> PMREM, source disposed after conversion; intensity 0.34, yaw 0.72 rad"
+    },
+    {
+      "path": "workshop-details.glb",
+      "bytes": 1464564,
+      "sha256": "54b4ca352291480ea9f15b2756964de4a852cdf5addcd5870a115832f96745e2",
+      "authorship": "Original geometry authored in Blender for this workshop; no external models",
+      "editableSource": "tools/workshop_visuals/workshop-details.blend",
+      "generator": "tools/workshop_visuals/build_workshop_details.py",
+      "authoredPieces": 121,
+      "meshes": 1,
+      "materials": 7,
+      "triangles": 56518,
+      "coordinates": "Final Three.js workshop world metres, Y up",
+      "roomWidthMeters": 18
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "source": "Poly Haven photographic PBR textures",
+  "licenseUrl": "https://polyhaven.com/license",
+  "version": 1,
+  "license": "CC0-1.0",
+  "assets": [
+    {
+      "id": "floor",
+      "sourceUrl": "https://polyhaven.com/a/concrete_floor_worn_001",
+      "authors": {
+        "Dimitrios Savva": "Photography",
+        "Rico Cilliers": "Processing"
+      },
+      "suggestedMaterial": {
+        "metalness": 0.0,
+        "colorSrgb": "#969085",
+        "normalScale": 0.45,
+        "roughnessMultiplier": 0.62
+      },
+      "maps": {
+        "roughness": {
+          "md5": "169cac76d6499d7d70d1dbb237fcc976",
+          "bytes": 735249,
+          "path": "floor-roughness-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_rough_2k.jpg"
+        },
+        "normal": {
+          "md5": "210fbc9fe40492177e79fdb4afda268e",
+          "bytes": 870609,
+          "path": "floor-normal-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_nor_gl_2k.jpg"
+        },
+        "baseColor": {
+          "md5": "6a3645f19f2ac4b7f60f43419c5d09ec",
+          "bytes": 482906,
+          "path": "floor-baseColor-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/concrete_floor_worn_001/concrete_floor_worn_001_diff_2k.jpg"
+        }
+      },
+      "sourceAsset": "concrete_floor_worn_001",
+      "materialName": "MAT_Floor_Concrete_Oily",
+      "physicalTileMeters": [
+        3.0,
+        3.0
+      ],
+      "resolution": 2048
+    },
+    {
+      "id": "plaster",
+      "sourceUrl": "https://polyhaven.com/a/plastered_wall_03",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "suggestedMaterial": {
+        "metalness": 0.0,
+        "colorSrgb": "#bcb4a1",
+        "normalScale": 0.55,
+        "roughnessMultiplier": 1.0
+      },
+      "maps": {
+        "roughness": {
+          "md5": "16cf46fab8c4201acd51fe1cbb707b04",
+          "bytes": 1323292,
+          "path": "plaster-roughness-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/plastered_wall_03/plastered_wall_03_rough_2k.jpg"
+        },
+        "normal": {
+          "md5": "17004c3ae6e75703b0ac425260378476",
+          "bytes": 2351716,
+          "path": "plaster-normal-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/plastered_wall_03/plastered_wall_03_nor_gl_2k.jpg"
+        },
+        "baseColor": {
+          "md5": "6a5e793104f98260474a86abd8d6b336",
+          "bytes": 2351087,
+          "path": "plaster-baseColor-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/plastered_wall_03/plastered_wall_03_diff_2k.jpg"
+        }
+      },
+      "sourceAsset": "plastered_wall_03",
+      "materialName": "MAT_Wall_Plaster_Aged",
+      "physicalTileMeters": [
+        4.0,
+        4.0
+      ],
+      "resolution": 2048
+    },
+    {
+      "id": "blue-paint",
+      "sourceUrl": "https://polyhaven.com/a/blue_plaster_wall",
+      "authors": {
+        "Dimitrios Savva": "All"
+      },
+      "suggestedMaterial": {
+        "metalness": 0.0,
+        "colorSrgb": "#537481",
+        "normalScale": 0.35,
+        "roughnessMultiplier": 0.85
+      },
+      "maps": {
+        "roughness": {
+          "md5": "b99d0951d5104b1ff094c4748ecedb25",
+          "bytes": 1231817,
+          "path": "blue-paint-roughness-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_plaster_wall/blue_plaster_wall_rough_2k.jpg"
+        },
+        "normal": {
+          "md5": "4f8177dc48c9edd93e62f3d1919c81f5",
+          "bytes": 3366847,
+          "path": "blue-paint-normal-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_plaster_wall/blue_plaster_wall_nor_gl_2k.jpg"
+        },
+        "baseColor": {
+          "md5": "c0281b61e4f2b55a44b32853040ccb18",
+          "bytes": 2483333,
+          "path": "blue-paint-baseColor-2k.jpg",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/blue_plaster_wall/blue_plaster_wall_diff_2k.jpg"
+        }
+      },
+      "sourceAsset": "blue_plaster_wall",
+      "materialName": "MAT_Wall_Blue_OilPaint",
+      "physicalTileMeters": [
+        2.0,
+        2.0
+      ],
+      "resolution": 2048
+    }
+  ],
+  "mapConvention": {
+    "roughness": "Non-Color, all RGB channels equal",
+    "uv": "Repeat, one UV unit equals the physicalTileMeters dimensions",
+    "normal": "Non-Color, tangent-space OpenGL +Y",
+    "baseColor": "sRGB",
+    "flipY": false
+  },
+  "generatedAt": "2026-09-06T14:03:52.4336224Z"
+}

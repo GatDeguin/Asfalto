@@ -1,0 +1,76 @@
+{
+  "schema": "asfalto-track-registry/v1",
+  "tracks": [
+    {
+      "id": "dos_lagos",
+      "displayName": "Dos Lagos",
+      "status": "ready",
+      "adapter": "dos_lagos",
+      "manifest": "./dos-lagos/manifest.json",
+      "lengthM": 10250,
+      "sectors": 6,
+      "defaultEnvironment": "clear",
+      "capabilities": {
+        "streaming": true,
+        "floatingOrigin": false
+      }
+    },
+    {
+      "id": "aconcagua_horcones",
+      "displayName": "Aconcagua · Horcones",
+      "status": "ready",
+      "adapter": "aconcagua_horcones",
+      "manifest": "./aconcagua-horcones/manifest.json",
+      "lengthM": 21000,
+      "sectors": 8,
+      "defaultEnvironment": "golden-hour",
+      "capabilities": {
+        "streaming": true,
+        "floatingOrigin": false
+      }
+    },
+    {
+      "id": "cuesta_lipan",
+      "displayName": "Cuesta de Lipán",
+      "status": "ready",
+      "adapter": "cuesta_lipan",
+      "manifest": "./cuesta-lipan/manifest.json",
+      "lengthM": 20000,
+      "sectors": 8,
+      "defaultEnvironment": "clear",
+      "capabilities": {
+        "streaming": true,
+        "floatingOrigin": false
+      }
+    },
+    {
+      "id": "paso_garibaldi",
+      "displayName": "Paso Garibaldi",
+      "status": "ready",
+      "adapter": "paso_garibaldi",
+      "manifest": "./paso-garibaldi/manifest.json",
+      "lengthM": 24000,
+      "sectors": 9,
+      "defaultEnvironment": "overcast",
+      "capabilities": {
+        "streaming": false,
+        "floatingOrigin": false
+      }
+    },
+    {
+      "id": "cataratas_iguazu",
+      "displayName": "Cataratas del Iguazú",
+      "status": "ready",
+      "adapter": "cataratas_iguazu",
+      "manifest": "./cataratas-iguazu/manifest.json",
+      "lengthM": 10600,
+      "closedRuntimeLengthM": 30532.731,
+      "sectors": 9,
+      "defaultEnvironment": "clear",
+      "capabilities": {
+        "streaming": false,
+        "floatingOrigin": false
+      }
+    }
+  ]
+}

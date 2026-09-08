@@ -1,0 +1,197 @@
+{
+  "identificacion": {
+    "familia": "Chevrolet L6 230/250/292",
+    "variante": "250 Plus Chevy Serie 2 argentina",
+    "carburador": {
+      "modelo": "Holley RX 7214-A",
+      "bocas": 2,
+      "estado": "corroborado"
+    }
+  },
+  "arquitectura": {
+    "configuracion": "L6",
+    "cilindros": 6,
+    "cilindrada_comercial_cm3": 4097,
+    "cilindrada_geometrica_aprox_cm3": 4093,
+    "culata": "hierro, no crossflow, no integral",
+    "puertos": {
+      "admisiones_siamesadas": 3,
+      "cilindros_por_admision": 2,
+      "escapes_individuales": 6,
+      "total": 9,
+      "estado": "corroborado"
+    },
+    "valvulas": 12,
+    "distribucion": "OHV; arbol en block, varillas, balancines y taques hidraulicos",
+    "mando": "dos engranajes helicoidales directos, sin cadena",
+    "orden_encendido": [
+      1,
+      5,
+      3,
+      6,
+      2,
+      4
+    ],
+    "apoyos_principales": 7,
+    "bulones_por_tapa_bancada": 2,
+    "contrapesos": 12
+  },
+  "geometria_mm": {
+    "diametro_cilindro": 98.425,
+    "carrera": 89.662,
+    "radio_manivela": 44.831,
+    "centros_cilindros": 111.76,
+    "biela_nominal": 144.78,
+    "biela_rango": [
+      144.653,
+      144.907
+    ],
+    "munon_biela": [
+      50.7746,
+      50.8
+    ],
+    "cojinete_principal_teorico": 58.4302,
+    "valvula_admision": 43.688,
+    "valvula_escape": 38.1,
+    "boca_admision": [
+      64,
+      38
+    ],
+    "boca_escape_1_6": [
+      31.5,
+      41
+    ],
+    "boca_escape_2_3_4_5": [
+      36,
+      36
+    ]
+  },
+  "cojinetes_pulgadas": {
+    "principal": {
+      "cantidad": 7,
+      "diametro_interior_teorico": 2.3004,
+      "juego": [
+        0.0003,
+        0.0029
+      ],
+      "empuje_apoyo": 7,
+      "juego_axial": [
+        0.002,
+        0.006
+      ]
+    },
+    "biela": {
+      "munon": [
+        1.999,
+        2.0
+      ],
+      "diametro_interior_teorico": 2.0017,
+      "juego": [
+        0.0007,
+        0.0027
+      ],
+      "juego_lateral": [
+        0.009,
+        0.014
+      ]
+    }
+  },
+  "variante_argentina": {
+    "potencia_1973": {
+      "valor": 170,
+      "unidad": "HP SAE",
+      "fuente": "CORSA/Test del Ayer",
+      "nota": "otras publicaciones o años citan 175",
+      "rpm": 4400
+    },
+    "acabado": {
+      "tipo": "restauracion",
+      "block": "naranja",
+      "tapa_valvulas": "naranja",
+      "filtro": "negro",
+      "carburador": "dorado",
+      "estado": "estetica, no color de fabrica confirmado"
+    },
+    "par_1973": {
+      "valor": 33.3,
+      "unidad": "kgm SAE",
+      "rpm": 2200,
+      "fuente": "CORSA nº398, diciembre1973 / Test del Ayer"
+    },
+    "compresion_1973": 8.1,
+    "multiple_1973": "Penín, según CORSA",
+    "arbol_1973": "Levemente modificado respecto al SS; nota sin curva dimensional ni ángulos de distribución"
+  },
+  "modelado": {
+    "ejes_blender": {
+      "lateral": "X",
+      "longitudinal_ciguenal": "Y",
+      "vertical": "Z"
+    },
+    "ejes_glTF": {
+      "lateral": "X",
+      "vertical": "Y",
+      "longitudinal_ciguenal": "Z"
+    },
+    "cilindro_1": "extremo damper; Y negativo Blender / Z positivo glTF",
+    "origen": "eje ciguenal entre cilindros 3 y 4",
+    "centros_y_blender_mm": [
+      -279.4,
+      -167.64,
+      -55.88,
+      55.88,
+      167.64,
+      279.4
+    ],
+    "detalle_no_acotado": "reconstruido"
+  },
+  "fuentes": [
+    {
+      "id": "GM_1970",
+      "tipo": "primaria",
+      "url": "https://news.chevrolet.com/content/dam/company/no_search/heritage-archive-docs/vehicle-information-kits/chevrolet/1970-Chevrolet.pdf"
+    },
+    {
+      "id": "GM_CHEVELLE_1970",
+      "tipo": "primaria",
+      "url": "https://www.gm.com/content/dam/company/no_search/heritage-archive-docs/vehicle-information-kits/chevrolet/1970-Chevrolet-Chevelle.pdf"
+    },
+    {
+      "id": "GM_ELCAMINO_1975",
+      "tipo": "primaria",
+      "url": "https://www.gm.com/content/dam/company/no_search/heritage-archive-docs/vehicle-information-kits/chevrolet/1975-Chevrolet-El-Camino.pdf"
+    },
+    {
+      "id": "ST333_73",
+      "tipo": "primaria_escaneada",
+      "url": "https://www.73-87chevytrucks.com/techinfo/7387CKMans/Unit_Repair/ST_333_73_1973_Chevrolet_Passenger_Car_and_Light_Truck_Overhaul_Manual.pdf"
+    },
+    {
+      "id": "GM_PART_93443044",
+      "tipo": "fabricante",
+      "url": "https://parts.gmc.com/product/gm-genuine-parts-engine-connecting-rod-93443044"
+    },
+    {
+      "id": "CORSA_SERIE2",
+      "tipo": "ensayo_epoca",
+      "url": "https://www.testdelayer.com.ar/chevyserie2.htm"
+    },
+    {
+      "id": "UNC_MUSEO",
+      "tipo": "institucional",
+      "url": "https://fcefyn.unc.edu.ar/facultad/general/museos-fcefyn/museo-cientifico-tecnologico/colecciones/motores-automotrices/motor-chevrolet-250/"
+    },
+    {
+      "id": "TC4000_2025",
+      "tipo": "reglamento_tecnico",
+      "url": "https://fradsanluis.com.ar/images/reglamentos2025/Reglamento_Tecnico_TC4000_25.pdf"
+    }
+  ],
+  "advertencia": "Fuentes GM norteamericanas acreditan arquitectura comun y cotas basicas, no multiple, carburador, potencia, accesorios, calibracion ni color argentino. Todo dato sin fuente explicita es reconstruido.",
+  "animacion": {
+    "duracion_valvulas_grados_ciguenal": 240,
+    "cruce_grados_ciguenal": 60,
+    "alzada_maxima_mm": 8,
+    "estado": "Ilustrativo: forma de leva calculada para contacto geométrico con botador plano. No datos de fábrica de Serie 2."
+  }
+}

@@ -1,0 +1,71 @@
+/* Standalone pause dialog. The host owns simulation, audio and settings. */
+.an-race-pause {
+  --an-pause-orange:#f75a0a;--an-pause-paper:#eee5d2;--an-pause-muted:#b4ac99;--an-pause-line:#beaf8d3d;
+  position:fixed;inset:0;z-index:32000;display:grid;place-items:center;overflow:auto;
+  padding:max(28px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  background:#0b0e0c;background-image:radial-gradient(ellipse at 75% 15%,#45301655,transparent 55%),linear-gradient(115deg,transparent 18%,#e2d4b504 18.1%,#e2d4b504 18.2%,transparent 18.3%,transparent 81%,#e2d4b505 81.1%,transparent 81.3%);
+  color:var(--an-pause-paper);font-family:"Arial Narrow","Roboto Condensed",sans-serif;overscroll-behavior:contain;pointer-events:auto;
+}
+.an-race-pause,.an-race-pause * { box-sizing:border-box; }
+.an-race-pause[hidden],.an-race-pause [hidden] { display:none!important; }
+.an-pause-shell { width:min(560px,100%);margin:auto; }
+.an-pause-brand { position:relative;display:flex;gap:12px;align-items:center;width:210px;margin:0 0 29px;color:#e9dfcb;font:400 28px/.91 Impact,"Arial Narrow",sans-serif;text-transform:uppercase;letter-spacing:.025em; }
+.an-pause-stripes { flex:none;width:24px;height:53px;background:linear-gradient(90deg,#f4570a 0 42%,transparent 42% 57%,#f4570a 57%);transform:skew(-16deg); }
+.an-pause-brand small { position:absolute;left:37px;top:58px;color:#ed6b25;font:10px/1.1 "Arial Narrow",sans-serif;letter-spacing:.11em;white-space:nowrap; }
+.an-pause-card { border-top:1px solid var(--an-pause-line);border-bottom:1px solid var(--an-pause-line);padding:25px 0 0; }
+.an-pause-kicker { margin:0 0 7px;color:#dd7b3d;font-size:11px;letter-spacing:.18em;text-transform:uppercase; }
+.an-pause-heading h1 { margin:0;color:var(--an-pause-paper);font:400 clamp(49px,6vw,76px)/.98 Impact,"Arial Narrow",sans-serif;text-transform:uppercase;letter-spacing:.015em; }
+.an-pause-session { margin:12px 0 0;font-size:18px;line-height:1.35;color:#d0c6b1;overflow-wrap:anywhere; }
+.an-pause-detail { margin:7px 0 0;color:var(--an-pause-muted);font-size:14px;line-height:1.45; }
+.an-pause-actions { display:flex;flex-direction:column;gap:5px;margin-top:28px; }
+.an-race-pause .an-pause-button { position:relative;display:flex;align-items:center;gap:17px;width:100%;min-height:60px;margin:0;padding:15px 20px;background:transparent;border:1px solid transparent;border-bottom-color:var(--an-pause-line);border-radius:0;color:#d5ccb8;font:400 22px/1.1 "Arial Narrow","Roboto Condensed",sans-serif;letter-spacing:.035em;text-align:left;text-transform:uppercase;cursor:pointer; }
+.an-race-pause .an-pause-primary { background:var(--an-pause-orange);background-image:linear-gradient(110deg,#ff741624,transparent);border-color:#ff8239;color:#18160f;font-weight:700; }
+.an-pause-symbol { width:25px;flex:none;text-align:center;font:28px/1 sans-serif; }
+.an-race-pause .an-pause-button kbd { margin-left:auto;padding:4px 6px;border:1px solid #2b1d115e;font:10px/1.2 monospace;letter-spacing:.08em; }
+.an-race-pause .an-pause-button:hover { background-color:#ddd2b513;color:#fff1d5; }
+.an-race-pause .an-pause-primary:hover { background-color:#ff782f;color:#16140f; }
+.an-race-pause .an-pause-button:focus-visible { outline:2px solid #ffd49a!important;outline-offset:3px!important; }
+.an-pause-footer { display:flex;justify-content:space-between;gap:16px;padding:22px 4px;color:#aaa18d;font-size:11px;letter-spacing:.06em;text-transform:uppercase; }
+.an-pause-footer span { display:flex;align-items:center;gap:7px; }
+.an-pause-footer kbd { min-width:21px;padding:4px 5px;border:1px solid #b7ab8b3d;color:#d8cdb6;font:11px/1 monospace;text-align:center; }
+.an-pause-motto { margin:20px 0 0;color:#807b6e;font:13px/1.4 "Arial Narrow",sans-serif;letter-spacing:.04em; }
+.an-pause-confirm { margin-top:29px;padding:23px 20px;border:1px solid #d777314a;background:#36231838; }
+.an-pause-confirm h2 { margin:0;color:#f0e5cc;font:400 30px/1.1 Impact,"Arial Narrow",sans-serif;text-transform:uppercase; }
+.an-pause-confirm p { margin:12px 0 24px;color:#c4b8a0;font-size:16px;line-height:1.45; }
+.an-pause-confirm>div { display:flex;flex-direction:column;gap:9px; }
+.an-pause-confirm .an-pause-button { font-size:18px;min-height:50px;justify-content:center;text-align:center; }
+body.an-race-pause-open { overflow:hidden; }
+@media(max-width:600px) {
+  .an-race-pause { padding:24px 25px max(24px,env(safe-area-inset-bottom)); }
+  .an-pause-brand { font-size:24px;margin-bottom:27px; }
+  .an-pause-stripes { height:46px;width:22px; }
+  .an-pause-brand small { top:51px;left:34px;font-size:9px; }
+  .an-pause-card { padding-top:23px; }
+  .an-pause-heading h1 { font-size:58px; }
+  .an-pause-session { font-size:17px; }
+  .an-race-pause .an-pause-button { min-height:57px;padding:14px 15px;font-size:20px;gap:14px; }
+  .an-pause-actions { margin-top:23px; }
+  .an-pause-confirm { padding:19px 14px; }
+  .an-pause-footer { padding:21px 0;font-size:10px; }
+}
+@media(max-height:590px) and (orientation:landscape) {
+  .an-race-pause { padding:20px 30px; }
+  .an-pause-shell { display:grid;grid-template-columns:minmax(165px,.65fr) minmax(300px,1.35fr);width:min(850px,100%);gap:0 34px; }
+  .an-pause-brand { align-self:start;margin-top:15px; }
+  .an-pause-card { grid-column:2;grid-row:1/3;padding-top:10px; }
+  .an-pause-heading h1 { font-size:40px; }
+  .an-pause-session { margin-top:6px;font-size:14px; }
+  .an-pause-detail { font-size:12px; }
+  .an-pause-actions { gap:2px;margin-top:13px; }
+  .an-race-pause .an-pause-button { min-height:44px;padding:9px 13px;font-size:17px; }
+  .an-pause-symbol { font-size:23px; }
+  .an-pause-motto { grid-column:1;align-self:end;font-size:12px;max-width:170px; }
+  .an-pause-footer { padding:12px 0;font-size:10px; }
+  .an-pause-confirm { margin-top:15px;padding:14px; }
+  .an-pause-confirm h2 { font-size:24px; }
+  .an-pause-confirm p { margin:10px 0 15px;font-size:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .an-race-pause * { animation:none!important;transition:none!important;scroll-behavior:auto!important; } }
+body.v6-high-contrast .an-race-pause { --an-pause-paper:#fff;--an-pause-muted:#e4e0d5;--an-pause-line:#bfbfbf88; }
+body.v6-high-contrast .an-pause-button { color:#fff; }
+body.v6-high-contrast .an-pause-primary { color:#000; }

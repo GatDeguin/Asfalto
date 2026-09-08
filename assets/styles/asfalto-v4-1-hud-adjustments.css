@@ -1,0 +1,5 @@
+
+body.v6-driving #chevy-hud-telemetry{transform:scale(.86);transform-origin:100% 100%}
+body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:max(var(--chevy-hud-safe-bottom),calc(3.8vh - 16px))}
+@media(max-width:680px){body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 96px)}}
+@media(max-height:500px) and (orientation:landscape){body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:5px}}

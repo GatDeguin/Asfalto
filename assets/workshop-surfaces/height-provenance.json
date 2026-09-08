@@ -1,0 +1,62 @@
+{
+  "license": "CC0-1.0",
+  "convention": "Linear displacement; white = high; same UV orientation as the photographic PBR maps",
+  "downloadedAt": "2026-09-08T01:25:11.370Z",
+  "assets": [
+    {
+      "id": "floor",
+      "source": "concrete_floor_worn_001",
+      "sourcePage": "https://polyhaven.com/a/concrete_floor_worn_001",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/concrete_floor_worn_001/concrete_floor_worn_001_disp_1k.png",
+      "file": "floor-height-1k.png",
+      "md5": "a9d245c1629ffc45a76136351c2e844a",
+      "bytes": 2464358,
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "plaster",
+      "source": "plastered_wall_03",
+      "sourcePage": "https://polyhaven.com/a/plastered_wall_03",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/plastered_wall_03/plastered_wall_03_disp_1k.png",
+      "file": "plaster-height-1k.png",
+      "md5": "e1d5feae1d17d53824214ae4c7cac3f6",
+      "bytes": 1232747,
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "blue-paint",
+      "source": "blue_plaster_wall",
+      "sourcePage": "https://polyhaven.com/a/blue_plaster_wall",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/blue_plaster_wall/blue_plaster_wall_disp_1k.png",
+      "file": "blue-paint-height-1k.png",
+      "md5": "fee383878e53b4314b2bc2ec8839a668",
+      "bytes": 1613943,
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "wood",
+      "source": "dark_wood",
+      "sourcePage": "https://polyhaven.com/a/dark_wood",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/dark_wood/dark_wood_disp_1k.png",
+      "file": "wood-height-1k.png",
+      "md5": "7339f25a4dc59fc806dfd632edcd5667",
+      "bytes": 1837371,
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "steel",
+      "source": "rusty_metal_02",
+      "sourcePage": "https://polyhaven.com/a/rusty_metal_02",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/png/1k/rusty_metal_02/rusty_metal_02_disp_1k.png",
+      "file": "steel-height-1k.png",
+      "md5": "d1f6407796766f6e433fbfad7cecba3e",
+      "bytes": 2008858,
+      "width": 1024,
+      "height": 1024
+    }
+  ]
+}

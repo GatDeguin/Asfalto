@@ -1,0 +1,91 @@
+{
+  "schema": "asfalto-environment-profile/v1",
+  "trackId": "aconcagua_horcones",
+  "defaultPreset": "golden-hour",
+  "allowedSurfaceStates": [
+    "dry",
+    "damp",
+    "wet"
+  ],
+  "climateBounds": {
+    "minTemperatureC": -20,
+    "maxTemperatureC": 28
+  },
+  "presets": {
+    "clear": {
+      "surfaceState": "dry",
+      "temperatureC": 7,
+      "precipitation": "none"
+    },
+    "overcast": {
+      "surfaceState": "dry",
+      "temperatureC": 2,
+      "precipitation": "none"
+    },
+    "golden-hour": {
+      "surfaceState": "dry",
+      "temperatureC": 9,
+      "precipitation": "none"
+    },
+    "sunset": {
+      "surfaceState": "dry",
+      "temperatureC": 4,
+      "precipitation": "none"
+    },
+    "moonrise": {
+      "surfaceState": "dry",
+      "temperatureC": -2,
+      "precipitation": "none"
+    },
+    "night": {
+      "surfaceState": "dry",
+      "temperatureC": -6,
+      "precipitation": "none"
+    }
+  },
+  "defaultWeather": "clear",
+  "availableWeatherIds": [
+    "clear",
+    "cloudy",
+    "rain",
+    "storm",
+    "fog"
+  ],
+  "weatherProfiles": {
+    "clear": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0,
+      "surfaceState": "dry",
+      "fogDensityMin": 0
+    },
+    "cloudy": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0.35,
+      "surfaceState": "damp",
+      "fogDensityMin": 0.004
+    },
+    "rain": {
+      "precipitation": "rain",
+      "precipitationIntensity": 0.65,
+      "roadWetness": 0.7,
+      "surfaceState": "wet",
+      "fogDensityMin": 0.006
+    },
+    "storm": {
+      "precipitation": "storm",
+      "precipitationIntensity": 1,
+      "roadWetness": 0.9,
+      "surfaceState": "wet",
+      "fogDensityMin": 0.009
+    },
+    "fog": {
+      "precipitation": "none",
+      "precipitationIntensity": 0,
+      "roadWetness": 0.35,
+      "surfaceState": "damp",
+      "fogDensityMin": 0.018
+    }
+  }
+}

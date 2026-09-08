@@ -1,0 +1,86 @@
+[
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/wood-baseColor-1k.jpg",
+    "source": "dark_wood",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_diff_1k.jpg",
+    "md5": "47fa883f1bb33acc5711245f64b75975",
+    "authors": {
+      "Dario Barresi": "Baking",
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Tiling"
+    },
+    "dimensions": [
+      2000,
+      2000
+    ]
+  },
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/wood-normal-1k.jpg",
+    "source": "dark_wood",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_nor_gl_1k.jpg",
+    "md5": "ca74ffa4c1b7ff5afe7316bbfa87f9a0",
+    "authors": {
+      "Dario Barresi": "Baking",
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Tiling"
+    },
+    "dimensions": [
+      2000,
+      2000
+    ]
+  },
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/wood-roughness-1k.jpg",
+    "source": "dark_wood",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/dark_wood/dark_wood_rough_1k.jpg",
+    "md5": "b1acb7bf90785d3945a85eca408dbc6c",
+    "authors": {
+      "Dario Barresi": "Baking",
+      "Dimitrios Savva": "Photography",
+      "Rico Cilliers": "Tiling"
+    },
+    "dimensions": [
+      2000,
+      2000
+    ]
+  },
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/steel-baseColor-1k.jpg",
+    "source": "rusty_metal_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_diff_1k.jpg",
+    "md5": "476bff9959bc727bd4b83c0a9ac4aeaa",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "dimensions": [
+      1000,
+      1000
+    ]
+  },
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/steel-normal-1k.jpg",
+    "source": "rusty_metal_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_nor_gl_1k.jpg",
+    "md5": "8d6dc7e26f2708ec59e2a739711c612b",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "dimensions": [
+      1000,
+      1000
+    ]
+  },
+  {
+    "path": "Asfalto_Nacional_v6/assets/workshop-detail/steel-roughness-1k.jpg",
+    "source": "rusty_metal_02",
+    "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rusty_metal_02/rusty_metal_02_rough_1k.jpg",
+    "md5": "75551ad404e29489f9b75876da95a13a",
+    "authors": {
+      "Rob Tuytel": "All"
+    },
+    "dimensions": [
+      1000,
+      1000
+    ]
+  }
+]

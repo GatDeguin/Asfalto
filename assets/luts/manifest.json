@@ -1,0 +1,1372 @@
+{
+  "schema": "asfalto-luts/v1",
+  "inputColorSpace": "display_srgb_after_tone_mapping",
+  "sourceFilesUnmodified": true,
+  "luts": [
+    {
+      "id": "2strip-6e9d22a7",
+      "label": "2Strip",
+      "url": "2strip-6e9d22a7.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "6E9D22A789FB122771881AF40FD059C332AA125A06134D6FA63702358F98F404",
+      "sourceFile": "LUTS/2Strip.cube",
+      "bytes": 720934,
+      "title": "2Strip",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "3strip-634a5fb2",
+      "label": "3Strip",
+      "url": "3strip-634a5fb2.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "634A5FB2E4DF5DB96CE51470118B7B75943B10EDB19296A5E6F7774B8CA1FDBB",
+      "sourceFile": "LUTS/3Strip.cube",
+      "bytes": 720947,
+      "title": "3 Strip Technicolor",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "70s-c8feb436",
+      "label": "70s",
+      "url": "70s-c8feb436.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "C8FEB43681AAEA9FAF2DB606158077DEB2008CA62F6A0D44D8E4F81DA4911172",
+      "sourceFile": "LUTS/70s.cube",
+      "bytes": 958386,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "alexa-logc-to-rec709-de533d35",
+      "label": "Alexa LogC to Rec709",
+      "url": "alexa-logc-to-rec709-de533d35.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "DE533D358202C2DDDBB7F32C6321D9CD2FCB98A46B9F09429539FCF434AC456C",
+      "sourceFile": "LUTS/Alexa LogC to Rec709.cube",
+      "bytes": 564272,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "blackmagic-4k-film-to-rec709-329aea75",
+      "label": "Blackmagic 4K Film to Rec709",
+      "url": "blackmagic-4k-film-to-rec709-329aea75.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "329AEA75629DC3FFE0054A6C1A6EECE9C2DE0169D6DAF680A6B8C057797AF53F",
+      "sourceFile": "LUTS/Blackmagic 4K Film to Rec709.cube",
+      "bytes": 970315,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "blackmagic-film-to-rec709-773b8384",
+      "label": "Blackmagic Film to Rec709",
+      "url": "blackmagic-film-to-rec709-773b8384.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "773B838406E6C5072E88AEF16A084CE1EBD609E3938D57AF4734776EEB4C5E72",
+      "sourceFile": "LUTS/Blackmagic Film to Rec709.cube",
+      "bytes": 970315,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "budapest-01-ee850e4a",
+      "label": "Budapest 01",
+      "url": "budapest-01-ee850e4a.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "EE850E4A381E99E75934CC51D736032F11341AA64E2427DE37ED96A25C1DD670",
+      "sourceFile": "LUTS/Budapest 01.cube",
+      "bytes": 884788,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "canon-log-cingamut-rec709-wdr-89da985a",
+      "label": "Canon_LOG_CinGamut_Rec709_WDR",
+      "url": "canon-log-cingamut-rec709-wdr-89da985a.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "89DA985ABAD3C6B663EAB5358FFA3FA4702826517F7FCA4E34C259B0902420B8",
+      "sourceFile": "LUTS/Canon_LOG_CinGamut_Rec709_WDR.cube",
+      "bytes": 142609,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "canon-log-rec709-wdr-1325ca05",
+      "label": "Canon_LOG_Rec709_WDR",
+      "url": "canon-log-rec709-wdr-1325ca05.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "1325CA053C6B425907F753DED7A02E3DBC7AEA58C7A27947F9C2163AA92F9BD4",
+      "sourceFile": "LUTS/Canon_LOG_Rec709_WDR.cube",
+      "bytes": 142593,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+      "label": "Canon_LOG2_CinGamut_Rec709_WDR",
+      "url": "canon-log2-cingamut-rec709-wdr-2f2e0b11.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "2F2E0B11E2AD8D5301072D1A7C9796B7DAF7A4C2FEFA54AE42C23BA546C4806F",
+      "sourceFile": "LUTS/Canon_LOG2_CinGamut_Rec709_WDR.cube",
+      "bytes": 970424,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "canon-log2-rec709-wdr-8e771cc3",
+      "label": "Canon_LOG2_Rec709_WDR",
+      "url": "canon-log2-rec709-wdr-8e771cc3.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "8E771CC3687AE5BDF700E49CFC23D427F281998F716B932C0DF0EA3EB897EAD8",
+      "sourceFile": "LUTS/Canon_LOG2_Rec709_WDR.cube",
+      "bytes": 970420,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "cinestyle-s-curve-1d9e1be7",
+      "label": "CineStyle S Curve",
+      "url": "cinestyle-s-curve-1d9e1be7.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "1D9E1BE73BFE6BAFBD1298EA2257AC8438630E804EE15B099399A9D519B3DD61",
+      "sourceFile": "LUTS/CineStyle S Curve.cube",
+      "bytes": 720949,
+      "title": "S-curve_for_CineStyle",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "darjeeling-01-b068203a",
+      "label": "Darjeeling 01",
+      "url": "darjeeling-01-b068203a.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "B068203AB55128F2893DA793101E4D85F147DD6221668CA70B63A81E15F78414",
+      "sourceFile": "LUTS/Darjeeling 01.cube",
+      "bytes": 884788,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "dji-inspire-log-to-rec709-4574b0a3",
+      "label": "DJI Inspire LOG to Rec709",
+      "url": "dji-inspire-log-to-rec709-4574b0a3.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "4574B0A3D35E31658F50C88B45A0D8FD4F6C800353C561EF9001E20643BF97D3",
+      "sourceFile": "LUTS/DJI Inspire LOG to Rec709.cube",
+      "bytes": 828659,
+      "title": "Generate by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "drive-rec709-eb77d5ed",
+      "label": "Drive - Rec709",
+      "url": "drive-rec709-eb77d5ed.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "EB77D5EDDDFEA9339EE3DEA67A8DCC6746657143BE4B3C8AF2DD017CC3EEE503",
+      "sourceFile": "LUTS/Drive - Rec709.cube",
+      "bytes": 836643,
+      "title": "Generated by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "french-dispatch-01-7daf961f",
+      "label": "French Dispatch 01",
+      "url": "french-dispatch-01-7daf961f.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "7DAF961FE994FD432D4F040D45F1585B8D065D458EEC8DE1BD879538DC40AF8C",
+      "sourceFile": "LUTS/French Dispatch 01.cube",
+      "bytes": 884788,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "fuji3513-log-03ba9f0b",
+      "label": "Fuji3513 - LOG",
+      "url": "fuji3513-log-03ba9f0b.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "03BA9F0BA6DBE9B003FA8A1F44E9BFD439E3A8AB377C304174EB5304FF6322AD",
+      "sourceFile": "LUTS/Fuji3513 - LOG.cube",
+      "bytes": 797670,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "fuji3513-rec709-20f3d288",
+      "label": "Fuji3513 - Rec709",
+      "url": "fuji3513-rec709-20f3d288.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "20F3D288232FBED5FC7A8B130468C25420E3798180905526BB2A8B1B0E3424CB",
+      "sourceFile": "LUTS/Fuji3513 - Rec709.cube",
+      "bytes": 826226,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "gh4-cinelike-d-to-rec709-03519a71",
+      "label": "GH4 Cinelike D to Rec709",
+      "url": "gh4-cinelike-d-to-rec709-03519a71.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "03519A7129FCDF439250E5B542C3516DD7331560B9B317ACB6F7B6424F6043C6",
+      "sourceFile": "LUTS/GH4 Cinelike D to Rec709.cube",
+      "bytes": 712205,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "grit-ba797a60",
+      "label": "Grit",
+      "url": "grit-ba797a60.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "BA797A6009D97E107D07344139BA7B14BDEEABDB18709EEC52773ED4CBB27AF8",
+      "sourceFile": "LUTS/Grit.cube",
+      "bytes": 935026,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-pro-400-fc-log-6485de85",
+      "label": "ImpulZ_Fuji Pro 400_FC - LOG",
+      "url": "impulz-fuji-pro-400-fc-log-6485de85.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "6485DE85D0A24B3D72A59A2AE71C3304DA95FC8A9ACB7D92A2293FBA48720A57",
+      "sourceFile": "LUTS/ImpulZ_Fuji Pro 400_FC - LOG.cube",
+      "bytes": 137772,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-pro-400-fc-rec-709-f3cf82bb",
+      "label": "ImpulZ_Fuji Pro 400_FC - Rec 709",
+      "url": "impulz-fuji-pro-400-fc-rec-709-f3cf82bb.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "F3CF82BB9132F72401A3D16B63DDED7BEEAC56AF3C68B9A25D4D16D14C861C6B",
+      "sourceFile": "LUTS/ImpulZ_Fuji Pro 400_FC - Rec 709.cube",
+      "bytes": 137772,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-pro-400-fpe-log-d9ea23d0",
+      "label": "ImpulZ_Fuji Pro 400_FPE - LOG",
+      "url": "impulz-fuji-pro-400-fpe-log-d9ea23d0.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "D9EA23D0A6A64BC71B574F9D5DECC58B09F7F199BBFBD5ADD53E93C1728FEB32",
+      "sourceFile": "LUTS/ImpulZ_Fuji Pro 400_FPE - LOG.cube",
+      "bytes": 137773,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-pro-400-fpe-rec709-5827f41e",
+      "label": "ImpulZ_Fuji Pro 400_FPE - Rec709",
+      "url": "impulz-fuji-pro-400-fpe-rec709-5827f41e.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "5827F41E48ABFA49DD927A841E098BC0010E432AA3474A85BA28C699DAB5EF6E",
+      "sourceFile": "LUTS/ImpulZ_Fuji Pro 400_FPE - Rec709.cube",
+      "bytes": 137773,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-superior-200-fc-log-4cf71de8",
+      "label": "ImpulZ_Fuji Superior 200_FC - LOG",
+      "url": "impulz-fuji-superior-200-fc-log-4cf71de8.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "4CF71DE8939F6C52741C5E3B82EE33BA370D47A734E61AB9F54D11194CB633C0",
+      "sourceFile": "LUTS/ImpulZ_Fuji Superior 200_FC - LOG.cube",
+      "bytes": 137777,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-superior-200-fc-rec709-558934a6",
+      "label": "ImpulZ_Fuji Superior 200_FC - Rec709",
+      "url": "impulz-fuji-superior-200-fc-rec709-558934a6.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "558934A6342EA3D34870331A7F1BD73BC513295B5E15656D1C9A2717C099F257",
+      "sourceFile": "LUTS/ImpulZ_Fuji Superior 200_FC - Rec709.cube",
+      "bytes": 137777,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-superior-200-fpe-log-ef6ee857",
+      "label": "ImpulZ_Fuji Superior 200_FPE - LOG",
+      "url": "impulz-fuji-superior-200-fpe-log-ef6ee857.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "EF6EE8571C0EB387C1FCEAE98BE4E5BF2F38AC599349BF40E74762D9CC2F6910",
+      "sourceFile": "LUTS/ImpulZ_Fuji Superior 200_FPE - LOG.cube",
+      "bytes": 137778,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fuji-superior-200-fpe-rec709-d8229950",
+      "label": "ImpulZ_Fuji Superior 200_FPE - Rec709",
+      "url": "impulz-fuji-superior-200-fpe-rec709-d8229950.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "D8229950EB246640A6BC54363FAC4DB3AC35471D75ED9889E299A3AF4F511B3C",
+      "sourceFile": "LUTS/ImpulZ_Fuji Superior 200_FPE - Rec709.cube",
+      "bytes": 137778,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fujicolor-200-fc-log-a13f7773",
+      "label": "ImpulZ_FujiColor 200_FC - LOG",
+      "url": "impulz-fujicolor-200-fc-log-a13f7773.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "A13F777339DC6C11946A261AC1FFB826B841E12EE93B9F541C79B8C374FEF913",
+      "sourceFile": "LUTS/ImpulZ_FujiColor 200_FC - LOG.cube",
+      "bytes": 137773,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fujicolor-200-fc-rec709-e62203ac",
+      "label": "ImpulZ_FujiColor 200_FC - Rec709",
+      "url": "impulz-fujicolor-200-fc-rec709-e62203ac.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "E62203ACC45291FF8A338DFE194D9929AF844D6D34CF3802DEA306C1E615E4AF",
+      "sourceFile": "LUTS/ImpulZ_FujiColor 200_FC - Rec709.cube",
+      "bytes": 137773,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fujicolor-200-fpe-log-1faf4ff2",
+      "label": "ImpulZ_FujiColor 200_FPE - LOG",
+      "url": "impulz-fujicolor-200-fpe-log-1faf4ff2.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "1FAF4FF2C9CF7AF265307C2A4FBAD19A861A27519EB0C68E8AA700E4CFFC4ECE",
+      "sourceFile": "LUTS/ImpulZ_FujiColor 200_FPE - LOG.cube",
+      "bytes": 137774,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-fujicolor-200-fpe-rec709-3d521ee8",
+      "label": "ImpulZ_FujiColor 200_FPE - Rec709",
+      "url": "impulz-fujicolor-200-fpe-rec709-3d521ee8.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "3D521EE8F9A7405481F0AC3E824F50D1F1218E3BF15A903131865D3CBC230C8B",
+      "sourceFile": "LUTS/ImpulZ_FujiColor 200_FPE - Rec709.cube",
+      "bytes": 137774,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ektar-100-fc-log-71592d73",
+      "label": "ImpulZ_Kodak Ektar 100_FC - LOG",
+      "url": "impulz-kodak-ektar-100-fc-log-71592d73.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "71592D7398296595E769A46BD8C341836DA5152785A85B9C86A1755D5184A7B4",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ektar 100_FC - LOG.cube",
+      "bytes": 137775,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ektar-100-fc-rec709-8eb9f0d8",
+      "label": "ImpulZ_Kodak Ektar 100_FC - Rec709",
+      "url": "impulz-kodak-ektar-100-fc-rec709-8eb9f0d8.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "8EB9F0D814C452E762A727D5A9E96DE851E7F51D0F5965DF70335B6F05E3C98A",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ektar 100_FC - Rec709.cube",
+      "bytes": 137775,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ektar-100-fpe-log-78a7ad91",
+      "label": "ImpulZ_Kodak Ektar 100_FPE - LOG",
+      "url": "impulz-kodak-ektar-100-fpe-log-78a7ad91.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "78A7AD914E78CFE56D60974675A7879E040EC6957FEF4C2E3A90C8DC419915F7",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ektar 100_FPE - LOG.cube",
+      "bytes": 137776,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ektar-100-fpe-rec709-df3ce9a2",
+      "label": "ImpulZ_Kodak Ektar 100_FPE - Rec709",
+      "url": "impulz-kodak-ektar-100-fpe-rec709-df3ce9a2.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "DF3CE9A261BCE6B28FDF0AE1BDBD9E1F158E8D8CE6E71B706467D877E0BC9F74",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ektar 100_FPE - Rec709.cube",
+      "bytes": 137776,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-gold-gen-6-200-fc-log-d1f8fa5e",
+      "label": "ImpulZ_Kodak Gold Gen.6 200_FC - LOG",
+      "url": "impulz-kodak-gold-gen-6-200-fc-log-d1f8fa5e.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "D1F8FA5E1F9AA636A5384591517147B0AFF05F94E46C8A424C54E8ADEA6F4D9A",
+      "sourceFile": "LUTS/ImpulZ_Kodak Gold Gen.6 200_FC - LOG.cube",
+      "bytes": 137780,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-gold-gen-6-200-fc-rec709-b754de51",
+      "label": "ImpulZ_Kodak Gold Gen.6 200_FC - Rec709",
+      "url": "impulz-kodak-gold-gen-6-200-fc-rec709-b754de51.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "B754DE51CFA835DF4A56FF209F6C6C93FB752E48B2B2B2C99915B034CDC4812F",
+      "sourceFile": "LUTS/ImpulZ_Kodak Gold Gen.6 200_FC - Rec709.cube",
+      "bytes": 137780,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-gold-gen-6-200-fpe-log-d81b5c47",
+      "label": "ImpulZ_Kodak Gold Gen.6 200_FPE - LOG",
+      "url": "impulz-kodak-gold-gen-6-200-fpe-log-d81b5c47.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "D81B5C4715C7D648B9D6299897A7D51455253B7118D73E9591072C1548E886E6",
+      "sourceFile": "LUTS/ImpulZ_Kodak Gold Gen.6 200_FPE - LOG.cube",
+      "bytes": 137781,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-gold-gen-6-200-fpe-rec709-06167b89",
+      "label": "ImpulZ_Kodak Gold Gen.6 200_FPE - Rec709",
+      "url": "impulz-kodak-gold-gen-6-200-fpe-rec709-06167b89.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "06167B890EAA951EE95F9B9F935A2E28AD2F3E829098801682C3CBED65E6BA11",
+      "sourceFile": "LUTS/ImpulZ_Kodak Gold Gen.6 200_FPE - Rec709.cube",
+      "bytes": 137781,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ultramax-400-fc-log-47e83cd8",
+      "label": "ImpulZ_Kodak Ultramax 400_FC - LOG",
+      "url": "impulz-kodak-ultramax-400-fc-log-47e83cd8.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "47E83CD8217D1D8A4D04C46B5B2B9BA83B176402F23E7A4327C9DCFB630A30F5",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ultramax 400_FC - LOG.cube",
+      "bytes": 137778,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ultramax-400-fc-rec709-3d236fc2",
+      "label": "ImpulZ_Kodak Ultramax 400_FC - Rec709",
+      "url": "impulz-kodak-ultramax-400-fc-rec709-3d236fc2.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "3D236FC2FE4C1F31BF52F968C1F23298C1AB4B546121B15ACFCD49273C7CDFE3",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ultramax 400_FC - Rec709.cube",
+      "bytes": 137778,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ultramax-400-fpe-log-0cf8f1a9",
+      "label": "ImpulZ_Kodak Ultramax 400_FPE - LOG",
+      "url": "impulz-kodak-ultramax-400-fpe-log-0cf8f1a9.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "0CF8F1A97087E507CC850821397FCDF83204BA88CAC7082BCB5086045B35BD3B",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ultramax 400_FPE - LOG.cube",
+      "bytes": 137779,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "impulz-kodak-ultramax-400-fpe-rec709-84770bce",
+      "label": "ImpulZ_Kodak Ultramax 400_FPE - Rec709",
+      "url": "impulz-kodak-ultramax-400-fpe-rec709-84770bce.cube",
+      "kind": "3D",
+      "size": 17,
+      "sourceSha256": "84770BCE2163C2B217D03E321E5F1FB05F207C5AD2A12F00D64A8F6FDBE4F6BF",
+      "sourceFile": "LUTS/ImpulZ_Kodak Ultramax 400_FPE - Rec709.cube",
+      "bytes": 137779,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "kodak2393-log-d318837a",
+      "label": "Kodak2393 - LOG",
+      "url": "kodak2393-log-d318837a.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "D318837A424B19C6431A85E5DB8A37D5E01D08D7A57A531BB93D55FC77B88783",
+      "sourceFile": "LUTS/Kodak2393 - LOG.cube",
+      "bytes": 753224,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "kodak2393-rec709-7c45b97c",
+      "label": "Kodak2393 - Rec709",
+      "url": "kodak2393-rec709-7c45b97c.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "7C45B97CE31DCEA773F923FB07AB264C7FA0C15437CDBF9738E95317A0CFA608",
+      "sourceFile": "LUTS/Kodak2393 - Rec709.cube",
+      "bytes": 817756,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "m31-log-cd3224a4",
+      "label": "M31 - LOG",
+      "url": "m31-log-cd3224a4.cube",
+      "kind": "3D",
+      "size": 64,
+      "sourceSha256": "CD3224A40AF2775E0614D2F38C741FCA7A3D48B20016545860E2267022147319",
+      "sourceFile": "LUTS/M31 - LOG.cube",
+      "bytes": 5767224,
+      "title": "VisionColor: M31 - LOG",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "m31-rec-709-b1f2dc7d",
+      "label": "M31 - Rec.709",
+      "url": "m31-rec-709-b1f2dc7d.cube",
+      "kind": "3D",
+      "size": 64,
+      "sourceSha256": "B1F2DC7D6DF25DF212E65BE180544E06833BAF1381073ABAAD19243F4BDDD027",
+      "sourceFile": "LUTS/M31 - Rec.709.cube",
+      "bytes": 5767228,
+      "title": "VisionColor: M31 - Rec.709",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "mad-max-rec709-8d0e337d",
+      "label": "Mad Max - Rec709",
+      "url": "mad-max-rec709-8d0e337d.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "8D0E337DCB3CDC2B11DCDD23A0C13FCF49CD243347B19D52C259D334B473A8C3",
+      "sourceFile": "LUTS/Mad Max - Rec709.cube",
+      "bytes": 817778,
+      "title": "Generated by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "moonrise-01-66c86429",
+      "label": "Moonrise 01",
+      "url": "moonrise-01-66c86429.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "66C86429F6374FCCAC33E3441093307BDACC254AE1073610A6EC722BA0DC9D3D",
+      "sourceFile": "LUTS/Moonrise 01.cube",
+      "bytes": 884788,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "moonrise-kingdom-v1-rec709-459f5440",
+      "label": "Moonrise Kingdom V1 - Rec709",
+      "url": "moonrise-kingdom-v1-rec709-459f5440.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "459F5440E94F93C56898D2AF65052374F7A4DC35B087B26A3DA46C42ED2CF104",
+      "sourceFile": "LUTS/Moonrise Kingdom V1 - Rec709.cube",
+      "bytes": 856871,
+      "title": "Generated by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "panasonic-vlog-to-v709-bbf7f826",
+      "label": "Panasonic VLog to V709",
+      "url": "panasonic-vlog-to-v709-bbf7f826.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "BBF7F826EA658336F0AA5B0AC5C2A64CD92CEEEB37169A7D9F95E4EE8A175152",
+      "sourceFile": "LUTS/Panasonic VLog to V709.cube",
+      "bytes": 838645,
+      "title": "Generate by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "redlogfilm-to-rec709-75a130e6",
+      "label": "RedLogFilm to Rec709",
+      "url": "redlogfilm-to-rec709-75a130e6.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "75A130E62F738B0B21EDC7676C9CD5CECFBDE6AC07A11DEE47F28F8103C2DB49",
+      "sourceFile": "LUTS/RedLogFilm to Rec709.cube",
+      "bytes": 716897,
+      "title": "Generate by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "rushmore-01-b6fa7703",
+      "label": "Rushmore 01",
+      "url": "rushmore-01-b6fa7703.cube",
+      "kind": "3D",
+      "size": 32,
+      "sourceSha256": "B6FA7703774B06E325AE9796B2C9B33544D3FF8EA2DFABAA442261098849AD39",
+      "sourceFile": "LUTS/Rushmore 01.cube",
+      "bytes": 884788,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog2-sgumut-to-cine-709-c9974019",
+      "label": "SLog2-SGumut_To_Cine+709",
+      "url": "slog2-sgumut-to-cine-709-c9974019.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "C9974019AC19B6922DF5486A1E18C8FCE7367B909E89E461BDB578C9AC0E81CA",
+      "sourceFile": "LUTS/SLog2-SGumut_To_Cine+709.cube",
+      "bytes": 723639,
+      "title": "Generate by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog2-sgumut-to-lc-709-0bba5b1c",
+      "label": "SLog2-SGumut_To_LC-709",
+      "url": "slog2-sgumut-to-lc-709-0bba5b1c.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "0BBA5B1C958B91A0803499FFD4FA32B4B9171F211F4C3A89C1D885A992F0AD42",
+      "sourceFile": "LUTS/SLog2-SGumut_To_LC-709.cube",
+      "bytes": 970323,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog2-sgumut-to-lc-709typea-9eba7477",
+      "label": "SLog2-SGumut_To_LC-709TypeA",
+      "url": "slog2-sgumut-to-lc-709typea-9eba7477.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "9EBA7477BA4E10A4DC1E8C494E3ABE9562E65087A4876AC215E9CE058ABCB7EB",
+      "sourceFile": "LUTS/SLog2-SGumut_To_LC-709TypeA.cube",
+      "bytes": 970323,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog2-sgumut-to-slog2-709-7c5d21cc",
+      "label": "SLog2-SGumut_To_SLog2-709",
+      "url": "slog2-sgumut-to-slog2-709-7c5d21cc.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "7C5D21CC04AD9DEC7E8ADCBC3E80C60B51B3C2B94C48B7EA51477EE9224B3AAD",
+      "sourceFile": "LUTS/SLog2-SGumut_To_SLog2-709.cube",
+      "bytes": 970323,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog3-sgamut-to-cine-709-fb04b4ac",
+      "label": "SLog3-SGamut to Cine+709",
+      "url": "slog3-sgamut-to-cine-709-fb04b4ac.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "FB04B4AC0EDFD85FA7E42E9851DD02B2FA89F5C641B3C4F56852BE68DB2BEA6E",
+      "sourceFile": "LUTS/SLog3-SGamut to Cine+709.cube",
+      "bytes": 904407,
+      "title": "Generate by Resolve",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog3-sgamut3-to-lc-709-102913f3",
+      "label": "SLog3-SGamut3 to LC-709",
+      "url": "slog3-sgamut3-to-lc-709-102913f3.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "102913F346EA6697489FC97ED7DA7AE37C0C614EBFE1074291B57F9BA0340657",
+      "sourceFile": "LUTS/SLog3-SGamut3 to LC-709.cube",
+      "bytes": 970315,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog3-sgamut3-to-lc-709typea-bb2c8037",
+      "label": "SLog3-SGamut3 to LC-709TypeA",
+      "url": "slog3-sgamut3-to-lc-709typea-bb2c8037.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "BB2C8037DED8CCF9DDB15EF298BD697F0DA0266C2A9B5F409BF5647A6DDF297D",
+      "sourceFile": "LUTS/SLog3-SGamut3 to LC-709TypeA.cube",
+      "bytes": 970315,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "slog3-sgamut3-to-slog2-709-6e89e257",
+      "label": "SLog3-SGamut3 to SLog2-709",
+      "url": "slog3-sgamut3-to-slog2-709-6e89e257.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "6E89E25754CA0CB527DA3AD4CC411A779FEFF20793476CEF022B9EC4FDF3A5D0",
+      "sourceFile": "LUTS/SLog3-SGamut3 to SLog2-709.cube",
+      "bytes": 970315,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "sony-slog2-to-rec709-83c1285d",
+      "label": "Sony SLog2 to Rec709",
+      "url": "sony-slog2-to-rec709-83c1285d.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "83C1285D7F3F89B60CDFEBE969292BD7664F047666BC4206144BB736607B6AAA",
+      "sourceFile": "LUTS/Sony SLog2 to Rec709.cube",
+      "bytes": 584809,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "summer-22160568",
+      "label": "Summer",
+      "url": "summer-22160568.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "2216056890E56EA3367F52E66A95041E9EF528431AA9E094615ECA8138EBDC9C",
+      "sourceFile": "LUTS/Summer.cube",
+      "bytes": 958332,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    },
+    {
+      "id": "thriller-8c824001",
+      "label": "Thriller",
+      "url": "thriller-8c824001.cube",
+      "kind": "3D",
+      "size": 33,
+      "sourceSha256": "8C82400115223131FFF2D299244C44CE014878D89A4690702E4A16D707CFCB53",
+      "sourceFile": "LUTS/Thriller.cube",
+      "bytes": 976729,
+      "title": "",
+      "domainMin": [
+        0,
+        0,
+        0
+      ],
+      "domainMax": [
+        1,
+        1,
+        1
+      ]
+    }
+  ]
+}

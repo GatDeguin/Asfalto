@@ -1,0 +1,203 @@
+{
+  "version": 1,
+  "title": "Asfalto Nacional — Blender menu components",
+  "generatedBy": "Blender 5.2 / build_menu_assets.py",
+  "units": "meters",
+  "source": "../../../Produccion/Intro_Menu_2026-09-05/blender/Menu_Components.blend",
+  "frontAxis": "Blender +Z, glTF +Y",
+  "copyPolicy": "Functional labels remain accessible HTML; only brand text is modeled",
+  "components": {
+    "action-plate": {
+      "image": "action-plate.png",
+      "model": "action-plate.glb",
+      "description": "Beveled orange enamel action plate; live text belongs in HTML",
+      "width": 1536,
+      "height": 256,
+      "triangles": 1900,
+      "materials": [
+        "AN_Black_Powdercoat",
+        "AN_Brushed_Aluminum",
+        "AN_Chrome",
+        "AN_Matte_Rubber",
+        "AN_Orange_Enamel"
+      ],
+      "meshCount": 11,
+      "imageBytes": 390528,
+      "modelBytes": 334020,
+      "bounds": {
+        "min": [
+          -3.0,
+          -0.49000000953674316,
+          -0.04500000178813934
+        ],
+        "max": [
+          2.9934444427490234,
+          0.49000000953674316,
+          0.0860000029206276
+        ]
+      },
+      "labelSafeArea": [
+        0.07,
+        0.16,
+        0.82,
+        0.8
+      ]
+    },
+    "vehicle-plate": {
+      "image": "vehicle-plate.png",
+      "model": "vehicle-plate.glb",
+      "description": "Brushed aluminum technical plaque with four fasteners and a blank copy area",
+      "width": 1520,
+      "height": 400,
+      "triangles": 3856,
+      "materials": [
+        "AN_Black_Powdercoat",
+        "AN_Brushed_Aluminum",
+        "AN_Chrome",
+        "AN_Matte_Rubber"
+      ],
+      "meshCount": 16,
+      "imageBytes": 637800,
+      "modelBytes": 384352,
+      "bounds": {
+        "min": [
+          -2.8399999141693115,
+          -0.7350000143051147,
+          -0.054999999701976776
+        ],
+        "max": [
+          2.8399999141693115,
+          0.7350000143051147,
+          0.10000000149011612
+        ]
+      },
+      "labelSafeArea": [
+        0.08,
+        0.17,
+        0.92,
+        0.81
+      ]
+    },
+    "ignition": {
+      "image": "ignition.png",
+      "model": "ignition.glb",
+      "description": "Chrome contact with independent key and a turn pivot at the lock center",
+      "width": 1024,
+      "height": 1024,
+      "triangles": 7984,
+      "materials": [
+        "AN_Black_Powdercoat",
+        "AN_Brushed_Aluminum",
+        "AN_Chrome",
+        "AN_Ivory_Enamel",
+        "AN_Matte_Rubber",
+        "AN_Orange_Enamel"
+      ],
+      "meshCount": 20,
+      "imageBytes": 959968,
+      "modelBytes": 484216,
+      "bounds": {
+        "min": [
+          -0.7099999785423279,
+          -0.858676016330719,
+          -0.06499999761581421
+        ],
+        "max": [
+          0.7099999785423279,
+          0.8299999833106995,
+          0.32600000500679016
+        ]
+      },
+      "labelSafeArea": null,
+      "animation": {
+        "clip": "Ignition_Turn_Key",
+        "pivot": "Ignition_Key_Pivot",
+        "durationSeconds": 1.125,
+        "axis": "local Y in glTF"
+      }
+    },
+    "card-frame": {
+      "image": "card-frame.png",
+      "model": "card-frame.glb",
+      "description": "Blackened steel and rubber frame; center remains transparent for a live route image",
+      "width": 1280,
+      "height": 800,
+      "triangles": 4232,
+      "materials": [
+        "AN_Black_Powdercoat",
+        "AN_Brushed_Aluminum",
+        "AN_Chrome",
+        "AN_Matte_Rubber",
+        "AN_Orange_Enamel"
+      ],
+      "meshCount": 26,
+      "imageBytes": 564994,
+      "modelBytes": 398624,
+      "bounds": {
+        "min": [
+          -2.5,
+          -1.5449999570846558,
+          -0.03999999910593033
+        ],
+        "max": [
+          2.5,
+          1.5449999570846558,
+          0.10899999737739563
+        ]
+      },
+      "labelSafeArea": [
+        0.045,
+        0.07,
+        0.955,
+        0.93
+      ]
+    },
+    "brand": {
+      "image": "brand.png",
+      "model": "brand.glb",
+      "description": "Solid condensed ASFALTO NACIONAL lettering and two orange diagonal bars",
+      "width": 1536,
+      "height": 768,
+      "triangles": 5340,
+      "materials": [
+        "AN_Ivory_Enamel",
+        "AN_Orange_Enamel"
+      ],
+      "meshCount": 4,
+      "imageBytes": 1055096,
+      "modelBytes": 121480,
+      "bounds": {
+        "min": [
+          -3.507946491241455,
+          -1.545588493347168,
+          -0.04600000008940697
+        ],
+        "max": [
+          3.576361894607544,
+          1.8200000524520874,
+          0.054999999701976776
+        ]
+      },
+      "labelSafeArea": null
+    }
+  },
+  "materials": [
+    "AN_Orange_Enamel",
+    "AN_Brushed_Aluminum",
+    "AN_Chrome",
+    "AN_Black_Powdercoat",
+    "AN_Matte_Rubber",
+    "AN_Ivory_Enamel"
+  ],
+  "textureBudget": {
+    "sharedNormalSize": [
+      512,
+      512
+    ],
+    "materialCount": 6
+  },
+  "totalTriangles": 23312,
+  "totalModelBytes": 1722692,
+  "totalImageBytes": 3608386,
+  "optimization": "glTF Transform 4.5.0 dedup + prune + MikkTSpace tangents; no decoder extensions required"
+}

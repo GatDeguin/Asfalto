@@ -1,0 +1,665 @@
+{
+  "schema": "asfalto-track/v1",
+  "id": "cuesta_lipan",
+  "displayName": "Cuesta de Lipán",
+  "format": "point_to_point",
+  "lengthM": 20000,
+  "defaultEnvironment": "golden",
+  "environment": {
+    "profile": "./environment.json",
+    "defaultPreset": "clear",
+    "availablePresets": [
+      "clear",
+      "overcast",
+      "golden-hour",
+      "sunset",
+      "moonrise",
+      "night"
+    ]
+  },
+  "route": "./route.json",
+  "visual": [
+    "./sectors/S01/lod0.glb",
+    "./sectors/S01/lod1.glb",
+    "./sectors/S01/lod2.glb",
+    "./sectors/S02/lod0.glb",
+    "./sectors/S02/lod1.glb",
+    "./sectors/S02/lod2.glb",
+    "./sectors/S03/lod0.glb",
+    "./sectors/S03/lod1.glb",
+    "./sectors/S03/lod2.glb",
+    "./sectors/S04/lod0.glb",
+    "./sectors/S04/lod1.glb",
+    "./sectors/S04/lod2.glb",
+    "./sectors/S05/lod0.glb",
+    "./sectors/S05/lod1.glb",
+    "./sectors/S05/lod2.glb",
+    "./sectors/S06/lod0.glb",
+    "./sectors/S06/lod1.glb",
+    "./sectors/S06/lod2.glb",
+    "./sectors/S07/lod0.glb",
+    "./sectors/S07/lod1.glb",
+    "./sectors/S07/lod2.glb",
+    "./sectors/S08/lod0.glb",
+    "./sectors/S08/lod1.glb",
+    "./sectors/S08/lod2.glb"
+  ],
+  "collision": [
+    "./sectors/S01/collision.glb",
+    "./sectors/S02/collision.glb",
+    "./sectors/S03/collision.glb",
+    "./sectors/S04/collision.glb",
+    "./sectors/S05/collision.glb",
+    "./sectors/S06/collision.glb",
+    "./sectors/S07/collision.glb",
+    "./sectors/S08/collision.glb"
+  ],
+  "integrity": {
+    "route": {
+      "bytes": 616193,
+      "sha256": "6748B2B04B9A32FC9A31DA0DC7163A9954AEEE09AE5D89D8B264F0C582C21E5E"
+    },
+    "visual": {
+      "./sectors/S01/lod0.glb": {
+        "bytes": 3693872,
+        "sha256": "5BA9D36E0B4F1FA1E722315C8EC726D9C528A354D565969E431B58FA05C5CB8D"
+      },
+      "./sectors/S01/lod1.glb": {
+        "bytes": 2586908,
+        "sha256": "5B0F7EA0AAFDC5DFC9B7EBE808D2865EFAA75D75E633FBA136A28184FBA71942"
+      },
+      "./sectors/S01/lod2.glb": {
+        "bytes": 1353812,
+        "sha256": "63521626E94394053AB6434C60CEC69CCDAB4CE55D7CA70F55D32CDCB5A9AA74"
+      },
+      "./sectors/S02/lod0.glb": {
+        "bytes": 3994584,
+        "sha256": "C900118669417146FD5509B621A4AA5006B5C7A92D17CD8294D8387C36B6215F"
+      },
+      "./sectors/S02/lod1.glb": {
+        "bytes": 3023176,
+        "sha256": "D237260CC164B08A34A6AE1ED1ED2EC937634B0374995972557D61E2A03331E9"
+      },
+      "./sectors/S02/lod2.glb": {
+        "bytes": 1781308,
+        "sha256": "7830D872C5D36C3A96DC344F65837656CA34C2F4ACCB65EA8950B2C6C7F2C010"
+      },
+      "./sectors/S03/lod0.glb": {
+        "bytes": 4268588,
+        "sha256": "C46F5629EE16F13B7AE7ECE7A5E78E1962E42D5AFEDB8BA492D3AFA650C961F1"
+      },
+      "./sectors/S03/lod1.glb": {
+        "bytes": 3284168,
+        "sha256": "0B2D765A385A65C34E295DB7D1CB94786CD4B7DE2A8C3A964E94EC3E69C1F1EC"
+      },
+      "./sectors/S03/lod2.glb": {
+        "bytes": 2036004,
+        "sha256": "238CB352B8DD5B0B380E24C6F5734CD42A0A6240A9986BDA44526FC7E11A5326"
+      },
+      "./sectors/S04/lod0.glb": {
+        "bytes": 3885720,
+        "sha256": "4DB58221A7D45A21AD50206BDDC3ECCF8DDFFD29B31E3D41F46CA0C085DE934A"
+      },
+      "./sectors/S04/lod1.glb": {
+        "bytes": 2780596,
+        "sha256": "5983C57E94A13A5846FCFB85FBE1EFADA2D7F7CADB14FCC83FC746157FC829F4"
+      },
+      "./sectors/S04/lod2.glb": {
+        "bytes": 1538916,
+        "sha256": "9CC0532BFB2D9206B3B0A177A58E5F82AE43BFFD1A5649E3292AD38F5822AAA7"
+      },
+      "./sectors/S05/lod0.glb": {
+        "bytes": 3968944,
+        "sha256": "CD5715E7CB5F783BA4A12ADCDEAB2727ABAD0A8C146F9556034DB10E374C5409"
+      },
+      "./sectors/S05/lod1.glb": {
+        "bytes": 2837344,
+        "sha256": "A0C184701EB235EE41CDF33BD3ACC6141948A9B077B13372529C5B2B17B41A50"
+      },
+      "./sectors/S05/lod2.glb": {
+        "bytes": 1713264,
+        "sha256": "A4C10DB29A4BA6F87C334C773E99D680CF8606F713E2531323DD5F55C922B72F"
+      },
+      "./sectors/S06/lod0.glb": {
+        "bytes": 4182828,
+        "sha256": "5529C256CAA2B70EBFB8345909B76FBAE28E7BAA65079811851C003B432D2B62"
+      },
+      "./sectors/S06/lod1.glb": {
+        "bytes": 2920024,
+        "sha256": "77FD2CE8D44E78A5C32178DDB554A893722F06D40192EF570E031D492D20B7F2"
+      },
+      "./sectors/S06/lod2.glb": {
+        "bytes": 1637924,
+        "sha256": "C148FD3C5DEF17F343F7C116080D156EF8F773C17BCBF33C3B2099151880B622"
+      },
+      "./sectors/S07/lod0.glb": {
+        "bytes": 3878848,
+        "sha256": "A2E27EE91D540BF8E70408E63F0CD73B454AB61F6159BFABDE7D4E00B6DBCAFE"
+      },
+      "./sectors/S07/lod1.glb": {
+        "bytes": 2775920,
+        "sha256": "47FB9B9DE29EC09E4CF6E06FDFE350A9B86C3E433B4B7A3DC22B8AEF7E4D5AF2"
+      },
+      "./sectors/S07/lod2.glb": {
+        "bytes": 1532296,
+        "sha256": "01A89D12748D5B99AB0EC532BE5A7CC6F1D37E1962224EA6F8BA919257D9FBE2"
+      },
+      "./sectors/S08/lod0.glb": {
+        "bytes": 3554988,
+        "sha256": "FF3D228646A8CBACB5E9A1F7B3D41F2480209C53CA4B3E83FD3F1F93791D0CC9"
+      },
+      "./sectors/S08/lod1.glb": {
+        "bytes": 2550968,
+        "sha256": "3FC0DD181F2B3C903A5F90B7A082DC91EF545477743325AC7D2EC1B41A09597C"
+      },
+      "./sectors/S08/lod2.glb": {
+        "bytes": 1331228,
+        "sha256": "BE0FA7BF1C01ECCC11FCE68AA487CED042498CF0FAED275A6BC6152B16B05136"
+      }
+    },
+    "collision": {
+      "./sectors/S01/collision.glb": {
+        "bytes": 60584,
+        "sha256": "65BD55D687DBC5A8FF7EAB4D553DE544DFE8D0D6AFEB2D44D75C85CDF32EE71A"
+      },
+      "./sectors/S02/collision.glb": {
+        "bytes": 69656,
+        "sha256": "B2F16F24FF5A7CD2D6C561CC06EBCD1CD41122FFD460C6100480AD01BCF3AAA4"
+      },
+      "./sectors/S03/collision.glb": {
+        "bytes": 76884,
+        "sha256": "22C020B96D41A4A7E0348F2B42161F3053D098D821EB0FF791837F9097574865"
+      },
+      "./sectors/S04/collision.glb": {
+        "bytes": 63476,
+        "sha256": "1ABFE3A0A3FA6208930A3DD13FA76CD417C948E8CC89F5F01C356CE9FB868715"
+      },
+      "./sectors/S05/collision.glb": {
+        "bytes": 73512,
+        "sha256": "FF7AEFC5FEE45B6B3F5D1309B24B40D47829ED9BDA15E777D34848CDAD7A91E7"
+      },
+      "./sectors/S06/collision.glb": {
+        "bytes": 65048,
+        "sha256": "0D1C27161BC600F8C30E7B84A9A5F80B25C1AE6A8F3B1B3BA488B57DE23DC2E8"
+      },
+      "./sectors/S07/collision.glb": {
+        "bytes": 69564,
+        "sha256": "862022F3EA713C687E4A5974E0AA4E659C744BAF05FE62A4CB1C6234848F9996"
+      },
+      "./sectors/S08/collision.glb": {
+        "bytes": 60344,
+        "sha256": "FA741E6F46CF39E2D365C4B0F3572FD990F00F5825C00BC81591719C34709131"
+      }
+    },
+    "decoder": {
+      "url": "../../assets/vendor/meshopt/meshopt_decoder.module.js",
+      "bytes": 32392,
+      "sha256": "97901FB3D2D296EEEA2A57348A734EF0A17E35F2D4AEA5A65223635D3F0E1709"
+    }
+  },
+  "streaming": {
+    "schema": "asfalto-sector-streaming/v1",
+    "decoder": "../../assets/vendor/meshopt/meshopt_decoder.module.js",
+    "qualityTiers": {
+      "high": {
+        "visualRadius": 2,
+        "collisionRadius": 1
+      },
+      "balanced": {
+        "visualRadius": 1,
+        "collisionRadius": 1
+      },
+      "low": {
+        "visualRadius": 1,
+        "collisionRadius": 1
+      }
+    },
+    "sectors": [
+      {
+        "id": "S01",
+        "routeSectorId": "s01",
+        "startM": 0,
+        "endM": 1700,
+        "localOrigin": [
+          210.493895,
+          -792.512709,
+          46.072971
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S01/lod0.glb",
+            "bytes": 3693872,
+            "sha256": "5BA9D36E0B4F1FA1E722315C8EC726D9C528A354D565969E431B58FA05C5CB8D",
+            "triangles": 67674,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S01/lod1.glb",
+            "bytes": 2586908,
+            "sha256": "5B0F7EA0AAFDC5DFC9B7EBE808D2865EFAA75D75E633FBA136A28184FBA71942",
+            "triangles": 34980,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S01/lod2.glb",
+            "bytes": 1353812,
+            "sha256": "63521626E94394053AB6434C60CEC69CCDAB4CE55D7CA70F55D32CDCB5A9AA74",
+            "triangles": 27336,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S01/collision.glb",
+          "bytes": 60584,
+          "sha256": "65BD55D687DBC5A8FF7EAB4D553DE544DFE8D0D6AFEB2D44D75C85CDF32EE71A",
+          "triangles": 340,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S02",
+        "routeSectorId": "s02",
+        "startM": 1700,
+        "endM": 4200,
+        "localOrigin": [
+          264.728635,
+          -2722.508322,
+          175.412481
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S02/lod0.glb",
+            "bytes": 3994584,
+            "sha256": "C900118669417146FD5509B621A4AA5006B5C7A92D17CD8294D8387C36B6215F",
+            "triangles": 92872,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S02/lod1.glb",
+            "bytes": 3023176,
+            "sha256": "D237260CC164B08A34A6AE1ED1ED2EC937634B0374995972557D61E2A03331E9",
+            "triangles": 58666,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S02/lod2.glb",
+            "bytes": 1781308,
+            "sha256": "7830D872C5D36C3A96DC344F65837656CA34C2F4ACCB65EA8950B2C6C7F2C010",
+            "triangles": 50539,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S02/collision.glb",
+          "bytes": 69656,
+          "sha256": "B2F16F24FF5A7CD2D6C561CC06EBCD1CD41122FFD460C6100480AD01BCF3AAA4",
+          "triangles": 606,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S03",
+        "routeSectorId": "s03",
+        "startM": 4200,
+        "endM": 7700,
+        "localOrigin": [
+          959.033064,
+          -3894.877656,
+          422.663932
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S03/lod0.glb",
+            "bytes": 4268588,
+            "sha256": "C46F5629EE16F13B7AE7ECE7A5E78E1962E42D5AFEDB8BA492D3AFA650C961F1",
+            "triangles": 96044,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S03/lod1.glb",
+            "bytes": 3284168,
+            "sha256": "0B2D765A385A65C34E295DB7D1CB94786CD4B7DE2A8C3A964E94EC3E69C1F1EC",
+            "triangles": 63583,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S03/lod2.glb",
+            "bytes": 2036004,
+            "sha256": "238CB352B8DD5B0B380E24C6F5734CD42A0A6240A9986BDA44526FC7E11A5326",
+            "triangles": 54184,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S03/collision.glb",
+          "bytes": 76884,
+          "sha256": "22C020B96D41A4A7E0348F2B42161F3053D098D821EB0FF791837F9097574865",
+          "triangles": 888,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S04",
+        "routeSectorId": "s04",
+        "startM": 7700,
+        "endM": 10100,
+        "localOrigin": [
+          2588.595452,
+          -3479.089049,
+          639.588939
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S04/lod0.glb",
+            "bytes": 3885720,
+            "sha256": "4DB58221A7D45A21AD50206BDDC3ECCF8DDFFD29B31E3D41F46CA0C085DE934A",
+            "triangles": 87000,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S04/lod1.glb",
+            "bytes": 2780596,
+            "sha256": "5983C57E94A13A5846FCFB85FBE1EFADA2D7F7CADB14FCC83FC746157FC829F4",
+            "triangles": 52592,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S04/lod2.glb",
+            "bytes": 1538916,
+            "sha256": "9CC0532BFB2D9206B3B0A177A58E5F82AE43BFFD1A5649E3292AD38F5822AAA7",
+            "triangles": 44398,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S04/collision.glb",
+          "bytes": 63476,
+          "sha256": "1ABFE3A0A3FA6208930A3DD13FA76CD417C948E8CC89F5F01C356CE9FB868715",
+          "triangles": 480,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S05",
+        "routeSectorId": "s05",
+        "startM": 10100,
+        "endM": 12600,
+        "localOrigin": [
+          4685.027999,
+          -2967.086679,
+          793.051395
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S05/lod0.glb",
+            "bytes": 3968944,
+            "sha256": "CD5715E7CB5F783BA4A12ADCDEAB2727ABAD0A8C146F9556034DB10E374C5409",
+            "triangles": 89726,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S05/lod1.glb",
+            "bytes": 2837344,
+            "sha256": "A0C184701EB235EE41CDF33BD3ACC6141948A9B077B13372529C5B2B17B41A50",
+            "triangles": 53812,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S05/lod2.glb",
+            "bytes": 1713264,
+            "sha256": "A4C10DB29A4BA6F87C334C773E99D680CF8606F713E2531323DD5F55C922B72F",
+            "triangles": 44894,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S05/collision.glb",
+          "bytes": 73512,
+          "sha256": "FF7AEFC5FEE45B6B3F5D1309B24B40D47829ED9BDA15E777D34848CDAD7A91E7",
+          "triangles": 706,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S06",
+        "routeSectorId": "s06",
+        "startM": 12600,
+        "endM": 16000,
+        "localOrigin": [
+          6924.855751,
+          -1490.26807,
+          988.12823
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S06/lod0.glb",
+            "bytes": 4182828,
+            "sha256": "5529C256CAA2B70EBFB8345909B76FBAE28E7BAA65079811851C003B432D2B62",
+            "triangles": 118116,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S06/lod1.glb",
+            "bytes": 2920024,
+            "sha256": "77FD2CE8D44E78A5C32178DDB554A893722F06D40192EF570E031D492D20B7F2",
+            "triangles": 67392,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S06/lod2.glb",
+            "bytes": 1637924,
+            "sha256": "C148FD3C5DEF17F343F7C116080D156EF8F773C17BCBF33C3B2099151880B622",
+            "triangles": 55080,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S06/collision.glb",
+          "bytes": 65048,
+          "sha256": "0D1C27161BC600F8C30E7B84A9A5F80B25C1AE6A8F3B1B3BA488B57DE23DC2E8",
+          "triangles": 680,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S07",
+        "routeSectorId": "s07",
+        "startM": 16000,
+        "endM": 18500,
+        "localOrigin": [
+          9053.336643,
+          189.36135,
+          1173.017575
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S07/lod0.glb",
+            "bytes": 3878848,
+            "sha256": "A2E27EE91D540BF8E70408E63F0CD73B454AB61F6159BFABDE7D4E00B6DBCAFE",
+            "triangles": 89274,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S07/lod1.glb",
+            "bytes": 2775920,
+            "sha256": "47FB9B9DE29EC09E4CF6E06FDFE350A9B86C3E433B4B7A3DC22B8AEF7E4D5AF2",
+            "triangles": 53382,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S07/lod2.glb",
+            "bytes": 1532296,
+            "sha256": "01A89D12748D5B99AB0EC532BE5A7CC6F1D37E1962224EA6F8BA919257D9FBE2",
+            "triangles": 44808,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S07/collision.glb",
+          "bytes": 69564,
+          "sha256": "862022F3EA713C687E4A5974E0AA4E659C744BAF05FE62A4CB1C6234848F9996",
+          "triangles": 598,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      },
+      {
+        "id": "S08",
+        "routeSectorId": "s08",
+        "startM": 18500,
+        "endM": 20000,
+        "localOrigin": [
+          10745.365818,
+          826.608667,
+          1334.657483
+        ],
+        "visual": {
+          "lod0": {
+            "url": "./sectors/S08/lod0.glb",
+            "bytes": 3554988,
+            "sha256": "FF3D228646A8CBACB5E9A1F7B3D41F2480209C53CA4B3E83FD3F1F93791D0CC9",
+            "triangles": 61722,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod1": {
+            "url": "./sectors/S08/lod1.glb",
+            "bytes": 2550968,
+            "sha256": "3FC0DD181F2B3C903A5F90B7A082DC91EF545477743325AC7D2EC1B41A09597C",
+            "triangles": 32590,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          },
+          "lod2": {
+            "url": "./sectors/S08/lod2.glb",
+            "bytes": 1331228,
+            "sha256": "BE0FA7BF1C01ECCC11FCE68AA487CED042498CF0FAED275A6BC6152B16B05136",
+            "triangles": 25797,
+            "extensionsRequired": [
+              "EXT_meshopt_compression"
+            ]
+          }
+        },
+        "collision": {
+          "url": "./sectors/S08/collision.glb",
+          "bytes": 60344,
+          "sha256": "FA741E6F46CF39E2D365C4B0F3572FD990F00F5825C00BC81591719C34709131",
+          "triangles": 300,
+          "extensionsRequired": [
+            "EXT_meshopt_compression"
+          ]
+        }
+      }
+    ]
+  },
+  "glb": {
+    "fileCount": 32,
+    "extensionsRequired": [
+      "EXT_meshopt_compression"
+    ],
+    "totalVisualBytes": 67112228,
+    "totalCollisionBytes": 539068
+  },
+  "profile": {
+    "id": "cuesta_lipan",
+    "name": "Cuesta de Lipán",
+    "description": "Ruta de cornisa puneña, gran desnivel y asfalto seco de altura.",
+    "biome": "puna_high_altitude",
+    "environment": "golden",
+    "recommendedFarPlaneM": 30000,
+    "surface": {
+      "road": "dry_mountain_asphalt",
+      "shoulder": "mineral_gravel",
+      "barrier": "galvanized_guardrail"
+    }
+  },
+  "provenance": {
+    "source": "Circuitos/Cuesta_Lipan.zip",
+    "archive": {
+      "bytes": 102271698,
+      "sha256": "771C9666E67722F657FD8367131BDC444BB2C242D7D482862F24F10B6B6100D2"
+    },
+    "master": {
+      "path": "CuestaLipan_Blender_DetailPass_V2/CuestaLipan_DetailPass_V2.blend",
+      "bytes": 16338181,
+      "sha256": "4246B38D3425A0FB375FD1251DE070F6135209B5C953D603FFD019403979B6C5"
+    },
+    "route": {
+      "path": "CuestaLipan_Blender_DetailPass/Source/CuestaLipan_HTML_Package/data/route.json",
+      "bytes": 1441521,
+      "sha256": "68B1A880D59B8C58CEAEE984150826390D7A415A07D41A56A8D5079B284BB4AD"
+    },
+    "sectors": {
+      "path": "CuestaLipan_Blender_DetailPass/Source/CuestaLipan_HTML_Package/data/sectors.json",
+      "bytes": 2336,
+      "sha256": "857A9F89AB9C6C5CAA4A80A22E8465E6DBC07E09EBE75BB67AB7BA2C7DBE0987"
+    },
+    "checkpoints": {
+      "path": "CuestaLipan_Blender_DetailPass/Source/CuestaLipan_HTML_Package/data/checkpoints.json",
+      "bytes": 38470,
+      "sha256": "2406A434A689BC843D0B55867B6B00885FF5318F1F504C6DAC9D83D308379C4C"
+    },
+    "axis": "Y_UP",
+    "units": "meters",
+    "collisionSeparate": true,
+    "assetsRecompressed": true,
+    "compressor": "@gltf-transform 4.4.2 + meshoptimizer 1.0.1"
+  }
+}

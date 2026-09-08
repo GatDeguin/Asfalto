@@ -1,0 +1,10 @@
+{
+  "description": "Decorative menu stills extracted from the existing approved cinematic sources. These are cinematic illustrations, not captures of the playable scene.",
+  "generatedNewImages": false,
+  "images": {
+    "conduccion.jpg": { "source": "assets/intro/cinematic.mp4", "timeSeconds": 13, "width": 960 },
+    "competencia.jpg": { "source": "assets/intro/cinematic.mp4", "timeSeconds": 29, "width": 960 },
+    "pruebas.jpg": { "source": "Produccion/Intro_Menu_2026-09-05/flow/clips/09.mp4", "timeSeconds": 1, "width": 1200 },
+    "instrumental.jpg": { "source": "Produccion/Intro_Menu_2026-09-05/flow/clips/02.mp4", "timeSeconds": 1, "width": 960 }
+  }
+}

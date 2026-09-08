@@ -1,0 +1,71 @@
+{
+  "schema": "asfalto-hdri-catalog/v1",
+  "presets": [
+    {
+      "id": "clear",
+      "label": "Día despejado",
+      "sourceFile": "autumn_field_puresky_4k.exr",
+      "timePeriod": "day",
+      "file": "clear.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "4FAE12BD002076D36C1390BCF9B07F5251BB699AE60147D20BA28B2F4F61DD94"
+    },
+    {
+      "id": "overcast",
+      "label": "Día nublado",
+      "sourceFile": "overcast_soil_puresky_4k.exr",
+      "timePeriod": "day",
+      "file": "overcast.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "B047E339DD95935AAE51E65F39359ABD52148144872644E0918B7464C5A35CBF"
+    },
+    {
+      "id": "golden-hour",
+      "label": "Tarde dorada",
+      "sourceFile": "qwantani_late_afternoon_puresky_4k.exr",
+      "timePeriod": "afternoon",
+      "file": "golden.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "603C3F7DD38C850BCA04D9C532B1787D78D77AB480EA3129FDA3E2D3D1A5F29E"
+    },
+    {
+      "id": "sunset",
+      "label": "Atardecer",
+      "sourceFile": "qwantani_sunset_puresky_4k.exr",
+      "timePeriod": "sunset",
+      "file": "sunset.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "9B83B12E2E0AB7E6F9933E920B49BA0DE8F662829AEC562D9E7B974AFF6D253A"
+    },
+    {
+      "id": "moonrise",
+      "label": "Noche con luna",
+      "sourceFile": "qwantani_moonrise_puresky_4k.exr",
+      "timePeriod": "moonrise",
+      "file": "moonrise.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "DE48E823ED893A8999622AC8E5873337EDA7114237E650B739C9CE47F178CD3B"
+    },
+    {
+      "id": "night",
+      "label": "Noche profunda",
+      "sourceFile": "qwantani_night_puresky_4k.exr",
+      "timePeriod": "night",
+      "file": "night.av3hdri",
+      "width": 1024,
+      "height": 512,
+      "byteLength": 3145744,
+      "sha256": "B7DA232FB2F34C595F2C2519DEF9A03537850123E33C93B25F1066935869A94E"
+    }
+  ]
+}

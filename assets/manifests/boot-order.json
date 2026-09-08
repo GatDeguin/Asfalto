@@ -1,0 +1,258 @@
+[
+  {
+    "kind": "script",
+    "id": "module-01",
+    "src": "./src/runtime/asset-core.mjs",
+    "type": "module",
+    "order": 0
+  },
+  {
+    "kind": "style",
+    "id": "inline-01",
+    "path": "assets/styles/inline-01.css",
+    "href": "./assets/styles/inline-01.css",
+    "order": 1
+  },
+  {
+    "kind": "script",
+    "id": "cockpit-v5-preflight",
+    "path": "src/legacy/cockpit-v5-preflight.js",
+    "src": "./src/legacy/cockpit-v5-preflight.js",
+    "type": "classic",
+    "order": 2
+  },
+  {
+    "kind": "style",
+    "id": "cockpit-v5-style",
+    "path": "assets/styles/cockpit-v5-style.css",
+    "href": "./assets/styles/cockpit-v5-style.css",
+    "order": 3
+  },
+  {
+    "kind": "style",
+    "id": "v6-complete-style",
+    "path": "assets/styles/v6-complete-style.css",
+    "href": "./assets/styles/v6-complete-style.css",
+    "order": 4
+  },
+  {
+    "kind": "style",
+    "id": "chevy-hud-3d-style",
+    "path": "assets/styles/chevy-hud-3d-style.css",
+    "href": "./assets/styles/chevy-hud-3d-style.css",
+    "order": 5
+  },
+  {
+    "kind": "style",
+    "id": "asfalto-v3-camera-style",
+    "path": "assets/styles/asfalto-v3-camera-style.css",
+    "href": "./assets/styles/asfalto-v3-camera-style.css",
+    "order": 6
+  },
+  {
+    "kind": "style",
+    "id": "asfalto-v4-1-radio-style",
+    "path": "assets/styles/asfalto-v4-1-radio-style.css",
+    "href": "./assets/styles/asfalto-v4-1-radio-style.css",
+    "order": 7
+  },
+  {
+    "kind": "style",
+    "id": "asfalto-v4-1-hud-adjustments",
+    "path": "assets/styles/asfalto-v4-1-hud-adjustments.css",
+    "href": "./assets/styles/asfalto-v4-1-hud-adjustments.css",
+    "order": 8
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v5-track-runtime",
+    "path": "src/legacy/asfalto-v5-track-runtime.js",
+    "src": "./src/legacy/asfalto-v5-track-runtime.js",
+    "type": "classic",
+    "order": 9
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v5-environment-runtime",
+    "path": "src/legacy/asfalto-v5-environment-runtime.js",
+    "src": "./src/legacy/asfalto-v5-environment-runtime.js",
+    "type": "classic",
+    "order": 10
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v5-glb-runtime",
+    "path": "src/legacy/asfalto-v5-glb-runtime.js",
+    "src": "./src/legacy/asfalto-v5-glb-runtime.js",
+    "type": "classic",
+    "order": 11
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-rapier",
+    "path": "src/legacy/asfalto-v6-rapier.js",
+    "src": "./src/legacy/asfalto-v6-rapier.js",
+    "type": "classic",
+    "order": 12
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-vehicle-model",
+    "path": "src/legacy/asfalto-v6-vehicle-model.js",
+    "src": "./src/legacy/asfalto-v6-vehicle-model.js",
+    "type": "classic",
+    "order": 13
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-physics-runtime",
+    "path": "src/legacy/asfalto-v6-physics-runtime.js",
+    "src": "./src/legacy/asfalto-v6-physics-runtime.js",
+    "type": "classic",
+    "order": 14
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-input-runtime",
+    "path": "src/legacy/asfalto-v6-input-runtime.js",
+    "src": "./src/legacy/asfalto-v6-input-runtime.js",
+    "type": "classic",
+    "order": 15
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-falcon-runtime",
+    "path": "src/legacy/asfalto-v6-falcon-runtime.js",
+    "src": "./src/legacy/asfalto-v6-falcon-runtime.js",
+    "type": "classic",
+    "order": 16
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-feedback-runtime",
+    "path": "src/legacy/asfalto-v6-feedback-runtime.js",
+    "src": "./src/legacy/asfalto-v6-feedback-runtime.js",
+    "type": "classic",
+    "order": 17
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v6-integration-runtime",
+    "path": "src/legacy/asfalto-v6-integration-runtime.js",
+    "src": "./src/legacy/asfalto-v6-integration-runtime.js",
+    "type": "classic",
+    "order": 18
+  },
+  {
+    "kind": "module-dependency",
+    "id": "driver-control-pipeline",
+    "path": "src/game/driver-control-pipeline.mjs",
+    "src": "./src/game/driver-control-pipeline.mjs",
+    "type": "module",
+    "order": 19
+  },
+  {
+    "kind": "module-dependency",
+    "id": "physical-render-bridge",
+    "path": "src/game/physical-render-bridge.mjs",
+    "src": "./src/game/physical-render-bridge.mjs",
+    "type": "module",
+    "order": 20
+  },
+  {
+    "kind": "module-dependency",
+    "id": "vehicle-camera-rig",
+    "path": "src/game/vehicle-camera-rig.mjs",
+    "src": "./src/game/vehicle-camera-rig.mjs",
+    "type": "module",
+    "order": 21
+  },
+  {
+    "kind": "script",
+    "id": "module-02",
+    "path": "src/legacy/module-02.mjs",
+    "src": "./src/legacy/module-02.mjs",
+    "type": "module",
+    "order": 22
+  },
+  {
+    "kind": "script",
+    "id": "cockpit-v5-core",
+    "path": "src/legacy/cockpit-v5-core.js",
+    "src": "./src/legacy/cockpit-v5-core.js",
+    "type": "classic",
+    "order": 23
+  },
+  {
+    "kind": "script",
+    "id": "cockpit-v5-browser",
+    "path": "src/legacy/cockpit-v5-browser.js",
+    "src": "./src/legacy/cockpit-v5-browser.js",
+    "type": "classic",
+    "order": 24
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v3-camera-state",
+    "path": "src/legacy/asfalto-v3-camera-state.js",
+    "src": "./src/legacy/asfalto-v3-camera-state.js",
+    "type": "classic",
+    "order": 25
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v3-workshop-editor-state",
+    "path": "src/legacy/asfalto-v3-workshop-editor-state.js",
+    "src": "./src/legacy/asfalto-v3-workshop-editor-state.js",
+    "type": "classic",
+    "order": 26
+  },
+  {
+    "kind": "script",
+    "id": "v6-complete-runtime",
+    "path": "src/legacy/v6-complete-runtime.js",
+    "src": "./src/legacy/v6-complete-runtime.js",
+    "type": "classic",
+    "order": 27
+  },
+  {
+    "kind": "script",
+    "id": "chevy-hud-3d-runtime",
+    "path": "src/legacy/chevy-hud-3d-runtime.js",
+    "src": "./src/legacy/chevy-hud-3d-runtime.js",
+    "type": "classic",
+    "order": 28
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v3-workshop-editor-runtime",
+    "path": "src/legacy/asfalto-v3-workshop-editor-runtime.js",
+    "src": "./src/legacy/asfalto-v3-workshop-editor-runtime.js",
+    "type": "classic",
+    "order": 29
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v4-1-radio-state",
+    "path": "src/legacy/asfalto-v4-1-radio-state.js",
+    "src": "./src/legacy/asfalto-v4-1-radio-state.js",
+    "type": "classic",
+    "order": 30
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v4-1-radio-display",
+    "path": "src/legacy/asfalto-v4-1-radio-display.js",
+    "src": "./src/legacy/asfalto-v4-1-radio-display.js",
+    "type": "classic",
+    "order": 31
+  },
+  {
+    "kind": "script",
+    "id": "asfalto-v4-1-radio-functional-core",
+    "path": "src/legacy/asfalto-v4-1-radio-functional-core.js",
+    "src": "./src/legacy/asfalto-v4-1-radio-functional-core.js",
+    "type": "classic",
+    "order": 32
+  }
+]
