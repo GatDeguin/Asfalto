@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "02843a9ab632ec7183143f6b3b3272e6aa243116",
+  "gameFiles": 477,
+  "gameBytes": 756882403,
+  "bundleBytes": 466981830,
+  "bundleSha256": "b895c2829d3ab48575321f54dec31b4660bfeb0822dea7381d2928970cfc0aad",
+  "verifiedParts": 75,
+  "allFileHashesVerified": true,
+  "credentialSignatureFindings": 0,
+  "unexpectedPrivateFileNames": 0,
+  "localBrowserValidation": {
+    "circuits": 5,
+    "errors": 0,
+    "httpErrors": 0,
+    "apiRequests": 0,
+    "dayNightCycleSeconds": 720
+  }
+}

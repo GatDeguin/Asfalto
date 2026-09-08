@@ -1,9 +1,11 @@
-# Asfalto Nacional V6 — transferencia del juego
+# Asfalto Nacional V6 — paquete completo
 
-Esta rama contiene los bloques de un paquete Git con los 477 archivos del juego completo. El paquete está comprimido sin pérdida y conserva el commit `02843a9ab632ec7183143f6b3b3272e6aa243116`.
+Se recibieron y verificaron los 75 bloques del juego completo: **466981830 bytes** con compresión sin pérdida. Contienen los **477 archivos originales** de la versión preparada para GitHub Pages, incluidos los cinco circuitos, el taller, los modelos, las texturas, el cockpit, la música y la introducción.
 
-La transferencia está en curso. El manifiesto `.github/game-import/manifest.json` registra el tamaño y SHA-256 de los 75 bloques esperados. Los bloques recibidos se verifican por su SHA de Git antes de incorporarlos.
+Commit del juego: `02843a9ab632ec7183143f6b3b3272e6aa243116`.
 
-El paquete final ocupa 466981830 bytes y su SHA-256 es `b895c2829d3ab48575321f54dec31b4660bfeb0822dea7381d2928970cfc0aad`.
+SHA-256 del paquete ensamblado: `b895c2829d3ab48575321f54dec31b4660bfeb0822dea7381d2928970cfc0aad`.
 
-La versión para GitHub Pages ya se probó localmente en los cinco circuitos, con ciclo día/noche de 12 minutos. La importación y activación de Pages todavía están pendientes.
+El manifiesto `.github/game-import/manifest.json` indica el orden, tamaño y SHA-256 de cada bloque. El paquete se reconstruye concatenando los bloques en ese orden; el resultado es un Git bundle completo.
+
+La versión preparada pasó las pruebas locales de los cinco circuitos, el taller y el guardado en el navegador. El ciclo día/noche está configurado en 12 minutos. El proceso de importación está documentado en [IMPORTACION.md](IMPORTACION.md).
