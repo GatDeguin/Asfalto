@@ -1054,8 +1054,8 @@
     },
     {
       "path": "assets/styles/menu-v7-experience.css",
-      "bytes": 7125,
-      "sha256": "6C6DFFB68ED555DEE7D055F391B17442E8BCF5F695E875AC7FAC8C6321F9A5F4"
+      "bytes": 7145,
+      "sha256": "FBFC0DB0796CE6A5095F5A9EC4626E5F03CC901EE2FC52F760C6C24C2B093CBE"
     },
     {
       "path": "assets/styles/race-pause-menu.css",
@@ -3154,8 +3154,8 @@
     }
   ],
   "fileCount": 614,
-  "totalBytes": 838287116,
-  "inventorySha256": "70667C8E1995E9889E5980CA8D0625940CC11372C5042318DA2BE6EB6E9DB955",
+  "totalBytes": 838287136,
+  "inventorySha256": "4E866AF0AE6D40DF124BEC8C9FFEB606528D391A0FCAAF79B87A82B183E22259",
   "selectionCases": 174,
   "environmentCases": [
     {
