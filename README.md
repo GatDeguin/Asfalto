@@ -2,6 +2,12 @@
 
 Instantánea de desarrollo para Chrome. Incluye cinco circuitos, taller 3D, cockpit, tres vehículos seleccionables, campeonato narrativo de 5/10/15 etapas, colección de premios, pruebas de manejo y álbum. El plan de 100 mejoras y sus auditorías todavía no están completos.
 
+## Jugar en Chrome
+
+https://gatdeguin.github.io/Asfalto/
+
+GitHub Pages sirve esta rama gh-pages desde la raíz. Los ajustes y el progreso se conservan en el navegador de cada jugador. La primera carga descarga modelos y texturas grandes.
+
 ## Ejecutar
 
 Requiere Node.js 20.11 o superior y Chrome con aceleración gráfica.
@@ -12,7 +18,7 @@ cd Asfalto
 node server.mjs
 ~~~
 
-Abrir la dirección local indicada, normalmente http://127.0.0.1:4273/. En Windows también se puede ejecutar INICIAR_JUEGO.bat: busca un puerto entre 4273 y 4283. No abrir index.html mediante file:. La configuración inicial de cabina/iluminación está en assets/configuration; los cambios locales se guardan en .local-data/v7 y en el navegador. No se requieren archivos del workspace original.
+Abrir la dirección local indicada, normalmente http://127.0.0.1:4273/. En Windows también se puede ejecutar INICIAR_JUEGO.bat: busca un puerto entre 4273 y 4283. No abrir index.html mediante file:. La configuración inicial de cabina/iluminación está en assets/configuration; esta edición para Pages conserva los cambios en el navegador. No se requieren archivos del workspace original.
 
 ## Estado
 
@@ -26,4 +32,4 @@ W/flecha arriba: acelerador. S/flecha abajo: freno. A/D o flechas: dirección. M
 
 ## Distribución
 
-Se conserva el historial de v6 en main. Esta subida crea la rama v7 y no cambia la configuración de GitHub Pages. Los archivos son grandes porque incluyen todos los modelos, audio y texturas locales. Licencias y atribuciones de dependencias y materiales se conservan junto a sus activos; esta publicación no cambia esas licencias.
+Se conserva el historial de v6 en main y el código fuente v7 en la rama v7. La rama gh-pages publica esta edición estática de v7. Los archivos son grandes porque incluyen todos los modelos, audio y texturas locales. Licencias y atribuciones de dependencias y materiales se conservan junto a sus activos; esta publicación no cambia esas licencias.

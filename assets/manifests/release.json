@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 1975,
-      "sha256": "59BF6147C364EF15C298C5714462F5C56676DBECCE81481A143F22C1D0FA9AC3"
+      "bytes": 2227,
+      "sha256": "9AB30A84BAF02894B2E0DA178B0E17C2AAE950CD282C001E0DC51BE6FFD9262B"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -1454,8 +1454,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 80220,
-      "sha256": "375093AF6249C4E2B9748D03F97F37CA15F7E3DDCA7E971A95DA305F38561B59"
+      "bytes": 80272,
+      "sha256": "86EC69B2F35C98438E8E044A42FB073E3F3E30850C00E8F55217564CF154C5BF"
     },
     {
       "path": "server.mjs",
@@ -3154,8 +3154,8 @@
     }
   ],
   "fileCount": 614,
-  "totalBytes": 838286812,
-  "inventorySha256": "4C4831890D4F265E4A2B9CA78A3D3C34FF1FF8EDADAE38E7EC994F98F4AA115C",
+  "totalBytes": 838287116,
+  "inventorySha256": "70667C8E1995E9889E5980CA8D0625940CC11372C5042318DA2BE6EB6E9DB955",
   "selectionCases": 174,
   "environmentCases": [
     {
