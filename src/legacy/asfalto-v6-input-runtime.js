@@ -169,7 +169,7 @@
       this.storage = options?.storage === undefined
         ? (() => {
           try {
-            return root.localStorage || null;
+            return globalThis.__asfaltoV7Storage || null;
           } catch {
             return null;
           }

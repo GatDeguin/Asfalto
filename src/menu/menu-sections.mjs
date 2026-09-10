@@ -34,7 +34,7 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
   modes.setAttribute('aria-label', 'Elegí tu modo');
   modes.innerHTML = '<header class="an-mode-heading"><h2 tabindex="-1">Elegí tu modo</h2><p>Tres formas de vivir la pasión por el asfalto.</p></header><div class="an-mode-grid"></div>';
   const modeDefinitions = [
-    { id:'drive', title:'Conducción', image:'conduccion', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:'4 rutas', last:'Libre · Viaje · Práctica' },
+    { id:'drive', title:'Conducción', image:'conduccion', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:`${root.querySelector('#v6-drive-route')?.options.length || 5} rutas`, last:'Libre · Viaje · Práctica' },
     { id:'tests', title:'Pruebas', image:'instrumental', copy:'Poné a prueba al auto y superá tus marcas.', first:'2–8 min por prueba', second:'12 pruebas', last:'Aceleración · Frenado · Precisión' },
     { id:'competition', title:'Competencia', image:'competencia', copy:'Compartí la ruta con rivales y contra el reloj.', first:'Según el evento', second:'7 formatos', last:'Club · Contrarreloj · Resistencia' },
   ];

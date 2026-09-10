@@ -12,6 +12,6 @@ export function installRaceDayCycleControls({document,storage,getController=()=>
 }
 // Resolve the runtime at click time; pre-start choices initialize the race clock.
 if(typeof document!=='undefined'){
- let storage;try{storage=globalThis.localStorage;}catch{}
+ let storage;try{storage=globalThis.__asfaltoV7Storage;}catch{}
  installRaceDayCycleControls({document,storage,getController:()=>globalThis.__cockpit?.raceWorld});
 }

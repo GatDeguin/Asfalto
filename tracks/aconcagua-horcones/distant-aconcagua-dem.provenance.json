@@ -1,0 +1,276 @@
+{
+  "source": "Copernicus DEM GLO-30 Public, AWS COG 2021 release",
+  "accessDate": "2026-09-09",
+  "bboxRequested": [
+    -70.12,
+    -32.75,
+    -69.9,
+    -32.58
+  ],
+  "bboxActual": [
+    -70.12,
+    -32.75,
+    -69.90027777777777,
+    -32.58
+  ],
+  "shape": [
+    613,
+    792
+  ],
+  "horizontalCRS": "EPSG:4326 WGS84",
+  "verticalCRS": "EGM2008 EPSG:3855",
+  "cellArcSeconds": 1,
+  "heightRangeM": [
+    3360.4833984375,
+    6915.51953125
+  ],
+  "peak": {
+    "longitude": -70.01166666666667,
+    "latitude": -32.653333333333336,
+    "heightM": 6915.51953125
+  },
+  "retrievedBytes": 3818011,
+  "blocks": [
+    {
+      "id": "Copernicus_DSM_COG_10_S33_00_W071_00_DEM",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_S33_00_W071_00_DEM/Copernicus_DSM_COG_10_S33_00_W071_00_DEM.tif",
+      "range": [
+        35838264,
+        37113295
+      ],
+      "bytes": 1275032,
+      "sha256": "cb66e2c11cf77416c74734b61a869f3eba0b84fadc2cbed49346676987d3340d",
+      "httpStatus": 206,
+      "tileIndex": 11
+    },
+    {
+      "id": "Copernicus_DSM_COG_10_S33_00_W070_00_DEM",
+      "url": "https://copernicus-dem-30m.s3.amazonaws.com/Copernicus_DSM_COG_10_S33_00_W070_00_DEM/Copernicus_DSM_COG_10_S33_00_W070_00_DEM.tif",
+      "range": [
+        27130909,
+        29542815
+      ],
+      "bytes": 2411907,
+      "sha256": "649194e521194e6ecd8a41f0dfb6bedea045aff1b661fce6a377f1d7bfe47c23",
+      "httpStatus": 206,
+      "tileIndex": 8
+    }
+  ],
+  "licenseURL": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf",
+  "sourceURL": "https://registry.opendata.aws/copernicus-dem/",
+  "processing": "Two 64KiB headers and only intersecting compressed raster tiles fetched via HTTP206. Cropped numeric DEM; no elevation editing, no source media downloaded.",
+  "prototype": {
+    "vertices": 25921,
+    "triangles": 51200,
+    "vertexSelection": "161x161 selected original raster samples, includes source maximum exactly; no synthetic height added",
+    "localOrigin": {
+      "longitude": -70.01,
+      "latitude": -32.665,
+      "heightDatumM": 3000.0
+    },
+    "localAxes": "X east, Y orthometric elevation minus3000m, Z south",
+    "horizontalProjection": "x=R*cos(lat0)*radians(lon-lon0); z=-R*radians(lat-lat0), R=6378137m; local metric approximation for visual prototype",
+    "snow": "derived elevation/slope/aspect/concavity study, no observed season",
+    "proposedPlacement": {
+      "matrixColumnMajor": [
+        0.5020214192269707,
+        0,
+        -0.8648551870904967,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0.8648551870904967,
+        0,
+        0.5020214192269707,
+        0,
+        -23635.54818705165,
+        143.292,
+        -1960.7081329558314,
+        1
+      ],
+      "scale": 1,
+      "verticalExaggeration": 1,
+      "anchorRouteStationM": 7980,
+      "anchorRoutePosition": [
+        -7930.835,
+        193.292,
+        128.424
+      ],
+      "geographicDesignAnchor": {
+        "longitude": -69.94515,
+        "latitude": -32.79643333333333,
+        "heightM": 3050,
+        "source": "Mendoza Plan de Manejo Aconcagua Tomo I, table 14, weather station; chosen design anchor, not road survey"
+      },
+      "rationale": "Map a documented Horcones station to fictional route station7980; rotate the true station-to-summit bearing to the route forward tangent. Explicit scenic adaptation, not surveyed RN7 alignment.",
+      "productionState": "NOT APPLIED; source road/collision/runtimes unchanged; cropped foothills require seam/contact integration review"
+    },
+    "glbBytes": 1242876,
+    "glbSHA256": "297610c1380adc881583bb95cb8b912044cc96ec99ea802d4d0760040842162f",
+    "sourceHeightPeakPreservedM": 6915.51953125,
+    "views": [
+      {
+        "file": "D:\\2026\\Chevy\\Reports\\Asfalto_Nacional_v7\\horcones-dem-prototype\\01-south-clay.png",
+        "projection": "orthographic CPU matplotlib Agg",
+        "azimuthDeg": -90,
+        "elevationDeg": 12,
+        "verticalExaggeration": 1
+      },
+      {
+        "file": "D:\\2026\\Chevy\\Reports\\Asfalto_Nacional_v7\\horcones-dem-prototype\\02-southwest-rock-snow.png",
+        "projection": "orthographic CPU matplotlib Agg",
+        "azimuthDeg": -120,
+        "elevationDeg": 16,
+        "verticalExaggeration": 1
+      },
+      {
+        "file": "D:\\2026\\Chevy\\Reports\\Asfalto_Nacional_v7\\horcones-dem-prototype\\03-northeast-rock-snow.png",
+        "projection": "orthographic CPU matplotlib Agg",
+        "azimuthDeg": 45,
+        "elevationDeg": 24,
+        "verticalExaggeration": 1
+      },
+      {
+        "file": "D:\\2026\\Chevy\\Reports\\Asfalto_Nacional_v7\\horcones-dem-prototype\\04-plan-rock-snow.png",
+        "projection": "orthographic CPU matplotlib Agg",
+        "azimuthDeg": -90,
+        "elevationDeg": 78,
+        "verticalExaggeration": 1
+      }
+    ]
+  },
+  "placement": {
+    "degrees": -110,
+    "shift": 11500,
+    "scale": 0.8,
+    "minimumCorridorClearanceM": 1459.7456433038958,
+    "visiblePeakStations": 6,
+    "matrixColumnMajor": [
+      -0.7875195801925874,
+      0,
+      -0.1407583418959277,
+      0,
+      0,
+      0.8,
+      0,
+      0,
+      0.1407583418959277,
+      0,
+      -0.7875195801925874,
+      0,
+      -5630.037287179041,
+      143.292,
+      10363.202709548113,
+      1
+    ],
+    "views": [
+      {
+        "sM": 20,
+        "eye": [
+          -20,
+          2.241,
+          0.007
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 13153.102537661956,
+        "sourceTerrainOcclusion": false
+      },
+      {
+        "sM": 4200,
+        "eye": [
+          -4177.418,
+          105.14,
+          203.267
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 11742.448238169693,
+        "sourceTerrainOcclusion": false
+      },
+      {
+        "sM": 9030,
+        "eye": [
+          -8926.511,
+          220.652,
+          -193.694
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 12426.092894063875,
+        "sourceTerrainOcclusion": false
+      },
+      {
+        "sM": 7980,
+        "eye": [
+          -7930.835,
+          194.542,
+          128.424
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 11905.611349640201,
+        "sourceTerrainOcclusion": false
+      },
+      {
+        "sM": 17220,
+        "eye": [
+          -16752.172,
+          426.315,
+          -1582.324
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 17298.603345947264,
+        "sourceTerrainOcclusion": false
+      },
+      {
+        "sM": 20880,
+        "eye": [
+          -20378.302,
+          496.132,
+          -1723.854
+        ],
+        "target": [
+          -5689.84228114432,
+          3275.707625,
+          11407.960853702629
+        ],
+        "distanceM": 19897.775024345436,
+        "sourceTerrainOcclusion": false
+      }
+    ],
+    "coordinateAdaptation": "Real geographic Aconcagua relief adapted as a distant scenic reference for a fictional unreferenced route. Uniform XYZ scale 0.8; no vertical exaggeration. Geographic source coordinates remain in prototype.localOrigin. Matrix acts on local East/height-minus-3000/South coordinates. This supersedes the earlier prototype.proposedPlacement, which is archival only.",
+    "corridorAudit": "Entire generated closed route sampled every 40m against conservative 800-local-metre expanded crop rectangle; six peak rays against refined visible source terrain. GPU visual review pending."
+  },
+  "license": {
+    "url": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf",
+    "attribution": "produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved",
+    "liability": "The organisations in charge of the Copernicus programme by law or by delegation do not incur any liability for any use of the Copernicus WorldDEM-30"
+  },
+  "appearance": "Mineral vertex colours and snow from source height/slope/aspect/concavity are derived art direction, not observed season, snow cover or geology. No baked lighting.",
+  "asset": {
+    "file": "distant-aconcagua-dem.glb",
+    "bytes": 1242876,
+    "sha256": "297610c1380adc881583bb95cb8b912044cc96ec99ea802d4d0760040842162f",
+    "sourceTriangles": 51200,
+    "runtimeApronTriangles": 1280
+  }
+}

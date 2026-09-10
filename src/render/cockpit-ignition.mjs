@@ -64,8 +64,10 @@ export function createCockpitIgnition({ THREE, models } = {}) {
   keyMotion.add(keychainMount);
   const motion = createIgnitionMotion(), basis = new THREE.Quaternion(), worldScale = new THREE.Vector3();
   const frameQuaternion = [0,0,0,1];
+  let ignitionSequence=0,ignitionStartAtS=null,ignitionLastTime=null,ignitionTurn=0,ignitionState='ready',ignitionFault='none';
   function resetMotion() {
     motion.reset();
+    ignitionStartAtS=null;ignitionTurn=0;if(rotor)rotor.rotation.z=RUN_ANGLE;
     keyMotion.rotation.set(0,0,0);chainMotion.rotation.set(0,0,0);fobMotion.rotation.set(0,0,0);
   }
   mount.traverse(node => {
@@ -86,7 +88,18 @@ export function createCockpitIgnition({ THREE, models } = {}) {
       basis.copy(mount.quaternion).multiply(keyMount.quaternion).multiply(keychainMount.quaternion).toArray(frameQuaternion);
       keychainMount.getWorldScale(worldScale);
       const state = motion.step(snapshot, { ...options, frameQuaternion, lengthM:.064*Math.abs(worldScale.y) });
-      keyMotion.rotation.set(state.keyPitch,0,state.keyRoll);
+      const ignition=snapshot?.engine?.ignition,time=snapshot?.timeSeconds;
+      if(ignition&&Number.isFinite(ignition.sequence)&&Number.isFinite(time)){
+        if(ignition.sequence>ignitionSequence){ignitionSequence=ignition.sequence;ignitionStartAtS=Number.isFinite(ignition.startedAtS)?ignition.startedAtS:time;}
+        else if(ignitionLastTime!==null&&time<ignitionLastTime)ignitionStartAtS=null;
+        ignitionLastTime=time;ignitionState=ignition.state;ignitionFault=snapshot.engine.fault||'none';
+      }
+      if(options.editing||options.reducedMotion){ignitionStartAtS=null;ignitionTurn=0;}
+      else if(!options.paused){const age=ignitionStartAtS===null?Infinity:Math.max(0,time-ignitionStartAtS);ignitionTurn=age<.35?(-12*Math.PI/180)*Math.exp(-age/.075)*Math.cos(age*22):0;}
+      // Starter travel stays on physical child pivots; the user's key and
+      // ignition editor mounts, their offsets and blade insertion never change.
+      keyMotion.rotation.set(state.keyPitch,0,state.keyRoll+ignitionTurn);
+      if(rotor)rotor.rotation.z=RUN_ANGLE+ignitionTurn;
       chainMotion.rotation.set(state.pitch,0,state.roll);
       fobMotion.rotation.set(-state.pitch*.18,state.twist,-state.roll*.12);
       return true;
@@ -96,7 +109,7 @@ export function createCockpitIgnition({ THREE, models } = {}) {
       { id: 'ignition-key', label: 'Llave de contacto', object: keyMount, capabilities, availability },
       { id: 'ignition-keychain', label: 'Llavero Chevrolet', object: keychainMount, capabilities, availability },
     ]),
-    diagnostics: () => ({ ready: !disposed, disposed, inserted: true, presentationAngleDeg: -42, models: ASSETS.slice(), motion:motion.getState() }),
+    diagnostics: () => ({ ready: !disposed, disposed, inserted: true, presentationAngleDeg: -42, models: ASSETS.slice(), motion:motion.getState(), ignition:{state:ignitionState,sequence:ignitionSequence,fault:ignitionFault,turnRad:ignitionTurn} }),
     dispose() {
       if (disposed) return false;
       disposed = true;

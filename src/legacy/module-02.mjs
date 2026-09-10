@@ -1,3 +1,17 @@
+import {createRoadTestCoursePresentation} from '../render/road-test-course.mjs';
+import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs';
+import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs';
+import {startupDemand} from '../runtime/startup-demand.mjs';
+import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs';
+import {installDrivingViewPreset} from '../game/driving-view-preset.mjs';
+import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs';
+import {createFramePacer} from '../performance/frame-pacer.mjs';
+import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs';
+import {prepareRenderPolicies,prewarmStableScene} from '../performance/render-warmup.mjs';
+import {renderPixelRatio} from '../render/render-resolution.mjs';
+import {withFrameMatrices} from '../render/frame-matrices.mjs';
+import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs';
+import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs';
 import {createAdvancedGraphics} from '../render/advanced-graphics.mjs';
 import {installAdvancedGraphicsSettings} from '../render/advanced-graphics-settings.mjs';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs';
@@ -28,6 +42,7 @@ import { createRaceSoundscape } from '../audio/race-soundscape.mjs';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs';
+import {engineMix} from '../audio/v7-audio-state.mjs';
 import { drivingAudioState } from '../audio/race-driving-state.mjs';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs';
 import { createVehicleCameraRig } from '../game/vehicle-camera-rig.mjs';
@@ -746,7 +761,7 @@ function createCockpitRadioController({
       return { context: engineSound.context, destination: engineSound.masterGain, shared: true };
     },
     resolveEmbeddedTrack: async (track) => await decodeEmbeddedPayload(track),
-    storage: localStorage,
+    storage: globalThis.__asfaltoV7Storage,
     storageKey: 'asfalto-v4.1-radio-state-v2',
     createObjectURL: (file) => URL.createObjectURL(file),
     revokeObjectURL: (url) => URL.revokeObjectURL(url),
@@ -1262,7 +1277,8 @@ function horizontalFovFromVerticalFov(verticalFovDeg, aspect) {
 }
 
 const payloadScript = document.getElementById('cockpit-payload');
-const payload = payloadScript.dataset.encoding === 'external-url' ? JSON.parse(new TextDecoder().decode(await globalThis.AsfaltoV6AssetCore.readExternalPayload(payloadScript))) : JSON.parse(payloadScript.textContent); payloadScript.textContent = '';
+const startupPayload = payloadScript.dataset.encoding === 'external-url' ? await loadWorkshopBootstrap(payloadScript) : {payload:JSON.parse(payloadScript.textContent),full:true};
+const payload = startupPayload.payload; payloadScript.textContent = '';
 const EMBEDDED_BACKGROUND_DATA_URL = payload.backgroundPngDataUrl || '';
 const EMBEDDED_REARVIEW_DATA_URL = payload.rearviewPngDataUrl || '';
 delete payload.backgroundPngDataUrl;
@@ -1478,8 +1494,7 @@ async function gunzipBase64ToText(base64) {
   return new TextDecoder().decode(await gunzipBase64(base64));
 }
 
-const DOS_LAGOS_ROUTE_BYTES = await globalThis.AsfaltoV5PayloadCore.decodePayloadById(document, "asfalto-v5-dos-lagos-route", gunzipBase64);
-const DOS_LAGOS_ROUTE_DATA = JSON.parse(new TextDecoder().decode(DOS_LAGOS_ROUTE_BYTES));
+let DOS_LAGOS_ROUTE_DATA;
 
 async function loadThree() {
   loadingTextEl.textContent = 'Iniciando motor 3D…';
@@ -1854,7 +1869,7 @@ function createAdjustableFrontCut({
   onChange = () => {},
 }) {
   const geometry = mesh?.geometry;
-  const position = geometry?.getAttribute('position');
+  const position = geometry?.getAttribute('vehicleReferencePosition') || geometry?.getAttribute('position');
   const sourceIndex = geometry?.getIndex();
   if (!geometry || !position || !sourceIndex) throw new Error('Frente del auto: la malla no permite un corte ajustable.');
 
@@ -1997,7 +2012,7 @@ function createAdjustableFrontCut({
     syncUi();
     if (persist) {
       try {
-        localStorage.setItem(FRONT_CUT_STORAGE_KEY, JSON.stringify({ version: 1, percent: currentPercent }));
+        globalThis.__asfaltoV7Storage.setItem(FRONT_CUT_STORAGE_KEY, JSON.stringify({ version: 1, percent: currentPercent }));
       } catch {}
     }
     if (notify) onChange(getState());
@@ -2006,14 +2021,14 @@ function createAdjustableFrontCut({
 
   function restore() {
     try {
-      const saved = JSON.parse(localStorage.getItem(FRONT_CUT_STORAGE_KEY) || 'null');
+      const saved = JSON.parse(globalThis.__asfaltoV7Storage.getItem(FRONT_CUT_STORAGE_KEY) || 'null');
       if (saved && saved.version === 1 && Number.isFinite(Number(saved.percent))) currentPercent = Number(saved.percent);
     } catch {}
     apply(currentPercent, { persist: false, notify: false });
   }
 
   function reset({ persist = true } = {}) {
-    if (persist) try { localStorage.removeItem(FRONT_CUT_STORAGE_KEY); } catch {}
+    if (persist) try { globalThis.__asfaltoV7Storage.removeItem(FRONT_CUT_STORAGE_KEY); } catch {}
     return apply(defaultPercent, { persist: false, notify: true });
   }
 
@@ -2090,7 +2105,7 @@ function dialAngle(value, max) {
   return valueToNeedleRotation(value, 0, max);
 }
 
-function createDialCanvas(kind) {
+function createDialCanvas(kind, emission = false) {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
   canvas.height = 1024;
@@ -2102,6 +2117,8 @@ function createDialCanvas(kind) {
   const minorStep = kind === 'speed' ? 10 : 0.2;
   const majorStep = kind === 'speed' ? 20 : 1;
 
+  if (emission) { ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, 1024, 1024); }
+  if (!emission) {
   const background = ctx.createRadialGradient(cx - 105, cy - 135, 30, cx, cy, outer);
   background.addColorStop(0, '#272a2c');
   background.addColorStop(0.28, '#111315');
@@ -2123,6 +2140,7 @@ function createDialCanvas(kind) {
   ctx.arc(cx, cy, outer - 3, 0, Math.PI * 2);
   ctx.stroke();
 
+  }
   const count = Math.round(max / minorStep);
   for (let i = 0; i <= count; i++) {
     const value = i * minorStep;
@@ -2160,7 +2178,7 @@ function createDialCanvas(kind) {
   ctx.font = kind === 'speed' ? '700 45px Arial, sans-serif' : '700 49px Arial, sans-serif';
   ctx.fillStyle = '#f5f6f1';
   ctx.shadowColor = 'rgba(255,255,255,.18)';
-  ctx.shadowBlur = 5;
+  ctx.shadowBlur = emission ? 0 : 5;
   for (let value = 0; value <= max + 0.001; value += majorStep) {
     const angle = dialAngle(value, max);
     const radius = outer - 155;
@@ -2181,7 +2199,7 @@ function createDialCanvas(kind) {
   ctx.fillText(kind === 'speed' ? 'CHEVY SS' : 'CHEVY 250', cx, cy + 208);
 
   // Marcas de tornillos y reflejos muy sutiles para integrar el instrumento al tablero.
-  for (const a of [0.25, 2.89, 3.39, 6.03]) {
+  for (const a of (emission ? [] : [0.25, 2.89, 3.39, 6.03])) {
     const x = cx + Math.cos(a) * (outer - 22);
     const y = cy + Math.sin(a) * (outer - 22);
     const screw = ctx.createRadialGradient(x - 4, y - 5, 1, x, y, 15);
@@ -2257,12 +2275,14 @@ function createGauge(THREE, kind, radius) {
   group.add(shadow);
 
   const faceTexture = new THREE.CanvasTexture(createDialCanvas(kind));
+  const emissionTexture = new THREE.CanvasTexture(createDialCanvas(kind, true));
+  emissionTexture.colorSpace = THREE.SRGBColorSpace;
   faceTexture.colorSpace = THREE.SRGBColorSpace;
   faceTexture.minFilter = THREE.LinearMipmapLinearFilter;
   faceTexture.magFilter = THREE.LinearFilter;
   const face = new THREE.Mesh(
     new THREE.CircleGeometry(radius, 96),
-    new THREE.MeshStandardMaterial({ map:faceTexture,roughness:.78,metalness:0,emissiveMap:faceTexture,emissive:0xc5d49a,emissiveIntensity:0 }),
+    new THREE.MeshStandardMaterial({ map:faceTexture,roughness:.78,metalness:0,emissiveMap:emissionTexture,emissive:0xc9d5ac,emissiveIntensity:0 }),
   );
   group.add(face);
 
@@ -2286,7 +2306,7 @@ function createGauge(THREE, kind, radius) {
   needleGeometry.computeVertexNormals();
   const needle = new THREE.Mesh(
     needleGeometry,
-    new THREE.MeshStandardMaterial({ color: 0xf0eee6, metalness: 0.42, roughness: 0.34, emissive: 0x10100e }),
+    new THREE.MeshStandardMaterial({ color: 0xf0eee6, metalness: 0.42, roughness: 0.34, emissive: 0xc9d5ac, emissiveIntensity: 0 }),
   );
   needle.position.z = 0.037;
   group.add(needle);
@@ -2319,10 +2339,10 @@ function createGauge(THREE, kind, radius) {
     new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       transparent: true,
-      opacity: 0.055,
-      roughness: 0.08,
+      opacity: 0.035,
+      roughness: 0.18,
       metalness: 0,
-      transmission: 0.2,
+      transmission: 0,
       depthWrite: false,
     }),
   );
@@ -2343,7 +2363,13 @@ function createGauge(THREE, kind, radius) {
   }
 
   update(kind === 'rpm' ? ENGINE_SPEC.idleRpm : 0, 1 / 60, 'N');
-  return { group, update, needle, display, setIllumination(power,night){face.material.emissiveIntensity=power*.85;needle.material.emissiveIntensity=.05+power*2.2;display.mesh.material.color.setScalar(night?.12+.88*power:1);redTail.material.color.setHex(0xb9302c).multiplyScalar(night?.2+.8*power:1);} };
+  return { group, update, needle, display, getReading:()=>({value:spring.value,digitalValue:Math.round(spring.value)}), setIllumination(power,night){
+    const level = Number.isFinite(power) ? clamp(power,0,1) : 0;
+    face.material.emissiveIntensity = level * .5;
+    needle.material.emissiveIntensity = level * .4;
+    display.mesh.material.color.setScalar(night ? .1 + .7 * level : .85);
+    redTail.material.color.setHex(0xb9302c).multiplyScalar(night ? .2 + .65 * level : 1);
+  } };
 }
 
 function createGaugeCluster(THREE, layout) {
@@ -3232,7 +3258,7 @@ class EngineSoundSynth {
         this.source = node;
         this.params = node.parameters;
         this.backend = 'AudioWorklet PTR v2';
-        node.port.postMessage({ type: 'start', rpm: 320 });
+        // The physics ignition sequence triggers the start impulse when a session starts.
       } catch (workletError) {
         if (!workletError?.expectedFallback) console.warn('AudioWorklet no disponible; se usa síntesis nativa avanzada de respaldo.', workletError);
         this.createNativeFallback();
@@ -3533,13 +3559,21 @@ class EngineSoundSynth {
     this.setParam('quality', qualityIndex, 0.05);
   }
 
-  update(vehicle, controls, gear, {cameraMode='cockpit',physicalRoad=false}={}) {
+  update(vehicle, controls, gear, {cameraMode='cockpit',physicalRoad=false,ignition=null}={}) {
     if (!this.context || !this.started) return;
     const audio=this.getSettings().audio,now=this.context.currentTime,inside=cameraMode==='cockpit';
+    if(Number.isSafeInteger(ignition?.sequence)&&ignition.sequence>0&&ignition.sequence!==this.lastIgnitionSequence){this.lastIgnitionSequence=ignition.sequence;this.source?.port?.postMessage({type:'start',rpm:vehicle.rpm});}
     if(this.cameraMode!==cameraMode){this.cameraMode=cameraMode;const cabin=inside?audio.cabin:0;this.cabinLowpass?.frequency.setTargetAtTime(inside?4600+4400*(1-cabin):14500,now,.18);this.wetGain?.gain.setTargetAtTime(inside?.025+cabin*.18:.012,now,.18);}
     this.setParam('roadLevel',physicalRoad?0:audio.road,.04);this.setParam('brakeLevel',physicalRoad?0:audio.brakes,.04);
-    this.setParam('exhaustLevel',audio.exhaust*(inside?.78:1.12),.10);this.setParam('intakeLevel',audio.intake*(inside?.82:1.08),.10);
-    this.setParam('mechanicalLevel',audio.mechanical*(inside?1.10:.82),.10);
+    const v7Prefs=globalThis.__asfaltoV7Experience?.preferences?.()||{};
+    const v7Mix=engineMix({rpm:vehicle.rpm,load:vehicle.engineLoad||0,throttle:vehicle.effectiveThrottle??controls.throttle,cameraMode,reducedRange:v7Prefs.reducedRange});
+    this.setParam('engineLevel',audio.engine*v7Mix.engineLevel*(v7Prefs.engineVolume??1),.08);
+    this.setParam('exhaustLevel',audio.exhaust*v7Mix.exhaustLevel,.10);
+    this.setParam('intakeLevel',audio.intake*v7Mix.intakeLevel,.10);
+    this.setParam('mechanicalLevel',audio.mechanical*v7Mix.mechanicalLevel,.10);
+    this.setParam('popsLevel',audio.pops*v7Mix.popsLevel,.10);
+    this.setParam('stereoWidth',audio.stereoWidth*v7Mix.stereoWidth,.12);
+    for(const field of ['threshold','ratio','knee'])this.compressor?.[field]?.setTargetAtTime(v7Mix.compressor[field],now,.12);
     const numericGear = gear === 'R' ? -1 : gear === 'N' ? 0 : Number(gear) || 0;
     this.setParam('rpm', vehicle.rpm, 0.020);
     this.setParam('throttle', vehicle.effectiveThrottle ?? controls.throttle, 0.014);
@@ -3564,7 +3598,7 @@ class EngineSoundSynth {
       const firingEmphasis = voice.order === 3 ? 1.0 : 0.68;
       voice.gain.gain.setTargetAtTime(
         voice.level * firingEmphasis * (0.20 + throttle * 0.76 + load * 0.28)
-          * audio.engine * profileDrive,
+          * audio.engine * v7Mix.engineLevel * (v7Prefs.engineVolume??1) * profileDrive,
         ctx.currentTime,
         0.026,
       );
@@ -3577,7 +3611,7 @@ class EngineSoundSynth {
       0.045,
     );
     this.fallback.exhaustGain.gain.setTargetAtTime(
-      (0.018 + throttle * 0.11 + load * 0.055) * audio.exhaust * profileDrive,
+      (0.018 + throttle * 0.11 + load * 0.055) * audio.exhaust * v7Mix.exhaustLevel * (v7Prefs.engineVolume??1) * profileDrive,
       ctx.currentTime,
       0.030,
     );
@@ -3587,7 +3621,7 @@ class EngineSoundSynth {
       0.045,
     );
     this.fallback.intakeGain.gain.setTargetAtTime(
-      Math.pow(throttle, 1.12) * (0.025 + vehicle.rpm / 6000 * 0.085) * audio.intake,
+      Math.pow(throttle, 1.12) * (0.025 + vehicle.rpm / 6000 * 0.085) * audio.intake * v7Mix.intakeLevel * (v7Prefs.engineVolume??1),
       ctx.currentTime,
       0.025,
     );
@@ -3700,7 +3734,7 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
 
   function readSaved() {
     try {
-      const raw = JSON.parse(localStorage.getItem(BACKGROUND_STORAGE_KEY) || 'null');
+      const raw = JSON.parse(globalThis.__asfaltoV7Storage.getItem(BACKGROUND_STORAGE_KEY) || 'null');
       if (raw && typeof raw === 'object') state = normalize(raw);
     } catch (error) {
       console.warn('No se pudo restaurar el fondo:', error);
@@ -3710,7 +3744,7 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
 
   function persist({ announce = false } = {}) {
     try {
-      localStorage.setItem(BACKGROUND_STORAGE_KEY, JSON.stringify(state));
+      globalThis.__asfaltoV7Storage.setItem(BACKGROUND_STORAGE_KEY, JSON.stringify(state));
       customPersistenceAvailable = true;
       if (announce) setStatus(state.source === 'custom' ? 'Fondo personalizado guardado' : 'Fondo incluido guardado', 'saved');
       return true;
@@ -4020,7 +4054,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
 
   function loadSavedLayout() {
     try {
-      const raw = initialLayout || JSON.parse(localStorage.getItem(EDITOR_STORAGE_KEY) || 'null');
+      const raw = initialLayout || JSON.parse(globalThis.__asfaltoV7Storage.getItem(EDITOR_STORAGE_KEY) || 'null');
       if (!raw || ![1, 2, EDITOR_SCHEMA_VERSION].includes(raw.version) || !raw.transforms || typeof raw.transforms !== 'object') return false;
       const migrated = migrateCompositionState(raw);
       const saved = sanitizeCompositionState(raw);
@@ -4072,7 +4106,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     const snapshot = serialize();
     let localSaved = false;
     try {
-      localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(snapshot));
+      globalThis.__asfaltoV7Storage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(snapshot));
       localSaved = true;
       dirty = false;
       if (announce && !fileStore?.enabled) setStatus('Composición guardada en este dispositivo', 'saved');
@@ -4484,14 +4518,14 @@ function normalizeGameSettings(raw = {}) {
 
 function loadGameSettings() {
   try {
-    return normalizeGameSettings(JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}'));
+    return normalizeGameSettings(JSON.parse(globalThis.__asfaltoV7Storage.getItem(SETTINGS_STORAGE_KEY) || '{}'));
   } catch {
     return normalizeGameSettings();
   }
 }
 
 function saveGameSettings(settings) {
-  try { localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); } catch {}
+  try { globalThis.__asfaltoV7Storage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); } catch {}
 }
 
 let modularHostInitialization = null;
@@ -4510,6 +4544,21 @@ try {
   window.__chevyV6Three = THREE;
   window.__chevyThreeLoadError = null;
   window.dispatchEvent(new CustomEvent('chevy-three-ready', { detail: THREE }));
+  // Publish the exact shared Three/template for home before any cockpit/race preparation.
+  const deferredStartupAssets = await startupDemand.run(async ({signal,stage}) => {
+    stage('Cargando recursos del cockpit…',0,2);
+    const fullPayload = startupPayload.full ? payload : JSON.parse(new TextDecoder().decode(await readDeferredPayload(payloadScript,signal)));
+    stage('Cargando trazado inicial…',1,2);
+    const routeNode = document.getElementById('asfalto-v5-dos-lagos-route');
+    const routeBytes = routeNode.dataset.encoding === 'external-url' ? await readDeferredPayload(routeNode,signal) : await globalThis.AsfaltoV5PayloadCore.decodePayloadById(document,'asfalto-v5-dos-lagos-route',gunzipBase64);
+    if(signal.aborted)throw signal.reason;
+    const route=JSON.parse(new TextDecoder().decode(routeBytes));
+    stage('Construyendo cockpit y preparando controles…');
+    return {fullPayload,route};
+  });
+  Object.assign(payload,deferredStartupAssets.fullPayload);
+  delete payload.threeCoreGz;delete payload.threeModuleGz;delete payload.backgroundPngDataUrl;delete payload.rearviewPngDataUrl;
+  DOS_LAGOS_ROUTE_DATA=deferredStartupAssets.route;
   setLoading('Creando cockpit…');
   let gameSettings = loadGameSettings();
   const backgroundEditor = createBackgroundEditor({
@@ -4695,7 +4744,8 @@ try {
   cockpitEntranceRoot.name = 'Camera entrance compensation';
   const cockpitHeadRoot=new THREE.Group();cockpitHeadRoot.name='Physical head compensation';
   camera.add(cockpitHeadRoot);cockpitHeadRoot.add(cockpitEntranceRoot);
-  cockpitEntranceRoot.add(cockpit);
+  const cockpitViewMount=new THREE.Group();cockpitViewMount.name='Optional driving eye compensation';
+  cockpitEntranceRoot.add(cockpitViewMount);cockpitViewMount.add(cockpit);
 
   const hemi = new THREE.HemisphereLight(0xe9f1ff, 0x191a1d, 1.15);
   scene.add(hemi);
@@ -4830,7 +4880,7 @@ const RaceCore = (() => {
   }
 
   function defaultStorage() {
-    try { return typeof globalThis !== 'undefined' ? (globalThis.localStorage || null) : null; }
+    try { return typeof globalThis !== 'undefined' ? (globalThis.__asfaltoV7Storage || null) : null; }
     catch { return null; }
   }
 
@@ -5341,11 +5391,11 @@ const RaceCore = (() => {
       return feedback;
     }
 
-    debugSet(partial = {}) {
+    debugSet(partial = {}, { publish = true } = {}) {
       Object.assign(this.state, partial);
       if (partial.s != null) this.state.s = this.track.closed === false ? clamp(partial.s, 0, this.track.length) : mod(partial.s, this.track.length);
       if (partial.raceProgress != null && this.track.closed === false) this.state.raceProgress = clamp(partial.raceProgress, 0, this.track.length);
-      return this.getState();
+      return publish ? this.getState() : undefined;
     }
 
     getGhost() { return this._ghost ? JSON.parse(JSON.stringify(this._ghost)) : { version: 1, lapTime: null, samples: [] }; }
@@ -5442,7 +5492,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   const onRenderingScaleChanged = typeof options.onRenderingScaleChanged === 'function' ? options.onRenderingScaleChanged : () => {};
   const playerVisualBody = options.playerVisualBody || null;
   const playerWheelVisualRig = options.playerWheelVisualRig || null;
-  const storage = (() => { try { return window.localStorage; } catch { return null; } })();
+  const storage = (() => { try { return globalThis.__asfaltoV7Storage; } catch { return null; } })();
 
   const clamp = RaceCore.clamp;
   const lerp = RaceCore.lerp;
@@ -5670,6 +5720,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
       if (resultsOpen) { closeResults(); event.preventDefault(); return; }
       if (settingsOpen) { setSettingsOpen(false); event.preventDefault(); return; }
     }
+    if(globalThis.__asfaltoV7Experience?.shouldBlockDrivingInput(event))return;
     const formControl = event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement;
     if (formControl) return;
     const action = bindingActionForCode(event.code);
@@ -5796,6 +5847,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     async function ensureStartedInternal() {
       if (started && context) { if (context.state !== 'running') await context.resume(); return true; }
       const sharedAudioReady = await ensureAudioStarted();
+      globalThis.__asfaltoV7Experience?.bindAudio(getSharedAudioContext(),options.getUiAudioDestination?.()||getSharedAudioDestination());
       context = getSharedAudioContext() || null;
       ownsContext = false;
       if (!context && sharedAudioReady === false) return false;
@@ -5917,6 +5969,14 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   ...activeTrack.physicsBridge,
   getEnvironmentState: () => readEnvironmentSimulationState(),
 });
+const roadTestCourse=createRoadTestCoursePresentation(THREE,{scene});
+let roadTestCourseUnsubscribe=null;
+function clearRoadTestGates(){roadTestCourseUnsubscribe?.();roadTestCourseUnsubscribe=null;roadTestCourse.clear();}
+function setRoadTestGates(gates,{sessionSequence}={}){
+ const state=simulation.getPhysicalObservationState();if(state.sessionSequence!==sessionSequence)throw new Error('Road-test gate session changed');
+ const result=roadTestCourse.set(gates,{sessionSequence,referenceChart:state.referenceChart});roadTestCourseUnsubscribe?.();
+ roadTestCourseUnsubscribe=simulation.subscribePhysicalSteps({sample(){},rebase:event=>roadTestCourse.rebase(event),invalidated:()=>clearRoadTestGates()});return result;
+}
 const v6InputAdapter = globalThis.AsfaltoV6Input.createInputAdapter();
 v6InputAdapter.setProfile(getSelectedV6Profile());
 v6InputAdapter.setChassisConfig(appliedChassisConfig);
@@ -5956,7 +6016,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const drivingLights=createVehicleLightControl({storage});let environmentLightRequest=null;
   function activeHeadlightObjects(){const lights=options.getPlayerPresentation?.()?.getLights?.();return lights?.length?lights:environmentHeadlights;}
   function setDrivingLights(kind,value){if(kind==='mode')drivingLights.setMode(value);else if(kind==='position')drivingLights.setPosition(value);else if(kind==='cycle')drivingLights.cycle();else if(kind==='beam')drivingLights.toggleBeam();else if(kind==='dimmer')drivingLights.setDimmer(value);else if(kind==='automatic')drivingLights.setAutomatic(value);const player=options.getPlayerPresentation?.();player?.setLightMode?.(drivingLights.getState().mode);if(environmentLightRequest)applyEnvironmentLightState(environmentLightRequest);return drivingLights.getState();}
-  function updateExterior(controller,snapshot){if(!controller||!snapshot)return;const time=snapshot.timeSeconds||0,dt=Math.max(0,Math.min(.1,time-(exteriorTimes.get(controller)??time)));exteriorTimes.set(controller,time);const weather=raceWeatherEffects.getSoundscapeState();const player=controller===options.getPlayerPresentation?.(),lightMode=player?drivingLights.getState().mode:(environmentLightRequest?.headlights?'low':'off');if(player&&falconPhysicalBody?.visible===false)falconPresentation?.setActive?.(false);if(controller.setLightMode)controller.setLightMode(lightMode);else controller.setHeadlights(lightMode==='low'||lightMode==='high');controller.update({dt,allowGlare:!player||!['cockpit','hood'].includes(options.getCameraMode?.()),active:player||!!falconPhysicalBody?.visible,phase:settings.timeOfDay,nightAmount:raceDayActive?raceDayClock.state.nightFactor:undefined,snapshot,speedMps:Math.hypot(...(snapshot.chassis?.linearVelocity||[0,0,0])),brake:snapshot.controls?.brake||0,camera,viewportHeight:renderer.domElement.height,quality:performanceState.qualityTier,trackId:track.id,surface:snapshot.wheels?.find(w=>w.contact)?.surface||'asphalt',rain:weather.rainIntensity,wetness:weather.wetness,paused:simulation.state.status==='PAUSED'});if(player&&controller.getLightingDiagnostics?.().projectorsActive){for(const light of environmentHeadlights){light.visible=false;light.intensity=0;}refreshEnvironmentLightingState();}}
+  function updateExterior(controller,snapshot){if(!controller||!snapshot)return;const time=snapshot.timeSeconds||0,dt=Math.max(0,Math.min(.1,time-(exteriorTimes.get(controller)??time)));exteriorTimes.set(controller,time);const weather=raceWeatherEffects.getSoundscapeState();const player=controller===options.getPlayerPresentation?.(),lightMode=player?drivingLights.getState().mode:(environmentLightRequest?.headlights?'low':'off');if(player&&falconPhysicalBody?.visible===false)falconPresentation?.setActive?.(false);if(controller.setLightMode)controller.setLightMode(lightMode);else controller.setHeadlights(lightMode==='low'||lightMode==='high');controller.update({dt,allowGlare:!player||!['cockpit','hood'].includes(options.getCameraMode?.()),active:player||!!falconPhysicalBody?.visible,phase:settings.timeOfDay,nightAmount:raceDayActive?raceDayClock.state.nightFactor:undefined,snapshot,speedMps:Math.hypot(...(snapshot.chassis?.linearVelocity||[0,0,0])),brake:snapshot.controls?.brake||0,camera,viewportHeight:renderer.domElement.height,quality:performanceState.qualityTier,trackId:track.id,surface:snapshot.wheels?.find(w=>w.contact)?.surface||'asphalt',rain:weather.rainIntensity,wetness:weather.wetness,reducedMotion:document.body.classList.contains('v6-reduce-motion')||window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,editing:document.body.classList.contains('editor-mode-active'),paused:simulation.state.status==='PAUSED'});if(player&&controller.getLightingDiagnostics?.().projectorsActive){for(const light of environmentHeadlights){light.visible=false;light.intensity=0;}refreshEnvironmentLightingState();}}
   let falconPhysicalBody = null;
   let physicalRenderBridge = null;
   let authoredCollisionProbe = null;
@@ -6674,7 +6734,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const required=state.nightFactor>.12||['rain','storm','fog','light-snow','heavy-snow'].includes(settings.weather);
     if(environmentLightRequest&&environmentLightRequest.headlights!==required)applyEnvironmentLightState({...environmentLightRequest,headlights:required});
   }
-  async function setDayCycleOptions(options={}){const result=raceDayClock.setOptions(options);if('enabled'in options)reflectRaceDayCycleEnabled(result.enabled,{document,storage});if(!result.enabled)releaseRaceDayCycle();else if(!raceDayActive&&['RUNNING','COUNTDOWN','PAUSED'].includes(simulation.state.status))await prepareRaceDayCycle();return raceDayClock.diagnostics();}
+  async function setDayCycleOptions(options={}, {persist=true}={}){const result=raceDayClock.setOptions(options);if('enabled'in options&&persist)reflectRaceDayCycleEnabled(result.enabled,{document,storage});if(!result.enabled)releaseRaceDayCycle();else if(!raceDayActive&&['RUNNING','COUNTDOWN','PAUSED'].includes(simulation.state.status))await prepareRaceDayCycle();return raceDayClock.diagnostics();}
 
   function environmentCacheDiagnostics() {
     let bytes = 0;
@@ -7636,13 +7696,21 @@ listen(window,'chevy:vehicle-config',(event)=>{
     rearviewRenderAccumulator += Math.max(0, Number(frameDt) || 0);
     const intervalSeconds=Number(frameDt);const ms=Number.isFinite(intervalSeconds)&&intervalSeconds>=0?Math.max(.001,intervalSeconds*1000):1000;performanceState.averageFrameMs=lerp(performanceState.averageFrameMs,ms,.045);
     if(!performanceState.dynamicResolution||contextLost)return performanceState.performanceScale;
-    const diagnostics=performanceGovernor.sample({frameMs:ms,frameWorkMs:clamp(Number(frameWorkMs)||0,0,1000),heapBytes:Math.max(0,Number(globalThis.performance?.memory?.usedJSHeapSize)||0),gpuTextures:Math.max(0,Number(renderer.info?.memory?.textures)||0),gpuGeometries:Math.max(0,Number(renderer.info?.memory?.geometries)||0)});
+    const targetFps=options.getTargetFps?.()||60;
+    if(performanceState.targetFps!==targetFps){performanceState.targetFps=targetFps;performanceGovernor.beginWindow('presentation-'+targetFps);}
+    const diagnostics=performanceGovernor.sample({targetFps,frameMs:ms,frameWorkMs:Math.max(0,Number(frameWorkMs)||0),heapBytes:Math.max(0,Number(globalThis.performance?.memory?.usedJSHeapSize)||0),gpuTextures:Math.max(0,Number(renderer.info?.memory?.textures)||0),gpuGeometries:Math.max(0,Number(renderer.info?.memory?.geometries)||0)});
     performanceState.p50FrameMs=diagnostics.p50FrameMs;performanceState.p95FrameMs=diagnostics.p95FrameMs;performanceState.p50FrameWorkMs=diagnostics.p50FrameWorkMs;performanceState.p95FrameWorkMs=diagnostics.p95FrameWorkMs;
     return performanceState.performanceScale;
   }
+  let visualWarmup=null;
+  async function prepareVisualPolicies(signal){
+    if(!options.precompileGraphics)return;
+    visualWarmup=await prepareRenderPolicies({signal,getTier:()=>performanceState.qualityTier,applyTier:tier=>{const policy=TRACK_RENDER_POLICIES[tier];performanceState.qualityTier=tier;performanceState.performanceScale=policy.resolutionScale;renderer.shadowMap.enabled=policy.shadows;applyPerformanceTier();onRenderingScaleChanged(policy.resolutionScale);},prepare:()=>options.precompileGraphics(),paint:()=>new Promise(resolve=>requestAnimationFrame(resolve))});
+    performanceGovernor.beginWindow('prepared');
+  }
   function getPerformanceScale(){return performanceState.performanceScale;}
   function getPerformanceTier(){return performanceState.qualityTier;}
-  function getPerformanceDiagnostics(){return {...performanceGovernor.diagnostics(),surfaceRelief:surfaceReliefDiagnostics()};}
+  function getPerformanceDiagnostics(){return {...performanceGovernor.diagnostics(),surfaceRelief:surfaceReliefDiagnostics(),warmup:visualWarmup};}
   renderer.shadowMap.enabled=TRACK_RENDER_POLICIES[initialPerformanceTier].shadows;
   applyPerformanceTier();
 
@@ -7676,15 +7744,18 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let circuitSelectionTail=Promise.resolve();
   function selectCircuit(id,options={}) {
     const operation=circuitSelectionTail.then(async()=>{
-      const loading=globalThis.__asfaltoLoading?.begin('Preparando la ruta','Cargando terreno, asfalto y entorno…');
-      try{return await performCircuitSelection(id,options)}finally{loading?.end()}
+      options?.signal?.throwIfAborted();
+      const loading=globalThis.__asfaltoLoading?.begin('Preparando la ruta','Cargando terreno, asfalto y entorno…',{track:id});
+      await loading?.painted;
+      try{return await performCircuitSelection(id,options)}finally{await loading?.end()}
     });
     const settled=operation.then(()=>undefined,()=>undefined);
     circuitSelectionTail=settled;
     settled.then(()=>{if(circuitSelectionTail===settled)circuitSelectionTail=Promise.resolve();});
     return operation;
   }
-  async function performCircuitSelection(id,{announce=true,skyId,weather}={}) {
+  async function performCircuitSelection(id,{announce=true,skyId,weather,signal}={}) {
+    signal?.throwIfAborted();
     const environmentTransition = beginEnvironmentSelection();
     const facade=globalThis.__asfaltoV6Modular;
     const manager=facade.trackManager;
@@ -7699,8 +7770,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
         if (weather != null) settings.weather = weather;
       }
       syncUiSettings(); await syncEnvironment();
+      signal?.throwIfAborted();
     }
     function commitCandidateEnvironment() {
+      signal?.throwIfAborted();
       if (environmentTransition.isCurrent()) {
         environmentTransition.commit();
         saveUiSettings({ environment: skyId != null || weather != null });
@@ -7708,11 +7781,13 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }
     try {
       candidate=await facade.selectTrack(id);
+      signal?.throwIfAborted();
       if(candidate.id===previousId&&simulation.track===candidate.gameplay){
         if (skyId != null || weather != null) await applyCandidateEnvironment();
         ui.circuit.value=id;resetRaceToIdle({vehicle:true});applyTheme({announce});commitCandidateEnvironment();return getState();
       }
       await simulation.replaceTrack({track:candidate.gameplay,trackAdapter:candidate,physicsBridge:candidate.physicsBridge});
+      signal?.throwIfAborted();
       track=candidate.gameplay;
       setAuthoredTrackVisuals({visualRoot:candidate.visualRoot,collisionRoot:candidate.collisionRoot,collisionProbe:candidate.collisionProbe},{replace:true});
        ui.circuit.value=id;await applyCandidateEnvironment();simulation.configure(coreSettingsFromUi());lastState=simulation.getState();feedback=simulation.step(0,{speedMps:0,steer:0,throttle:0,brake:0,handbrake:0});maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=null;lastEventSignature='';applyTheme({announce});onVehicleReset({reason:'circuit-change',speedMps:0});updateHud();commitCandidateEnvironment();return getState();
@@ -7733,13 +7808,17 @@ listen(window,'chevy:vehicle-config',(event)=>{
       environmentTransition.finish();
     }
   }
-  async function start() {
+  async function start({signal}={}) {
+    signal?.throwIfAborted();
     releaseRaceDayCycle();
     raceWeatherEffects.reset();
     await syncEnvironment({prepareCycle:false});
     await prepareRaceDayCycle();
     await simulation.prepare();
-    await Promise.allSettled([ensureAudioStarted(),raceAudio.ensureStarted()]);closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:'N'});simulation.configure(coreSettingsFromUi());simulation.start();lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=null;ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(Math.ceil(lastState.countdown||3)),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
+    signal?.throwIfAborted();
+    await prepareVisualPolicies(signal);
+    signal?.throwIfAborted();
+    await Promise.allSettled([ensureAudioStarted(),raceAudio.ensureStarted()]);closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:'N'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start();lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=null;ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(Math.ceil(lastState.countdown||3)),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
   }
   function pause({reason='pause'}={}) {simulation.pause();lastState=simulation.getState();ui.pause.textContent='▶';ui.pause.setAttribute('aria-label','Reanudar carrera');showMessage('PAUSA',{duration:0});clearInputs();onInputCaptureRelease('pause');driverControlPipeline.reset();window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason}}));return getState();}
   function resume() {modularRaceCue.classList.remove("show");modularRaceCue.textContent="";simulation.resume();lastState=simulation.getState();ui.pause.textContent='Ⅱ';ui.pause.setAttribute('aria-label','Pausar carrera');showMessage(lastState.status==='COUNTDOWN'?String(Math.ceil(lastState.countdown)):'REANUDAR',{duration:650,countdown:lastState.status==='COUNTDOWN'});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status}}));return getState();}
@@ -7913,7 +7992,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if(renderingRearview||contextLost||!renderer||!rearCamera||!rearviewTarget||!rearviewMaterial||!camera)return false;
     rearviewRenderAccumulator=0;
     renderingRearview=true;const previousTarget=renderer.getRenderTarget();const previousCockpitVisible=cockpit?.visible;const previousShadow=renderer.shadowMap?.autoUpdate;const previousScissorTest=renderer.getScissorTest?.()||false;renderer.getViewport(rearPreviousViewport);renderer.getScissor(rearPreviousScissor);try{
-      if(cockpit)cockpit.visible=false;if(renderer.shadowMap)renderer.shadowMap.autoUpdate=false;const hasPhysicalRearPose=Array.isArray(physicalRearPose?.position)&&Array.isArray(physicalRearPose?.look);if(hasPhysicalRearPose){rearCamera.position.fromArray(physicalRearPose.position);rearCamera.up.copy(camera.up);rearCamera.lookAt(new THREE.Vector3().fromArray(physicalRearPose.look));}else{rearCamera.position.copy(camera.position);rearCamera.position.y+=.02;const behind=new THREE.Vector3(0,-.04,13).applyQuaternion(camera.quaternion).add(rearCamera.position);rearCamera.up.copy(camera.up);rearCamera.lookAt(behind);}renderer.setRenderTarget(rearviewTarget);renderer.setViewport(0,0,rearviewTarget.width,rearviewTarget.height);renderer.setScissorTest(false);renderer.clear(true,true,true);renderer.render(scene,rearCamera);return true;
+      if(cockpit)cockpit.visible=false;if(renderer.shadowMap)renderer.shadowMap.autoUpdate=false;const hasPhysicalRearPose=Array.isArray(physicalRearPose?.position)&&Array.isArray(physicalRearPose?.look);if(hasPhysicalRearPose){rearCamera.position.fromArray(physicalRearPose.position);rearCamera.up.copy(camera.up);rearCamera.lookAt(new THREE.Vector3().fromArray(physicalRearPose.look));}else{rearCamera.position.copy(camera.position);rearCamera.position.y+=.02;const behind=new THREE.Vector3(0,-.04,13).applyQuaternion(camera.quaternion).add(rearCamera.position);rearCamera.up.copy(camera.up);rearCamera.lookAt(behind);}renderer.setRenderTarget(rearviewTarget);renderer.setScissorTest(false);renderer.clear(true,true,true);renderer.render(scene,rearCamera);return true;
     }finally{renderer.setRenderTarget(previousTarget);renderer.setViewport(rearPreviousViewport);renderer.setScissor(rearPreviousScissor);renderer.setScissorTest(previousScissorTest);if(cockpit)cockpit.visible=previousCockpitVisible;if(renderer.shadowMap)renderer.shadowMap.autoUpdate=previousShadow;renderingRearview=false;}
   }
   function resize() {
@@ -7989,6 +8068,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if (environmentHostDisposal) return environmentHostDisposal;
     environmentHostDisposed = true;
     environmentHostDisposal = (async () => {
+    clearRoadTestGates();roadTestCourse.dispose();
     falconPresentation?.dispose();falconPresentation=null;
     raceWeatherEffects.dispose();
     releaseRaceDayCycle();raceSkyTransition?.dispose();
@@ -8027,8 +8107,18 @@ listen(window,'chevy:vehicle-config',(event)=>{
   return {
     update,getInput,getControlGate,start,pause,resume,togglePause,recover,selectCircuit,setSettings,setSettingsOpen,getState,getCameraMotion,
     ...(isAsfaltoV5Qa ? { debugSetRaceState, debugDrivePhysicalRoute, debugTeleportPhysicalVehicle } : {}),
-    renderRearview,attachRearview,setAuthoredTrackVisuals,setFalconVisualRig,setFalconPresentation:controller=>{falconPresentation=controller;},getFalconVisualRoot:()=>falconVisualRig?.root||null,getRenderFrame:()=>simulation.getRenderFrame(),getV6Diagnostics:()=>({...simulation.getDiagnostics(),driving:driverControlPipeline.diagnostics(),renderBridge:physicalRenderBridge?.diagnostics?.()||null,playerWheelVisuals:playerWheelVisualRig?.getDiagnostics?.()||null,playerVisualYawOffsetRad:raceChevyV3.rotation.y,falconVisualInstalled:!!falconVisualRig,falconVisualVisible:!!falconPhysicalBody?.visible,falconVisualMeshes:falconVisualRig?countMeshes(falconVisualRig.root):0}),updateActiveTrackScene,getAuthoredSceneDiagnostics,syncEnvironment,selectEnvironmentPreset,applyWorkshopEnvironment,getEnvironmentDiagnostics,resize,reportFrame,getPerformanceScale,getPerformanceTier,getPerformanceDiagnostics,getResourceLifetimeDiagnostics,clearInputs,releaseTouchCaptures,dispose,
+    beginPerformanceWindow:phase=>performanceGovernor.beginWindow(phase),renderRearview,attachRearview,setAuthoredTrackVisuals,setFalconVisualRig,setFalconPresentation:controller=>{falconPresentation=controller;},getFalconVisualRoot:()=>falconVisualRig?.root||null,getRenderFrame:()=>simulation.getRenderFrame(),getV6Diagnostics:()=>({...simulation.getDiagnostics(),driving:driverControlPipeline.diagnostics(),renderBridge:physicalRenderBridge?.diagnostics?.()||null,playerWheelVisuals:playerWheelVisualRig?.getDiagnostics?.()||null,playerVisualYawOffsetRad:raceChevyV3.rotation.y,falconVisualInstalled:!!falconVisualRig,falconVisualVisible:!!falconPhysicalBody?.visible,falconVisualMeshes:falconVisualRig?countMeshes(falconVisualRig.root):0}),updateActiveTrackScene,getAuthoredSceneDiagnostics,syncEnvironment,selectEnvironmentPreset,applyWorkshopEnvironment,getEnvironmentDiagnostics,resize,reportFrame,getPerformanceScale,getPerformanceTier,getPerformanceDiagnostics,getResourceLifetimeDiagnostics,clearInputs,releaseTouchCaptures,dispose,
     getAdvancedGraphicsEnvironment:()=>({...getRaceRenderEnvironment(),skyId:raceDayActive?raceDayClock.state.skyId:settings.skyId,weather:settings.weather,keyLightDirection:keyLight.position.toArray(),keyLightColor:'#'+keyLight.color.getHexString(),sunIntensity:keyLight.visible?keyLight.intensity:0}),
+    subscribePhysicalSteps:observer=>simulation.subscribePhysicalSteps(observer),
+    getPhysicalObservationState:()=>simulation.getPhysicalObservationState(),
+    getRoadTestContext:()=>simulation.getRoadTestContext(),
+    setRoadTestGates,clearRoadTestGates,getRoadTestGatesDiagnostics:()=>roadTestCourse.diagnostics(),
+    configureChampionship:({enabled=false,onFinalClassification}={})=>simulation.configureChampionship({enabled,createLedger:createChampionshipClassificationLedger,onFinalClassification}),
+    getChampionshipClassification:()=>simulation.getChampionshipClassification(),
+    getFinalClassification:()=>simulation.getFinalClassification(),
+    retireChampionshipParticipant:(id,status,reason)=>simulation.retireChampionshipParticipant(id,status,reason),
+    invalidateChampionship:reason=>simulation.invalidateChampionship(reason),
+    renderWaterReflections:options=>raceWeatherEffects.renderWaterReflections(options),
     getWeatherEffectsDiagnostics:()=>({...raceWeatherEffects.diagnostics(),policy:weatherEffectsPolicy(regionalEnvironment || {},performanceState.qualityTier)}),
     getEffectiveFogState:()=>raceWeatherEffects.getEffectiveFogState(regionalEnvironment),
     prepareFogRender:options=>raceWeatherEffects.prepareFogRender(options),
@@ -8103,6 +8193,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
   bootFailureDisposer = () => {
     try { return disposeBeforeCockpitRoof(); } finally { disposeCockpitRoof(); }
   };
+  let gpuFrameTimer=null;
+  let cockpitDisplayLods=null,framePacingSettings=null,visualPrecompileInProgress=false,cockpitViewPreset=null,lastEffectiveCockpitView=null;
   let cockpitMirrors = null;
   let cockpitIgnition = null,cockpitLightSwitch=null;
   let rayTracing=null,rayTracingSettings=null;
@@ -8115,6 +8207,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       advancedGraphics?.dispose();advancedGraphics=null;graphicsSettings?.dispose();graphicsSettings=null;
       try { await modularRaceWorld?.dispose?.(); } finally {
         cameraOpening.cancel();cameraOpeningOverlay.dispose();headMotionControls?.dispose();headMotion.dispose();lightingEditor?.dispose();colorGrading?.dispose();rayTracingSettings?.dispose();rayTracing?.dispose();
+        gpuFrameTimer?.dispose();
+        cockpitDisplayLods?.dispose();framePacingSettings?.dispose();cockpitViewPreset?.dispose();
         cockpitMirrors?.dispose();
         cockpitIgnition?.dispose();cockpitLightSwitch?.dispose();cockpitLightSwitch=null;
         disposeRaceChevyWheels();
@@ -8191,8 +8285,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
     ensureAudioStarted,
     getSharedAudioContext: () => engineSound.context,
     getSharedAudioDestination: () => engineSound.safetyLimiter || engineSound.masterGain,
+    getUiAudioDestination:()=>engineSound.masterGain,
     getDrivingAudioLevels: () => ({road:gameSettings.roadVolume,brakes:gameSettings.brakeVolume}),
     onVehicleReset({ speedMps = 0, gear = 'N', reason } = {}) {
+      raceChevyPresentation?.resetCondition();
       cockpitIgnition?.resetMotion();
       headMotion.reset();cockpitHeadRoot.position.set(0,0,0);cockpitHeadRoot.quaternion.identity();
       if (reason === 'race-start') {
@@ -8239,6 +8335,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       headMotion.reset(raceWorld.getRenderFrame().currentSnapshot);cockpitHeadRoot.position.set(0,0,0);cockpitHeadRoot.quaternion.identity();
       updateKeyUi();
     },
+    getTargetFps:()=>framePacingSettings?.getTargetFps()||60,
+    precompileGraphics:()=>prewarmStableScene({setLocked:value=>{visualPrecompileInProgress=value;},settleStreaming:()=>trackStreamingPromise,compile:()=>{const visible=raceChevyV3.visible;try{raceChevyV3.visible=true;scene.updateMatrixWorld(true);renderer.compile(scene,camera);}finally{raceChevyV3.visible=visible;}},draw:renderFrame}),
     onRenderingScaleChanged() {
       if (typeof resize === 'function') resize();
     },
@@ -8314,7 +8412,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
   // Carga secuencial para contener el pico de memoria en teléfonos.
   const frontMesh = await modularHostInitialization.waitFor(compressedAssetToObject(THREE, 'frenteGz', 'Frente del auto completo para corte', { signal: modularHostInitialization.signal }), 'cockpit-frenteGz');
   tuneAsset(frontMesh);
+  const restoredFront=restoreCockpitFront(THREE,frontMesh);
   cockpitFrontPaint=createChevyPaintController(THREE,frontMesh,{color:globalThis.__chevyPaintColor||'#d66a24',partitionWheels:false});
+  if(restoredFront.restored)installCockpitFrontFinish(cockpitFrontPaint,restoredFront);
   frontMesh.rotation.y = COCKPIT_LAYOUT.front.modelRotationY;
   frontMesh.updateMatrixWorld(true);
   const frontCutController = createAdjustableFrontCut({
@@ -8339,15 +8439,15 @@ listen(window,'chevy:vehicle-config',(event)=>{
   frontMount.add(front);
 
   // Construct only after both independent facets exist. This state survives the
-  // lazy camera and writes the actual three localStorage keys transactionally.
-  const browserCompositionLayout = (() => { try { return JSON.parse(localStorage.getItem(EDITOR_STORAGE_KEY) || 'null'); } catch { return null; } })();
+  // lazy camera and writes the actual three globalThis.__asfaltoV7Storage keys transactionally.
+  const browserCompositionLayout = (() => { try { return JSON.parse(globalThis.__asfaltoV7Storage.getItem(EDITOR_STORAGE_KEY) || 'null'); } catch { return null; } })();
   const cockpitLayoutFile = createCockpitLayoutFile();
   const compositionInitialLayout = await modularHostInitialization.waitFor(cockpitLayoutFile.initialize(browserCompositionLayout), 'cockpit-file-layout');
   if (compositionInitialLayout) {
-    try { localStorage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(compositionInitialLayout)); } catch {}
+    try { globalThis.__asfaltoV7Storage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(compositionInitialLayout)); } catch {}
   }
   const compositionState = createCompositionState({
-    storage: localStorage,
+    storage: globalThis.__asfaltoV7Storage,
     keys: { layout: EDITOR_STORAGE_KEY, background: BACKGROUND_STORAGE_KEY, frontCut: FRONT_CUT_STORAGE_KEY },
     initial: compositionInitialLayout || {},
     build: COCKPIT_BUILD,
@@ -8375,6 +8475,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   raceWorld.attachWeatherSurfaces([raceChevyPhysicalRoot,frontMount]);
 
   function applyCockpitLod() {
+    cockpitDisplayLods?.update({editing:compositionEditor?.isActive()});
     const memoryConstrained = Number(navigator.deviceMemory || 8) <= 4;
     const narrowDevice = (viewport.clientWidth || window.innerWidth || 1024) < 460;
     const automaticEco = gameSettings.graphicsQuality === 'auto' && (memoryConstrained || narrowDevice);
@@ -8429,6 +8530,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   cockpit.add(dashboard);
 
   const gaugeCluster = createGaugeCluster(THREE, COCKPIT_LAYOUT.gauges);
+  let instrumentPhysicalTimeSeconds=null;
   cockpit.add(gaugeCluster.group);
 
   const wheelMesh = await modularHostInitialization.waitFor(compressedAssetToObject(THREE, 'volanteGz', 'Volante', { signal: modularHostInitialization.signal }), 'cockpit-volanteGz');
@@ -8470,6 +8572,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
   shifter.name = 'BasePalancaConDiagramaInferior';
   shifter.rotation.z = COCKPIT_LAYOUT.shifter.rotationZ;
   shifterAssembly.add(shifter);
+  cockpitDisplayLods = await modularHostInitialization.waitFor(loadCockpitDisplayLods({
+    THREE, signal:modularHostInitialization.signal, editing:compositionEditor?.isActive(),
+    bindings:{cabina:cabinMesh,tablero:dashboardMesh,volante:wheelMesh,'pedales-accelerator':pedalParts.acceleratorMesh,'pedales-brake':pedalParts.brakeMesh,palanca:shifterBaseMesh},
+  }), 'cockpit-display-lods');
 
   const knobBytes = await modularHostInitialization.waitFor(globalThis.AsfaltoV5PayloadCore.decodePayloadById(
     document, 'asfalto-v6-shifter-knob-payload', gunzipBase64,
@@ -9068,6 +9174,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       setSettingsPanelOpen(false);
       return;
     }
+    if(globalThis.__asfaltoV7Experience?.shouldBlockDrivingInput(event))return;
     const formControl = event.target instanceof HTMLInputElement
       || event.target instanceof HTMLSelectElement
       || event.target instanceof HTMLButtonElement;
@@ -9391,11 +9498,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
       throttle:0,brake:0,clutchEngagement:1,handbrake:0,
     };
     gaugeCluster.update(Math.abs(vehicle.speedMps)*3.6,vehicle.rpm,gearState.gear,dt);
+    instrumentPhysicalTimeSeconds=Number.isFinite(raceWorld.state?.physicsSnapshot?.timeSeconds)?raceWorld.state.physicsSnapshot.timeSeconds:null;
     const instrument= raceWorld.getDrivingLights(),dark=/night|dusk|sunset|noche/.test(instrument.phase||'');gaugeCluster.speed.setIllumination(instrument.instrumentPower,dark);gaugeCluster.rpm.setIllumination(instrument.instrumentPower,dark);
     engineSound.update(vehicle,{
       throttle:physicalControls.throttle,
       brake:physicalControls.brake,
-    },gearState.gear,{cameraMode:raceCameraState.current,physicalRoad:true});
+    },gearState.gear,{cameraMode:raceCameraState.current,physicalRoad:true,ignition:physical?.snapshot?.engine?.ignition});
   }
 
   function advanceSimulation(seconds) {
@@ -9458,6 +9566,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       vehicleCameraRig.setCockpitCalibration(compositionState.getState().camera.cockpit);
       vehicleCameraRig.setMode(mode);
     }
+    const effectiveCockpitView=cockpitViewPreset?.resolve(compositionState.getState().camera.cockpit,!!compositionEditor?.isActive());
+    if(effectiveCockpitView&&effectiveCockpitView!==lastEffectiveCockpitView){vehicleCameraRig.setCockpitCalibration(effectiveCockpitView.calibration);lastEffectiveCockpitView=effectiveCockpitView;}
     lastPhysicalCameraPose = raceCameraInitialized
       ? vehicleCameraRig.update(cameraFrame, frameDt)
       : vehicleCameraRig.reset(cameraFrame);
@@ -9474,6 +9584,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const head=headMotion.update(renderFrame.currentSnapshot,frameDt,{mode:opening.blocking?'cinematic':mode,paused:raceWorld.isPaused,reducedMotion:compositionEditor?.isActive()||ignitionMotionPreference?.matches||document.body.classList.contains('v6-reduce-motion'),cameraWorldQuaternion:camera.quaternion.toArray()});
     headMotionOffset.fromArray(head.positionOffsetM).applyQuaternion(camera.quaternion);camera.position.add(headMotionOffset);headMotionQuaternion.fromArray(head.quaternion);camera.quaternion.multiply(headMotionQuaternion);
     cockpitHeadRoot.position.fromArray(head.compensationPositionM);cockpitHeadRoot.quaternion.fromArray(head.compensationQuaternion);camera.updateMatrixWorld();
+    cockpitViewPreset?.compensate(renderFrame.currentSnapshot);
     if(opening.shot){
       cockpit.visible=false;raceChevyV3.visible=true;
       camera.position.fromArray(opening.shot.position);camera.up.set(0,1,0);camera.lookAt(...opening.shot.target);camera.fov=opening.shot.fov;camera.updateProjectionMatrix();camera.updateMatrixWorld();
@@ -9489,8 +9600,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
     return { commit(){if(committed||released)return;raceChevyPresentation?.dispose();for(const child of [...raceChevyV3Model.children])if(child!==stage){if(child.userData.vehicleSelectionMount)child.removeFromParent();else child.visible=false;}raceChevyPresentation=presentation;window.__asfaltoVehiclePresentations.chevy=presentation;window.__asfaltoSelectedPlayerVehicle=vehicle;stage.visible=true;committed=true;presentation.setLightMode(raceWorld.getDrivingLights().mode);lightingEditor?.applyVehicles();rayTracing?.invalidate();},dispose(){if(released||committed)return;released=true;presentation.dispose();stage.removeFromParent();} };
   }
   advancedGraphics=createAdvancedGraphics(THREE,{renderer,scene,camera,getEnvironment:()=>raceWorld.getAdvancedGraphicsEnvironment(),getQuality:()=>raceWorld.getPerformanceTier()});
-  graphicsSettings=installAdvancedGraphicsSettings({getDiagnostics:()=>({effectiveQuality:(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.getEffectiveQuality()})});
+  graphicsSettings=installAdvancedGraphicsSettings({getDiagnostics:()=>({targetFps:framePacingSettings?.getTargetFps()||60,effectiveQuality:(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.getEffectiveQuality()})});
   globalThis.__asfaltoAdvancedGraphics={refreshStatus:()=>graphicsSettings?.refresh(),getSettings:()=>graphicsSettings.getSettings(),setSettings:value=>graphicsSettings.setSettings(value),setMode:value=>graphicsSettings.setMode(value),diagnostics:()=>advancedGraphics?.diagnostics(),refresh:()=>{advancedGraphics?.refresh();globalThis.__chevyV6Complete?.workshop?.advancedGraphics?.refresh();}};
+  framePacingSettings=installFramePacingSettings();
+  cockpitViewPreset=installDrivingViewPreset({THREE,mount:cockpitViewMount});
   const cockpitRenderPass = createCockpitRenderPass({ renderer, scene, camera, cockpit, overlays:compositionEditor?.renderOverlays || [],renderWorld:()=>advancedGraphics.render(()=>{const restore=scene.fog?raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()}):null;try{renderer.render(scene,camera);}finally{restore?.();}}) });
   colorGrading=createRaceColorGrade({THREE,renderer});lightingEditor?.reapply();
   let trackStreamingError=null;
@@ -9501,9 +9614,11 @@ listen(window,'chevy:vehicle-config',(event)=>{
     trackStreamingError=message;
     globalThis.__asfaltoV6TrackStreamingError=message;
   }
+  gpuFrameTimer=createGpuFrameTimer(renderer.getContext());
+  const publishPresentedRacePhoto=createPresentedFrameCapture({renderer,camera,getBridge:()=>globalThis.__asfaltoV7RacePhoto,getMetadata:()=>{const environment=raceWorld.getAdvancedGraphicsEnvironment();return{trackId:raceWorld.track.id,skyId:environment.skyId,weather:environment.weather,vehicleId:globalThis.__asfaltoSelectedPlayerVehicle||'chevy',qa:new URLSearchParams(globalThis.location.search).get('qa')==='1'};}});
   function renderFrame() {
     if (!raceCameraInitialized) updateRaceCamera(1);
-    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:cockpit.visible, enabled:raceWorld.rearviewEnabled, quality:raceWorld.getPerformanceTier?.() || 'balanced', nowMs:performance.now() });
+
     compositionEditor?.updateGuides();
     radioController?.update(performance.now());
     const cameraPosition=[Number(camera.position.x)||0,Number(camera.position.y)||0,Number(camera.position.z)||0];
@@ -9517,7 +9632,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       const governedQuality=raceWorld.getPerformanceTier();
       const qualityRank={low:0,balanced:1,high:2};
       const quality=qualityRank[requestedQuality]<=qualityRank[governedQuality]?requestedQuality:governedQuality;
-      const result=activeAdapter?.updateStreaming({sM:Number(raceWorld.state?.raceProgress)||0,quality,distanceM,cameraPosition,vehiclePosition});
+      const result=visualPrecompileInProgress?null:activeAdapter?.updateStreaming({sM:Number(raceWorld.state?.raceProgress)||0,quality,distanceM,cameraPosition,vehiclePosition});
       if(result&&typeof result.then==='function'){
         const observed=Promise.resolve(result);
         if(observed!==trackStreamingPromise){
@@ -9533,7 +9648,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }
     advancedGraphics.update({time:performance.now()/1000});graphicsSettings.refresh();
     rayTracing.update({sceneKey:globalThis.__asfaltoV6Modular.trackManager?.active||scene});rayTracingSettings.refresh();
+    gpuFrameTimer.begin();
+    try{withFrameMatrices(scene,()=>{
+    raceWorld.renderWaterReflections({renderer,scene,camera,quality:raceWorld.getPerformanceTier(),nowMs:performance.now(),excludeRoots:[cockpit,...(compositionEditor?.renderOverlays||[])]});
+    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:cockpit.visible, enabled:raceWorld.rearviewEnabled, quality:raceWorld.getPerformanceTier?.() || 'balanced', nowMs:performance.now() });
     colorGrading.render(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{cockpitRenderPass.render();}finally{restore?.();}});
+    });publishPresentedRacePhoto();}finally{gpuFrameTimer.end();}
   }
 
   function qualityPixelRatioLimit(width) {
@@ -9549,7 +9669,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const width = Math.max(1, viewport.clientWidth);
     const height = Math.max(1, viewport.clientHeight);
     const aspect = width / height;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, qualityPixelRatioLimit(width) * raceWorld.getPerformanceScale()));
+    renderer.setPixelRatio(renderPixelRatio({devicePixelRatio:window.devicePixelRatio||1,qualityLimit:qualityPixelRatioLimit(width),renderScale:raceWorld.getPerformanceScale()}));
     renderer.setSize(width, height, false);
     camera.aspect = aspect;
     camera.fov = aspect < DESKTOP_REFERENCE_ASPECT
@@ -9575,11 +9695,16 @@ listen(window,'chevy:vehicle-config',(event)=>{
 
   let accumulator = 0;
   const clock = new THREE.Clock();
-  function animate() {
+  let previousDrivingFrame=false, accumulatedFrameWorkMs=0;
+  const framePacer=createFramePacer();
+  const presentationStats={frames:0,timestampMs:null,intervalMs:null,targetFps:60};
+  function animate(timestamp=performance.now()) {
     const rawFrameDt = Math.max(0, clock.getDelta());
     const simulationFrameDt = Math.min(rawFrameDt, 0.05);
     const raceSurfaceVisible = !document.hidden && !document.body.classList.contains('v6-menu-open') && !document.body.classList.contains('an-intro-open');
     if (renderingEnabled && raceSurfaceVisible) {
+      if(!previousDrivingFrame)raceWorld.beginPerformanceWindow('driving');
+      previousDrivingFrame=true;
       const frameWorkStarted = performance.now();
       accumulator += simulationFrameDt;
       while (accumulator >= 1 / 60) {
@@ -9588,9 +9713,14 @@ listen(window,'chevy:vehicle-config',(event)=>{
       }
       applyMechanicalVisuals();
       updateRaceCamera(simulationFrameDt);
-      renderFrame();
-      raceWorld.reportFrame(rawFrameDt, Math.max(0, performance.now() - frameWorkStarted));
-    } else accumulator = 0;
+      const presentation=framePacer.sample(timestamp,framePacingSettings.getTargetFps());
+      if(presentation.render){renderFrame();presentationStats.frames++;presentationStats.timestampMs=timestamp;presentationStats.intervalMs=presentation.intervalMs;presentationStats.targetFps=presentation.targetFps;}
+      accumulatedFrameWorkMs += Math.max(0,performance.now()-frameWorkStarted);
+      if(presentation.render){
+        if(presentation.intervalMs!==null)raceWorld.reportFrame(presentation.intervalMs/1000,accumulatedFrameWorkMs);
+        accumulatedFrameWorkMs=0;
+      }
+    } else {accumulator=0;previousDrivingFrame=false;accumulatedFrameWorkMs=0;framePacer.reset();}
     requestAnimationFrame(animate);
   }
 
@@ -9604,6 +9734,15 @@ listen(window,'chevy:vehicle-config',(event)=>{
   modularHostInitialization.assertActive();
   window.__cockpit = {
     preparePlayerVehicle,
+    setFrontRestoration:value=>{restoredFront.setEnabled?.(value);renderFrame();return !!value;},
+    v7FrontDiagnostics:()=>({...restoredFront,setEnabled:undefined}),
+    getInstrumentReadings:()=>{const r=gaugeCluster.speed.getReading();return{indicatedKph:r.value,digitalKph:r.digitalValue,physicalTimeSeconds:instrumentPhysicalTimeSeconds,physicalTick:instrumentPhysicalTimeSeconds===null?null:Math.round(instrumentPhysicalTimeSeconds*120)};},
+    v7RenderDiagnostics:()=>({gpu:gpuFrameTimer.diagnostics(),render:{...renderer.info.render},resources:{...renderer.info.memory},camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,near:camera.near,far:camera.far},drawingBuffer:[renderer.domElement.width,renderer.domElement.height],exposure:renderer.toneMappingExposure}),
+    v7BeginMeasurement:()=>{raceWorld.beginPerformanceWindow('driving');gpuFrameTimer.beginWindow();},
+    v7DrivingView:{set:value=>cockpitViewPreset.setSelected(value),diagnostics:()=>cockpitViewPreset.diagnostics()},
+    v7CockpitLodDiagnostics:()=>cockpitDisplayLods?.diagnostics(),
+    v7SetCockpitDisplayLod:value=>{cockpitDisplayLods?.setEnabled(value);renderFrame();return cockpitDisplayLods?.diagnostics();},
+    v7Presentation:{diagnostics:()=>({...presentationStats}),getTargetFps:()=>framePacingSettings.getTargetFps(),setTargetFps:value=>framePacingSettings.setTargetFps(value)},
     rayTracingDiagnostics:()=>rayTracing?.diagnostics(),
     raceOpeningDiagnostics:()=>cameraOpening.diagnostics(),
     headMotionDiagnostics:()=>headMotion.diagnostics(),
@@ -9680,7 +9819,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       const projectedVertexStats=(()=>{const s={sampled:0,clipped:0,visible:0,minX:Infinity,maxX:-Infinity,minY:Infinity,maxY:-Infinity,minZ:Infinity,maxZ:-Infinity,localMinX:Infinity,localMaxX:-Infinity,localMinY:Infinity,localMaxY:-Infinity,localMinZ:Infinity,localMaxZ:-Infinity};const v=new THREE.Vector3(),p=new THREE.Vector3(),unique=new Set(),attributeStats=[];root.traverse(n=>{const a=n.isMesh?n.geometry?.getAttribute?.('position'):null;if(!a)return;attributeStats.push(Object.freeze({name:n.name,count:a.count,itemSize:a.itemSize,normalized:a.normalized,arrayType:a.array?.constructor?.name||null,indexCount:n.geometry?.index?.count||0,geometryBounds:n.geometry?.boundingBox?Object.freeze({min:Object.freeze(n.geometry.boundingBox.min.toArray()),max:Object.freeze(n.geometry.boundingBox.max.toArray())}):null}));const limit=Math.min(a.count,4096-s.sampled);for(let j=0;j<limit;j++){const i=a.count<=limit?j:Math.min(a.count-1,Math.floor((((j+1)*.6180339887498949)%1)*a.count));v.fromBufferAttribute(a,i);unique.add(v.x.toPrecision(9)+','+v.y.toPrecision(9)+','+v.z.toPrecision(9));s.localMinX=Math.min(s.localMinX,v.x);s.localMaxX=Math.max(s.localMaxX,v.x);s.localMinY=Math.min(s.localMinY,v.y);s.localMaxY=Math.max(s.localMaxY,v.y);s.localMinZ=Math.min(s.localMinZ,v.z);s.localMaxZ=Math.max(s.localMaxZ,v.z);v.applyMatrix4(n.matrixWorld);p.copy(v).project(camera);s.sampled++;s.minX=Math.min(s.minX,p.x);s.maxX=Math.max(s.maxX,p.x);s.minY=Math.min(s.minY,p.y);s.maxY=Math.max(s.maxY,p.y);s.minZ=Math.min(s.minZ,p.z);s.maxZ=Math.max(s.maxZ,p.z);if(p.x<-1||p.x>1||p.y<-1||p.y>1||p.z<-1||p.z>1)s.clipped++;else s.visible++}});return Object.freeze({sampled:s.sampled,clipped:s.clipped,visible:s.visible,sampleStrategy:'golden-ratio',uniqueLocalPositions:unique.size,localBounds:s.sampled?Object.freeze({minX:s.localMinX,maxX:s.localMaxX,minY:s.localMinY,maxY:s.localMaxY,minZ:s.localMinZ,maxZ:s.localMaxZ}):null,ndcBounds:s.sampled?Object.freeze({minX:s.minX,maxX:s.maxX,minY:s.minY,maxY:s.maxY,minZ:s.minZ,maxZ:s.maxZ}):null,attributeStats:Object.freeze(attributeStats)})})();
       const overlayScene=new THREE.Scene(),overlayTarget=new THREE.WebGLRenderTarget(targetWidth,targetHeight,{depthBuffer:true}),bright=new Uint8Array(targetWidth*targetHeight*4),blank=new Uint8Array(targetWidth*targetHeight*4),sentinel=new Uint8Array(targetWidth*targetHeight*4),sentinelScene=new THREE.Scene(),sentinelCamera=new THREE.OrthographicCamera(-1,1,1,-1,.1,10),sentinelGeometry=new THREE.PlaneGeometry(2,2),sentinelMaterial=new THREE.MeshBasicMaterial({color:0xff00ff,side:THREE.DoubleSide,depthTest:false,depthWrite:false,transparent:false,opacity:1,toneMapped:false,fog:false}),sentinelMesh=new THREE.Mesh(sentinelGeometry,sentinelMaterial),priorTarget2=renderer.getRenderTarget(),priorAutoClear2=renderer.autoClear,priorViewport=new THREE.Vector4(),priorScissor=new THREE.Vector4(),priorScissorTest=renderer.getScissorTest(),overlays=[],overlaySources=[];renderer.getViewport(priorViewport);renderer.getScissor(priorScissor);let brightOverlayPixelContribution=0;
       let overlayRenderStats=Object.freeze({calls:0,triangles:0,targetIsCurrent:false,targetUuid:null,targetTextureUuid:null,children:0,sourceWorldMatrix:Object.freeze([]),overlayWorldMatrix:Object.freeze([]),worldMatrixMaxAbsDiff:null,bright:Object.freeze({nonzero:0,checksum:0}),blank:Object.freeze({nonzero:0,checksum:0}),diffPixels:0});let sentinelBufferStats=Object.freeze({calls:0,triangles:0,nonzero:0,checksum:0,targetIsCurrent:false});
-      try{sentinelCamera.position.z=1;sentinelCamera.updateMatrixWorld();sentinelScene.add(sentinelMesh);root.traverse(n=>{if(!n.isMesh||!n.geometry)return;const o=new THREE.Mesh(n.geometry,new THREE.MeshBasicMaterial({color:0xff00ff,side:THREE.DoubleSide,depthTest:false,depthWrite:false,transparent:false,opacity:1,toneMapped:false,fog:false}));o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;o.matrixWorldNeedsUpdate=false;o.matrix.copy(n.matrixWorld);o.matrixWorld.copy(n.matrixWorld);o.layers.mask=camera.layers.mask;o.frustumCulled=false;overlayScene.add(o);overlays.push(o);overlaySources.push(n)});renderer.autoClear=false;renderer.setRenderTarget(overlayTarget);renderer.setViewport(0,0,targetWidth,targetHeight);renderer.setScissor(0,0,targetWidth,targetHeight);renderer.setScissorTest(false);renderer.clear(true,true,true);overlayScene.updateMatrixWorld(true);renderer.info.reset();renderer.render(overlayScene,camera);const overlayRenderCalls=renderer.info.render.calls,overlayRenderTriangles=renderer.info.render.triangles;renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,bright);renderer.clear(true,true,true);renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,blank);for(let i=0;i<bright.length;i+=4){if(Math.abs(bright[i]-blank[i])+Math.abs(bright[i+1]-blank[i+1])+Math.abs(bright[i+2]-blank[i+2])>=24)brightOverlayPixelContribution++}const sourceWorldMatrix=overlaySources[0]?.matrixWorld.toArray()||[],overlayWorldMatrix=overlays[0]?.matrixWorld.toArray()||[],worldMatrixMaxAbsDiff=sourceWorldMatrix.length===overlayWorldMatrix.length?sourceWorldMatrix.reduce((max,value,index)=>Math.max(max,Math.abs(value-overlayWorldMatrix[index])),0):null;overlayRenderStats=Object.freeze({calls:overlayRenderCalls,triangles:overlayRenderTriangles,targetIsCurrent:renderer.getRenderTarget()===overlayTarget,targetUuid:overlayTarget.uuid,targetTextureUuid:overlayTarget.texture.uuid,children:overlayScene.children.length,sourceName:overlaySources[0]?.name||null,sourceWorldMatrix:Object.freeze(sourceWorldMatrix),overlayWorldMatrix:Object.freeze(overlayWorldMatrix),worldMatrixMaxAbsDiff,bright:Object.freeze({nonzero:bright.reduce((count,value)=>count+(value?1:0),0),checksum:bright.reduce((sum,value)=>(sum+value)>>>0,0)}),blank:Object.freeze({nonzero:blank.reduce((count,value)=>count+(value?1:0),0),checksum:blank.reduce((sum,value)=>(sum+value)>>>0,0)}),diffPixels:brightOverlayPixelContribution,glError:renderer.getContext().getError()});renderer.clear(true,true,true);renderer.info.reset();renderer.render(sentinelScene,sentinelCamera);const sentinelCalls=renderer.info.render.calls,sentinelTriangles=renderer.info.render.triangles;renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,sentinel);sentinelBufferStats=Object.freeze({calls:sentinelCalls,triangles:sentinelTriangles,nonzero:sentinel.reduce((count,value)=>count+(value?1:0),0),checksum:sentinel.reduce((sum,value)=>(sum+value)>>>0,0),targetIsCurrent:renderer.getRenderTarget()===overlayTarget,glError:renderer.getContext().getError()})}finally{renderer.autoClear=priorAutoClear2;renderer.setRenderTarget(priorTarget2);renderer.setViewport(priorViewport);renderer.setScissor(priorScissor);renderer.setScissorTest(priorScissorTest);for(const o of overlays)o.material.dispose();sentinelGeometry.dispose();sentinelMaterial.dispose();overlayTarget.dispose()}
+      try{sentinelCamera.position.z=1;sentinelCamera.updateMatrixWorld();sentinelScene.add(sentinelMesh);root.traverse(n=>{if(!n.isMesh||!n.geometry)return;const o=new THREE.Mesh(n.geometry,new THREE.MeshBasicMaterial({color:0xff00ff,side:THREE.DoubleSide,depthTest:false,depthWrite:false,transparent:false,opacity:1,toneMapped:false,fog:false}));o.matrixAutoUpdate=false;o.matrixWorldAutoUpdate=false;o.matrixWorldNeedsUpdate=false;o.matrix.copy(n.matrixWorld);o.matrixWorld.copy(n.matrixWorld);o.layers.mask=camera.layers.mask;o.frustumCulled=false;overlayScene.add(o);overlays.push(o);overlaySources.push(n)});renderer.autoClear=false;renderer.setRenderTarget(overlayTarget);renderer.setScissorTest(false);renderer.clear(true,true,true);overlayScene.updateMatrixWorld(true);renderer.info.reset();renderer.render(overlayScene,camera);const overlayRenderCalls=renderer.info.render.calls,overlayRenderTriangles=renderer.info.render.triangles;renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,bright);renderer.clear(true,true,true);renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,blank);for(let i=0;i<bright.length;i+=4){if(Math.abs(bright[i]-blank[i])+Math.abs(bright[i+1]-blank[i+1])+Math.abs(bright[i+2]-blank[i+2])>=24)brightOverlayPixelContribution++}const sourceWorldMatrix=overlaySources[0]?.matrixWorld.toArray()||[],overlayWorldMatrix=overlays[0]?.matrixWorld.toArray()||[],worldMatrixMaxAbsDiff=sourceWorldMatrix.length===overlayWorldMatrix.length?sourceWorldMatrix.reduce((max,value,index)=>Math.max(max,Math.abs(value-overlayWorldMatrix[index])),0):null;overlayRenderStats=Object.freeze({calls:overlayRenderCalls,triangles:overlayRenderTriangles,targetIsCurrent:renderer.getRenderTarget()===overlayTarget,targetUuid:overlayTarget.uuid,targetTextureUuid:overlayTarget.texture.uuid,children:overlayScene.children.length,sourceName:overlaySources[0]?.name||null,sourceWorldMatrix:Object.freeze(sourceWorldMatrix),overlayWorldMatrix:Object.freeze(overlayWorldMatrix),worldMatrixMaxAbsDiff,bright:Object.freeze({nonzero:bright.reduce((count,value)=>count+(value?1:0),0),checksum:bright.reduce((sum,value)=>(sum+value)>>>0,0)}),blank:Object.freeze({nonzero:blank.reduce((count,value)=>count+(value?1:0),0),checksum:blank.reduce((sum,value)=>(sum+value)>>>0,0)}),diffPixels:brightOverlayPixelContribution,glError:renderer.getContext().getError()});renderer.clear(true,true,true);renderer.info.reset();renderer.render(sentinelScene,sentinelCamera);const sentinelCalls=renderer.info.render.calls,sentinelTriangles=renderer.info.render.triangles;renderer.readRenderTargetPixels(overlayTarget,0,0,targetWidth,targetHeight,sentinel);sentinelBufferStats=Object.freeze({calls:sentinelCalls,triangles:sentinelTriangles,nonzero:sentinel.reduce((count,value)=>count+(value?1:0),0),checksum:sentinel.reduce((sum,value)=>(sum+value)>>>0,0),targetIsCurrent:renderer.getRenderTarget()===overlayTarget,glError:renderer.getContext().getError()})}finally{renderer.autoClear=priorAutoClear2;renderer.setRenderTarget(priorTarget2);renderer.setViewport(priorViewport);renderer.setScissor(priorScissor);renderer.setScissorTest(priorScissorTest);for(const o of overlays)o.material.dispose();sentinelGeometry.dispose();sentinelMaterial.dispose();overlayTarget.dispose()}
       const originalMaterialOverlayAfterClearDepth=isolatedPixelContribution;
       const renderBufferStats = Object.freeze({ visible: Object.freeze({ nonzero: withFalcon.reduce((count, value) => count + (value ? 1 : 0), 0), checksum: withFalcon.reduce((sum, value) => (sum + value) >>> 0, 0) }), hidden: Object.freeze({ nonzero: withoutFalcon.reduce((count, value) => count + (value ? 1 : 0), 0), checksum: withoutFalcon.reduce((sum, value) => (sum + value) >>> 0, 0) }), diffPixels: pixelContribution, target: Object.freeze({ width: targetWidth, height: targetHeight, format: target.texture.format, type: target.texture.type }), camera: Object.freeze({ near: camera.near, far: camera.far }) });
       const centerInFrustum = projected.x >= -1 && projected.x <= 1 && projected.y >= -1 && projected.y <= 1 && projected.z >= -1 && projected.z <= 1;
@@ -9779,8 +9918,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       applyMechanicalVisuals();
       renderFrame();
     },
-    raceStart() {
-      return raceWorld.start();
+    raceStart(options={}) {
+      return raceWorld.start(options);
     },
     racePause() {
       return raceWorld.togglePause();

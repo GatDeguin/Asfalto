@@ -11,7 +11,7 @@ const PRESETS=Object.freeze({
  night:{label:'Noche',hemi:.32,key:.24,fill:.2,warm:.18,exposure:1.45,pos:[-5,11,-7]}
 });
 if(!globalThis.AsfaltoV3WorkshopEditorState)return;
-function saved(){try{return JSON.parse(localStorage.getItem(STORAGE)||'null')}catch{return null}}
+function saved(){try{return JSON.parse(globalThis.__asfaltoV7Storage.getItem(STORAGE)||'null')}catch{return null}}
 const controller=globalThis.AsfaltoV3WorkshopEditorState.create(saved());
 let selectedTab='camera',activeSky=null,skyGeneration=0,pmrem=null;
 
@@ -44,7 +44,7 @@ document.body.append(gear,panel);
 
 function getPath(object,path){return path.split('.').reduce(function(value,key){return value&&value[key]},object)}
 function patchPath(path,value){const keys=path.split('.');return keys.length===2?{[keys[1]]:value}:{[keys[1]]:{[keys[2]]:value}}}
-function save(){try{localStorage.setItem(STORAGE,JSON.stringify(controller.snapshot()))}catch{}}
+function save(){try{globalThis.__asfaltoV7Storage.setItem(STORAGE,JSON.stringify(controller.snapshot()))}catch{}}
 function sync(){const state=controller.snapshot();panel.querySelectorAll('[data-editor-path]').forEach(function(input){if(document.activeElement!==input)input.value=String(getPath(state,input.dataset.editorPath))});panel.querySelector('#workshop-editor-sky-id').value=state.sky.id;const known=['12','24','35','50','85','135'];panel.querySelector('#workshop-editor-lens-preset').value=known.includes(String(state.camera.lens))?String(state.camera.lens):''}
 function tab(name){selectedTab=['camera','chevy','sky'].includes(name)?name:'camera';panel.querySelectorAll('[data-workshop-editor-tab]').forEach(function(button){button.setAttribute('aria-selected',String(button.dataset.workshopEditorTab===selectedTab))});panel.querySelectorAll('[data-workshop-editor-pane]').forEach(function(pane){pane.hidden=pane.dataset.workshopEditorPane!==selectedTab})}
 function open(value){panel.dataset.open=String(Boolean(value));gear.setAttribute('aria-expanded',String(Boolean(value)));if(value){tab(selectedTab);sync()}}

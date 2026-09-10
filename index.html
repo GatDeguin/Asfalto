@@ -1,16 +1,16 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta name="asfalto-persistence" content="browser">
+<script src="./src/runtime/versioned-storage.js"></script>
 <script type="module" src="./src/runtime/asset-core.mjs"></script>
 <meta name="asfalto-v6-source-sha256" content="A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA">
-<meta name="description" content="Asfalto Nacional v6 · Realismo clásico argentino · rutas nacionales">
+<meta name="description" content="Asfalto Nacional v7 · Realismo clásico argentino · rutas nacionales">
 <meta name="asfalto-v5-source-sha256" content="29bd13e525861ee21ec066d2c3460480a9e200ad790a837f4f247ee5c2fb8288">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'/%3E">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#090b0e">
-<title>Asfalto Nacional v6</title>
+<title>Asfalto Nacional v7</title>
 <link rel="stylesheet" href="./assets/styles/inline-01.css">
 
 
@@ -52,7 +52,7 @@
 <script  id="asfalto-v5-hdri-sunset" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="sunset" data-source="Cielos/runtime/sunset.av3hdri" data-width="1024" data-height="512" data-filename="sunset.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-sunset/sunset.av3hdri" data-bytes="3145744" data-sha256="9B83B12E2E0AB7E6F9933E920B49BA0DE8F662829AEC562D9E7B974AFF6D253A"></script>
 <script  id="asfalto-v5-hdri-moonrise" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="moonrise" data-source="Cielos/runtime/moonrise.av3hdri" data-width="1024" data-height="512" data-filename="moonrise.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-moonrise/moonrise.av3hdri" data-bytes="3145744" data-sha256="DE48E823ED893A8999622AC8E5873337EDA7114237E650B739C9CE47F178CD3B"></script>
 <script  id="asfalto-v5-hdri-night" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="night" data-source="Cielos/runtime/night.av3hdri" data-width="1024" data-height="512" data-filename="night.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-night/night.av3hdri" data-bytes="3145744" data-sha256="B7DA232FB2F34C595F2C2519DEF9A03537850123E33C93B25F1066935869A94E"></script>
-<script id="asfalto-v6-manifest" type="application/json">{"version":6,"name":"Asfalto Nacional v6","baseVersion":5,"defaultCircuit":"dos_lagos","defaultProfile":"original","physics":{"engine":"Rapier 3D deterministic","fixedHz":120,"preset":"realismo-clasico-argentino"},"profiles":{"original":{"label":"Chevy Serie 2 Original","forwardGears":4,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}},"restomod":{"label":"Chevy Serie 2 Restomod","forwardGears":5,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}}},"rivals":[{"id":"falcon","count":1}],"sourceLocks":{"v5":"A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA","manual":"7F6C10A1692440DBA5566A0637DB26003B196463B4F698BA511E397F76F9410E","falcon":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"}}</script>
+<script id="asfalto-v6-manifest" type="application/json">{"version":6,"name":"Asfalto Nacional v7","baseVersion":5,"defaultCircuit":"dos_lagos","defaultProfile":"original","physics":{"engine":"Rapier 3D deterministic","fixedHz":120,"preset":"realismo-clasico-argentino"},"profiles":{"original":{"label":"Chevy Serie 2 Original","forwardGears":4,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}},"restomod":{"label":"Chevy Serie 2 Restomod","forwardGears":5,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}}},"rivals":[{"id":"falcon","count":1}],"sourceLocks":{"v5":"A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA","manual":"7F6C10A1692440DBA5566A0637DB26003B196463B4F698BA511E397F76F9410E","falcon":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"}}</script>
 <script id="asfalto-v6-rapier" src="./src/legacy/asfalto-v6-rapier.js"></script>
 <script  id="asfalto-v6-falcon" type="application/octet-stream" data-role="single-physical-rival" data-filename="Falcon.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-falcon/Falcon.glb" data-bytes="28216660" data-sha256="51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"></script>
 <script id="asfalto-v6-falcon-rig" type="application/json">{"version":1,"source":{"sha256":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006","byteLength":28216660,"gltfVersion":"2.0","generator":"gltfpack 1.2","positionCount":674391,"indexCount":3329274},"axes":{"front":"+X","up":"+Y","side":"+Z"},"authoredBounds":{"minimum":[-0.950797021,-0.300976992,-0.381623],"maximum":[0.948652143899,0.29994133929899996,0.379988521957],"dimensions":[1.899449164899,0.600918331299,0.761611521957]},"targetDimensionsM":{"length":4.65,"width":1.78,"height":1.42},"uniformScale":2.4480781512503684,"bones":[{"name":"body","index":0,"center":[0,0,0]},{"name":"frontLeft","index":1,"center":[0.62,-0.18,0.31]},{"name":"frontRight","index":2,"center":[0.62,-0.18,-0.31]},{"name":"rearLeft","index":3,"center":[-0.58,-0.18,0.31]},{"name":"rearRight","index":4,"center":[-0.58,-0.18,-0.31]}],"wheels":{"frontLeft":{"center":[0.62,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11898,"bounds":{"minimum":[0.46019585800999996,-0.300629171241,0.23506320570699996],"maximum":[0.7713794970619999,-0.022024743281999992,0.37222052500599995]}},"frontRight":{"center":[0.62,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11677,"bounds":{"minimum":[0.4612393202870001,-0.300049469976,-0.373970943302],"maximum":[0.7714954373149999,-0.021445042016999982,-0.235074520208]}},"rearLeft":{"center":[-0.58,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11838,"bounds":{"minimum":[-0.7379307164919999,-0.300976992,0.23506320570699996],"maximum":[-0.421761646561,-0.020169699234000027,0.37894505968]}},"rearRight":{"center":[-0.58,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":12131,"bounds":{"minimum":[-0.738858238516,-0.300745111494,-0.38046359746999997],"maximum":[-0.42118194529599995,-0.020285639487000018,-0.235074520208]}}},"assignment":{"bodyVertexCount":626847,"overlapCount":0,"totalVertexCount":674391}}</script>
@@ -387,6 +387,7 @@
         <button type="button" data-workshop-camera="wheel">Rueda</button>
         <button type="button" data-workshop-camera="interior">Interior</button>
         <button type="button" data-workshop-camera="bench">Banco</button>
+        <button type="button" data-workshop-camera="collection" aria-pressed="false">Colección</button>
       </div>
       <div class="v6-ambient-status">Motor apagado · metal enfriándose · fluorescente distante</div>
     </div>
@@ -449,6 +450,7 @@
         <header class="v6-panel-head"><div><span class="v6-kicker">Club y cronómetro</span><h2>Competencia</h2></div><p>Pruebas con reglamento, rivales y clasificación. La configuración histórica y la Restomod compiten en tablas separadas.</p></header>
         <div class="v6-section-title">Formatos</div>
         <div class="v6-grid v6-grid-3" id="v6-competition-cards"></div>
+        <div class="v6-note"><button type="button" class="v6-btn" id="v7-championship-open">Campeonato nacional · 5 / 10 / 15 etapas</button><div id="v7-championship-content" hidden></div></div>
         <div class="v6-section-title">Inscripción</div>
         <div class="v6-form-grid">
           <label class="v6-field"><span>Circuito</span><select id="v6-comp-track"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></label>
@@ -493,10 +495,10 @@
         <div class="v6-workshop-tab" id="v6-workshop-photo" data-workshop-page="photo">
           <div class="v6-section-title">Cámara de taller</div>
           <div class="v6-form-grid">
-            <label class="v6-field"><span>Foco</span><select id="v6-photo-focus"><option value="general">General</option><option value="front">Frente</option><option value="engine">Motor</option><option value="wheel">Rueda</option><option value="interior">Interior</option><option value="bench">Banco</option></select></label>
-            <label class="v6-field"><span>Lente</span><select id="v6-photo-lens"><option value="35">35 mm</option><option value="50" selected>50 mm</option><option value="85">85 mm macro</option></select></label>
+            <label class="v6-field"><span>Foco</span><select id="v6-photo-focus"><option value="general">General</option><option value="front">Frente</option><option value="engine">Motor</option><option value="wheel">Rueda</option><option value="interior">Interior</option><option value="bench">Banco</option><option value="collection">Colección</option></select></label>
+            <label class="v6-field"><span>Lente</span><select id="v6-photo-lens"><option value="28">28 mm</option><option value="35">35 mm</option><option value="50" selected>50 mm</option><option value="85">85 mm macro</option></select></label>
             <label class="v6-field"><span>Exposición <span class="v6-range-line"><output id="v6-photo-exposure-output">0.0 EV</output></span></span><input id="v6-photo-exposure" type="range" min="-1.5" max="1.5" value="0" step="0.1"></label>
-            <label class="v6-field"><span>Profundidad de campo</span><select id="v6-photo-dof"><option value="off">Vista técnica</option><option value="soft" selected>Suave</option><option value="macro">Macro</option></select></label>
+            <label class="v6-field"><span>Profundidad de campo</span><select id="v6-photo-dof" disabled aria-describedby="v6-photo-dof-note"><option value="off">Vista técnica</option></select><small id="v6-photo-dof-note">Profundidad óptica pendiente.</small></label>
           </div>
           <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-photo-capture" type="button">Tomar fotografía</button><button class="v6-btn" id="v6-photo-reset" type="button">Restablecer cámara</button></div>
         </div>
@@ -504,6 +506,14 @@
 
       <section class="v6-panel" id="v6-collection-panel" role="tabpanel" aria-labelledby="v6-tab-collection">
         <header class="v6-panel-head"><div><span class="v6-kicker">Conocer, mantener, documentar</span><h2>Colección</h2></div><p>El progreso abre pruebas, piezas originales, documentos, herramientas, cámaras y contextos coherentes; nunca cajas aleatorias.</p></header>
+        <section class="v6-note" aria-labelledby="v6-earned-collection-title">
+          <h3 id="v6-earned-collection-title">Premios del taller</h3>
+          <p id="v6-earned-collection-status" role="status" aria-live="polite">0 de 20 piezas obtenidas. Los espacios vacíos se conservan hasta un logro válido.</p>
+          <p>Trofeos de circuito, medallas de pruebas y copas de campeonato. Los posters de destinos son decorativos.</p>
+          <button type="button" class="v6-btn" id="v6-view-collection" data-workshop-camera="collection" aria-pressed="false">Ver la vitrina</button>
+          <details><summary>Ver piezas obtenidas y pendientes</summary><ul id="v6-earned-collection-list"></ul></details>
+          <button type="button" class="v6-btn" id="v7-earned-album-open">Abrir cuaderno de ruta</button><p id="v7-earned-album-status" role="status"></p><section id="v7-earned-album" hidden aria-label="Álbum de llegadas reales"></section>
+        </section>
         <div class="v6-section-title">Ejes de progreso</div><div class="v6-axis-grid" id="v6-axis-grid"></div>
         <div class="v6-section-title">Archivo del propietario</div><div class="v6-collection-grid" id="v6-collection-grid"></div>
         <div class="v6-section-title">Próximo objetivo</div><div class="v6-note" id="v6-next-objective"><strong>Primera inspección:</strong> revisá el estado general en el taller y completá una prueba 0–100 válida.</div>

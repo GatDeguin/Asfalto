@@ -1,0 +1,433 @@
+{
+  "schema": "asfalto-v7-cockpit-display-lod/v1",
+  "date": "2026-09-08",
+  "sourceOriginalsPreserved": true,
+  "editorUsesFullSource": true,
+  "gpuAccepted": false,
+  "sourceTriangles": 2655285,
+  "displayTriangles": 634604,
+  "displayFileBytes": 26543976,
+  "additionalResidentGeometryBytes": 21982576,
+  "entries": [
+    {
+      "name": "cabina",
+      "path": "assets/cockpit/v7/cabina-display.glb",
+      "sha256": "fe4606976891c0e370ee292dbad4d94625a76707f12c92b858c280a69919e84d",
+      "bytes": 11987420,
+      "sourceSha256": "c8c0bf35a14c5fe7ea3925d8777f9c44f84bee2d52ba6c17095cc3244253a846",
+      "geometryBytes": 10296332,
+      "source": "cabina",
+      "ratio": 0.24,
+      "sourceTriangles": 1296778,
+      "triangles": 311225,
+      "vertices": 205051,
+      "sourceBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          16383,
+          8118,
+          11127
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          0.5403291583061218,
+          0.19141380488872528,
+          -0.37192776799201965
+        ],
+        "max": [
+          16385.22265625,
+          8118.74365234375,
+          11126.255859375
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "correctedNonunitNormals": 11,
+      "sourceTransferredZeroNormals": 1,
+      "degenerateAttributeSamples": {
+        "uv": 0,
+        "normals": 0
+      },
+      "surfaceErrorRaw": {
+        "p95": 2.038914918899535,
+        "max": 4.997929096221924
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.00023634313832936795,
+        "max": 0.0005793406271146886
+      },
+      "normalDot": {
+        "p05": 0.9419990565627814,
+        "median": 0.9959150172653608
+      },
+      "uvError": {
+        "p95": 0.00023631839801408603,
+        "median": 0.00005163637658762688
+      },
+      "seconds": 21.460534811019897,
+      "uvTransformScale": [
+        1,
+        1
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 2.2,
+        "max": 0.6277312181659286,
+        "p95": 0.2560841742923076
+      }
+    },
+    {
+      "name": "tablero",
+      "path": "assets/cockpit/v7/tablero-display.glb",
+      "sha256": "c70f7d0c7e9a1e9b815b001023d9dd59fa1b6e21db1e89d07fb49f51da374cac",
+      "bytes": 3943828,
+      "sourceSha256": "b6497f9e197a85a32bcb0c4e0e58f918108cb4e7559650522504cb053465bd13",
+      "geometryBytes": 3363424,
+      "source": "tablero",
+      "ratio": 0.25,
+      "sourceTriangles": 417796,
+      "triangles": 104448,
+      "vertices": 65939,
+      "sourceBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          16383,
+          6973,
+          8757
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          -0.2312738001346588,
+          -0.31317251920700073,
+          -0.14784200489521027
+        ],
+        "max": [
+          16383.3212890625,
+          6973.48876953125,
+          8756
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "correctedNonunitNormals": 11,
+      "sourceTransferredZeroNormals": 0,
+      "degenerateAttributeSamples": {
+        "uv": 2,
+        "normals": 0
+      },
+      "surfaceErrorRaw": {
+        "p95": 1.5411716938018791,
+        "max": 4.093806266784668
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.00017869022733484259,
+        "max": 0.00047465391131858826
+      },
+      "normalDot": {
+        "p05": 0.9563699745573103,
+        "median": 0.9977665706974221
+      },
+      "uvError": {
+        "p95": 0.000023841479410772458,
+        "median": 0.00000568914246652752
+      },
+      "seconds": 5.251134872436523,
+      "uvTransformScale": [
+        16.0032463,
+        15.9653349
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 1.8,
+        "max": 0.4206886039066897,
+        "p95": 0.15837421851309208
+      }
+    },
+    {
+      "name": "volante",
+      "path": "assets/cockpit/v7/volante-display.glb",
+      "sha256": "8936eace5b137cd4315736e54b425191d34b7c4a52bef4cc1c72dc9a92efeb7e",
+      "bytes": 3403092,
+      "sourceSha256": "f949e8a38eafaa34d0e721288bff1bf4ddf31189023bb3f82d476763779ad6f8",
+      "geometryBytes": 2296856,
+      "source": "volante",
+      "ratio": 0.24,
+      "sourceTriangles": 313743,
+      "triangles": 75298,
+      "vertices": 43540,
+      "sourceBounds": {
+        "min": [
+          0,
+          0,
+          0
+        ],
+        "max": [
+          16382,
+          16383,
+          1867
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          -0.25318214297294617,
+          -0.5049650073051453,
+          0.06357238441705704
+        ],
+        "max": [
+          16382.0439453125,
+          16383.5546875,
+          1867.2252197265625
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "surfaceErrorRaw": {
+        "p95": 1.0413631618022918,
+        "max": 3.023766040802002
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.00012712728526343081,
+        "max": 0.0003691345940964751
+      },
+      "normalDot": {
+        "p05": 0.9963894589163829,
+        "median": 0.9998033464944456
+      },
+      "uvError": {
+        "p95": 0.000024910832336582497,
+        "median": 0.000008382061142811675
+      },
+      "seconds": 3.905709743499756,
+      "uvTransformScale": [
+        15.7484198,
+        16.0021267
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 0.845,
+        "max": 0.14587885967481312,
+        "p95": 0.05023962452822043
+      }
+    },
+    {
+      "name": "pedales-accelerator",
+      "path": "assets/cockpit/v7/pedales-accelerator-display.glb",
+      "sha256": "6c475755cb4bb4be092d2ba23f372295acc3c22d4aaad4e0e72b12980db6481e",
+      "bytes": 2861576,
+      "sourceSha256": "8aa605e9964fdb69997b390fd1938eef9a56c897e8acf53da1b341501689eef7",
+      "geometryBytes": 2361220,
+      "source": "pedales",
+      "ratio": 0.24,
+      "sourceTriangles": 229449,
+      "triangles": 55067,
+      "vertices": 53138,
+      "sourceBounds": {
+        "min": [
+          257,
+          0,
+          59
+        ],
+        "max": [
+          5397,
+          16383,
+          3058
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          256.14605712890625,
+          -0.3875330090522766,
+          58.41380310058594
+        ],
+        "max": [
+          5397.0673828125,
+          16382.4755859375,
+          3058.002197265625
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "surfaceErrorRaw": {
+        "p95": 2.406647360324859,
+        "max": 8.323668479919434
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.0002937981260783137,
+        "max": 0.0010161348279821747
+      },
+      "normalDot": {
+        "p05": 0.9787797668999701,
+        "median": 0.9990597548894584
+      },
+      "uvError": {
+        "p95": 0.000020834345544383902,
+        "median": 0.000004043712921322766
+      },
+      "seconds": 3.6081573963165283,
+      "uvTransformScale": [
+        15.9929523,
+        16.0027218
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 0.39,
+        "max": 0.1981739912322539,
+        "p95": 0.057298643504932315
+      }
+    },
+    {
+      "name": "pedales-brake",
+      "path": "assets/cockpit/v7/pedales-brake-display.glb",
+      "sha256": "5ea111df48ae514221125e038c8d96f6939b985e730458998951eaa6394a9500",
+      "bytes": 2915704,
+      "sourceSha256": "8aa605e9964fdb69997b390fd1938eef9a56c897e8acf53da1b341501689eef7",
+      "geometryBytes": 2415364,
+      "source": "pedales",
+      "ratio": 0.24,
+      "sourceTriangles": 226580,
+      "triangles": 54379,
+      "vertices": 55088,
+      "sourceBounds": {
+        "min": [
+          6969,
+          2187,
+          0
+        ],
+        "max": [
+          15578,
+          8223,
+          3026
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          6968.86865234375,
+          2186.46337890625,
+          0.931522786617279
+        ],
+        "max": [
+          15578.658203125,
+          8222.228515625,
+          3026.33642578125
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "surfaceErrorRaw": {
+        "p95": 2.9365550041198722,
+        "max": 8.513978958129883
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.00035848806582940975,
+        "max": 0.0010393675054375666
+      },
+      "normalDot": {
+        "p05": 0.9781533458502963,
+        "median": 0.9990870412439108
+      },
+      "uvError": {
+        "p95": 0.00002017795451820927,
+        "median": 0.000004045491755774747
+      },
+      "seconds": 3.4846763610839844,
+      "uvTransformScale": [
+        15.9929523,
+        16.0027218
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 0.39,
+        "max": 0.2027049966574782,
+        "p95": 0.0699149452003542
+      }
+    },
+    {
+      "name": "palanca",
+      "path": "assets/cockpit/v7/palanca-display.glb",
+      "sha256": "5b73b25d248d400e6a2862d775ebef99e0db514e3dffa6b25a562e62a139ffbc",
+      "bytes": 1432356,
+      "sourceSha256": "27f3d4add948525dadd0c28588dd40bac6f1bbfe851f0e4926b0db815463a493",
+      "geometryBytes": 1249380,
+      "source": "palanca",
+      "ratio": 0.2,
+      "sourceTriangles": 170939,
+      "triangles": 34187,
+      "vertices": 26223,
+      "sourceBounds": {
+        "min": [
+          0,
+          16,
+          3622
+        ],
+        "max": [
+          13249,
+          2360,
+          16383
+        ]
+      },
+      "displayBounds": {
+        "min": [
+          0.17416413128376007,
+          15.541465759277344,
+          3620.76220703125
+        ],
+        "max": [
+          13249.01953125,
+          2360,
+          16381.220703125
+        ]
+      },
+      "sampleCountEachDirection": 5000,
+      "surfaceErrorRaw": {
+        "p95": 1.1599354445934293,
+        "max": 3.2729315757751465
+      },
+      "surfaceErrorAuthoredM": {
+        "p95": 0.0001416023243003763,
+        "max": 0.00039955216522269486
+      },
+      "normalDot": {
+        "p05": 0.9957038256412488,
+        "median": 0.9999253869464155
+      },
+      "uvError": {
+        "p95": 0.00002196431972319373,
+        "median": 0.000005008164952517351
+      },
+      "seconds": 2.5603506565093994,
+      "uvTransformScale": [
+        16.0033455,
+        15.9529886
+      ],
+      "pixelEstimate": {
+        "notAVisualAcceptance": true,
+        "heightPx": 1080,
+        "verticalFovDeg": 60,
+        "distanceM": 1,
+        "originalTargetWidthM": 0.235,
+        "max": 0.05429703008131646,
+        "p95": 0.019243008376231777
+      }
+    }
+  ]
+}

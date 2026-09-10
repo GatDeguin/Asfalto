@@ -1,3 +1,5 @@
+import {createWorkshopContactShadow} from './workshop-contact-shadow.mjs';
+import { createWorkshopCollection } from './workshop-collection.mjs';
 import { reflectorClass } from './reflector-factory.mjs';
 import { hdrLoaderClass } from './hdr-loader-factory.mjs';
 import { createChevyPaintController } from './chevy-paint-controller.mjs';
@@ -49,11 +51,16 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   let reflector = null;
   let hdriEnvironment = null, detailsRoot = null;
   let staticBatches=null;
-  let detailPass = null, night = false, lastTime = null, probeDirty = false;
+  let collection=null,collectionItems=[],collectionPosters=[],collectionMemories=[],collectionLoad=null,collectionDisposed=false,room=null;
+  const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(0,2.2,4);collectionLight.castShadow=false;
+  let detailPass = null, night = false, lastTime = null, probeDirty = false, contactShadow=null;
+  const invalidateContact=()=>contactShadow?.invalidate();
   const previousEnvironment = scene.environment;
   const previousEnvironmentIntensity = scene.environmentIntensity;
   const previousEnvironmentRotation = scene.environmentRotation?.clone();
   const disposeOwned = () => {
+    globalThis.window?.removeEventListener?.('chevy:vehicle-config',invalidateContact);contactShadow?.dispose();contactShadow=null;
+    collectionDisposed=true;collection?.dispose();collection=null;collectionLight.removeFromParent();collectionLight.dispose?.();
     staticBatches?.dispose();staticBatches=null;
     detailPass?.dispose(); detailPass=null;
     for (const [object,state] of originals.splice(0)) Object.assign(object,state);
@@ -180,6 +187,35 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   });
   detailPass=createWorkshopDetailPass(T,workshop,{floorY:floorBounds.isEmpty()?.188:floorBounds.max.y});
   staticBatches=createWorkshopStaticBatches(T,scene,[root,detailsRoot]);
+  const collectionWood=materials.get('MAT_Wood_Dark_Oiled');
+  function rebuildCollection(){
+    const next=createWorkshopCollection(T,{textures:{wood:collectionWood?.map,woodNormal:collectionWood?.normalMap,woodRoughness:collectionWood?.roughnessMap},collection:collectionItems,posters:collectionMemories.length?collectionMemories:collectionPosters});
+    next.root.position.set(0,floorBounds.isEmpty()?.18:floorBounds.max.y+.001,5.70);next.root.rotation.y=Math.PI;
+    if(room)next.setEnvironment(room.texture);collection?.dispose();collection=next;scene.add(next.root);probeDirty=true;
+  }
+  rebuildCollection();scene.add(collectionLight);
+  async function prepareCollection(){
+    if(collectionDisposed)throw new Error('El taller ya se cerró.');
+    if(collectionPosters.length)return collection.diagnostics();
+    if(collectionLoad)return collectionLoad;
+    collectionLoad=(async()=>{
+      const references=[['dos_lagos','Dos Lagos'],['cuesta_lipan','Lipán']];
+      const loaded=await Promise.allSettled(references.map(async([id,title])=>{
+        const source=await loader.loadAsync(new URL('../../assets/menu/game-captures/v7-'+id+'--clear--clear.png',import.meta.url).href);
+        try{
+          const canvas=document.createElement('canvas');canvas.width=canvas.height=1024;const context=canvas.getContext('2d');
+          context.fillStyle='#ded4bd';context.fillRect(0,0,1024,1024);context.fillStyle='#3c413d';context.textAlign='center';context.font='28px Georgia';context.fillText('ASFALTO NACIONAL',512,130);
+          const img=source.image,ratio=Math.min(900/img.width,600/img.height),width=img.width*ratio,height=img.height*ratio;context.drawImage(img,(1024-width)/2,495-height/2,width,height);
+          context.font='54px Georgia';context.fillText(title.toUpperCase(),512,870);context.font='24px Georgia';context.fillText('DESTINOS POR CONOCER',512,940);
+          const texture=new T.CanvasTexture(canvas);texture.name='Collection_Poster_'+id;texture.colorSpace=T.SRGBColorSpace;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());return {texture,caption:title+' · destinos por conocer'};
+        }finally{source.dispose();}
+      }));
+      const fulfilled=loaded.filter(x=>x.status==='fulfilled').map(x=>x.value),failure=loaded.find(x=>x.status==='rejected');
+      if(collectionDisposed||failure){for(const item of fulfilled)item.texture.dispose();if(failure)throw failure.reason;return null;}
+      collectionPosters=fulfilled;for(const item of fulfilled)owned.push(item.texture);rebuildCollection();return collection.diagnostics();
+    })();
+    try{return await collectionLoad;}finally{collectionLoad=null;}
+  }
 
   function configure() {
     workshop.hemi.color.set('#b8c3cb'); workshop.hemi.groundColor.set('#3c3023');
@@ -202,6 +238,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     workshop.key.shadow.blurSamples = 12;
     scene.fog = new T.FogExp2('#171511', .012);
     workshop.hotspots.bench = {yaw:.5,pitch:.22,radius:4.8,target:[-2.3,1.35,-4.4]};
+    collectionLight.intensity=night?20:18;
+    workshop.hotspots.collection={yaw:Math.PI,pitch:.025,radius:3.8,target:[0,1.28,5.55]};
     detailPass?.setNight(night);
   }
   configure();
@@ -212,7 +250,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const probe = new T.CubeCamera(.1, 45, cubeTarget);
   probe.position.set(0, 1.3, 0); scene.add(probe);
   const carWasVisible = car.visible;
-  let generator, room;
+  let generator;
   try {
     car.visible = false;
     probe.update(renderer, scene);
@@ -225,18 +263,24 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     generator?.dispose(); cubeTarget.dispose();
   }
   paint.forEachMaterial(m => {m.envMap = room.texture; m.needsUpdate = true;});
+  collection?.setEnvironment(room.texture);
   const reflectedCarPosition=new T.Vector3();car.getWorldPosition(reflectedCarPosition);
   function refreshRoomReflection() {
     const cube=new T.WebGLCubeRenderTarget(256,{type:T.HalfFloatType}),camera=new T.CubeCamera(.1,45,cube),pmrem=new T.PMREMGenerator(renderer);
     car.getWorldPosition(camera.position);camera.position.y+=1.15;scene.add(camera);
-    const visible=car.visible, floorVisible=reflector?.visible, detailVisible=detailPass.group.visible;
+    const visible=car.visible, floorVisible=reflector?.visible, detailVisible=detailPass.group.visible, contactVisible=contactShadow?.plane.visible;
     try {
-      car.visible=false;if(reflector)reflector.visible=false;detailPass.group.visible=true;
+      car.visible=false;if(reflector)reflector.visible=false;if(contactShadow)contactShadow.plane.visible=false;detailPass.group.visible=true;
       camera.update(renderer,scene);const next=pmrem.fromCubemap(cube.texture);
       paint.forEachMaterial(m=>{m.envMap=next.texture;m.needsUpdate=true;});
+      workshop.vehiclePresentation?.setEnvironment(next.texture);
+      collection?.setEnvironment(next.texture);
+      // Engine and wheel inspectors borrow the room PMREM too, including when
+      // hidden. Rebind every borrower before disposing the former target.
+      car.traverse(object=>{for(const m of Array.isArray(object.material)?object.material:[object.material])if(m?.envMap===room.texture){m.envMap=next.texture;m.needsUpdate=true;}});
       owned.splice(owned.indexOf(room),1);room.dispose();room=next;owned.push(next);
       car.getWorldPosition(reflectedCarPosition);probeDirty=false;
-    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();}
+    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();}
   }
 
   if (!floorBounds.isEmpty()) {
@@ -285,8 +329,16 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     reflector.renderOrder = 2;
     scene.add(reflector); owned.push(geometry, reflector);
   }
+  contactShadow=createWorkshopContactShadow(T,{renderer,scene,car,floorY:floorBounds.isEmpty()?.18:floorBounds.max.y,getRevision:()=>workshop.vehiclePresentation?.root.uuid||'initial'});
+  globalThis.window?.addEventListener?.('chevy:vehicle-config',invalidateContact);
   const presentation = {
-    configure,
+    configure,prepareCollection,
+    invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
+    setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
+    // Earned memories are borrowed from the album lease. Rebuild before the host
+    // releases its former lease; this controller never disposes these textures.
+    setCollectionMemories(posters=[]){if(collectionDisposed)throw new Error('El taller ya se cerró.');if(!Array.isArray(posters))throw new TypeError('Memory posters must be an array');collectionMemories=posters.filter(p=>p?.texture?.isTexture&&p.source==='earned-race-memory'&&p.memoryId&&p.receiptId).slice(0,2);rebuildCollection();return collection.diagnostics();},
+    getCollectionDiagnostics:()=>collection?.diagnostics(),
     setLighting(mode) {const next=mode==='night';if(next!==night){night=next;configure();probeDirty=true;}return night?'night':'day';},
     getRoomEnvironment:()=>room.texture,
     setPaintColor: hex => paint.setColor(hex),
@@ -295,9 +347,10 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       workshop.warm.position.set(1,4.2,-2.5);workshop.warm.intensity=night?32:5;
       detailPass.update(dt,{reducedMotion:globalThis.document?.body?.classList.contains('v6-reduce-motion')||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
       staticBatches.update(workshop.camera);
+      contactShadow.update();
       if(workshop.camera&&!workshop.drag&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))refreshRoomReflection();
     },
-    diagnostics:()=>({lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:true,planarReflection:!!reflector,textures:textureTasks.size,
+    diagnostics:()=>({contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:true,planarReflection:!!reflector,textures:textureTasks.size,
       surfaceRelief:{...surfaceReliefDiagnostics(),materials:materials.size,heightMaps:5},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},
       hdri:'Poly Haven Workshop 2K CC0',environmentIntensity:scene.environmentIntensity,details:true,staticBatches:staticBatches.diagnostics(),detailPass:detailPass.diagnostics(),paint:paint.diagnostics()}),
     dispose(){ disposeOwned(); if (workshop.presentation === presentation) workshop.presentation = null; },

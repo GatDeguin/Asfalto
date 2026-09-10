@@ -48,6 +48,8 @@ function mount() {
   footer.innerHTML = '<p class="an-controls-hint"><kbd>↵</kbd> Seleccionar <kbd>ESC</kbd> Volver</p><button type="button" class="an-replay">Ver animática <span aria-hidden="true">▷</span></button>';
   root.append(footer);
   const replay = footer.querySelector('button');
+  const quickDrive=document.createElement('button');quickDrive.type='button';quickDrive.className='an-v7-quick-drive';quickDrive.textContent='Salir a la ruta →';quickDrive.setAttribute('aria-label','Conducir con la ruta y el vehículo seleccionados');footer.append(quickDrive);
+  quickDrive.addEventListener('click',async()=>{if(quickDrive.disabled)return;quickDrive.disabled=true;quickDrive.textContent='Preparando la salida…';try{await game.startDrive(game.profile().selectedDrive||'free');}catch(error){globalThis.__asfaltoV7Experience?.announce('No se pudo preparar la salida. Podés reintentar.');console.error('Salida rápida',error);}finally{quickDrive.disabled=false;quickDrive.textContent='Salir a la ruta →';}});
   const back = document.createElement('button'); back.type = 'button'; back.className = 'an-panel-back';
   back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver al menú</span>';
   content.prepend(back);
@@ -84,7 +86,7 @@ function mount() {
     root.dataset.anInspection=String(section&&state.panel==='workshop'&&!!root.querySelector('[data-workshop-tab=chassis][aria-selected=true],[data-workshop-tab=mechanics][aria-selected=true],[data-workshop-tab=condition][aria-selected=true],[data-workshop-tab=tuning][aria-selected=true]')); 
     root.dataset.anAppearance = String(section && state.panel === 'workshop' && !!root.querySelector('[data-workshop-tab="appearance"][aria-selected="true"]'));
     refinements.refresh();
-    back.querySelector('.an-back-label').textContent = photo ? 'Volver al taller' : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
+    back.querySelector('.an-back-label').textContent = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
     content.hidden = !section;
     content.inert = !section;
     homePlate.hidden = section && !modes;
@@ -96,6 +98,7 @@ function mount() {
   function onBack() {
     if (!intro.hidden) { closeIntro('skip'); return; }
     if (root.dataset.anPhoto === 'true') {
+      if(game.workshop.collectionInspectionReturn&&game.closeCollectionInspection?.())return;
       root.querySelector('[data-workshop-tab="appearance"]').click();
       root.querySelector('[data-workshop-tab="photo"]').focus({ preventScroll: true });
       return;
@@ -131,6 +134,7 @@ function mount() {
   }
   function frameWorkshop(workshop, instant=false) {
     if (!workshop?.camera || !workshop.car) return;
+    if(workshop.collectionFocusActive){workshop.camera.clearViewOffset();return;}
     const camera=workshop.camera, rect=workshop.canvas.getBoundingClientRect();
     const appearance=root.dataset.anAppearance==='true', modes=root.dataset.anStep==='modes' && state.view==='section';
     if(state.view!=='home' && !appearance && !modes){camera.clearViewOffset();return;}
@@ -139,7 +143,7 @@ function mount() {
     const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:-.82,pitch:.13,reservedLeftPx});
     camera.setViewOffset(rect.width,rect.height,...pose.offset,rect.width,rect.height);
     workshop.hotspots.general=pose;
-    const reduced=document.body.classList.contains('v6-reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced=(document.body.classList.contains('v6-reduce-motion') || document.body.classList.contains('an-v7-reduce-motion')) || matchMedia('(prefers-reduced-motion: reduce)').matches;
     workshop.focus('general',instant||reduced);
   }
   function configureWorkshop(workshop) {
@@ -190,6 +194,7 @@ function mount() {
     return introFetch;
   }
   async function playIntro({ automatic = false } = {}) {
+    if (automatic && (globalThis.__asfaltoV7Experience?.preferences?.().reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     if (state.view === 'closed' || !intro.hidden || document.hidden) return;
     const request = ++introRequest;
     focusBeforeIntro = document.activeElement;

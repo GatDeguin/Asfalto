@@ -354,12 +354,32 @@ export function createVehicleCameraRig(options = {}) {
     // Keep the unobstructed smoothing state independent of collision response.
     // Only the rendered pose lifts: no shortening or horizontal drift, and
     // height/orientation share one release state instead of separate damping.
-    const resolved = resolveCollision(snapshot, position, look);
+    const baseView = { from: vector(snapshot.chassis.position), to: position, look, up: target.up, mode };
+    let resolved = resolveCollision(snapshot, position, look);
+    // Solve the compensated aim before temporal release; otherwise the
+    // correction feeds back into itself and a stationary obstacle creeps up.
+    if (resolved[1] > position[1]) {
+      for (let i = 0; i < 16; i++) {
+        const aim = reframeCameraBoom(baseView, resolved).look;
+        const next = resolveCollision(snapshot, resolved, aim);
+        const delta = next[1] - resolved[1];
+        resolved = next;
+        if (delta <= 0) break;
+        if (delta < 1e-5) {
+          resolved = [resolved[0], Math.min(position[1] + 4, resolved[1] + 1e-4), resolved[2]];
+          break;
+        }
+      }
+    }
     const requiredLift = Math.max(0, resolved[1] - position[1]);
-    collisionLiftM = Math.max(requiredLift, (!initialized || snap) ? 0 : collisionLiftM * Math.exp(-7 * dt));
+    // Integrate dL/dt = -min(7L, 8 m/s) exactly: the longer boom must
+    // return smoothly at every render rate without delaying obstacle clearance.
+    const releaseThreshold = 8 / 7;
+    const linearTime = Math.min(dt, Math.max(0, (collisionLiftM - releaseThreshold) / 8));
+    const releasedLift = (collisionLiftM - linearTime * 8) * Math.exp(-7 * (dt - linearTime));
+    collisionLiftM = Math.max(requiredLift, (!initialized || snap) ? 0 : releasedLift);
     if (collisionLiftM < 1e-6) collisionLiftM = 0;
     let viewPosition = collisionLiftM > 0 ? [resolved[0], position[1] + collisionLiftM, resolved[2]] : resolved;
-    const baseView = { from: vector(snapshot.chassis.position), to: position, look, up: target.up, mode };
     let view = reframeCameraBoom(baseView, viewPosition);
     if (collisionLiftM > 0) {
       // Recheck the actual compensated aim line as well as the subject boom.

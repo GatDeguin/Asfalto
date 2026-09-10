@@ -1,3 +1,4 @@
+import {thickenVehicleGlass} from './vehicle-glass.mjs';
 import {createVehicleChassis} from './vehicle-chassis.mjs';
 import {getVehicleDefinition} from './vehicle-catalog.mjs';
 import {createVehicleLighting} from './vehicle-lighting.mjs';
@@ -39,6 +40,7 @@ export function createVehiclePresentationState(vehicle='chevy') {
       phase=(phase+dt*rpm/60*Math.PI*2)% (Math.PI*2);
       return true;
     },
+    reset(){if(disposed)return false;distanceM=dirt=wetness=brake=phase=rpm=speedMps=0;return true;},
     setCondition(condition) {if(disposed)return false;if(condition==='clean'){dirt=0;wetness=0;}else if(condition==='used'){dirt=.48;wetness=0;}else if(condition==='wet'){dirt=.18;wetness=1;}else return false;return true;},
     diagnostics:()=>({vehicle,distanceM,dirt,wetness,brake,phase,rpm,speedMps,disposed}),
     dispose(){disposed=true;},
@@ -72,7 +74,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const previous=[];modelRoot.traverse(o=>{if(o.isMesh)previous.push({object:o,visible:o.visible});});
   let disposed=false,lodIndex=0,hoodAmount=0,engineBayVisible=true,engineAncillariesVisible=true;const restCompression=new Map(),wheelDiagnostics={};
   const uniforms={vehiclePaint:{value:new T.Color(paintColor||(vehicle==='falcon'?'#761a2a':'#d66a24'))},vehicleDirt:{value:0},vehicleWet:{value:0},vehicleDust:{value:new T.Color('#6c5740')}};
-  const engineBayAncillaryNodes=[],engineBayNodes=[],brakes=[],headlamps=[],flexible=[],hoods=[],tiers=[],materials=new Set(),replacedMaterials=new Set();
+  const engineBayAncillaryNodes=[],engineBayNodes=[],brakes=[],headlamps=[],flexible=[],hoods=[],tiers=[],materials=new Set(),replacedMaterials=new Set(),replacedGeometries=new Set();
   const colorValue=new T.Color(),worldPosition=new T.Vector3(),scaleVector=new T.Vector3();
   for(let level=0;level<lods.length;level++) {
     const model=lods[level];model.traverse(o=>{if(/_Primitive_/.test(o.name))return;if(o.userData?.system==='engineBayAncillary'||/EngineBay_Ancillary/i.test(o.name))engineBayAncillaryNodes.push(o);else if(o.userData?.system==='engineBay'||/EngineBay(?:_|$)/i.test(o.name))engineBayNodes.push(o);});model.name=`${vehicle}_Exterior_LOD${level}`;root.add(model);model.updateMatrixWorld(true);
@@ -88,8 +90,17 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       // This supplied revision bakes AO in TEXCOORD_1. The legacy loader exposes
       // that stream as uv2; Three r180 selects the second stream through uv1.
       if(vehicle==='chevy_400_1957'&&o.geometry?.attributes.uv2){o.geometry.setAttribute('uv1',o.geometry.attributes.uv2);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.aoMap){m.aoMap.channel=1;m.needsUpdate=true;}}
+      if(/Glass/.test(o.material?.name)&&!definition?.preserveAuthoredMaterials){const original=thickenVehicleGlass(T,o,model);if(original)replacedGeometries.add(original);}
       o.castShadow=!/Glass/.test(o.material?.name);o.receiveShadow=true;
-      const mapMaterial=m=>{if(!m)return m;if(/Paint|StripeAtlas/.test(m.name)){const clone=m.clone();clone.userData.vehicleAuthoredMatrix=new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld);replacedMaterials.add(m);materials.add(clone);return clone;}materials.add(m);return m;};
+      const mapMaterial=m=>{if(!m)return m;
+        // Some supplied GLBs share red lens material with cabin controls and
+        // passive quarter reflectors. Only rear-facing tail assemblies emit.
+        if(/BrakeLens/.test(m.name)){
+          o.geometry.computeBoundingBox();
+          const center=o.geometry.boundingBox.getCenter(new T.Vector3()).applyMatrix4(o.matrixWorld).applyMatrix4(new T.Matrix4().copy(model.matrixWorld).invert());
+          if(center.x<.88){const passive=m.clone();passive.name=m.name.replace('BrakeLens','PassiveRed');passive.emissiveIntensity=0;materials.add(passive);return passive;}
+        }
+        if(/Paint|StripeAtlas/.test(m.name)){const clone=m.clone();clone.userData.vehicleAuthoredMatrix=new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld);replacedMaterials.add(m);materials.add(clone);return clone;}materials.add(m);return m;};
       o.material=Array.isArray(o.material)?o.material.map(mapMaterial):mapMaterial(o.material);
       if(/Mirror_|mirror|ExhaustTip|exhaust|Antenna|antenna/.test(name)&&!/Face|Stem|Hanger|Bore|Pipe/.test(name))flexible.push({object:owner,rotation:owner.rotation.clone(),position:owner.position.clone(),antenna:/antenna/i.test(name)});
     });
@@ -98,7 +109,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     tiers.push({model,wheels,stationaryWheels});model.visible=level===0;
   }
   for(const m of materials) {
-    if(/Glass/.test(m.name)&&!definition?.preserveAuthoredMaterials){m.transparent=true;m.opacity=.22;m.depthWrite=false;m.side=T.DoubleSide;m.envMapIntensity=.85;}
+    if(/Glass/.test(m.name)&&!definition?.preserveAuthoredMaterials){m.transparent=true;m.opacity=1-Math.sqrt(1-.22);m.depthWrite=false;m.side=T.FrontSide;m.envMapIntensity=.85;}
     if(/BrakeLens/.test(m.name)){m.emissive?.set('#a0180e');m.emissiveIntensity=.12;brakes.push(m);}
     if(/Headlamp/.test(m.name)){m.emissive?.set('#fff0cc');headlamps.push(m);}
     if(/Chrome/.test(m.name)){m.metalness=1;m.roughness=.22;m.envMapIntensity=.92;}
@@ -121,7 +132,10 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
           diffuseColor.rgb=mix(diffuseColor.rgb,mix(vehiclePaint*.85,vec3(.008,.010,.013),vehicleStripe),vehicleSideBand);
           vehiclePigment*=1.0-vehicleSideBand*vehicleStripe;`:''}
           float vehicleLow = 1.0-smoothstep(-.16,.015,vehicleAuthoredPosition.y);
-          float vehicleGrain = fract(sin(dot(floor(vehicleAuthoredPosition*vec3(930.0,1300.0,910.0)),vec3(12.9898,78.233,32.19)))*43758.5453);
+          vec3 vehicleGrainPosition=vehicleAuthoredPosition*vec3(930.0,1300.0,910.0);
+          float vehicleGrain = fract(sin(dot(floor(vehicleGrainPosition),vec3(12.9898,78.233,32.19)))*43758.5453);
+          float vehicleFootprint=max(length(dFdx(vehicleGrainPosition)),length(dFdy(vehicleGrainPosition)));
+          vehicleGrain=mix(.5,vehicleGrain,1.0-smoothstep(.5,1.5,vehicleFootprint));
           float vehicleDirtMask = vehicleDirt*vehicleLow*(.5+.5*smoothstep(.2,.75,vehicleGrain));
           diffuseColor.rgb=mix(diffuseColor.rgb,vehicleDust,vehicleDirtMask*.82);
           diffuseColor.rgb*=1.0-vehicleWet*.09;
@@ -132,10 +146,10 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
           roughnessFactor=mix(roughnessFactor,.17,vehicleWet*.7);
         `);
       };
-      m.customProgramCacheKey=()=>`approved-vehicle-surface-v2:${vehicle}:${paint}:${atlas}`;m.needsUpdate=true;
+      m.customProgramCacheKey=()=>`approved-vehicle-surface-v7:${vehicle}:${paint}:${atlas}`;m.needsUpdate=true;
     }
   }
-  replacedMaterials.forEach(m=>m.dispose());
+  replacedMaterials.forEach(m=>m.dispose());replacedGeometries.forEach(g=>g.dispose());
   modelRoot.add(root);previous.forEach(entry=>{entry.object.visible=false;});state.setCondition(initialCondition);
   const calibration=physicalCalibration?createVehiclePhysicalCalibration(T,{vehicle,root,modelRoot,tiers,spec:definition?.calibration}):null;
   const chassis=createVehicleChassis(T,{root,tiers,centers});let chassisInspection=null;
@@ -147,7 +161,8 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     setChassisInspection(value){chassisInspection=value;},
     setPaintColor(hex){if(disposed||typeof hex!=='string'||!/^#[a-f\d]{6}$/i.test(hex))return false;uniforms.vehiclePaint.value.set(hex);return true;},
     setEnvironment(texture){if(disposed||(texture!==null&&!texture?.isTexture))return false;chassis.setEnvironment(texture);for(const material of materials){if(material.envMap===texture)continue;material.envMap=texture;material.needsUpdate=true;}return true;},
-    setCondition:condition=>state.setCondition(condition),
+    setCondition(condition){const result=state.setCondition(condition);const now=state.diagnostics();uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;return result;},
+    resetCondition(){if(disposed)return false;state.reset();uniforms.vehicleDirt.value=uniforms.vehicleWet.value=0;restCompression.clear();for(const item of flexible)item.object.rotation.copy(item.rotation);return true;},
     setEngineBayVisible(value,{includeAncillaries=false}={}){if(disposed)return false;engineBayVisible=!!value;engineBayNodes.forEach(node=>{node.visible=engineBayVisible;});if(includeAncillaries){engineAncillariesVisible=!!value;engineBayAncillaryNodes.forEach(node=>{node.visible=engineAncillariesVisible;});}return true;},
     setHoodOpen(amount){if(disposed)return false;hoodAmount=clamp(amount);hoods.forEach(p=>{p.rotation.z=-hoodAmount*1.04;});return true;},
     setActive(value){return lighting.setActive(value);},
@@ -175,7 +190,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
         wheelDiagnostics[id]={spinRad:spin,steerRad:steer,suspensionOffsetM:rise*scale};
       }
       calibration?.update(snapshot);
-      for(const item of flexible){const wave=Math.sin(now.phase)*(now.rpm>0?.00045:0);item.object.rotation.x=item.rotation.x+wave*(item.antenna?4:1)+ (item.antenna?Math.min(now.speedMps/1500,.045):0);}
+      for(const item of flexible){const still=sample.reducedMotion||sample.editing;const wave=still?0:Math.sin(now.phase)*(now.rpm>0?.00045:0);item.object.rotation.x=item.rotation.x+wave*(item.antenna?4:1)+(item.antenna&&!still?Math.min(now.speedMps/1500,.045):0);}
       lighting.update({...sample,brake:now.brake});
       return true;
     },

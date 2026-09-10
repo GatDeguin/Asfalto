@@ -1,3 +1,4 @@
+import { selectRoutePhoto } from './v7-route-catalog.mjs';
 import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs';
 
 export function mountMenuRefinements({root,game}) {
@@ -24,18 +25,21 @@ export function mountMenuRefinements({root,game}) {
   root.querySelector('#v6-roadtest-panel').append(book);
   function refresh() {
     for (const {node,track,sky,weather} of views) {
-      const key=routePreviewKey(track.value,sky.value,weather.value), record=catalog?.previews?.[key];
+      const key=routePreviewKey(track.value,sky.value,weather.value), photo=selectRoutePhoto(catalog,track.value,sky.value,weather.value),record=photo?.record;
       node.querySelector('strong').textContent=title(track);
-      node.querySelector('figcaption span').textContent=`${title(sky)} · ${title(weather)}`;
+      const optionLabel=(select,value)=>[...select.options].find(option=>option.value===value)?.textContent||value;
+      const photographed=record?`${optionLabel(sky,record.skyId)} · ${optionLabel(weather,record.weather)}`:'';
+      node.querySelector('figcaption span').textContent=record?(photo.exact?`Captura del juego · ${photographed}`:`Fotografía: ${photographed}. Selección: ${title(sky)} · ${title(weather)}.`):`${title(sky)} · ${title(weather)}. Fotografía pendiente.`;
+      node.dataset.photoMatch=record?(photo.exact?'exact':'same-track'):'missing';
       const img=node.querySelector('img');img.hidden=!record;
-      if(record && img.dataset.key!==key){img.src=asset(record.file);img.dataset.key=key;img.alt=`Vista del juego: ${title(track)}, ${title(sky)}, ${title(weather)}`;}
+      if(record && img.dataset.key!==photo.key){img.src=asset(record.file);img.dataset.key=photo.key;img.alt=`Captura real del juego: ${title(track)}, ${photographed}`;img.onerror=()=>{img.hidden=true;node.querySelector('figcaption span').textContent='La fotografía no está disponible. El trazado y la selección se conservan.';};}
       const map=node.querySelector('.an-route-miniature'), route=catalog?.routes?.[track.value];
       if(route&&map.dataset.track!==track.value) {
         map.dataset.track=track.value;map.replaceChildren();
-        const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 240 140');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Recorrido y salida de ${title(track)}`);
+        const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 240 140');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Tramo de referencia y salida de ${title(track)}. ${route.caveat||'Trazado adaptado del juego; no es un mapa GPS.'}`);
         const line=document.createElementNS(ns,'polyline');line.setAttribute('points',route.mapPoints.map(p=>p.join(',')).join(' '));svg.append(line);
         const start=route.mapPoints[0],dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',start[0]);dot.setAttribute('cy',start[1]);dot.setAttribute('r','4');svg.append(dot);
-        const label=document.createElementNS(ns,'text');label.setAttribute('x','12');label.setAttribute('y','130');label.textContent='● SALIDA';svg.append(label);map.append(svg);
+        const label=document.createElementNS(ns,'text');label.setAttribute('x','12');label.setAttribute('y','130');label.textContent='● SALIDA';svg.append(label);map.append(svg);const caveat=document.createElement('small');caveat.className='an-route-map-note';caveat.textContent='Tramo original · trazado adaptado';caveat.title=route.caveat||'No es un mapa GPS';map.append(caveat);
       }
     }
     const profile=game.profile(), ids=[...root.querySelectorAll('#v6-test-cards [data-test-id]')].map(c=>c.dataset.testId);

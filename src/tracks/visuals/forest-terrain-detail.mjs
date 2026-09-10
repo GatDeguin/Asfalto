@@ -53,13 +53,13 @@ export function refineForestTerrain(THREE,mesh,{roadField,waterLevel=-Infinity,m
   return mesh.userData.asfaltoForestRelief;
 }
 
-export function forestBackfill({heightAt,roadField,maxTrees=16000}){
+export function forestBackfill({heightAt,roadField,maxTrees=16000,valleyDepthM=55}){
   const box=heightAt.bounds;if(!box||box.isEmpty())return[];
   const area=(box.max.x-box.min.x)*(box.max.z-box.min.z),step=Math.max(28,Math.sqrt(area/(maxTrees*1.2)));
   const trees=[];let state=67439;const rng=()=>{state=Math.imul(state,1664525)+1013904223>>>0;return state/4294967296;};
   for(let z=box.min.z;z<box.max.z;z+=step)for(let x=box.min.x;x<box.max.x;x+=step){
     const px=x+rng()*step,pz=z+rng()*step,y=heightAt(px,pz);if(!Number.isFinite(y))continue;
-    const q=roadField(px,pz);if(q.distanceM<160||y<q.position[1]-55)continue;
+    const q=roadField(px,pz);if(q.distanceM<160||y<q.position[1]-valleyDepthM)continue;
     const yx=heightAt(px+4,pz),yz=heightAt(px,pz+4);
     if(!Number.isFinite(yx)||!Number.isFinite(yz)||Math.hypot(yx-y,yz-y)/4>1.35)continue;
     trees.push({position:[px,y-.2,pz],roadDistanceM:q.distanceM,height:14+rng()*17,width:.75+rng()*.35,rotation:rng()*Math.PI*2,variation:0});

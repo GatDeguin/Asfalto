@@ -1,4 +1,7 @@
-import {mountainProfile} from './mountain-profile.mjs';
+import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs';
+import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs';
+import {regionalReviewPlan} from './regional-review-plan.mjs';
+import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs';
 import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs';
@@ -30,7 +33,7 @@ function surfaceRule(name, id) {
     if(name==='MAT_basalt')return{asset:'aerial_rocks_04',metres:5,roughness:.92,normal:.5,color:'#858e83',terrain:true};
   }
   if (/^(M_Asphalt_Wet|MAT_ASPHALT|MAT_P1_ROAD|V2_ASPHALT_PBR|M_DL_Detail_RoadPatch_PBR)$/.test(name))
-    return { asset: 'aerial_asphalt_01', metres: 9, roughness: 0.84, normal: 0.24, color: '#b6b4ae', road: true };
+    return { asset: 'aerial_asphalt_01', metres: 9, roughness: 0.84, normal: 0.24, color: FOREST_TRACKS.has(id)?'#828782':id==='cuesta_lipan'?'#6b6d66':'#999a93', road: true };
   if (/(Shoulder_Gravel|Gravel_PBR|MAT_SHOULDER|MAT_DRAINAGE|MAT_P1_GRAVEL|MAT_P1_BALLAST|V2_SHOULDER_PBR)/.test(name))
     return { asset: 'gravel_floor', metres: 3, roughness: 0.94, normal: 0.5, color: FOREST_TRACKS.has(id) ? '#858775' : id==='cuesta_lipan' ? '#a69374' : '#9e9787' };
   if (/(Terrain_Andean|MAT_TERRAIN_|MAT_PEAT)/.test(name))
@@ -38,7 +41,7 @@ function surfaceRule(name, id) {
   if (id === 'aconcagua_horcones' && name === 'MAT_P1_TERRAIN_ARID')
     return { asset: 'gravel_floor', metres: 12, roughness: 0.99, normal: 0.28, color: '#bbb9b2', terrain: true };
   if (id === 'cuesta_lipan' && name === 'V2_TERRAIN_PBR')
-    return { asset: 'gravel_floor', metres: 10, roughness: 0.99, normal: 0.3, color: '#d4b38f', terrain: true };
+    return { asset: 'gravel_floor', metres: 10, roughness: 0.99, normal: 0.3, color: '#c2b9a5', terrain: true };
   if (/(MAT_P1_TERRAIN_|V2_TERRAIN_PBR)/.test(name))
     return { asset: 'rock_face', metres: id === 'cuesta_lipan' ? 16 : 24, roughness: 0.97, normal: 0.38, color: id === 'cuesta_lipan' ? '#ecd4ac' : '#e2ded2', terrain: true };
   if (/(M_Rock_|Rock_PBR|MAT_ROCK|MAT_P1_DUST|V2_ROCK_PBR)/.test(name))
@@ -72,7 +75,12 @@ function metricUV(THREE, mesh, metres) {
 }
 
 export function terrainProjection(material, metres, snowLine = 1e8, secondaryMaps = null) {
+  const mountainSnow=Boolean(material.userData.asfaltoMountainSnow);
   material.onBeforeCompile = shader => {
+    if(mountainSnow){
+      shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float asfaltoMountainSnow;\nvarying float vMountainSnow;').replace('#include <begin_vertex>','#include <begin_vertex>\nvMountainSnow=asfaltoMountainSnow;');
+      shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float vMountainSnow;');
+    }
     if (secondaryMaps) shader.uniforms.landscapeRockMap = { value: secondaryMaps.diff };
     shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLandscapeWorld;\nvarying vec3 vLandscapeNormal;');
     shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
@@ -131,7 +139,8 @@ vec3 landscapeSample(sampler2D tex, vec3 p, vec3 n) {
   diffuseColor.rgb *= landscapeColor;
   float snowHeight = smoothstep(${Number(snowLine - 180).toFixed(2)}, ${Number(snowLine + 230).toFixed(2)}, vLandscapeWorld.y + (landscapeMacro.r - 0.5) * 410.0);
   float snowSlope = smoothstep(0.24, 0.75, max(0.0,normalize(vLandscapeNormal).y));
-  float landscapeSnowCover=snowHeight*snowSlope;
+  float snowAspect=.72-.28*dot(normalize(vLandscapeNormal.xz+vec2(.0001)),normalize(vec2(.55,.83)));
+  float landscapeSnowCover=snowHeight*snowSlope*mix(.55,1.0,snowAspect)${mountainSnow?'*smoothstep(.12,.78,vMountainSnow)*smoothstep(.32,.74,normalize(vLandscapeNormal).y)':''};
   float landscapeMeltFringe=snowSlope*smoothstep(.05,.32,snowHeight)*(1.0-smoothstep(.48,.8,snowHeight))*(1.0-landscapeSnowCover);
   diffuseColor.rgb*=1.0-landscapeMeltFringe*.18;
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.83, 0.86), landscapeSnowCover * 0.78);
@@ -169,7 +178,7 @@ float roughnessFactor = roughness;
 #endif
 // ASFALTO_LANDSCAPE_NORMAL_END`);
   };
-  material.customProgramCacheKey = () => 'asfalto-landscape-v4-melt-' + metres + '-' + snowLine + '-' + Boolean(secondaryMaps)+'-'+(material.userData.asfaltoRegion||'backdrop');
+  material.customProgramCacheKey = () => 'asfalto-landscape-v7-aspect-melt-' + metres + '-' + snowLine + '-' + Boolean(secondaryMaps)+'-'+(material.userData.asfaltoRegion||'backdrop')+'-'+mountainSnow;
 }
 
 export function improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField }) {
@@ -191,8 +200,18 @@ export function improveAuthoredSurfaces(root, { THREE, id, textures, query, leng
     if (foamOwner || (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).some(material => /^(M_ShoreFoam_v3|M_DL_Detail_ShoreWetline)$/.test(material?.name || ''))) mesh.geometry?.setDrawRange(0, 0);
     for (const material of (Array.isArray(mesh.material) ? mesh.material : [mesh.material])) {
       if (!material?.isMaterial) continue;
-      if(/GUARDRAIL|Guardrail|Galvanized_Metal/.test(material.name)){material.color?.set('#808780');material.emissive?.set('#000000');material.metalness=.55;material.roughness=.64;material.userData.asfaltoSurfaceColorBase=material.color?.clone();}
+      if(id==='cuesta_lipan'&&material.name==='V2_TIRE_PBR'&&/TIRE_WEAR/.test(mesh.name)){
+        for(const key of MAP_SLOTS){retainTexture(material,material[key]);material[key]=null;}
+        material.color.set('#242421');material.metalness=0;material.roughness=1;material.opacity=.19;material.transparent=true;material.depthWrite=false;material.needsUpdate=true;material.userData.asfaltoRubberWear=true;
+      }
+      if(/GUARDRAIL|Guardrail|Galvanized_Metal|^V2_METAL_PBR$/.test(material.name)){
+        // The Lipan export bakes blue paint into a shared metal map. Galvanized
+        // road furniture uses its neutral metal response; retain the source map for unload.
+        if(material.name==='V2_METAL_PBR'){retainTexture(material,material.map);material.map=null;}
+        material.color?.set('#808780');material.emissive?.set('#000000');material.metalness=.42;material.roughness=.68;material.userData.asfaltoSurfaceColorBase=material.color?.clone();material.userData.asfaltoRegionalSteel=true;material.needsUpdate=true;
+      }
       if (/^(M_Lake_Water|MAT_WATER(?:\.001)?|MAT_P1_RIVER)$/.test(material.name)) {
+        if(id==='paso_garibaldi'&&material.name==='MAT_WATER.001'){mesh.userData.asfaltoWater={kind:'river',maxDepthM:.45,shoreWidthM:1.2,shallowColor:'#6a7053',deepColor:'#394c3c',absorptionPerMeter:.45,roughness:.28,attenuationDistanceM:2,depthSource:'derived-shallow-wetland-envelope-not-surveyed-bathymetry',flowDirection:{x:.82,z:.57},flowSpeedMps:.16};}
         if(material.name==='MAT_P1_RIVER'&&query&&Number.isFinite(lengthM)){const first=query.sample(0).position,last=query.sample(Math.min(lengthM,21000)).position,d=Math.hypot(last[0]-first[0],last[2]-first[2])||1,sign=last[1]>first[1]?-1:1;mesh.userData.asfaltoWater={kind:'river',maxDepthM:2,shoreWidthM:4,flowDirection:{x:(last[0]-first[0])/d*sign,z:(last[2]-first[2])/d*sign},flowSpeedMps:1.1};}
         // Water appearance and wave coordinates belong to the environment effects controller.
         waterLevel = Math.max(waterLevel, new THREE.Box3().setFromObject(mesh).max.y);
@@ -259,6 +278,16 @@ export function improveAuthoredSurfaces(root, { THREE, id, textures, query, leng
   return changed;
 }
 
+// Correlated age/cover creates stands and openings in world space. It never
+// changes the terrain or collider and is stable at streaming boundaries.
+export function forestHabitat(x,z,id='dos_lagos'){
+ const cell=95,ix=Math.floor(x/cell),iz=Math.floor(z/cell),u=x/cell-ix,v=z/cell-iz;
+ const hash=(a,b)=>{const n=Math.sin(a*127.1+b*311.7+(id==='paso_garibaldi'?71:31))*43758.5453;return n-Math.floor(n);};
+ const smooth=t=>t*t*(3-2*t),a=smooth(u),b=smooth(v),mix=(x,y,t)=>x+(y-x)*t;
+ const grove=mix(mix(hash(ix,iz),hash(ix+1,iz),a),mix(hash(ix,iz+1),hash(ix+1,iz+1),a),b);
+ const mature=Math.max(0,Math.min(1,(grove-.25)/.5));
+ return{grove,cover:.10+.85*smooth(mature),maturity:.25+.75*mature};
+}
 export function createForestPlacements({ id, query, heightAt, maxTrees = 12000, detailRange = null, lengthM = query.lengthM }) {
   const random = rng(id === 'dos_lagos' ? 43109 : 43117), trees = [];
   if (!Number.isFinite(lengthM) || lengthM <= 0) return trees;
@@ -273,15 +302,17 @@ export function createForestPlacements({ id, query, heightAt, maxTrees = 12000, 
       const position = sample.position.map((v, i) => v + sample.frame.left[i] * offset);
       const height = heightAt(position[0], position[2]);
       if(!Number.isFinite(height))continue;
-      const density=.5+.5*Math.sin(s*.0063+side*1.7)*Math.cos(s*.0027+band);
-      if(random()>(band<2?.72:.86)*(density*.68+.32))continue;
+      // Grove density follows terrain-space patches, not parallel route bands.
+      const habitat=forestHabitat(position[0],position[2],id);
+      if(random()>habitat.cover)continue;
       const slopeX=heightAt(position[0]+3,position[2]),slopeZ=heightAt(position[0],position[2]+3);
       if(Number.isFinite(slopeX)&&Number.isFinite(slopeZ)&&Math.hypot(slopeX-height,slopeZ-height)/3>1.35)continue;
       const nearest=query.project?.([position[0],height,position[2]]);if(nearest&&nearest.distanceXZ<(nearest.widthM||8)/2+5.5)continue;
-      if (!Number.isFinite(height) || height < sample.position[1] - 20 || height > sample.position[1] + 310) continue;
+      if (!Number.isFinite(height) || height < sample.position[1] - (id==='paso_garibaldi'?100:20) || height > sample.position[1] + 310) continue;
       // Reject lake-floor placements and terrain outside the authored mesh.
       position[1] = height - 0.2;
-      trees.push({ position, roadDistanceM: Math.abs(offset), height: 7 + random() * 17, width: 0.65 + random() * 0.42, rotation: random() * Math.PI * 2, variation: Math.floor(random() * 3) });
+      const age=habitat.maturity*.72+random()*.28;
+      trees.push({position,roadDistanceM:nearest?.distanceXZ??Math.abs(offset),height:6+age*22,width:.58+habitat.maturity*.22+random()*.18,rotation:random()*Math.PI*2,variation:Math.floor(random()*3),grove:habitat.grove});
     }
   }
   return trees;
@@ -333,8 +364,11 @@ export function terrainHeightSampler(THREE, root) {
   return heightAt;
 }
 
-function addForest(THREE, root, id, query, lengthM, maps, heightAt, roadField, detailRange=null) {
-  const placements = [...createForestPlacements({ id, query, lengthM, heightAt, detailRange, maxTrees:detailRange?6000:12000 }), ...(detailRange?[]:forestBackfill({ heightAt, roadField }))];
+export function addForest(THREE, root, id, query, lengthM, maps, heightAt, roadField, detailRange=null) {
+  const austral=id==='paso_garibaldi';
+  const backfill=detailRange?[]:forestBackfill({heightAt,roadField,valleyDepthM:austral?180:55});
+  const far=austral?planAustralCanopyStands(backfill,{heightAt,roadField,habitat:(x,z)=>forestHabitat(x,z,id)}):backfill;
+  const placements = [...createForestPlacements({ id, query, lengthM, heightAt, detailRange, maxTrees:detailRange?6000:12000 }), ...far];
   const group = new THREE.Group(); group.name = 'ASFALTO_REFERENCE_FOREST';
   const dummy = new THREE.Object3D();
   // Keep required authored nodes present for route/LOD validation, but replace their visible proxies.
@@ -353,8 +387,8 @@ function addForest(THREE, root, id, query, lengthM, maps, heightAt, roadField, d
     if (!chunks.has(key)) chunks.set(key, []);
     chunks.get(key).push(tree);
   }
-  const geometry = new THREE.PlaneGeometry(1, 1); geometry.translate(0, 0.48, 0);
-  const materials = maps.map(map => new THREE.MeshStandardMaterial({ map, color: id === 'paso_garibaldi' ? '#b2beb0' : '#d2d3af', alphaTest: 0.44, side: THREE.DoubleSide, roughness: 1, metalness: 0, envMapIntensity: 0.2 }));
+  const geometry = austral?createForestImpostorGeometry(THREE):new THREE.PlaneGeometry(1, 1); if(!austral)geometry.translate(0, 0.48, 0);
+  const materials = maps.map(map => new THREE.MeshStandardMaterial({ name:'ASFALTO_'+id+'_canopy', map, color: id === 'paso_garibaldi' ? '#b2beb0' : '#d2d3af', alphaTest: 0.44, side: THREE.DoubleSide, roughness: 1, metalness: 0, envMapIntensity: 0.2 }));
   for (const material of materials) {
     material.alphaToCoverage=true;
     material.userData.asfaltoRainCanopy=true;
@@ -367,17 +401,27 @@ function addForest(THREE, root, id, query, lengthM, maps, heightAt, roadField, d
       shader.fragmentShader = shader.fragmentShader.replace('#include <alphatest_fragment>', '#include <alphatest_fragment>\nif(vDetailedTree>0.5){diffuseColor.a*=smoothstep(185.0,240.0,vForestDistance);if(diffuseColor.a<.002)discard;}');
     };
     material.customProgramCacheKey = () => 'forest-near-physical-v1';
+    if(austral)installAustralCanopyShader(material);
   }
   for (const [key, list] of chunks) {
     const material = materials[list[0].variation];
-    const tileGeometry = geometry.clone(), detailFlags = new Float32Array(list.length * 2);
-    list.forEach((tree, index) => { detailFlags[index*2] = detailFlags[index*2+1] = tree.roadDistanceM <= 48 ? 1 : 0; });
+    const copies=austral?1:2;
+    const tileGeometry = geometry.clone(), detailFlags = new Float32Array(list.length * copies);
+    list.forEach((tree, index) => {for(let p=0;p<copies;p++)detailFlags[index*copies+p] = tree.roadDistanceM <= 48 ? 1 : 0; });
+    if(austral){
+      tileGeometry.setAttribute('asfaltoCanopyStand',new THREE.InstancedBufferAttribute(new Float32Array(list.map(t=>t.canopyStand?1:0)),1));
+      tileGeometry.setAttribute('asfaltoCanopyGround',new THREE.InstancedBufferAttribute(new Float32Array(list.flatMap(t=>t.canopyGround||[0,0,0,0])),4));
+      const ground=list.flatMap(t=>t.canopyGround||[0]);
+      tileGeometry.boundingBox.min.y=Math.min(-.02,...ground);
+      tileGeometry.boundingBox.max.y=1+Math.max(0,...ground);
+      tileGeometry.boundingBox.getBoundingSphere(tileGeometry.boundingSphere);
+    }
     tileGeometry.setAttribute('asfaltoDetailedTree', new THREE.InstancedBufferAttribute(detailFlags, 1));
-    const instanced = new THREE.InstancedMesh(tileGeometry, material, list.length * 2);
+    const instanced = new THREE.InstancedMesh(tileGeometry, material, list.length * copies);
     instanced.name = 'Forest canopy ' + key; instanced.castShadow = false; instanced.receiveShadow = true;
     let index = 0;
-    for (const tree of list) for (let plane = 0; plane < 2; plane++) {
-      dummy.position.fromArray(tree.position); dummy.scale.set(tree.height * tree.width, tree.height, 1);
+    for (const tree of list) for (let plane = 0; plane < copies; plane++) {
+      dummy.position.fromArray(tree.position); dummy.scale.set(tree.height * tree.width, tree.height, austral?tree.height*tree.width:1);
       dummy.rotation.set(0, tree.rotation + plane * Math.PI / 2, 0); dummy.updateMatrix();
       instanced.setMatrixAt(index++, dummy.matrix);
     }
@@ -386,7 +430,7 @@ function addForest(THREE, root, id, query, lengthM, maps, heightAt, roadField, d
   }
   geometry.dispose();
   root.add(group);
-  return { placements, trees: placements.length, forestBatches: chunks.size, forestTriangles: placements.length * 4 };
+  return { placements, trees: placements.length, forestBatches: chunks.size, forestTriangles: placements.length * 4, canopyStands:far.filter(t=>t.canopyStand).length, replacedBackfillTrees:backfill.length };
 }
 
 function ridgeNoise(x, y) {
@@ -394,6 +438,7 @@ function ridgeNoise(x, y) {
 }
 
 export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, layer = 0) {
+  if(id==='aconcagua_horcones')return addHorconesDEM(THREE,root,textures.horconesDEM,{heightAt:textures.demHeightAt});
   const forest = FOREST_TRACKS.has(id);
   const box = new THREE.Box3();
   for (let s = 0; s <= lengthM; s += Math.max(1, lengthM / 80)) box.expandByPoint(new THREE.Vector3().fromArray(query.sample(s).position));
@@ -406,12 +451,15 @@ export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, l
     clearance = Math.max(clearance, Math.hypot((p[0] - center.x) / rx, (p[2] - center.z) / rz) * 1.12);
   }
   rx *= clearance; rz *= clearance;
-  const cols = layer===0?320:layer===1?224:160, rows = layer===0?48:layer===1?32:24, positions = [], indices = [], colors = [];
-  const palette = id === 'cuesta_lipan' ? ['#ab8057', '#a66e48', '#c59460'] : forest ? ['#8c9796', '#a1aaac', '#b4bfc4'] : ['#8b8272', '#756f68', '#aca18c'];
+  const cols = layer===0?320:layer===1?224:160, rows = layer===0?48:layer===1?32:24, positions = [], indices = [], colors = [], snowRetention = [];
+  const palette = id === 'cuesta_lipan' ? ['#948777', '#82746b', '#b6a789'] : forest ? ['#8c9796', '#a1aaac', '#b4bfc4'] : ['#8b8272', '#756f68', '#aca18c'];
   const baseColor = new THREE.Color();
+  const focus=query.sample(lengthM*.38).frame?.tangent||[0,0,1];
+  const bearing=id==='aconcagua_horcones'?Math.atan2(focus[2],focus[0])-Math.PI/2:0;
   for (let row = 0; row <= rows; row++) for (let col = 0; col <= cols; col++) {
-    const angle = col / cols * Math.PI * 2, u = row / rows;
-    const profile=mountainProfile(id,angle,u,layer);
+    const localAngle = mountainAngleAtFraction(id,col / cols), angle=localAngle+bearing, u = row / rows;
+    const profile=mountainProfile(id,localAngle,u,layer);
+    snowRetention.push(profile.snowRetention);
     const {radius,falloff}=profile;
     const height = box.min.y - 120 + profile.height;
     positions.push(center.x + Math.cos(angle) * rx * radius, height, center.z + Math.sin(angle) * rz * radius);
@@ -429,12 +477,14 @@ export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, l
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3)); geometry.setIndex(indices); geometry.computeVertexNormals();
+  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+  geometry.setAttribute('asfaltoMountainSnow',new THREE.Float32BufferAttribute(snowRetention,1)); geometry.setIndex(indices); geometry.computeVertexNormals();
   const map = textures.rock_face?.diff || textures.aerial_rocks_04?.diff || textures.aerial_grass_rock?.diff || null;
   const material = new THREE.MeshStandardMaterial({ map, color: layer===0?'#e5e0d7':layer===1?'#bec6c8':'#b8c5cd', vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.12, side: THREE.DoubleSide });
   material.userData.asfaltoRegion=id;
   material.userData.asfaltoVertexVariation=true;
   material.userData.asfaltoDistantMountain=true;
+  material.userData.asfaltoMountainSnow=id==='aconcagua_horcones';
   material.userData.asfaltoMountainLayer=layer;
   terrainProjection(material, forest ? 110 : 150, id === 'cuesta_lipan' ? 1e8 : box.min.y + (id === 'aconcagua_horcones' ? 2050 : id === 'paso_garibaldi' ? 800 : 1080));
   const mesh = new THREE.Mesh(geometry, material); mesh.name = layer===0?'ASFALTO_REGIONAL_MOUNTAIN_BACKDROP':'ASFALTO_REGIONAL_MOUNTAIN_BACKDROP_'+layer;mesh.userData.asfaltoDistantRidge={layer,triangles:indices.length/3};
@@ -482,10 +532,12 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   if (!root?.isObject3D || !THREE?.TextureLoader || typeof document === 'undefined') return null;
   if (root.userData.asfaltoReferenceVisual) return root.userData.asfaltoReferenceVisual;
   const { textures, owned } = await loadSurfaceTextures(THREE, id, signal, sceneryOnly);
+  try { if(id==='aconcagua_horcones'&&scenery) textures.horconesDEM=await loadHorconesDEM(THREE,signal); }
+  catch(error){for(const texture of owned)texture.dispose();throw error;}
   let templates;
   if (!sceneryOnly) {
-    try { templates = await loadRoadsideTemplates(THREE, signal); }
-    catch (error) { for (const texture of owned) texture.dispose(); throw error; }
+    try { templates = await loadRoadsideTemplates(THREE, signal, id); }
+    catch (error) { for (const texture of owned) texture.dispose(); textures.horconesDEM?.geometry.dispose(); throw error; }
   }
   const keeper = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
   keeper.name = 'ASFALTO_VISUAL_RESOURCE_OWNER'; keeper.visible = false;
@@ -494,6 +546,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   for (const [name, geometry] of templates || []) {
     const owner = new THREE.Mesh(geometry, keeper.material); owner.name = 'Detail template ' + name; keeper.add(owner);
   }
+  if(textures.horconesDEM)keeper.add(new THREE.Mesh(textures.horconesDEM.geometry,keeper.material));
   root.add(keeper);
   const roadField = query && Number.isFinite(lengthM) ? visualRoadField(query, lengthM) : null;
   const changed = sceneryOnly ? 0 : improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField });
@@ -513,6 +566,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
       details.shoulderTransition=addTerrainShoulderTransition(THREE,root,{query,lengthM,heightAt,material,embankment:id==='cuesta_lipan'});
     }
   }
+  textures.demHeightAt=heightAt;
   if (scenery && query && Number.isFinite(lengthM)) {
     details = { ...details, ...addMountainBackdrop(THREE, root, id, query, lengthM, textures) };
     if (FOREST_TRACKS.has(id)) {
@@ -531,6 +585,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   const reliefSet=new Set();
   root.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material]))if(m?.userData.asfaltoRelief)reliefSet.add(m);});
   const stats = { version: 4, materialCount: changed, textureCount: owned.length, reliefMaterials:reliefSet.size, vertexColors, ...details };
+  root.userData.asfaltoRegionalReview = regionalReviewPlan({id,query,lengthM});
   root.userData.asfaltoReferenceVisual = stats;
   return stats;
 }
@@ -539,7 +594,7 @@ export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,
   if(!root?.isObject3D||!THREE?.TextureLoader||typeof document==='undefined')return null;
   const detailRange={startM:startM+60,endM:lengthM-60};
   const {textures,owned}=await loadSurfaceTextures(THREE,id,signal,false);
-  let templates;try{templates=await loadRoadsideTemplates(THREE,signal);}catch(error){for(const texture of owned)texture.dispose();throw error;}
+  let templates;try{templates=await loadRoadsideTemplates(THREE,signal,id);}catch(error){for(const texture of owned)texture.dispose();throw error;}
   const keeper=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());keeper.name='ASFALTO_RETURN_SCENERY_RESOURCE_OWNER';keeper.visible=false;
   owned.forEach((texture,i)=>keeper.material['asfaltoOwnedTexture'+i]=texture);for(const[name,geometry]of templates){const owner=new THREE.Mesh(geometry,keeper.material);owner.name='Return detail template '+name;keeper.add(owner);}root.add(keeper);
   const heightAt=terrainHeightSampler(THREE,root),roadField=visualRoadField(query,lengthM);let placements=[],stats={};

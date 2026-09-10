@@ -62,7 +62,14 @@ export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,ma
     if(Number.isFinite(sourceHeight[i]))y=sourceHeight[i]-underlayM;
     else if(known>=0){const sx=known%(nx+1),sz=Math.floor(known/(nx+1)),d=Math.hypot((x-sx)*dx,(z-sz)*dz),u=smooth(d/1800);y=sourceHeight[known]-underlayM+(y-sourceHeight[known]+underlayM)*u;}
     if(q){const valleyY=q.height-2+.25*(Math.sqrt(q.distance*q.distance+1600)-40);y=Math.min(y,valleyY);if(q.distance<140)y=Math.min(y,q.height-3);}
-    const authored=sourceField(wx,wz,180);if(authored)y=Math.min(y,authored.height-20+Math.max(0,authored.distance-authored.widthM*.5-8)*.12);
+    const authored=sourceField(wx,wz,id==='cuesta_lipan'?1600:180);
+    if(authored){
+      // A 180m hard cutoff raised adjacent grid cells by hundreds of metres.
+      // Continue the same underlay cap into a footslope, then merge into relief.
+      const clearance=Math.max(0,authored.distance-authored.widthM*.5-8);
+      const envelope=id==='cuesta_lipan'?authored.height-20+.38*(Math.sqrt(clearance*clearance+1600)-40):authored.height-20+clearance*.12;
+      y=Math.min(y,envelope);
+    }
     heights[i]=y;
   }
   function heightAt(x,z){const gx=clamp((x-bounds.minX)/dx,0,nx-.000001),gz=clamp((z-bounds.minZ)/dz,0,nz-.000001),ix=Math.floor(gx),iz=Math.floor(gz),u=gx-ix,v=gz-iz,i=iz*(nx+1)+ix;return heights[i]*(1-u)*(1-v)+heights[i+1]*u*(1-v)+heights[i+nx+1]*(1-u)*v+heights[i+nx+2]*u*v;}
@@ -76,7 +83,8 @@ export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,ma
 function relocateDistantRidges(T,root,samples){
   const xs=samples.map(s=>s.position[0]),zs=samples.map(s=>s.position[2]),centerX=(Math.min(...xs)+Math.max(...xs))/2,centerZ=(Math.min(...zs)+Math.max(...zs))/2,halfX=(Math.max(...xs)-Math.min(...xs))/2,halfZ=(Math.max(...zs)-Math.min(...zs))/2;
   root.traverse(mesh=>{
-    if(!mesh.userData?.asfaltoDistantRidge||mesh.userData.asfaltoClosedRidge)return;
+    // Geographic relief has an explicitly audited scenic matrix, never an elliptical envelope.
+    if(!mesh.userData?.asfaltoDistantRidge||mesh.userData.asfaltoClosedRidge||mesh.userData.asfaltoGeographicDEM)return;
     const layer=mesh.userData.asfaltoDistantRidge.layer,p=mesh.geometry.attributes.position,box=new T.Box3().setFromBufferAttribute(p),oldX=(box.min.x+box.max.x)/2,oldZ=(box.min.z+box.max.z)/2,oldRx=(box.max.x-box.min.x)/3.6,oldRz=(box.max.z-box.min.z)/3.6;
     let rx=halfX+4200+layer*1900,rz=halfZ+4200+layer*1900,clearance=1;
     for(const s of samples)clearance=Math.max(clearance,Math.hypot((s.position[0]-centerX)/rx,(s.position[2]-centerZ)/rz)*1.05);

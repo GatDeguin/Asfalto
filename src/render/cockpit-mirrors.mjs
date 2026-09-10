@@ -149,7 +149,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       for (const id of due) {
         const feed = feeds[id], pose = poses[id];
         feed.camera.position.fromArray(pose.position); feed.camera.up.fromArray(pose.up); feed.camera.lookAt(...pose.look); feed.camera.updateMatrixWorld(true);
-        renderer.setRenderTarget(feed.target); renderer.setViewport(0, 0, feed.target.width, feed.target.height); renderer.setScissorTest(false);
+        renderer.setRenderTarget(feed.target); renderer.setScissorTest(false);
         renderer.clear(true, true, true); renderer.render(scene, feed.camera);
         feed.lastRenderMs = nowMs; feed.frames++; rendered++;
       }

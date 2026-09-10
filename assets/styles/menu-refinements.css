@@ -95,3 +95,12 @@ body.v6-menu-open .an-cockpit-light-panel,body.an-race-pause-visible .an-cockpit
 .an-race-opening{position:fixed;inset:0;z-index:45;pointer-events:none}.an-race-opening[hidden],body.v6-menu-open .an-race-opening{display:none}.an-race-opening-veil{position:absolute;inset:0;background:#050705}.an-race-opening-caption{position:absolute;left:5vw;right:5vw;bottom:8vh;display:flex;align-items:center;gap:20px;padding:22px 26px;background:#0a100ce8;border-left:5px solid #f26427;color:#f1eadb}.an-race-opening-caption[hidden]{display:none}.an-race-opening-caption span{font:11px/1.4 system-ui;letter-spacing:.16em;color:#cf9770}.an-race-opening-caption strong{font:clamp(20px,3vw,40px)/1.1 system-ui;flex:1}.an-race-opening-caption button{pointer-events:auto;padding:12px 18px;min-height:44px;border:1px solid #ddd3;background:#1c251c;color:inherit;cursor:pointer}@media(max-width:720px){.an-race-opening-caption{flex-wrap:wrap}.an-race-opening-caption span{width:100%}.an-race-opening-caption strong{font-size:22px}.an-race-opening-caption button{font-size:12px}}
 
 body.an-race-opening-active .race-message,body.an-race-opening-active #v6-objective-hud{visibility:hidden}
+/* Photographing the cabinet requires the rendered shelf lighting to stay visible. */
+#v6-main-menu.an-cinematic-menu.an-collection-inspection[data-an-photo=true] #v6-workshop-stage::before { background:none; }
+#v7-earned-album { margin-top:1rem; max-width:100%; }
+.an-earned-photo-card { padding:1rem 0; border-top:1px solid #6a6253; }
+.an-earned-photo-card img { display:block; width:min(100%,320px); height:auto; margin:.5rem 0; }
+.an-earned-photo-dialog { z-index:25000; width:min(760px,92vw); max-height:90dvh; overflow:auto; background:#e1d7c2; color:#242821; border:1px solid #655b46; padding:1.25rem; }
+.an-earned-photo-dialog::backdrop { background:#080a0be6; }
+.an-earned-photo-dialog img { display:block; width:100%; height:auto; }
+#v7-earned-album .v6-button-row { flex-wrap:wrap; }

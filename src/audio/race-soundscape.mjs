@@ -1,3 +1,4 @@
+import { regionalAcoustics } from './v7-audio-state.mjs';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 /** Ambient-only bus. Engine, brakes, tire squeal, rivals and music remain with host mixer. */
 export function createRaceSoundscape({context,destination=context?.destination,seed=6147}={}){
@@ -47,7 +48,7 @@ export function createRaceSoundscape({context,destination=context?.destination,s
       const gust=.72+variation(sceneTime*.16,8)*.38+variation(sceneTime*.63,67)*.12;
       const inside=cameraMode==='cockpit',wind=typeof windMps==='number'?Math.abs(windMps):Math.hypot(windMps.x??windMps[0]??0,windMps.y??windMps[1]??0,windMps.z??windMps[2]??0),speed=Math.abs(speedMps),rain=clamp(rainIntensity);
       for(const channel of Object.values(channels))channel.cover.frequency.setTargetAtTime(inside&&channel.occluded?1250:18000,context.currentTime,.12);
-      master.gain.setTargetAtTime(clamp(masterGain)*clamp(ambientGain)*.7,context.currentTime,.06);
+      master.gain.setTargetAtTime(clamp(masterGain)*clamp(ambientGain)*clamp(globalThis.__asfaltoV7Experience?.preferences?.().ambientVolume??1)*.7,context.currentTime,.06);
       gain(channels.wind,clamp((wind*.8+speed*.44)/42)* (inside?.045:.11)*gust);channels.wind.filter.frequency.setTargetAtTime(inside?260+speed*7:480+wind*70,context.currentTime,.25);
       gain(channels.rain,rain*(inside?.027:.12),.22);channels.rain.filter.frequency.setTargetAtTime(inside?600:1200,context.currentTime,.2);
       gain(channels.roof,inside?rain*.15:rain*.012,.18);channels.roof.filter.frequency.setTargetAtTime(inside?680:1300,context.currentTime,.12);
@@ -58,9 +59,9 @@ export function createRaceSoundscape({context,destination=context?.destination,s
       const fallDistance=Number(waterfall?.distanceM??Infinity),impactDistance=Number(waterfall?.impactDistanceM??fallDistance),fallNear=Number.isFinite(fallDistance)?1/(1+Math.pow(Math.max(0,fallDistance)/150,1.4)):0,impactNear=Number.isFinite(impactDistance)?1/(1+Math.pow(Math.max(0,impactDistance)/90,1.5)):0;
       gain(channels.waterfall,(fallNear*.11+impactNear*.1)*clamp(waterfall?.scale??1,.2,1.5)*(inside?.28:1)*(.84+variation(sceneTime*.21,504)*.2),.55);
       channels.waterfall.filter.frequency.setTargetAtTime(450+fallNear*1600,context.currentTime,.5);channels.waterfall.panner.pan.setTargetAtTime(clamp(waterfall?.pan??0,-.8,.8),context.currentTime,.25);
-      const jungle=trackId==='cataratas_iguazu'?clamp(forest?.proximity??0):0,quiet=(1-rain*.76)*(inside?.15:1),leaf=1+gust*.15;
-      gain(channels.birds,jungle*quiet*(night?.007:.07),.65);gain(channels.insects,jungle*quiet*(night?.045:.024),.8);channels.birds.panner.pan.setTargetAtTime(clamp(forest?.pan??0,-.7,.7),context.currentTime,.6);
-      if(jungle)gain(channels.wind,channels.wind.target+jungle*(inside?.003:.013)*clamp(wind/8)*leaf);
+      const regional=regionalAcoustics({trackId,forest,night,rainIntensity:rain}),jungle=regional.proximity,quiet=inside?.15:1,leaf=1+gust*.15;
+      gain(channels.birds,regional.birds*quiet,.65);gain(channels.insects,regional.insects*quiet,.8);channels.birds.panner.pan.setTargetAtTime(clamp(forest?.pan??0,-.7,.7),context.currentTime,.6);
+      if(jungle)gain(channels.wind,channels.wind.target+regional.leaf*(inside?.2:1)*clamp(wind/8)*leaf);
       return{trackId,active,inside,waterProximity:near,waterfallProximity:fallNear,forestProximity:jungle};
     },
     thunder({distanceM=1200,intensity=.4}={}){

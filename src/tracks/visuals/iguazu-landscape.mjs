@@ -1,7 +1,10 @@
-import {prepareIguazuSurfaces} from './reference-landscape.mjs';
+import {waterfallCameraProfile} from './regional-waterfall-camera.mjs';
+import {regionalReviewPlan} from './regional-review-plan.mjs';
+import {createIguazuFern} from './regional-forest.mjs';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs';
-import {findWaterfallImpact} from './waterfall-impact.mjs';
+import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs';
 
 const sourceTemplates=new WeakMap();
 const rand=n=>{const x=Math.sin(n*17.831+4.917)*43961.7;return x-Math.floor(x);};
@@ -13,40 +16,56 @@ function makeBatches(T,root,items,prefix){
     const mesh=new T.InstancedMesh(list[0].geometry,list[0].material,list.length);mesh.name=prefix+key;list.forEach((item,i)=>mesh.setMatrixAt(i,item.matrix));mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.receiveShadow=true;mesh.castShadow=false;
     const original=list.map(x=>x.matrix),range=list[0].range,maximum=list.length;
     const instanceWindow=installSharedInstanceWindow(T,mesh,{rangeM:range,eligible:index=>!original[index].asfaltoReturnExcluded});
-    if(/MAT_(leaf|palm|fern|bark)/.test(mesh.material.name))mesh.userData.asfaltoReprojectInstances=heightAt=>{let changed=0;for(let i=0;i<original.length;i++){const e=original[i].elements,y=heightAt(e[12],e[14],e[13]);if(y===null){original[i].asfaltoReturnExcluded=true;original[i].scale(new T.Vector3(0,0,0));changed++;}else if(Number.isFinite(y)){e[13]=y;changed++;}instanceWindow.source.set(original[i].elements,i*16);}if(changed)instanceWindow.replace(instanceWindow.source);return changed;};
+    if(/MAT_(leaf|palm|fern|bark)|ASFALTO_IGUAZU_FERN_V7/.test(mesh.material.name))mesh.userData.asfaltoReprojectInstances=heightAt=>{let changed=0;for(let i=0;i<original.length;i++){const e=original[i].elements,y=heightAt(e[12],e[14],e[13]);if(y===null){original[i].asfaltoReturnExcluded=true;original[i].scale(new T.Vector3(0,0,0));changed++;}else if(Number.isFinite(y)){e[13]=y;changed++;}instanceWindow.source.set(original[i].elements,i*16);}if(changed)instanceWindow.replace(instanceWindow.source);return changed;};
     mesh.userData.asfaltoIguazuInstances={maximum,rangeM:range};root.add(mesh);
   }return bins.size;
 }
 export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
-  root.updateMatrixWorld(true);const riverMeshes=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.name==='MAT_river_FLOW')riverMeshes.push(mesh);});const plants=[],remove=new Set(),templates=[],templateNames=new Set(),worldInverse=root.matrixWorld.clone().invert();let vegetationParts=0;
+  root.updateMatrixWorld(true);const riverMeshes=[],falls=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.name==='MAT_river_FLOW')riverMeshes.push(mesh);if(mesh.isMesh&&mesh.material?.name==='MAT_waterfall_FLOW')falls.push(mesh);});
+  const groundAt=terrainHeightSampler(T,root);
+  for(const mesh of falls){repairBakedSidefallTransform(T,mesh);if(/^SIDEFALL_/.test(mesh.name)){
+    const pool=createSidefallReceivingLedge(T,mesh,{heightAt:groundAt.raw,query,root,material:riverMeshes[0]?.material});if(pool)riverMeshes.push(pool);
+    connectSidefallToBasin(T,mesh,riverMeshes);
+  }const impact=findWaterfallImpact(T,mesh,riverMeshes);refineWaterfallVolume(T,mesh,impact||{});mesh.userData.asfaltoWaterfallContact=impact;}const fernForms=[0,1,2].map(v=>createIguazuFern(T,v)),fernMaterial=new T.MeshStandardMaterial({name:'ASFALTO_IGUAZU_FERN_V7',color:'#879f67',roughness:.97,metalness:0,vertexColors:true,side:T.DoubleSide,envMapIntensity:.18});
+  fernMaterial.userData.asfaltoWind={heightM:1.2,baseY:0,maxBendM:.09};fernMaterial.userData.asfaltoRainCanopy=true;
+  const replacedFernSources=new Set();let fernReplacements=0;
+  const plants=[],remove=new Set(),templates=[],templateNames=new Set(),worldInverse=root.matrixWorld.clone().invert();let vegetationParts=0;
   root.traverse(mesh=>{
-    if(!mesh.isMesh)return;
+    if(!mesh.isMesh||/SOURCE_OWNER/.test(mesh.name))return;
     let plant=ownerOf(mesh);if(!plant){let node=mesh;while(node.parent&&node.parent!==root)node=node.parent;if(/^(ROCK_|CLIFF_|PROP_|BRIDGE_|LATERITE_|JUNGLE_ARCH_|VINE_)/.test(node.name||''))plant=node;}const name=mesh.material?.name||'';
     if(/MAT_(leaf|palm|fern|bark)/.test(name)){mesh.material.userData.asfaltoWind={heightM:/fern/.test(name)?1.2:12,baseY:0,maxBendM:/bark/.test(name)?.14:.24};mesh.material.userData.asfaltoSnow=true;mesh.material.alphaToCoverage=true;}
     if(/MAT_(leaf|palm)/.test(name))mesh.material.userData.asfaltoRainCanopy=true;
     if(/MAT_(basalt|laterite|forest_floor|earthen_bank)/.test(name))mesh.material.userData.asfaltoSnow=true;
     if(name==='MAT_river_FLOW'){
       const center=new T.Box3().setFromObject(mesh).getCenter(new T.Vector3()),q=query.project(center.toArray()),sample=query.sample(q.sM);
-      mesh.userData.asfaltoWater={kind:'river',maxDepthM:4,shoreWidthM:7,flowDirection:{x:sample.frame.tangent[0],z:sample.frame.tangent[2]},flowSpeedMps:1.8};
+      mesh.userData.asfaltoWater={kind:'river',maxDepthM:mesh.userData.asfaltoSidefallPool?.waterY!==undefined?.65:4,shoreWidthM:mesh.userData.asfaltoSidefallPool?1.2:7,flowDirection:{x:sample.frame.tangent[0],z:sample.frame.tangent[2]},flowSpeedMps:1.8,roughness:.42,shallowColor:'#64785a',deepColor:'#314734',absorptionPerMeter:.45};
     }
     if(name==='MAT_waterfall_FLOW'){
       const box=new T.Box3().setFromObject(mesh),center=box.getCenter(new T.Vector3());
-      mesh.userData.asfaltoWaterfall={heightM:box.max.y-box.min.y,speedMps:12,flowDirection:[0,-1,0],baseWidthM:Math.hypot(box.max.x-box.min.x,box.max.z-box.min.z),bottomCenter:[center.x,box.min.y,center.z],sprayRadiusM:12,...findWaterfallImpact(T,mesh,riverMeshes)};
+      mesh.userData.asfaltoWaterfall={heightM:box.max.y-box.min.y,speedMps:12,flowDirection:[0,-1,0],baseWidthM:Math.hypot(box.max.x-box.min.x,box.max.z-box.min.z),bottomCenter:[center.x,box.min.y,center.z],sprayRadiusM:12,...(mesh.userData.asfaltoWaterfallContact||{})};
     }
     if(name==='MAT_foam'||name==='MAT_mist_LOCAL')mesh.userData.asfaltoWaterfallAux={kind:name==='MAT_foam'?'foam':'mist',source:'delivered_iguazu_environment'};
     if(!plant)return;
     if(/^VEG_/.test(plant.name))vegetationParts++;remove.add(plant);const matrix=worldInverse.clone().multiply(mesh.matrixWorld),range=/fern|understory|shrub/.test(plant.name)?190:1050;
-    plants.push({geometry:mesh.geometry,material:mesh.material,matrix,range});
+    let geometry=mesh.geometry,material=mesh.material;
+    if(/^VEG_fern_/.test(plant.name)&&query.project([mesh.matrixWorld.elements[12],mesh.matrixWorld.elements[13],mesh.matrixWorld.elements[14]]).distanceXZ<38){
+      replacedFernSources.add(geometry);geometry=fernForms[fernReplacements%3];material=fernMaterial;fernReplacements++;
+    }
+    plants.push({geometry,material,matrix,range});
     if(/^VEG_(tree|palmito|fern|shrub)_/.test(plant.name)){
       const family=plant.name.split('_')[1],signature=family+':'+mesh.geometry.uuid+':'+mesh.material.uuid;
       if(!templateNames.has(signature)&&templates.filter(t=>t.family===family).length<12){templateNames.add(signature);const local=plant.matrixWorld.clone().invert().multiply(mesh.matrixWorld);templates.push({family,geometry:mesh.geometry,material:mesh.material,local,range,scale:plant.scale.clone()});}
     }
   });
   const group=new T.Group();group.name='ASFALTO_IGUAZU_INSTANCED_FOREST';const batches=makeBatches(T,group,plants,'IGUAZU_SOURCE_');for(const plant of remove)plant.removeFromParent();root.add(group);sourceTemplates.set(root,templates);
-  const points=[{key:'portal-verde',sM:120},{key:'selva',sM:4850},{key:'cataratas',sM:8600}].map(p=>{const q=query.sample(p.sM);return{...p,position:q.position.map((v,i)=>v-q.frame.tangent[i]*10+(i===1?4:0)),target:q.position.map((v,i)=>v+q.frame.tangent[i]*80+(i===1?1.8:0)),fov:58};});
-  root.userData.asfaltoRegionalCameras={id:'cataratas_iguazu',views:points};root.userData.asfaltoWeather={snowLineM:1500,valleyFloorM:15};root.userData.asfaltoIguazu={sourceVegetationParts:vegetationParts,instancedBatches:batches,templateParts:templates.length,sourceGeometryPreserved:true};
+  const fernOwner=new T.Group();fernOwner.name='ASFALTO_FERN_RESOURCE_OWNER';fernOwner.visible=false;
+  for(const geometry of new Set([...fernForms,...replacedFernSources]))fernOwner.add(new T.Mesh(geometry,fernMaterial));root.add(fernOwner);
+  const points=[{key:'portal-verde',sM:120},{key:'selva',sM:4850}].map(p=>{const q=query.sample(p.sM);return{...p,position:q.position.map((v,i)=>v-q.frame.tangent[i]*10+(i===1?4:0)),target:q.position.map((v,i)=>v+q.frame.tangent[i]*80+(i===1?1.8:0)),fov:58};});
+  points.push(waterfallCameraProfile(T,root,{query,falls,heightAt:groundAt}));
+  root.userData.asfaltoRegionalCameras={id:'cataratas_iguazu',views:points};root.userData.asfaltoWeather={snowLineM:1500,valleyFloorM:15};root.userData.asfaltoIguazu={sourceVegetationParts:vegetationParts,instancedBatches:batches,templateParts:templates.length,sourceGeometryPreserved:true,fernReplacements};
   root.userData.asfaltoIguazu.surfaces=await prepareIguazuSurfaces(root,{THREE:T,signal});
+  root.userData.asfaltoRegionalReview=regionalReviewPlan({id:'cataratas_iguazu',query,lengthM:query.lengthM});
   return root.userData.asfaltoIguazu;
 }
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){

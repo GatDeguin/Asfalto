@@ -61,6 +61,7 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
     if(dt>0){const emission=emissions.update({...vehicle,dt,wetness:policy.wetness});particles.update({dt,vehicle,emission,policy:vehiclePolicy,velocity,wind:windVector});}
   }
   return{setTrack,update,
+    renderWaterReflections(options){if(disposed||!active)return false;return surfaces.renderReflections({...options,excludeRoots:[root,...(options.excludeRoots||[])],prepareRender:options=>fogAlignment.prepareRender(options)});},
     refreshTrack(options){if(disposed||!trackRoot||trackRoot.children.length===trackChildren.length&&trackChildren.every((child,i)=>trackRoot.children[i]===child))return false;waterfalls.clear();wind.clear();const changed=surfaces.refresh(options);wind.bind(trackRoot);roadWetness.bind(trackRoot);acoustics.bind(trackRoot,trackId);waterfalls.setTrack({visualRoot:trackRoot});trackChildren=[...trackRoot.children];return changed;},
     attachWindshield(options){windshield?.dispose();windshield=options?.cabinMount?createWeatherWindshield(THREE,{camera,...options}):null;return !!windshield;},
     attachVehicleSurfaces(roots){bodyRoots=(roots||[]).filter(Boolean);bodyRain.bind(bodyRoots);},

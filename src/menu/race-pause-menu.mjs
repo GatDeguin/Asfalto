@@ -115,7 +115,8 @@ export function createRacePauseMenu({
     // Block race shortcuts while preserving native Enter/Space button activation.
     event.stopImmediatePropagation();
     if (event.key === 'Escape') { event.preventDefault(); activate('escape'); return; }
-    const visible = (view === 'confirm-restart' ? [button('confirm-restart'), button('cancel')] : buttons.slice(0, 4)).filter(node => !node.disabled);
+    const visible = (view === 'confirm-restart' ? [button('confirm-restart'), button('cancel')] : [...overlay.querySelectorAll('button,input,select,summary')]).filter(node => !node.disabled && !node.hidden && node.getClientRects().length > 0);
+    if (event.key !== 'Tab' && event.target.closest?.('.an-v7-preferences')) return;
     if (['Tab','ArrowUp','ArrowDown','Home','End'].includes(event.key)) {
       event.preventDefault();
       let index = visible.indexOf(doc.activeElement);

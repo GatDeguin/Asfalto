@@ -3,6 +3,8 @@
   'use strict';
 
   const FIXED_DT = 1 / 120;
+  // Session starts share a monotonic identifier even when a track replaces its physics session.
+  let nextIgnitionSequence = 0;
   const TELEPORT_TOKENS = new WeakSet();
 
   function finite(value, fallback) {
@@ -648,8 +650,23 @@
       this.impacts = [];
       this.staticImpactTimes = new Map();
       this.timeSeconds = 0;
+      this.ignitionSequence = 0;
+      this.ignitionStartedAtS = 0;
+      this.ignitionState = 'ready';
       this.disposed = false;
       this.lastSnapshot = null;
+    }
+
+    _engineStatus() {
+      const engine = this.damage?.engine || {};
+      const condition = clamp(finite(engine.condition, 1), 0, 1);
+      const powerFactor = clamp(finite(engine.powerFactor, 1), 0, 1);
+      const fire = engine.fire === true;
+      return {
+        ignition: { state: this.ignitionState, sequence: this.ignitionSequence, startedAtS: this.ignitionStartedAtS },
+        condition, powerFactor, fire,
+        fault: fire ? 'fire' : condition < 1 || powerFactor < 1 ? 'damaged' : 'none',
+      };
     }
 
     setChassisConfig(value) {
@@ -1052,6 +1069,7 @@
       const preImpactAngularVelocity = fromRapierVector(this.body.angvel());
       this.world.step(this.impactEvents || undefined);
       this.timeSeconds += FIXED_DT;
+      if (this.ignitionState === 'starting') this.ignitionState = 'running';
       const hadStaticImpact = this._captureStaticImpacts(velocity, preImpactAngularVelocity);
       const translation = this.body.translation();
       this.damage = this.core.applyMechanicalWear(this.damage, {
@@ -1098,6 +1116,7 @@
             : 0,
         },
         engine: {
+          ...this._engineStatus(),
           rpm: this.powertrainState.engineRpm,
           temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
           load: controls.throttle,
@@ -1211,6 +1230,7 @@
       if (this.lastSnapshot) {
         this.lastSnapshot = this.core.finiteSnapshot({
           ...this.lastSnapshot,
+          engine: { ...this.lastSnapshot.engine, ...this._engineStatus() },
           impact: impulseNs > 0,
           impacts: this.impacts.slice(),
           damage: this.damage,
@@ -1242,6 +1262,11 @@
       this.absModulation = [1, 1, 1, 1];
       if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
       if (options?.resetClock !== false) this.timeSeconds = 0;
+      if (options?.startEngine === true) {
+        this.ignitionSequence = ++nextIgnitionSequence;
+        this.ignitionStartedAtS = this.timeSeconds;
+        this.ignitionState = 'starting';
+      }
       this.impacts = [];
       const translation = this.body.translation();
       const rotation = this.body.rotation();
@@ -1265,6 +1290,7 @@
         })),
         steering: { frontAligningTorqueNm: 0, frontContactRatio: 0 },
         engine: {
+          ...this._engineStatus(),
           rpm: this.powertrainState.engineRpm,
           temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
           load: 0,
@@ -1341,7 +1367,7 @@
         fixedHz: 120,
         timeSeconds: this.timeSeconds,
         wheels: this.wheels.map(wheel => ({ ...wheel })),
-        engine: { rpm: this.powertrainState.engineRpm },
+        engine: { ...this._engineStatus(), rpm: this.powertrainState.engineRpm },
         gearbox: {
           gear: this.powertrainState.gear,
           requestedGear: this.powertrainState.requestedGear,
