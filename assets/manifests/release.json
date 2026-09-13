@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7823,
-      "sha256": "65E12B40B52E65E9E17AE53A9EAEF4F76B0583602316FF7ECF0EDAC0B05704C8"
+      "bytes": 8561,
+      "sha256": "D74DE3C2CF932B42ABEE10E56095B3BE9AA2759D219292183389C850E0E1FFFD"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 7823,
-      "sha256": "65E12B40B52E65E9E17AE53A9EAEF4F76B0583602316FF7ECF0EDAC0B05704C8"
+      "bytes": 8561,
+      "sha256": "D74DE3C2CF932B42ABEE10E56095B3BE9AA2759D219292183389C850E0E1FFFD"
     },
     {
       "path": "index.html",
       "bytes": 80674,
-      "sha256": "8C89C40F75BA7BDC324A1A8D8A3A5AFFB6A7FC2CF8151C5340E45569D1EA0A18"
+      "sha256": "F2F754F5416C5350DCBE902E63218F9B996AB988BA4E4FC8CCAAF44D387B9312"
     },
     {
       "path": "server.mjs",
@@ -2829,18 +2829,18 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 549191,
-      "sha256": "51CD95D59AD794264B9E3E576CA442F46321B27907105AC7FD94FB589452E64A"
+      "bytes": 549868,
+      "sha256": "0AD5BE9A5D980A1D4AF1DFE4E5D36EB265F8D602951D4B2136D191C8ED09229D"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 127189,
-      "sha256": "F6BF2E9F18F7DC4D396ABE12E7E18F49C8C1DDB27B4EAD1DDEC2A56C61E4CC5A"
+      "bytes": 127348,
+      "sha256": "385AEBE668BE9651C0FAA4887EA48CAF5C760103FB363CF5425DB8019799902F"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
-      "bytes": 837,
-      "sha256": "E02C54885DCE83F2911572D88979C1D739FA8291423E75E37571AFB57D655E6F"
+      "bytes": 846,
+      "sha256": "5F3A3B9D2BBCE78275595E11A203F204003DD22F894B40A616A69EFF457F300F"
     },
     {
       "path": "src/menu/intro-player.mjs",
@@ -3059,8 +3059,8 @@
     },
     {
       "path": "src/performance/render-warmup.mjs",
-      "bytes": 1005,
-      "sha256": "FB17F94983615CFA1D26CC4042C173583444EAE1143F2104F997E859B78B53A4"
+      "bytes": 1011,
+      "sha256": "145488D16BAE1F7D66280DC55A7BF650D1605834E4A4D6E38CDBB4A5D9C54465"
     },
     {
       "path": "src/performance/track-performance-governor.mjs",
@@ -3206,6 +3206,11 @@
       "path": "src/render/phone-display-reference.mjs",
       "bytes": 947,
       "sha256": "372EF00C8593C295442C631BD4A2736A9CEBECCA25A29890E27B419441B27405"
+    },
+    {
+      "path": "src/render/phone-gpu-ready.mjs",
+      "bytes": 893,
+      "sha256": "8290C698B8306EDF3F21079C1E4E52B5198E0C868EC7A36DD66E2B1871071C2A"
     },
     {
       "path": "src/render/physical-atmosphere.mjs",
@@ -3515,12 +3520,12 @@
     {
       "path": "src/runtime/phone-cockpit-assets.mjs",
       "bytes": 1216,
-      "sha256": "CEC5E1F27A8DDEDBAF99414ADA918B56B04ACF8A4A3C41E65FA66DEE58E08D0E"
+      "sha256": "F32652197AD0D0DEF8F6060FB913F4B9174E1F11BD8F4DB18F369986F7EFE9EF"
     },
     {
       "path": "src/runtime/phone-load-diagnostics.js",
       "bytes": 2954,
-      "sha256": "CEFD71406F782AAE42D127EAB775B7A723A83356B5C130DBBB3E26F6DB4DBD9B"
+      "sha256": "10885B7CCF36C32A76EB8E0DDE906FC6B700246BABF1BC844B7A7595420BE778"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -3530,7 +3535,7 @@
     {
       "path": "src/runtime/phone-start-memory.mjs",
       "bytes": 1338,
-      "sha256": "97B0002060CF187843E0E8B47ED64C82394CB2736BEB0C80C342C4E926DFCD6A"
+      "sha256": "4F081DD44909C1ABB287674DD4575C20BDA3452DC2925FA3477B87EEC8FB0316"
     },
     {
       "path": "src/runtime/profile-persistence.mjs",
@@ -4418,9 +4423,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 867,
-  "totalBytes": 952356998,
-  "inventorySha256": "6E51FF3E94806BD7E81927ECA4197596CE9714447EB6CDC478DF5E76C7EFA76E",
+  "fileCount": 868,
+  "totalBytes": 952360218,
+  "inventorySha256": "99F59CA593D534830F7B78E6A36B57325709F4FEA592AA29262A93423F13742C",
   "selectionCases": 174,
   "environmentCases": [
     {

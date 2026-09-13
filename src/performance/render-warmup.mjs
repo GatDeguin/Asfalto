@@ -10,5 +10,5 @@ export async function prepareRenderPolicies({getTier,applyTier,prepare,paint=asy
  * program polling survives a streamed mesh disposal. The draw pays linking
  * cost inside the visible loading phase, never on the first driving frame. */
 export async function prewarmStableScene({setLocked,settleStreaming,compile,draw}){
- setLocked(true);try{await settleStreaming();compile();draw();}finally{setLocked(false);}
+ setLocked(true);try{await settleStreaming();compile();await draw();}finally{setLocked(false);}
 }

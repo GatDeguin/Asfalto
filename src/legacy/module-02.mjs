@@ -1,8 +1,9 @@
+import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=phone-r5-20260913';
 import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs';
 import {createBootRenderGate} from '../render/boot-render-gate.mjs';
 import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs';
 const phoneTextureQueue=createSerialTextureQueue();
-import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=phone-r4-20260913';
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=phone-r5-20260913';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs';
@@ -22,7 +23,7 @@ import {installDrivingViewPreset} from '../game/driving-view-preset.mjs';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs';
 import {createFramePacer} from '../performance/frame-pacer.mjs';
 import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs';
-import {prepareRenderPolicies,prewarmStableScene} from '../performance/render-warmup.mjs';
+import {prepareRenderPolicies,prewarmStableScene} from '../performance/render-warmup.mjs?v=phone-r5-20260913';
 import {renderPixelRatio} from '../render/render-resolution.mjs';
 import {withFrameMatrices} from '../render/frame-matrices.mjs';
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs';
@@ -4580,7 +4581,7 @@ try {
   const chevyV3Template = await compactGlbToObject(THREE, chevyV3Bytes, 'Chevy V3');
   chevyV3Template.name = 'Chevy_V3_Template';
   window.__chevyV3Template = chevyV3Template;
-  window.__asfaltoLoadVehicleModel=async(url,label,signal)=>{const response=await fetch(url,{signal,credentials:'same-origin'});if(!response.ok)throw new Error(label+': HTTP '+response.status);const bytes=new Uint8Array(await response.arrayBuffer());if(signal?.aborted)throw signal.reason;return globalThis.AsfaltoV5GlbCore.completeGlbToObject(THREE,bytes,label,{parseGlb,makeAttribute,textureFromInfo,meshoptDecoder:MeshoptDecoder});};
+  window.__asfaltoLoadVehicleModel=async(url,label,signal)=>{globalThis.__asfaltoPhoneLoad?.stage('Cargando exterior: '+label);const response=await fetch(url,{signal,credentials:'same-origin'});if(!response.ok)throw new Error(label+': HTTP '+response.status);const bytes=new Uint8Array(await response.arrayBuffer());if(signal?.aborted)throw signal.reason;globalThis.__asfaltoPhoneLoad?.stage('Decodificando exterior: '+label);return globalThis.AsfaltoV5GlbCore.completeGlbToObject(THREE,bytes,label,{parseGlb,makeAttribute,textureFromInfo,meshoptDecoder:MeshoptDecoder});};
   window.__chevyV3ModelInfo = Object.freeze({ source: 'Referencias/Chevy v3.glb', bytes: chevyV3Bytes.byteLength, embedded: true });
   chevyV3PayloadNode.textContent = '';
   window.__chevyV6Three = THREE;
@@ -7760,7 +7761,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let visualWarmup=null,racePreparation=null;
   async function prepareVisualPolicies(signal){
     if(!options.precompileGraphics)return;
-    visualWarmup=await prepareRenderPolicies({signal,maximumTier:performanceGovernor.diagnostics().maximumTier,getTier:()=>performanceState.qualityTier,applyTier:tier=>{const policy=TRACK_RENDER_POLICIES[tier];performanceState.qualityTier=tier;performanceState.performanceScale=policy.resolutionScale;renderer.shadowMap.enabled=policy.shadows;applyPerformanceTier();onRenderingScaleChanged(policy.resolutionScale);},prepare:()=>options.precompileGraphics(),paint:()=>new Promise(resolve=>requestAnimationFrame(resolve))});
+    visualWarmup=await prepareRenderPolicies({signal,maximumTier:performanceGovernor.diagnostics().maximumTier,getTier:()=>performanceState.qualityTier,applyTier:tier=>{const policy=TRACK_RENDER_POLICIES[tier];performanceState.qualityTier=tier;performanceState.performanceScale=policy.resolutionScale;renderer.shadowMap.enabled=policy.shadows;applyPerformanceTier();onRenderingScaleChanged(policy.resolutionScale);},prepare:()=>options.precompileGraphics({signal}),paint:()=>new Promise(resolve=>requestAnimationFrame(resolve))});
     performanceGovernor.beginWindow('prepared');
   }
   function getPerformanceScale(){return performanceState.performanceScale;}
@@ -8403,7 +8404,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     onDispose:()=>mobileDrivingControls?.dispose(),
     beforeResume:()=>{if(!runtimeDeviceProfile.phone)return true;setRaceCameraMode('cockpit');return raceCameraState.current==='cockpit';},
     getTargetFps:()=>framePacingSettings?.getTargetFps()||60,
-    precompileGraphics:()=>prewarmStableScene({setLocked:value=>{visualPrecompileInProgress=value;},settleStreaming:()=>trackStreamingPromise,compile:()=>{const visible=raceChevyV3.visible;try{raceChevyV3.visible=true;scene.updateMatrixWorld(true);renderer.compile(scene,camera);}finally{raceChevyV3.visible=visible;}},draw:renderFrame}),
+    precompileGraphics:({signal}={})=>prewarmStableScene({setLocked:value=>{visualPrecompileInProgress=value;},settleStreaming:()=>trackStreamingPromise,compile:()=>{const visible=raceChevyV3.visible;try{raceChevyV3.visible=true;scene.updateMatrixWorld(true);renderer.compile(scene,camera);}finally{raceChevyV3.visible=visible;}},draw:async()=>{bootRenderGate.release();renderFrame();if(runtimeDeviceProfile.phone){globalThis.__asfaltoPhoneLoad?.stage('Esperando confirmación de GPU…');await waitForGpuFrame(renderer.getContext(),{signal});globalThis.__asfaltoPhoneLoad?.stage('GPU confirmó el cuadro de salida');}}}),
     onRenderingScaleChanged() {
       if (typeof resize === 'function') resize();
     },
@@ -9687,9 +9688,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
   rayTracing=createRayTracedOcclusion({THREE,renderer,scene,camera,excludeRoots:()=>[cockpit,...(compositionEditor?.renderOverlays||[])],excludeOccluders:()=>[raceChevyPhysicalRoot,raceWorld.getFalconVisualRoot?.()]});
   rayTracingSettings=installRayTracingSettings({controller:rayTracing,getDiagnostics:()=>globalThis.__chevyV6Complete?.workshop?.active?(globalThis.__chevyV6Complete.workshop.rayTracing?.diagnostics()||rayTracing.diagnostics()):rayTracing.diagnostics()});
   globalThis.__asfaltoRayTracing={refresh:()=>rayTracingSettings.refresh(),getMode:()=>rayTracingSettings.getMode(),setMode:value=>rayTracingSettings.setMode(value),diagnostics:()=>rayTracing.diagnostics()};
-  async function preparePlayerVehicle(vehicle) {
+  async function preparePlayerVehicle(vehicle,{signal}={}) {
+    signal?.throwIfAborted();
     const stage=new THREE.Group();stage.name=`RaceVehicle_${vehicle}`;stage.userData.vehicleSelectionMount=true;stage.visible=false;raceChevyV3Model.add(stage);let presentation,committed=false,released=false;
-    try { presentation=await createVehiclePresentation(THREE,{vehicle,modelRoot:stage,physicalCalibration:true,lightScene:scene,loadGlb:window.__asfaltoLoadVehicleModel,paintColor:globalThis.__chevyPaintColor||'#d66a24'}); presentation.setChassisConfig(globalThis.__asfaltoChassisConfig || null); } catch(error) { stage.removeFromParent();throw error; }
+    try { presentation=await createVehiclePresentation(THREE,{vehicle,signal,lodLevels:runtimeDeviceProfile.phone?[0]:[0,1,2],modelRoot:stage,physicalCalibration:true,lightScene:scene,loadGlb:window.__asfaltoLoadVehicleModel,paintColor:globalThis.__chevyPaintColor||'#d66a24'}); presentation.setChassisConfig(globalThis.__asfaltoChassisConfig || null); } catch(error) { stage.removeFromParent();throw error; }
     return { commit(){if(committed||released)return;raceChevyPresentation?.dispose();for(const child of [...raceChevyV3Model.children])if(child!==stage){if(child.userData.vehicleSelectionMount)child.removeFromParent();else child.visible=false;}raceChevyPresentation=presentation;window.__asfaltoVehiclePresentations.chevy=presentation;window.__asfaltoSelectedPlayerVehicle=vehicle;stage.visible=true;committed=true;presentation.setLightMode(raceWorld.getDrivingLights().mode);lightingEditor?.applyVehicles();rayTracing?.invalidate();},dispose(){if(released||committed)return;released=true;presentation.dispose();stage.removeFromParent();} };
   }
   setLoading('Preparando vegetación y efectos gráficos…');
@@ -9754,7 +9756,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:cockpit.visible, enabled:raceWorld.rearviewEnabled, quality:raceWorld.getPerformanceTier?.() || 'balanced', nowMs:performance.now() });
     markFirstFrame('Primer cuadro: render del mundo y cockpit');
     colorGrading.render(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{cockpitRenderPass.render();}finally{restore?.();}});
-    });publishPresentedRacePhoto();markFirstFrame('Primer cuadro completo');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}
+    });publishPresentedRacePhoto();markFirstFrame('Cuadro enviado a GPU');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}
   }
 
   function qualityPixelRatioLimit(width) {return devicePixelRatioLimit({quality:gameSettings.graphicsQuality,width,memory:navigator.deviceMemory,profile:runtimeDeviceProfile});}
@@ -9825,9 +9827,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
   applyMechanicalVisuals();
   setGearUi();
   if(runtimeDeviceProfile.phone){
-    setLoading('Preparando primer cuadro con ajustes móviles…');
+    setLoading('Cockpit preparado; esperando auto y circuito…');
     await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
-    modularHostInitialization.assertActive();bootRenderGate.release();renderFrame();
+    modularHostInitialization.assertActive();
   }
   loadingEl.classList.add('hidden');
   viewport.classList.add('ready');
@@ -10053,7 +10055,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     },
     raceWorld,
     refreshAudioGate() { engineSound.applySettings(); },
-    openCockpitSettings: setSettingsPanelOpen,
+    openCockpitSettings: (open)=>{setSettingsPanelOpen(open);if(open&&runtimeDeviceProfile.phone){bootRenderGate.release();resize();}},
     mirrorDiagnostics: () => cockpitMirrors.diagnostics(),
     ignitionDiagnostics: () => cockpitIgnition.diagnostics(),
     lightSwitchDiagnostics:()=>cockpitLightSwitch?.diagnostics(),
