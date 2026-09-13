@@ -1,3 +1,5 @@
+import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs';
+const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs';
@@ -1608,12 +1610,12 @@ function makeAttribute(THREE, json, bin, accessorIndex) {
 
   if (strideElements === itemSize) {
     const array = new component.Ctor(bin.buffer, absoluteOffset, accessor.count * itemSize);
-    return new THREE.BufferAttribute(array, itemSize, !!accessor.normalized);
+    return new THREE.BufferAttribute(attributeStorage(array,runtimeDeviceProfile.phone), itemSize, !!accessor.normalized);
   }
 
   const totalElements = Math.floor(bufferView.byteLength / component.bytes);
   const array = new component.Ctor(bin.buffer, bin.byteOffset + (bufferView.byteOffset || 0), totalElements);
-  const interleaved = new THREE.InterleavedBuffer(array, strideElements);
+  const interleaved = new THREE.InterleavedBuffer(attributeStorage(array,runtimeDeviceProfile.phone), strideElements);
   const attributeOffset = (accessor.byteOffset || 0) / component.bytes;
   return new THREE.InterleavedBufferAttribute(interleaved, itemSize, attributeOffset, !!accessor.normalized);
 }
@@ -1670,6 +1672,10 @@ async function decodeTextureBitmap(blob) {
 }
 
 async function textureFromInfo(THREE, json, bin, textureInfo, srgb = false) {
+  const decode=()=>decodeTextureFromInfo(THREE,json,bin,textureInfo,srgb);
+  return runtimeDeviceProfile.phone?phoneTextureQueue(decode):decode();
+}
+async function decodeTextureFromInfo(THREE, json, bin, textureInfo, srgb = false) {
   if (!textureInfo) return null;
   const textureDef = json.textures[textureInfo.index];
   const sourceIndex = textureDef.extensions?.EXT_texture_webp?.source ?? textureDef.source;
@@ -1856,10 +1862,12 @@ function splitPedalMesh(THREE, sourceMesh) {
 
 async function compressedAssetToObject(THREE, key, label, { signal } = {}) {
   if (signal?.aborted) throw signal.reason;
+  globalThis.__asfaltoPhoneLoad?.stage("Cargando pieza: "+label);
   const compressedSource = payload[key];
   delete payload[key];
   const bytes = runtimeDeviceProfile.phone ? await readPhoneCockpitPart(key,signal) : await gunzipBase64(compressedSource);
   if (signal?.aborted) throw signal.reason;
+  globalThis.__asfaltoPhoneLoad?.stage("Decodificando pieza: "+label);
   const object = await compactGlbToObject(THREE, bytes, label);
   if (signal?.aborted) throw signal.reason;
   return object;
@@ -2107,6 +2115,7 @@ function makeEnvironment(THREE) {
 }
 
 function setLoading(text) {
+  globalThis.__asfaltoPhoneLoad?.stage(text);
   loadingTextEl.textContent = text;
 }
 
@@ -4630,7 +4639,7 @@ try {
     powerPreference: 'high-performance',
     preserveDrawingBuffer: false,
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, runtimeDeviceProfile.phone ? 1.15 : 1.5));
   renderer.setSize(viewport.clientWidth, viewport.clientHeight, false);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -4638,6 +4647,7 @@ try {
   renderer.setClearColor(0x000000, 0);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.domElement.addEventListener('webglcontextlost',()=>globalThis.__asfaltoPhoneLoad?.stage('Contexto gráfico perdido'));
   renderer.domElement.setAttribute('aria-label', 'Cockpit Chevy interactivo en 3D');
   viewport.appendChild(renderer.domElement);
 
