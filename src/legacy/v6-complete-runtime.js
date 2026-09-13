@@ -288,13 +288,13 @@ async function getSessionRequestRunner(){
  if(!sessionRequestRunner)sessionRequestRunner=tools.createSessionTransactionRunner({
   onCancel:metadata=>openMenu(metadata?.editor?'settings':metadata?.championship?'competition':'drive'),
   begin({metadata,cancel,retry}){
-   const presentationOwner={};sessionPresentationOwner=presentationOwner;
+   const presentationOwner={};sessionPresentationOwner=presentationOwner;const phoneLoadToken=globalThis.__asfaltoPhoneLoad?.begin();
    globalThis.__asfaltoRacePresentationHeld=true;
    setSessionPaused(true);sessionLoop.stop();window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();window.__cockpit?.raceWorld?.pause?.({reason:'menu'});
    const cinema=globalThis.__asfaltoLoading?.begin('Preparando la salida','Ajustando el auto y cargando la ruta…',{track:metadata.track});
    const ui=globalThis.__asfaltoV7Experience?.beginLoad({label:'Preparando la salida',cancel,retry});
    q('.an-v7-load-state [data-cancel]')?.focus({preventScroll:true});
-   return {canRetry:!!ui,stage(label,done,total){cinema?.stage(label);ui?.stage(label,done,total);},fail(message){ui?.fail(message);toast(message,'warn');},async end(success){try{ui?.finish(success?(metadata.editor?'editor':'opening'):'workshop');await cinema?.end();}finally{if(sessionPresentationOwner===presentationOwner){globalThis.__asfaltoRacePresentationHeld=false;if(!success&&document.body.classList.contains('v6-menu-open')){workshop.restoreAfterRace();workshop.setActive(!document.hidden);}}}globalThis.__asfaltoV7Experience?.syncPhase();}};
+   return {canRetry:!!ui,stage(label,done,total){globalThis.__asfaltoPhoneLoad?.stage(label,phoneLoadToken);cinema?.stage(label);ui?.stage(label,done,total);},fail(message){ui?.fail(message);toast(message,'warn');},async end(success){try{ui?.finish(success?(metadata.editor?'editor':'opening'):'workshop');await cinema?.end();}finally{if(sessionPresentationOwner===presentationOwner){globalThis.__asfaltoPhoneLoad?.finish(success,phoneLoadToken);globalThis.__asfaltoRacePresentationHeld=false;if(!success&&document.body.classList.contains('v6-menu-open')){workshop.restoreAfterRace();workshop.setActive(!document.hidden);}}}globalThis.__asfaltoV7Experience?.syncPhase();}};
   }
  });
  return sessionRequestRunner;

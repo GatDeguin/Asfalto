@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4775,
-      "sha256": "41D6DC91DCD946E25840557D4A6249805E4435DAA91CED7DA936FD617CE3C878"
+      "bytes": 5802,
+      "sha256": "849ED93E8DF15F4F23BB54B7A7F8F6E8D2CEABE1460B00E025B28A7EBCB780BA"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 4775,
-      "sha256": "41D6DC91DCD946E25840557D4A6249805E4435DAA91CED7DA936FD617CE3C878"
+      "bytes": 5802,
+      "sha256": "849ED93E8DF15F4F23BB54B7A7F8F6E8D2CEABE1460B00E025B28A7EBCB780BA"
     },
     {
       "path": "index.html",
-      "bytes": 80596,
-      "sha256": "1B6224836B217902339913C8AE42470CB7E8CFCB27890719AF4B05B97F4F29D0"
+      "bytes": 80674,
+      "sha256": "9DFF08B66AA8C4702F366C9B4A6E148190A0EEB866F8E4DCC14B729DD2CD647D"
     },
     {
       "path": "server.mjs",
@@ -2829,13 +2829,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 545977,
-      "sha256": "B26CC1AEC5468A287996D4CFB5C0949AD8AB5A58A43C8FF4990C7C672FFE74E9"
+      "bytes": 546797,
+      "sha256": "9D28F62FBF52C6D9236A4809787D140EFA8C0FBBCE7DE41A1FA8316AC0FA6107"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 126988,
-      "sha256": "8FAE27929A3167300C9946D677D6CFEBC47BAC7206F82C9F3EA9292B5775BB29"
+      "bytes": 127169,
+      "sha256": "DD78C3BB4264E63DCA8DF7653B40F91C6E348B717FF99531246BF41C786D10F9"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -3506,6 +3506,16 @@
       "path": "src/runtime/phone-cockpit-assets.mjs",
       "bytes": 1087,
       "sha256": "77B8C1E73C304E80F8A0F4F057845CB146FEC3AE66F7837BB87920372F8CD417"
+    },
+    {
+      "path": "src/runtime/phone-load-diagnostics.js",
+      "bytes": 2954,
+      "sha256": "6B7A7C418B943B076F18B771A25F8681BFFA9AC59F1CDA802993EFFC17483400"
+    },
+    {
+      "path": "src/runtime/phone-resource-memory.mjs",
+      "bytes": 647,
+      "sha256": "F3248CD2009807832D565BA4B8638FB4B991DD2FFBCFDC70A91D34FF5D2AE6FE"
     },
     {
       "path": "src/runtime/phone-start-memory.mjs",
@@ -4398,9 +4408,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 863,
-  "totalBytes": 988358292,
-  "inventorySha256": "7CEE3682D0F6771D16F164EE040249709E3DAF6D71A2E674D729DA931CD439F2",
+  "fileCount": 865,
+  "totalBytes": 988365026,
+  "inventorySha256": "6456B2B31B5149CE930E9A7E3955B1C273723D3D419BE56D3A9EB9B80EEB5B5E",
   "selectionCases": 174,
   "environmentCases": [
     {

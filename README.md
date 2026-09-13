@@ -40,3 +40,11 @@ Ante el reporte de recarga de Chrome en iPhone antes de largar, se redujo la acu
 El teléfono ahora carga seis piezas GLB secuencialmente y evita el JSON de cabina de 59 MB y sus cadenas base64. La geometría y las texturas móviles son las mismas; PC conserva su carga y configuración gráfica. Los GLB suman80,88MB: es una mitigación del pico de memoria, no una reducción de transferencia ni una medición de RAM del iPhone.
 
 Prueba local: entrada a pista, aceleración y regreso al taller reconstruido. Revisión independiente CPU y pruebas de cancelación/visibilidad/propiedad de transición. La causa del reinicio físico sigue sin confirmar; falta que el usuario pruebe nuevamente en su iPhone.
+
+## Reinicio móvil: segunda iteración — 13 de septiembre
+
+El usuario confirmó que la mitigación anterior no solucionó el reinicio en Chrome de su iPhone. Esta iteración separa buffers geométricos de archivos GLB en teléfono, reutiliza rangos intercalados y decodifica las texturas de una en una. El renderer móvil inicia dentro de su presupuesto de resolución. Se conservan modelos, UV y materiales; PC mantiene su almacenamiento, decodificación y presupuesto gráfico anteriores.
+
+La carga guarda su última etapa localmente. Si quedó incompleta, la próxima apertura muestra un aviso con diagnóstico copiable. El aviso no afirma por sí solo un cierre por memoria: una recarga manual también puede dejar una preparación incompleta.
+
+117 pruebas CPU aprobadas, incluidas comparaciones exactas de los atributos de las seis piezas móviles originales. Revisión independiente CPU:8/10 dentro del alcance de esta mitigación. Esto no confirma resolución en el iPhone físico; esa verificación sigue pendiente.
