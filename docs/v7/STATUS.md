@@ -64,3 +64,9 @@ El diagnóstico físico deR3 registra interrupción durante decodificación del 
 Texturas de las seis piezas preparadas offline a1024 píxeles, sólo teléfono. Transferencia80,883,712→44,867,780 bytes. La suma teóricaRGBA de esas imágenes pasa161,218,560→82,575,360 bytes; no es medición de RAM ni GPU total o pico físico. Frente y pedales conservan geometría.
 
 128pruebas de regresión y4 específicasLOD/editor aprobadas; comparación exacta de matrices/UV/posiciones/normales/índices y materiales. Revisión técnica independiente8/10 dentro de este alcance. Confirmación de estabilidad en iPhone físico pendiente.
+
+## Arranque móvil R5 — 13 de septiembre
+
+R4 volvió a interrumpirse en iPhone tras el marcador de primer cuadro; ese marcador sólo confirmaba retorno del dibujo en JavaScript. R5 mantiene bloqueado el primer render hasta preparar auto seleccionado y circuito. En teléfono, el exterior seleccionado carga sólo LOD0 (máximo detalle); PC conserva tres niveles. La confirmación GPU es asíncrona, con cancelación y timeout, y tiene marcadores separados de envío y finalización. El editor conserva apertura antes de iniciar carrera.
+
+La causa física única y la estabilidad en iPhone siguen pendientes de confirmación; Chrome emulado no las certifica. La barrera protege el primer arranque, no todas las selecciones posteriores.
