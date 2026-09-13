@@ -6,4 +6,7 @@ export function normalizeRouteMap(samples,{width=240,height=140,padding=14,maxPo
  const stride=Math.max(1,Math.ceil((points.length-1)/(maxPoints-1))),selected=points.filter((_,index)=>index%stride===0||index===points.length-1),first=points[0],last=points.at(-1);
  return {mapPoints:selected.map(([x,,z])=>[Number((left+(x-minX)*scale).toFixed(2)),Number((height-top-(z-minZ)*scale).toFixed(2))]),sourceStart:[...first],sourceEnd:[...last],sourceSampleCount:points.length,sourceClosed:Math.hypot(first[0]-last[0],first[2]-last[2])<.1,projection:'local world X/Z, equal scale; not geographic coordinates'};
 }
-export function selectRoutePhoto(catalog,track,sky,weather){const key=routePreviewKey(track,sky,weather),previews=catalog?.previews||{};if(previews[key]?.file)return{key,record:previews[key],exact:true};const fallback=Object.entries(previews).find(([entry,record])=>entry.startsWith(track+'--')&&record?.file);return fallback?{key:fallback[0],record:fallback[1],exact:false}:null;}
+export function selectRoutePhoto(catalog,track,sky,weather){
+ const key=routePreviewKey(track,sky,weather),record=catalog?.previews?.[key];
+ return record?.file&&record.trackId===track&&record.skyId===sky&&record.weather===weather?{key,record,exact:true}:null;
+}

@@ -57,3 +57,4 @@ body.an-loading-open #workshop-editor-toggle,body.an-loading-open #workshop-edit
 }
 @media(prefers-reduced-motion:reduce){.an-cinema-loading,.an-cinema-film video{transition:none!important}}
 body.v6-reduce-motion .an-cinema-loading,body.v6-reduce-motion .an-cinema-film video{transition:none!important}
+

@@ -1,7 +1,7 @@
 import { summarizeRoadTestRecords } from './roadtest-records.mjs';
 import { testPresentationState } from './menu-refinement-state.mjs';
 
-const scene = name => new URL(`../../assets/menu/game-captures/${name}.jpg`, import.meta.url).href;
+const scene = name => new URL(`../../assets/menu/game-captures/${name === 'competencia' ? 'viaje-v7.webp' : `${name}.jpg`}`, import.meta.url).href;
 const TEST_ORDER = ['accel100', 'm500', 'm1000', 'brake100', 'vmax', 'recovery', 'accel160', 'slalom', 'turn', 'wet', 'speedo', 'consumption'];
 const TEST_KIND = { accel100:'Aceleración', accel160:'Aceleración', m500:'Aceleración', m1000:'Aceleración', brake100:'Frenado', vmax:'Velocidad', recovery:'En cuarta', slalom:'Precisión', turn:'Maniobra', wet:'Adherencia', speedo:'Instrumental', consumption:'Consumo' };
 const recordLabel = result => {

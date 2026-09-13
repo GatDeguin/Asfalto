@@ -99,7 +99,7 @@ void main(){vec3 localCar=(uCarInverse*vec4(vSprayWorld,1.)).xyz;if(uEnclosed>.5
 #include <colorspace_fragment>
 #include <fog_fragment>
 }`});
-
+    
     const foamGeometry=createImpactFoamGeometry(T,emitters);
     if(foamGeometry.attributes.position.count){
      const foamMaterial=new T.ShaderMaterial({name:'AN_BasinImpactFoam',transparent:true,depthWrite:false,side:T.DoubleSide,fog:true,uniforms:{...T.UniformsUtils.clone(T.UniformsLib.fog),...uniforms,uFoamTint:{value:new T.Color('#d6ddd3')}},

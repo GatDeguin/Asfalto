@@ -6,3 +6,4 @@ export function withFrameMatrices(scene,draw){
  scene.matrixWorldAutoUpdate=false;
  try{return draw();}finally{scene.matrixWorldAutoUpdate=previous;}
 }
+

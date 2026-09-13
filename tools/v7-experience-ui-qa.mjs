@@ -65,3 +65,7 @@ try{
  report.status=report.errors.length||report.httpErrors.length?'failed':'passed';
 }catch(error){report.status='failed';report.failure=error.stack;process.exitCode=1;await page?.screenshot({path:path.join(out,'failure.png')}).catch(()=>{});}
 finally{report.completedAt=new Date().toISOString();fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));await browser?.close();await server.close();console.log(JSON.stringify({status:report.status,checks:report.checks,out}));}
+
+
+
+

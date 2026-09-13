@@ -27,3 +27,4 @@ const storage=Object.freeze({
 });
 Object.defineProperty(root,'__asfaltoV7Storage',{value:storage,configurable:false,writable:false});
 })(globalThis);
+

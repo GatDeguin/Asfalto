@@ -1,0 +1,20 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';import assert from 'node:assert/strict';
+const root=path.resolve('Asfalto_Nacional_v7'),assets=path.join(root,'assets/menu/game-captures'),reportRoot=path.resolve('Reports/Asfalto_Nacional_v7/exact-route-previews-2026-09-12');
+const report=JSON.parse(fs.readFileSync(path.join(reportRoot,'report.json'))),repairs=JSON.parse(fs.readFileSync(path.join(reportRoot,'dos-lagos-clean-recapture.json')));
+assert.equal(report.complete,true,'full capture must finish');assert.equal(repairs.complete,true,'clean first route recapture must finish');assert.equal(report.errors.length,0);assert.equal(repairs.captures.length,30);
+const records=new Map(report.captures.map(record=>[record.key,record]));for(const record of repairs.captures)records.set(record.key,record);
+const catalogFile=path.join(assets,'index.json'),catalog=JSON.parse(fs.readFileSync(catalogFile));let bytes=0,maxBytes=0;const verified=[];
+for(const track of ['dos_lagos','aconcagua_horcones','cuesta_lipan','paso_garibaldi','cataratas_iguazu'])for(const sky of ['clear','overcast','golden-hour','sunset','moonrise','night'])for(const weather of ['clear','cloudy','rain','storm','fog',...(['cuesta_lipan','paso_garibaldi'].includes(track)?['light-snow','heavy-snow']:[])]){
+ const key=[track,sky,weather].join('--'),entry=records.get(key);assert.ok(entry,'missing '+key);
+ assert.equal(entry.trackId,track);assert.equal(entry.skyId,sky);assert.equal(entry.weather,weather);
+ assert.deepEqual(entry.resolved,{trackId:track,skyId:sky,weather});
+ assert.equal(entry.environment.environmentState,'ready');assert.equal(entry.environment.environmentSource,sky==='golden-hour'?'golden':sky);assert.equal(entry.environment.regionalEnvironment.skyId,sky);assert.equal(entry.environment.regionalEnvironment.trackId,track);assert.equal(entry.environment.regionalEnvironment.weatherId,weather);assert.equal(entry.cycle.active,false);
+ assert.deepEqual(entry.environment.environmentErrors,[]);assert.equal(entry.weatherEffects.trackId,track);
+ const expectedWetness={clear:0,cloudy:.35,rain:.7,storm:.9,fog:.35,'light-snow':.1,'heavy-snow':.12}[weather];assert.ok(Math.abs(entry.weatherEffects.dynamics.wetness-expectedWetness)<.001,'unsettled wetness '+key);
+ if(!weather.includes('snow'))assert.ok(entry.weatherEffects.dynamics.snowCover<.025,'carried snow '+key);
+ const filename=path.join(assets,entry.file);assert.ok(filename.startsWith(assets+path.sep));const file=fs.readFileSync(filename),hash=crypto.createHash('sha256').update(file).digest('hex');assert.equal(hash,entry.sha256,'source integrity '+key);assert.ok(file.length<=160000);bytes+=file.length;maxBytes=Math.max(maxBytes,file.length);
+ const selected={file:entry.file,trackId:track,skyId:sky,weather,camera:entry.camera,cameraMode:entry.cameraMode,capturedAt:entry.capturedAt,source:'actual-v7-renderer',renderPath:'on-demand actual scene photograph at authored route camera; no postprocessing camera pass',sha256:hash,bytes:file.length};catalog.previews[key]=selected;
+ verified.push({key,...selected,resolved:entry.resolved,environmentSource:entry.environment.environmentSource,precipitation:entry.environment.precipitation,wetness:entry.weatherEffects.dynamics.wetness,snowCover:entry.weatherEffects.dynamics.snowCover});
+}
+assert.equal(verified.length,174);assert.ok(bytes<30*1024*1024);catalog.version=3;catalog.exactCombinationCount=174;catalog.verifiedAt=new Date().toISOString();fs.writeFileSync(catalogFile,JSON.stringify(catalog,null,2)+'\n');
+const audit={verifiedAt:catalog.verifiedAt,verifiedCount:verified.length,totalBytes:bytes,maxBytes,sourceReports:['report.json','dos-lagos-clean-recapture.json'],carVisible:false,staticMenu:true,renderPath:'Real scene geometry, materials, lighting, sky and weather through original renderer; custom authored regional camera; one direct framebuffer draw per photograph.',captures:verified};fs.writeFileSync(path.join(reportRoot,'catalog-audit.json'),JSON.stringify(audit,null,2));console.log(JSON.stringify({verified:verified.length,totalBytes:bytes,maxBytes}));

@@ -11,3 +11,4 @@ export function createGpuFrameTimer(gl,{capacity=300,maxPending=8}={}){
  function dispose(){if(disposed)return;end();for(const q of pending)gl.deleteQuery(q);pending.length=0;disposed=true;}
  return{begin,end,poll,diagnostics,beginWindow,dispose};
 }
+

@@ -38,7 +38,7 @@
 @media(prefers-reduced-motion:reduce){#v6-main-menu *, .an-race-pause *, .an-race-opening *{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 @media(max-width:720px){.an-v7-drive-strip{left:12px;bottom:max(12px,env(safe-area-inset-bottom));padding:9px 13px;gap:14px;max-width:calc(100vw - 24px)}.an-v7-drive-strip b{font-size:25px}.an-v7-drive-strip p{max-width:20ch;font-size:11px}.an-v7-drive-strip small{font-size:10px}.an-v7-quality{bottom:80px;right:12px;max-width:26ch}.an-v7-preferences{padding:0 12px 12px}.an-pause-card{max-height:calc(100dvh - 80px);overflow:auto;overscroll-behavior:contain}#v6-main-menu.an-cinematic-menu .v6-field>span{font-size:13px}}
 @media(max-height:650px) and (min-width:721px){.an-pause-card{max-height:calc(100dvh - 48px);overflow:auto}.an-pause-shell{padding-block:24px}.an-v7-preferences{margin-top:12px}}
-#v6-main-menu .an-v7-quick-drive{pointer-events:auto;min-height:48px;padding:12px 25px;background:#df8550;color:#171b12;border:1px solid #ffb77d;border-radius:4px;font:700 15px/1.3 system-ui,sans-serif;letter-spacing:.015em;cursor:pointer;box-shadow:0 6px 20px #0004}
+#v6-main-menu .an-v7-quick-drive{min-height:48px;padding:12px 25px;background:#df8550;color:#171b12;border:1px solid #ffb77d;border-radius:4px;font:700 15px/1.3 system-ui,sans-serif;letter-spacing:.015em;cursor:pointer;box-shadow:0 6px 20px #0004}
 #v6-main-menu:not([data-an-view=home]) .an-v7-quick-drive{display:none}
 #v6-main-menu .an-v7-quick-drive:disabled{opacity:.7;cursor:progress}
 @media(max-width:720px){#v6-main-menu .an-v7-quick-drive{font-size:13px;padding:10px 14px;min-height:44px}}
@@ -52,3 +52,69 @@ body.an-v7-free-hud :is(#chevy-hud-navigation,#chevy-hud-webgl-canvas,#chevy-hud
 #v6-touch-pause{touch-action:manipulation}
 /* Leave the persistent cockpit settings control its own touch target. */
 #v6-main-menu .an-v7-quick-drive{margin-inline-end:44px}
+
+/* Shared shallow bevels: static volume across every menu, without perspective motion. */
+#v6-main-menu.an-cinematic-menu{--an-surface-top:#edf1c915;--an-surface-edge:#020803b8;--an-panel-shadow:inset 0 1px 0 #fff2,inset 0 -2px 0 #020603a6,0 8px 18px #0004}
+#v6-main-menu.an-cinematic-menu :is(.v6-card,.v6-tech-plate,.v6-condition,.v6-part,.v6-collectible,.v6-axis,.an-mode-card,.an-test-detail,.an-test-collection,.an-workshop-vehicle-select,.v6-originality,.v6-history-item,.an-v7-preferences,.an-route-preview){border-top-color:#dce2c64d;border-bottom-color:#030903;box-shadow:var(--an-panel-shadow);background-image:linear-gradient(155deg,var(--an-surface-top),transparent 40%);border-radius:var(--an-v7-radius)}
+#v6-main-menu.an-cinematic-menu #v6-menu-content{box-shadow:inset 0 1px #dce2c622,inset 1px 0 #dce2c619,0 12px 32px #0003}
+#v6-main-menu.an-cinematic-menu :is(.v6-nav-btn,.v6-rail-btn,.v6-btn,.an-panel-back,.an-replay,.an-appearance-fold,.an-v7-quick-drive){box-shadow:inset 0 1px #fff2,inset 0 -2px #0006,0 3px 7px #0003;border-top-color:#e9e3c65e;border-bottom-color:#0009}
+#v6-main-menu.an-cinematic-menu :is(select,input[type=text],input[type=search]){box-shadow:inset 0 2px 5px #0005,0 1px #eee4bd20;background-image:linear-gradient(180deg,#0002,transparent)}
+#v6-main-menu.an-cinematic-menu :is(.v6-btn,.v6-rail-btn,.an-v7-quick-drive):hover:not(:disabled){filter:brightness(1.09);border-top-color:#f6c495}
+#v6-main-menu.an-cinematic-menu :is(.v6-card,.v6-rail-btn)[aria-selected=true]{box-shadow:inset 0 1px #ffc68a60,inset 0 -2px #0008,0 3px 9px #0004}
+#v6-main-menu .an-v7-quick-drive{pointer-events:auto}
+:is(.an-pause-card,.v6-sheet,.v6-dialog,.an-earned-photo-dialog,.an-v7-load-state){box-shadow:inset 0 1px #fff3,inset 0 -3px #0008,0 18px 55px #0008;border-top-color:#eee4c675}
+:is(.an-race-pause,.v6-modal,.v6-sheet,.v6-dialog,.an-v7-load-state) button{box-shadow:inset 0 1px #fff2,inset 0 -2px #0007,0 3px 8px #0004}
+#v6-main-menu .an-route-preview{grid-template-rows:210px;min-height:210px}
+#v6-main-menu .an-route-preview>img,#v6-main-menu .an-route-placeholder{grid-column:1;grid-row:1;width:100%;height:210px}
+#v6-main-menu .an-route-preview .an-route-miniature{grid-column:2;grid-row:1}
+.an-route-placeholder{display:grid;place-items:center;background:radial-gradient(ellipse at 50% 20%,#314038,#111a15 75%);color:#ced2bf;font:13px/1.4 system-ui;letter-spacing:.08em;text-transform:uppercase}
+.an-route-placeholder[hidden],.an-route-preview>img[hidden]{display:none!important}
+#v6-main-menu .an-route-preview>img{object-fit:cover}
+#v6-main-menu .an-route-preview[data-photo-match=loading] .an-route-placeholder{color:#d9b996}
+#v6-main-menu #v6-workshop-rail{display:flex;flex-wrap:wrap;gap:10px;padding:10px 0 16px;border-bottom:1px solid #c3b58733}
+.an-workshop-tab-group{display:flex;flex-wrap:wrap;gap:5px;align-items:stretch}
+.an-workshop-group-label{display:block;flex-basis:100%;padding:0 2px 3px;font:10px/1.4 system-ui;letter-spacing:.1em;text-transform:uppercase;color:#b7bda9}
+#v6-main-menu #v6-workshop-rail .v6-rail-btn{min-height:40px;white-space:normal;padding:9px 11px}
+.an-service-diagnosis{padding:15px 16px;margin:6px 0 16px;border:1px solid #acba8844;border-left:3px solid #a0b778;background:linear-gradient(130deg,#31412b8a,#121a15);box-shadow:var(--an-panel-shadow);border-radius:4px}
+.an-service-diagnosis[data-can-drive=false]{border-left-color:#e5a15b;background:linear-gradient(130deg,#5336208a,#171a13)}
+#v6-main-menu .an-service-diagnosis h3{font-size:clamp(21px,2.2vw,28px);line-height:1.12;margin:4px 0 8px;color:#edead8}
+.an-service-kicker{font:10px/1.4 system-ui!important;letter-spacing:.12em;text-transform:uppercase;color:#ced3b7!important;margin:0}
+.an-service-faults,.an-service-note{font:12px/1.55 system-ui;color:#ced2c1;margin:6px 0}
+.an-service-result{font:12px/1.5 system-ui;color:#f4bc88;margin:8px 0 0;min-height:0}
+.an-service-result:empty{display:none}
+#v6-main-menu .an-service-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.an-service-group-heading{grid-column:1/-1;margin:10px 0 0;font:600 12px/1.5 system-ui;letter-spacing:.035em;color:#e5dcc4}
+#v6-main-menu .an-service-item{display:flex;flex-direction:column;min-width:0;padding:12px;border:1px solid #7a886c40}
+.an-service-item .v6-condition-head{gap:6px;font-size:12px;align-items:baseline}
+.an-service-item .v6-condition-head b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.an-service-item meter{display:block;width:100%;height:10px;margin:8px 0 2px;accent-color:#a1b77c}
+.an-service-item p{font-size:11px!important;line-height:1.45!important;margin:6px 0 10px;flex:1}
+#v6-main-menu .an-service-item button{width:100%;min-height:40px;padding:8px;font-size:11px;white-space:normal;text-align:center}
+.an-service-item button:disabled{opacity:.46;cursor:default}
+.an-workshop-collection-link{margin-bottom:12px}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-menu-content{width:36%;max-width:530px}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-canvas{width:64%}
+@media(max-width:1000px) and (min-width:721px){#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-menu-content{width:43%;padding:16px}#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-canvas{width:57%}#v6-main-menu .an-service-grid{grid-template-columns:1fr}}
+@media(max-width:720px){#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-menu-content{width:100%;max-width:none}#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-canvas{width:100%}.an-workshop-tab-group{max-width:100%}#v6-main-menu #v6-workshop-rail{gap:12px}#v6-main-menu #v6-workshop-rail .v6-rail-btn{min-height:44px}#v6-main-menu .an-route-preview{grid-template-rows:170px;min-height:170px}#v6-main-menu .an-route-preview>img,#v6-main-menu .an-route-placeholder{height:170px}}
+@media(max-width:390px){#v6-main-menu .an-service-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#v6-main-menu.an-cinematic-menu button:active{transform:none}}
+body:is(.v6-reduce-motion,.an-v7-reduce-motion) #v6-main-menu.an-cinematic-menu button:active{transform:none}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-panel>.v6-panel-head{padding-bottom:10px}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-panel>.v6-panel-head h2{font-size:30px}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] #v6-workshop-panel>.v6-panel-head p{font-size:12px;line-height:1.5;margin:7px 0 0}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] .an-workshop-vehicle-select{grid-template-columns:1fr;padding:10px 12px;gap:5px;margin-bottom:10px}
+#v6-main-menu.an-cinematic-menu[data-an-inspection=true] .an-workshop-vehicle-select [role=status]{font-size:11px}
+:is(.settings-panel,.race-settings,.race-results>div,.an-cockpit-light-panel){border-top-color:#e3d6b875;box-shadow:inset 0 1px #fff2,inset 0 -2px #0008,0 14px 36px #0008;background-image:linear-gradient(145deg,#f0dcc00b,transparent 42%)}
+:is(.settings-panel,.race-settings,.race-results,.an-cockpit-light-panel) button{box-shadow:inset 0 1px #fff2,inset 0 -2px #0007,0 3px 8px #0004}
+:is(.settings-panel,.race-settings) :is(select,input[type=text]){box-shadow:inset 0 2px 5px #0005,0 1px #eee4bd20}
+#v6-main-menu.an-cinematic-menu #v6-test-cards .v6-card{box-shadow:inset 0 1px #fff1,inset 0 -2px #0007,0 3px 8px #0003}
+#v6-main-menu .an-service-item p,#v6-main-menu .an-service-item button{font-size:12px!important}
+@media(max-width:720px){#v6-main-menu .an-service-item button{min-height:44px}}
+#v6-main-menu .an-service-item:focus-visible{outline:2px solid #f7b879;outline-offset:3px}
+
+#v6-main-menu .an-service-jump{min-height:44px;margin-top:10px;padding:10px 14px;font-size:12px}
+#v6-main-menu .an-service-jump[hidden]{display:none!important}
+
+/* Inspection must expose the rendered materials; text panels supply their own contrast. */
+#v6-main-menu.an-cinematic-menu:is([data-an-photo=true],[data-an-inspection=true]) #v6-workshop-stage::before { background:none; }
+#v6-main-menu.an-cinematic-menu:is([data-an-photo=true],[data-an-inspection=true]) #v6-workshop-stage::after { display:none; }

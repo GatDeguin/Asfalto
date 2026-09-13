@@ -2,6 +2,7 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createGameplayBridge } from '../gameplay-bridge.mjs';
 import { createRouteQuery } from '../route-query.mjs';
 import { createSectorStreamer } from '../sector-streamer.mjs';
+import { updateSectorVisualQuality } from '../sector-visual-quality.mjs';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
 import { prepareTrackVisual } from '../visuals/reference-landscape.mjs';
@@ -376,6 +377,10 @@ export function createCuestaLipanAdapter(dependencies) {
 
       tx.streamer = createSectorStreamer({
         sectors: tx.sectors,
+        stableQualityGeometry: true,
+        updateVisualQuality: updateSectorVisualQuality,
+        retryDelayMs: 1000,
+        retryMaxDelayMs: 30000,
         signal: tx.controller.signal,
         async loadVisual({ sector, lod, asset, signal }) {
           const url = safeUrl(asset.url, manifestBase, releaseRoot, `${sector.id} lod${lod}`);

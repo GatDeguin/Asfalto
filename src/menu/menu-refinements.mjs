@@ -1,8 +1,10 @@
+import { createRoutePreviewLoader } from './route-preview-loader.mjs';
 import { selectRoutePhoto } from './v7-route-catalog.mjs';
 import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs';
 
 export function mountMenuRefinements({root,game}) {
   let catalog=null, disposed=false;
+  const catalogRequest=new AbortController();
   const views=[];
   const asset = name => new URL(`../../assets/menu/game-captures/${name}`, import.meta.url).href;
   const title = select => select?.selectedOptions?.[0]?.textContent || '';
@@ -11,9 +13,17 @@ export function mountMenuRefinements({root,game}) {
     ['#v6-competition-panel','#v6-comp-track','#v6-comp-sky','#v6-comp-weather']]) {
     const panel=root.querySelector(panelId), node=document.createElement('figure');
     node.className='an-route-preview';
-    node.innerHTML='<img alt="" hidden decoding="async"><div class="an-route-miniature"></div><figcaption><strong></strong><span role="status"></span></figcaption>';
+    node.innerHTML='<img alt="" hidden decoding="async"><div class="an-route-placeholder" aria-hidden="true">Vista de la ruta</div><div class="an-route-miniature"></div><figcaption><strong></strong><span role="status"></span></figcaption>';
     panel.querySelector('.v6-button-row').before(node);
-    views.push({node,track:root.querySelector(trackId),sky:root.querySelector(skyId),weather:root.querySelector(weatherId)});
+    const view={node,panel,track:root.querySelector(trackId),sky:root.querySelector(skyId),weather:root.querySelector(weatherId)};
+    view.loader=createRoutePreviewLoader({onState(state){
+      const img=node.querySelector('img');img.hidden=state.status!=='ready';node.dataset.photoMatch=state.status==='ready'?'exact':state.status;
+      node.setAttribute('aria-busy',String(state.status==='loading'));node.querySelector('.an-route-placeholder').hidden=state.status==='ready';
+      if(state.source){img.src=state.source;img.dataset.key=state.key;}else{img.removeAttribute('src');delete img.dataset.key;}
+      const selection=`${title(view.sky)} · ${title(view.weather)}`;
+      img.alt=`${title(view.track)} · ${selection}`;
+      node.querySelector('figcaption span').textContent=state.status==='ready'?selection:state.status==='loading'?`Cargando vista · ${selection}`:state.status==='error'?'No se pudo cargar la vista de esta selección.':`${selection} · Vista no disponible`;
+    }});views.push(view);
   }
   const appearance=root.querySelector('[data-workshop-page="appearance"]');
   const fold=document.createElement('button'); fold.type='button';fold.className='an-appearance-fold';fold.textContent='Ocultar ajustes · ver el auto';fold.setAttribute('aria-expanded','true');
@@ -24,15 +34,12 @@ export function mountMenuRefinements({root,game}) {
   book.innerHTML='<summary>Cuaderno de pruebas <span></span></summary><div><p class="an-book-kicker">ASFALTO NACIONAL / ROAD TEST</p><h3></h3><p class="an-book-stats"></p><progress max="12" value="0" aria-label="Pruebas con ficha válida"></progress><ol></ol></div>';
   root.querySelector('#v6-roadtest-panel').append(book);
   function refresh() {
-    for (const {node,track,sky,weather} of views) {
-      const key=routePreviewKey(track.value,sky.value,weather.value), photo=selectRoutePhoto(catalog,track.value,sky.value,weather.value),record=photo?.record;
+    for (const {node,panel,track,sky,weather,loader} of views) {
+      const visible=root.dataset.anView==='section'&&panel.classList.contains('v6-active')&&!(panel.id==='v6-drive-panel'&&root.dataset.anStep==='modes')&&!document.hidden;
+      if(!visible){loader.suspend();continue;}
+      const key=routePreviewKey(track.value,sky.value,weather.value),photo=selectRoutePhoto(catalog,track.value,sky.value,weather.value);
       node.querySelector('strong').textContent=title(track);
-      const optionLabel=(select,value)=>[...select.options].find(option=>option.value===value)?.textContent||value;
-      const photographed=record?`${optionLabel(sky,record.skyId)} · ${optionLabel(weather,record.weather)}`:'';
-      node.querySelector('figcaption span').textContent=record?(photo.exact?`Captura del juego · ${photographed}`:`Fotografía: ${photographed}. Selección: ${title(sky)} · ${title(weather)}.`):`${title(sky)} · ${title(weather)}. Fotografía pendiente.`;
-      node.dataset.photoMatch=record?(photo.exact?'exact':'same-track'):'missing';
-      const img=node.querySelector('img');img.hidden=!record;
-      if(record && img.dataset.key!==photo.key){img.src=asset(record.file);img.dataset.key=photo.key;img.alt=`Captura real del juego: ${title(track)}, ${photographed}`;img.onerror=()=>{img.hidden=true;node.querySelector('figcaption span').textContent='La fotografía no está disponible. El trazado y la selección se conservan.';};}
+      void loader.select(key,photo?asset(photo.record.file):null);
       const map=node.querySelector('.an-route-miniature'), route=catalog?.routes?.[track.value];
       if(route&&map.dataset.track!==track.value) {
         map.dataset.track=track.value;map.replaceChildren();
@@ -53,8 +60,8 @@ export function mountMenuRefinements({root,game}) {
     for(const entry of summary.entries){const li=document.createElement('li'),card=root.querySelector(`[data-test-id="${entry.testId}"]`);li.textContent=`${entry.best?'✓':'○'} ${card?.querySelector('h3')?.textContent||entry.testId}`;list.append(li);}
   }
   const observer=new MutationObserver(refresh);observer.observe(root.querySelector('#v6-test-cards'),{childList:true});
-  root.addEventListener('change',refresh);root.addEventListener('click',refresh);
-  fetch(asset('index.json')).then(r=>{if(!r.ok)throw new Error('No se pudo cargar la vista de rutas');return r.json();}).then(data=>{if(!disposed){catalog=data;refresh();}}).catch(error=>{if(!disposed)for(const v of views)v.node.querySelector('figcaption span').textContent=error.message;});
+  root.addEventListener('change',refresh);root.addEventListener('click',refresh);document.addEventListener('visibilitychange',refresh);
+  fetch(asset('index.json'),{signal:catalogRequest.signal}).then(r=>{if(!r.ok)throw new Error('No se pudo cargar la vista de rutas');return r.json();}).then(data=>{if(!disposed){catalog=data;refresh();}}).catch(error=>{if(!disposed)for(const v of views)v.node.querySelector('figcaption span').textContent=error.message;});
   refresh();
-  return {refresh,dispose(){disposed=true;observer.disconnect();root.removeEventListener('change',refresh);root.removeEventListener('click',refresh);}};
+  return {refresh,dispose(){disposed=true;catalogRequest.abort();for(const view of views)view.loader.dispose();document.removeEventListener('visibilitychange',refresh);observer.disconnect();root.removeEventListener('change',refresh);root.removeEventListener('click',refresh);}};
 }
