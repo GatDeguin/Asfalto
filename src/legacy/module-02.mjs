@@ -1,3 +1,4 @@
+import {createBootRenderGate} from '../render/boot-render-gate.mjs';
 import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs';
@@ -25,7 +26,7 @@ import {renderPixelRatio} from '../render/render-resolution.mjs';
 import {withFrameMatrices} from '../render/frame-matrices.mjs';
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs';
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=phone-r3-20260913';
 import {installAdvancedGraphicsSettings} from '../render/advanced-graphics-settings.mjs';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs';
 import { connectModularHost } from '../app/modular-bootstrap.mjs';
@@ -4597,6 +4598,9 @@ try {
   setLoading('Creando cockpit…');
   let gameSettings = loadGameSettings();
   mobileTextureQuality=gameSettings.graphicsQuality;
+  const bootRenderGate=createBootRenderGate(runtimeDeviceProfile.phone);
+  let firstPhoneFrame=runtimeDeviceProfile.phone;
+  const markFirstFrame=label=>{if(firstPhoneFrame)globalThis.__asfaltoPhoneLoad?.stage(label);};
   const backgroundEditor = createBackgroundEditor({
     defaultDataUrl: EMBEDDED_BACKGROUND_DATA_URL,
     ui: backgroundUi,
@@ -8681,10 +8685,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const radioModelPayload = document.getElementById('asfalto-v4-1-radio-model');
   const radioManifestPayload = document.getElementById('asfalto-v4-1-radio-manifest');
   if (!radioModelPayload || !radioManifestPayload) throw new Error('Falta el paquete autocontenido de Radio Chevrolet 1973.');
+  setLoading('Radio: descargando modelo…');
   const radioModelBytes = radioModelPayload.dataset.encoding === 'external-url'
     ? await modularHostInitialization.waitFor(globalThis.AsfaltoV6AssetCore.readExternalPayload(radioModelPayload, (url, options = {}) => fetch(url, { ...options, signal: modularHostInitialization.signal })), 'radio-external-decode')
     : await modularHostInitialization.waitFor(gunzipBase64(radioModelPayload.textContent), 'radio-embedded-decode');
   radioModelPayload.textContent = '';
+  setLoading('Radio: decodificando modelo y texturas…');
   const radioModel = await modularHostInitialization.waitFor(completeRadioGlbToObject(THREE, radioModelBytes, 'Radio Chevrolet 1973'), 'radio-conversion');
   tuneAsset(radioModel);
   const radioMount = new THREE.Group();
@@ -8695,6 +8701,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   radioMount.add(radioModel);
   cockpit.add(radioMount);
   const radioManifest = JSON.parse(radioManifestPayload.textContent);
+  setLoading('Radio: conectando controles y display…');
   const radioController = createCockpitRadioController({
     THREE,
     root: radioModel,
@@ -8709,6 +8716,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     },
   });
 
+  setLoading('Radio lista; preparando controles de conducción…');
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   const keys = new Set();
@@ -8768,6 +8776,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const automaticTransmission = createAutomaticTransmissionState();
 
   let resumeAfterCompositionEdit = false;
+  setLoading('Preparando composición del cockpit…');
   compositionEditor = createCompositionEditor({
     THREE,
     scene,
@@ -9668,6 +9677,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if(runtimeDeviceProfile.phone&&isCockpit&&!opening.shot&&!compositionEditor?.isActive())applyPhoneCockpitProjection(camera);
   }
 
+  setLoading('Preparando oclusión de la escena…');
   rayTracing=createRayTracedOcclusion({THREE,renderer,scene,camera,excludeRoots:()=>[cockpit,...(compositionEditor?.renderOverlays||[])],excludeOccluders:()=>[raceChevyPhysicalRoot,raceWorld.getFalconVisualRoot?.()]});
   rayTracingSettings=installRayTracingSettings({controller:rayTracing,getDiagnostics:()=>globalThis.__chevyV6Complete?.workshop?.active?(globalThis.__chevyV6Complete.workshop.rayTracing?.diagnostics()||rayTracing.diagnostics()):rayTracing.diagnostics()});
   globalThis.__asfaltoRayTracing={refresh:()=>rayTracingSettings.refresh(),getMode:()=>rayTracingSettings.getMode(),setMode:value=>rayTracingSettings.setMode(value),diagnostics:()=>rayTracing.diagnostics()};
@@ -9676,12 +9686,14 @@ listen(window,'chevy:vehicle-config',(event)=>{
     try { presentation=await createVehiclePresentation(THREE,{vehicle,modelRoot:stage,physicalCalibration:true,lightScene:scene,loadGlb:window.__asfaltoLoadVehicleModel,paintColor:globalThis.__chevyPaintColor||'#d66a24'}); presentation.setChassisConfig(globalThis.__asfaltoChassisConfig || null); } catch(error) { stage.removeFromParent();throw error; }
     return { commit(){if(committed||released)return;raceChevyPresentation?.dispose();for(const child of [...raceChevyV3Model.children])if(child!==stage){if(child.userData.vehicleSelectionMount)child.removeFromParent();else child.visible=false;}raceChevyPresentation=presentation;window.__asfaltoVehiclePresentations.chevy=presentation;window.__asfaltoSelectedPlayerVehicle=vehicle;stage.visible=true;committed=true;presentation.setLightMode(raceWorld.getDrivingLights().mode);lightingEditor?.applyVehicles();rayTracing?.invalidate();},dispose(){if(released||committed)return;released=true;presentation.dispose();stage.removeFromParent();} };
   }
-  advancedGraphics=createAdvancedGraphics(THREE,{renderer,scene,camera,getEnvironment:()=>raceWorld.getAdvancedGraphicsEnvironment(),getQuality:()=>raceWorld.getPerformanceTier()});
+  setLoading('Preparando vegetación y efectos gráficos…');
+  advancedGraphics=createAdvancedGraphics(THREE,{renderer,scene,camera,allowPivotPainter:!runtimeDeviceProfile.phone,getEnvironment:()=>raceWorld.getAdvancedGraphicsEnvironment(),getQuality:()=>raceWorld.getPerformanceTier()});
   graphicsSettings=installAdvancedGraphicsSettings({getDiagnostics:()=>({targetFps:framePacingSettings?.getTargetFps()||60,effectiveQuality:(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.getEffectiveQuality()})});
   globalThis.__asfaltoAdvancedGraphics={refreshStatus:()=>graphicsSettings?.refresh(),getSettings:()=>graphicsSettings.getSettings(),setSettings:value=>graphicsSettings.setSettings(value),setMode:value=>graphicsSettings.setMode(value),diagnostics:()=>advancedGraphics?.diagnostics(),refresh:()=>{advancedGraphics?.refresh();globalThis.__chevyV6Complete?.workshop?.advancedGraphics?.refresh();}};
   framePacingSettings=installFramePacingSettings();
   cockpitViewPreset=installDrivingViewPreset({THREE,mount:cockpitViewMount});
   const cockpitRenderPass = createCockpitRenderPass({ renderer, scene, camera, cockpit, overlays:compositionEditor?.renderOverlays || [],renderWorld:()=>advancedGraphics.render(()=>{const restore=scene.fog?raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()}):null;try{renderer.render(scene,camera);}finally{restore?.();}}) });
+  setLoading('Preparando compositor de color…');
   colorGrading=createRaceColorGrade({THREE,renderer});lightingEditor?.reapply();
   let trackStreamingError=null;
   let trackStreamingPromise=null;
@@ -9694,6 +9706,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
   gpuFrameTimer=createGpuFrameTimer(renderer.getContext());
   const publishPresentedRacePhoto=createPresentedFrameCapture({renderer,camera,getBridge:()=>globalThis.__asfaltoV7RacePhoto,getMetadata:()=>{const environment=raceWorld.getAdvancedGraphicsEnvironment();return{trackId:raceWorld.track.id,skyId:environment.skyId,weather:environment.weather,vehicleId:globalThis.__asfaltoSelectedPlayerVehicle||'chevy',qa:new URLSearchParams(globalThis.location.search).get('qa')==='1'};}});
   function renderFrame() {
+    if(!bootRenderGate.allowed())return;
+    markFirstFrame('Primer cuadro: cámara y controles');
     if (!raceCameraInitialized) updateRaceCamera(1);
 
     compositionEditor?.updateGuides();
@@ -9723,14 +9737,18 @@ listen(window,'chevy:vehicle-config',(event)=>{
     } catch(error) {
       reportTrackStreamingError(error);
     }
+    markFirstFrame('Primer cuadro: vegetación y atmósfera');
     advancedGraphics.update({time:performance.now()/1000});graphicsSettings.refresh();
     rayTracing.update({sceneKey:globalThis.__asfaltoV6Modular.trackManager?.active||scene});rayTracingSettings.refresh();
     gpuFrameTimer.begin();
     try{withFrameMatrices(scene,()=>{
+    markFirstFrame('Primer cuadro: reflejos del agua');
     raceWorld.renderWaterReflections({renderer,scene,camera,quality:raceWorld.getPerformanceTier(),nowMs:performance.now(),excludeRoots:[cockpit,...(compositionEditor?.renderOverlays||[])]});
+    markFirstFrame('Primer cuadro: espejos');
     cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:cockpit.visible, enabled:raceWorld.rearviewEnabled, quality:raceWorld.getPerformanceTier?.() || 'balanced', nowMs:performance.now() });
+    markFirstFrame('Primer cuadro: render del mundo y cockpit');
     colorGrading.render(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{cockpitRenderPass.render();}finally{restore?.();}});
-    });publishPresentedRacePhoto();}finally{gpuFrameTimer.end();}
+    });publishPresentedRacePhoto();markFirstFrame('Primer cuadro completo');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}
   }
 
   function qualityPixelRatioLimit(width) {return devicePixelRatioLimit({quality:gameSettings.graphicsQuality,width,memory:navigator.deviceMemory,profile:runtimeDeviceProfile});}
@@ -9795,10 +9813,16 @@ listen(window,'chevy:vehicle-config',(event)=>{
     requestAnimationFrame(animate);
   }
 
+  setLoading('Aplicando presupuesto gráfico y controles…');
   applySettings({ persist: false });
   setSettingsPanelOpen(false);
   applyMechanicalVisuals();
   setGearUi();
+  if(runtimeDeviceProfile.phone){
+    setLoading('Preparando primer cuadro con ajustes móviles…');
+    await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+    modularHostInitialization.assertActive();bootRenderGate.release();renderFrame();
+  }
   loadingEl.classList.add('hidden');
   viewport.classList.add('ready');
 
