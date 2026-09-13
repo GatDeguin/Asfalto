@@ -2489,8 +2489,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 80550,
-      "sha256": "BB5F73CB650CD2415C6B565BC7742BE90EC3F56EEFA91D44CE07115E28352C71"
+      "bytes": 80596,
+      "sha256": "1B6224836B217902339913C8AE42470CB7E8CFCB27890719AF4B05B97F4F29D0"
     },
     {
       "path": "server.mjs",
@@ -4399,8 +4399,8 @@
     }
   ],
   "fileCount": 863,
-  "totalBytes": 988358246,
-  "inventorySha256": "F3D2E1C6B7BEF5AF6370F51E8E3225B1389C45F878B12F2770EEDAA3444F55DA",
+  "totalBytes": 988358292,
+  "inventorySha256": "7CEE3682D0F6771D16F164EE040249709E3DAF6D71A2E674D729DA931CD439F2",
   "selectionCases": 174,
   "environmentCases": [
     {
