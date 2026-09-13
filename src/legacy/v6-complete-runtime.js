@@ -7,7 +7,7 @@ const STORAGE_KEY='chevy-serie2-v6-profile';
 let experienceTools=null,sessionRequestRunner=null,lastExperienceUiTime=-Infinity,sessionPresentationOwner=null;
 let collectionReaderPromise=null,collectionSyncVersion=0;
 let roadTestSession=null,roadTestTools=null,roadTestToolsPromise=null,roadTestReceiptStore=null,roadTestConfigVersion=0;
-const phoneMemoryReady=import(new URL('src/runtime/phone-start-memory.mjs',document.baseURI));
+const phoneMemoryReady=import(new URL('src/runtime/phone-start-memory.mjs?v=phone-r4-20260913',document.baseURI));
 const startupDemandReady=import(new URL('src/runtime/startup-demand.mjs',document.baseURI));
 const experienceToolsReady=import(new URL('src/menu/v7-session-runtime.mjs',document.baseURI)).then(module=>(experienceTools=module));
 const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>Array.from(r.querySelectorAll(s));

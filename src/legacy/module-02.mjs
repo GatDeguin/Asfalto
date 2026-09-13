@@ -1,7 +1,8 @@
+import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs';
 import {createBootRenderGate} from '../render/boot-render-gate.mjs';
 import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs';
 const phoneTextureQueue=createSerialTextureQueue();
-import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs';
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=phone-r4-20260913';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs';
@@ -1686,7 +1687,9 @@ async function decodeTextureFromInfo(THREE, json, bin, textureInfo, srgb = false
   const imageBytes = new Uint8Array(bin.buffer, start, imageView.byteLength);
   const blob = new Blob([imageBytes], { type: imageDef.mimeType || 'image/webp' });
   const decodeBlob = await phoneCockpitTextureSelector.select(blob);
+  if(json.__phoneLabel)globalThis.__asfaltoPhoneLoad?.stage('Textura de '+json.__phoneLabel+': mapa '+textureInfo.index+' · decodificando');
   const bitmap = await decodeTextureBitmap(decodeBlob);
+  if(json.__phoneLabel)globalThis.__asfaltoPhoneLoad?.stage('Textura de '+json.__phoneLabel+': mapa '+textureInfo.index+' · lista');
   rememberQaTrackResource('bitmap', bitmap, imageDef.name || imageDef.uri || 'embedded-image');
   const texture = new THREE.Texture(bitmap);
   let bitmapClosed = false;
@@ -1718,6 +1721,7 @@ async function decodeTextureFromInfo(THREE, json, bin, textureInfo, srgb = false
 async function compactGlbToObject(THREE, bytes, label) {
   loadingTextEl.textContent = `Preparando ${label}…`;
   const { json, bin } = parseGlb(bytes);
+  if(runtimeDeviceProfile.phone)json.__phoneLabel=label;
   const primitive = json.meshes?.[0]?.primitives?.[0];
   if (!primitive) throw new Error(`${label}: no se encontró una malla utilizable.`);
 
@@ -1757,6 +1761,7 @@ async function compactGlbToObject(THREE, bytes, label) {
 
   const mesh = new THREE.Mesh(geometry, material);
   mesh.name = label;
+  attachPhoneDisplayReference(mesh,json,runtimeDeviceProfile.phone);
   const node = json.nodes?.find(n => n.mesh === 0) || {};
   if (node.translation) mesh.position.fromArray(node.translation);
   if (node.scale) mesh.scale.fromArray(node.scale);
@@ -2083,6 +2088,7 @@ function createAdjustableFrontCut({
 }
 
 function normalizeObject(THREE, object, targetWidth, localReferenceBox = null) {
+  localReferenceBox ||= phoneDisplayReferenceBox(THREE,object);
   const wrapper = new THREE.Group();
   wrapper.add(object);
   object.updateMatrixWorld(true);
@@ -8636,7 +8642,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   shifterAssembly.add(shifter);
   cockpitDisplayLods = await modularHostInitialization.waitFor(loadCockpitDisplayLods({
     THREE, signal:modularHostInitialization.signal, editing:compositionEditor?.isActive(),
-    bindings:{cabina:cabinMesh,tablero:dashboardMesh,volante:wheelMesh,'pedales-accelerator':pedalParts.acceleratorMesh,'pedales-brake':pedalParts.brakeMesh,palanca:shifterBaseMesh},
+    bindings:swappableCockpitBindings({cabina:cabinMesh,tablero:dashboardMesh,volante:wheelMesh,'pedales-accelerator':pedalParts.acceleratorMesh,'pedales-brake':pedalParts.brakeMesh,palanca:shifterBaseMesh}),
   }), 'cockpit-display-lods');
 
   const knobBytes = await modularHostInitialization.waitFor(globalThis.AsfaltoV5PayloadCore.decodePayloadById(
@@ -9836,7 +9842,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     v7RenderDiagnostics:()=>({gpu:gpuFrameTimer.diagnostics(),render:{...renderer.info.render},resources:{...renderer.info.memory},camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,near:camera.near,far:camera.far},drawingBuffer:[renderer.domElement.width,renderer.domElement.height],exposure:renderer.toneMappingExposure}),
     v7BeginMeasurement:()=>{raceWorld.beginPerformanceWindow('driving');gpuFrameTimer.beginWindow();},
     v7DrivingView:{set:value=>cockpitViewPreset.setSelected(value),diagnostics:()=>cockpitViewPreset.diagnostics()},
-    v7CockpitLodDiagnostics:()=>cockpitDisplayLods?.diagnostics(),
+    v7CockpitLodDiagnostics:()=>({...cockpitDisplayLods?.diagnostics(),phoneDirect:[cabinMesh,dashboardMesh,wheelMesh,shifterBaseMesh].filter(m=>m.userData.phoneDisplay).map(m=>({name:m.userData.phoneDisplay.name,triangles:m.geometry.index.count/3,sourceRestorable:false}))}),
     v7SetCockpitDisplayLod:value=>{cockpitDisplayLods?.setEnabled(value);renderFrame();return cockpitDisplayLods?.diagnostics();},
     v7Presentation:{diagnostics:()=>({...presentationStats}),getTargetFps:()=>framePacingSettings.getTargetFps(),setTargetFps:value=>framePacingSettings.setTargetFps(value)},
     rayTracingDiagnostics:()=>rayTracing?.diagnostics(),

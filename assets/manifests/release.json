@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6713,
-      "sha256": "13760F0A76E91A0C0FBA9759A8D67E15621145F28EB05F3C4F21654ECFCE2287"
+      "bytes": 7823,
+      "sha256": "65E12B40B52E65E9E17AE53A9EAEF4F76B0583602316FF7ECF0EDAC0B05704C8"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -164,33 +164,33 @@
     },
     {
       "path": "assets/cockpit/phone-parts/cabina.glb",
-      "bytes": 31970224,
-      "sha256": "E069DC4673FE95073858EC735AC183194C8A87DFE1F801A3110BBAEFD3C1D6EA"
+      "bytes": 13005208,
+      "sha256": "35B71DDCE32F9CA0CEB63B0C9B8E841570F524FF03AB0410C4DB87DD8AF51035"
     },
     {
       "path": "assets/cockpit/phone-parts/frente.glb",
-      "bytes": 12347468,
-      "sha256": "F67E4B522CE42DF89BE3F92E231A57C68596D0E7894ABDEA0A97E14C02B8F8FE"
+      "bytes": 10658456,
+      "sha256": "99B982FB24EA6BD2A019555D71AA3AE5F61E2014723D410B54204C5E747BE7FB"
     },
     {
       "path": "assets/cockpit/phone-parts/palanca.glb",
-      "bytes": 3768400,
-      "sha256": "9BF6F321C41EA6E89007800AE785567BC50BBA90056718C3A2FD7751B108A259"
+      "bytes": 1432404,
+      "sha256": "03C788ADC1A37C8C51B53E1468830F43B807CECDD17CF96E608130BFE986453E"
     },
     {
       "path": "assets/cockpit/phone-parts/pedales.glb",
-      "bytes": 10575436,
-      "sha256": "6D451220D165B6F5FED4F6AD947DA34ED39772505B63F34115597D8854B22C0F"
+      "bytes": 10575440,
+      "sha256": "3BA9ECF84B8332DBF18C15D092A91C9092E9E7B6FD2C1C2F652044925B40D5B4"
     },
     {
       "path": "assets/cockpit/phone-parts/tablero.glb",
-      "bytes": 11686460,
-      "sha256": "68410EE11BFD3DE5AC8CECBCC885714AED9CEF94C7D12E9CD0538A31CC917375"
+      "bytes": 4641808,
+      "sha256": "D3813B425EE456B26D30610DBD4FD5092E0D5F0E1354F340CE6B6940CF485CD4"
     },
     {
       "path": "assets/cockpit/phone-parts/volante.glb",
-      "bytes": 10535724,
-      "sha256": "0624C0085BCD25146C45D84D5AD1104C25A2CD53EFE0F292920E345B2E5C86BD"
+      "bytes": 4554464,
+      "sha256": "44794C1DCD11D9B9BC1CE78F2EBD420444CCB64B140A73AD189D5DCC9443467A"
     },
     {
       "path": "assets/cockpit/phone-textures/1797cc21e3e6683b8eb20197aa5af8c798ff1df039e24be44d04c724700bfd5e.webp",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 6713,
-      "sha256": "13760F0A76E91A0C0FBA9759A8D67E15621145F28EB05F3C4F21654ECFCE2287"
+      "bytes": 7823,
+      "sha256": "65E12B40B52E65E9E17AE53A9EAEF4F76B0583602316FF7ECF0EDAC0B05704C8"
     },
     {
       "path": "index.html",
       "bytes": 80674,
-      "sha256": "6405EA30E2F09A8C44A40752EA17C71994038F4B309DD34D73F21F7F45A5E602"
+      "sha256": "8C89C40F75BA7BDC324A1A8D8A3A5AFFB6A7FC2CF8151C5340E45569D1EA0A18"
     },
     {
       "path": "server.mjs",
@@ -2829,13 +2829,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 548336,
-      "sha256": "95E214F2B21F73C4BCC1269182BADF2796E741D6C9513EFC2A440F494E385346"
+      "bytes": 549191,
+      "sha256": "51CD95D59AD794264B9E3E576CA442F46321B27907105AC7FD94FB589452E64A"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 127169,
-      "sha256": "DD78C3BB4264E63DCA8DF7653B40F91C6E348B717FF99531246BF41C786D10F9"
+      "bytes": 127189,
+      "sha256": "F6BF2E9F18F7DC4D396ABE12E7E18F49C8C1DDB27B4EAD1DDEC2A56C61E4CC5A"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -3203,6 +3203,11 @@
       "sha256": "ED3426AF1BF9D87E69C03099789534BB0F73106726AB6ED5AEC2FA3783908443"
     },
     {
+      "path": "src/render/phone-display-reference.mjs",
+      "bytes": 947,
+      "sha256": "372EF00C8593C295442C631BD4A2736A9CEBECCA25A29890E27B419441B27405"
+    },
+    {
       "path": "src/render/physical-atmosphere.mjs",
       "bytes": 14880,
       "sha256": "EC4F5A774DA85A9B7568B02E71BD0B234952CE7B96FA1B902169A23AF55226B9"
@@ -3509,13 +3514,13 @@
     },
     {
       "path": "src/runtime/phone-cockpit-assets.mjs",
-      "bytes": 1087,
-      "sha256": "77B8C1E73C304E80F8A0F4F057845CB146FEC3AE66F7837BB87920372F8CD417"
+      "bytes": 1216,
+      "sha256": "CEC5E1F27A8DDEDBAF99414ADA918B56B04ACF8A4A3C41E65FA66DEE58E08D0E"
     },
     {
       "path": "src/runtime/phone-load-diagnostics.js",
       "bytes": 2954,
-      "sha256": "FF8327B9D545DB21C09E56E6C87E69311D26263F1F2B17858704223CBC30E113"
+      "sha256": "CEFD71406F782AAE42D127EAB775B7A723A83356B5C130DBBB3E26F6DB4DBD9B"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -3524,8 +3529,8 @@
     },
     {
       "path": "src/runtime/phone-start-memory.mjs",
-      "bytes": 1318,
-      "sha256": "C013D93E1888E3CDAF9A69CEB7FC37490CE35D1D7B36DFF5B241CB4C28F3DAE9"
+      "bytes": 1338,
+      "sha256": "97B0002060CF187843E0E8B47ED64C82394CB2736BEB0C80C342C4E926DFCD6A"
     },
     {
       "path": "src/runtime/profile-persistence.mjs",
@@ -4413,9 +4418,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 866,
-  "totalBytes": 988368739,
-  "inventorySha256": "667940E693CA9B52230D7ADF3C021271FA33FCD4460845D250AD2A5A5B4376CA",
+  "fileCount": 867,
+  "totalBytes": 952356998,
+  "inventorySha256": "6E51FF3E94806BD7E81927ECA4197596CE9714447EB6CDC478DF5E76C7EFA76E",
   "selectionCases": 174,
   "environmentCases": [
     {
