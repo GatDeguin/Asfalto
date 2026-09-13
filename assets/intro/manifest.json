@@ -1,7 +1,7 @@
 {
   "kind": "final",
-  "src": "cinematic.mp4",
-  "poster": "cinematic-poster.jpg",
+  "src": "cinematic-v7.mp4",
+  "poster": "cinematic-v7-poster.jpg",
   "durationSeconds": 40,
   "title": "Asfalto Nacional · Intro",
   "finalVideoAvailable": true,
@@ -20,23 +20,31 @@
   "editorialHoldSeconds": 2,
   "editorialHold": "El cierre sostiene el último cuadro limpio de la fuente 09 durante 38–40 segundos para leer el título.",
   "audioRender": "FFmpeg 7.1; proyecto REAPER editable actualizado, sin nuevo render nativo de REAPER",
-  "videoAssembly": "FFmpeg 7.1; video H.264 copiado sin recodificar al integrar la canción",
+  "videoAssembly": "Clean 40-second picture, original regional titles, new v7 logo overlay; H.264 CRF19 / unchanged AAC audio",
   "measuredLufs": -16.05,
   "measuredTruePeakDbtp": -2.14,
   "audioListeningReview": false,
-  "sha256": "9e66a23ad4f773a5daadc10ab1ce4415cecb164555bcf674a72e336c335ba50a",
-  "bytes": 48907557,
+  "sha256": "40833fb7427cb8a240049719167788eb489d98eff0b84796a94f8fd47626c775",
+  "bytes": 53859440,
   "music": {
     "source": "Canciones/Intro.mp3",
     "provenance": "Archivo provisto por el usuario; no se atribuye artista ni licencia adicional",
     "sourceSha256": "5e4413966327fec79a1ab43168cf43f359c086a01dc48f29b1b02ece0a731414",
-    "sourceRangeSeconds": [0, 40],
+    "sourceRangeSeconds": [
+      0,
+      40
+    ],
     "musicGainDb": -4,
     "originalBedGainDb": -12,
     "masterGainDb": 1.67,
     "fadeInSeconds": 1.25,
-    "fadeOutRangeSeconds": [37, 40],
+    "fadeOutRangeSeconds": [
+      37,
+      40
+    ],
     "integrationReport": "Produccion/Intro_Menu_2026-09-05/intro_audio_integration.md"
   },
-  "projectUrl": "https://flow.google.com/project/34c5ee01-0cd9-4e5b-83c9-e0d8fe665513"
+  "projectUrl": "https://flow.google.com/project/34c5ee01-0cd9-4e5b-83c9-e0d8fe665513",
+  "brandRevision": "2026-09-12",
+  "brandReport": "Reports/Asfalto_Nacional_v7/expansion-2026-09-12/brand"
 }

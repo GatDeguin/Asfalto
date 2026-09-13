@@ -2,7 +2,8 @@ import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs';
 import {AWARDS} from './v7-championship-catalog.mjs';
 import {FUEL_MODEL_ID} from '../game/fuel-observer.mjs';
 // Selectable presentation identity only; the catalog does not establish historical physics calibration.
-const SELECTABLE_VEHICLES=new Set(Object.values(VEHICLE_CATALOG).filter(vehicle=>vehicle.selectable===true).map(vehicle=>vehicle.id));
+// Retiring a selectable model must not erase legitimately earned historical medals.
+const SELECTABLE_VEHICLES=new Set(['chevy',...Object.values(VEHICLE_CATALOG).filter(vehicle=>vehicle.selectable===true).map(vehicle=>vehicle.id)]);
 const TRACKS=new Set(['dos_lagos','aconcagua_horcones','cuesta_lipan','paso_garibaldi','cataratas_iguazu']);
 const TYPES={vmax:['maximumStableSpeedKph','km/h','physical-stable-speed-window'],accel100:['elapsedSeconds','s','physical-speed-crossing'],accel160:['elapsedSeconds','s','physical-speed-crossing'],m500:['elapsedSeconds','s','physical-route-distance-gate'],m1000:['elapsedSeconds','s','physical-route-distance-gate'],recovery:['elapsedSeconds','s','physical-fourth-gear-speed-crossings'],brake100:['brakingDistanceM','m','physical-brake-torque-to-supported-stop'],slalom:['physicalGates','puertas','ordered-physical-gate-crossings'],turn:['turningDiameterM','m','observed-circle-fit'],wet:['wetDistanceM','m','physical-wet-support-and-braking'],speedo:['speedometerRmsErrorKph','km/h RMS','actual-display-versus-physical-velocity'],consumption:['modeledLitersPer100Km','L/100 km estimados por modelo','integrated-reference-fuel-model']};
 export const ROAD_TEST_AWARDS=Object.freeze(AWARDS.filter(a=>a.kind==='test-medal'));

@@ -156,8 +156,9 @@ export function createCompositionEditorController({ targets = [], cameraMode = (
   });
 }
 
-export function createCompositionState({ storage = null, keys = {}, initial = {}, background = {}, frontCut = {}, build = '' } = {}) {
+export function createCompositionState({ storage = null, keys = {}, initial = {}, defaults = COMPOSITION_STATE_DEFAULTS, background = {}, frontCut = {}, build = '' } = {}) {
   const storageKeys = { layout: keys.layout || 'cockpit-chevy-layout-editor-v1', background: keys.background || 'cockpit-chevy-background-editor-v1', frontCut: keys.frontCut || 'cockpit-chevy-front-cut-editor-v1' };
+  const resetDefaults = sanitizeCompositionState(defaults);
   let layout = sanitizeCompositionState(initial);
   let backgroundState = clone(background);
   let frontCutState = clone(frontCut);
@@ -188,8 +189,7 @@ export function createCompositionState({ storage = null, keys = {}, initial = {}
       let raw;
       try {
         raw = { layout: read(storageKeys.layout), background: read(storageKeys.background), frontCut: read(storageKeys.frontCut) };
-        const defaults = sanitizeCompositionState({ ...COMPOSITION_STATE_DEFAULTS, build });
-        layout = defaults;
+        layout = sanitizeCompositionState({ ...resetDefaults, build });
         backgroundState = clone(nextBackground);
         frontCutState = clone(nextFrontCut);
         write(storageKeys.layout, serializeCompositionState(layout, layout.build));

@@ -34,7 +34,7 @@ export function createRacePauseMenu({
   overlay.setAttribute('aria-labelledby', `${id}-title`);
   overlay.setAttribute('aria-describedby', `${id}-session`);
   overlay.innerHTML = `<div class="an-pause-shell">
-    <header class="an-pause-brand"><span class="an-pause-stripes" aria-hidden="true"></span><span>Asfalto<br>Nacional</span><small>Chevy Serie 2 · 1973</small></header>
+    <header class="an-pause-brand"><img class="an-pause-brand-logo" src="${new URL('../../assets/brand/asfalto-nacional-v7.webp', import.meta.url).href}" alt="Asfalto Nacional" width="540" height="180"><small>Chevy Serie 2 · 1973</small></header>
     <div class="an-pause-card">
       <div class="an-pause-heading"><p class="an-pause-kicker">Sesión en pausa</p><h1 id="${id}-title">Pausa</h1><p id="${id}-session" class="an-pause-session"></p><p class="an-pause-detail" hidden></p></div>
       <nav class="an-pause-actions" aria-label="Opciones de pausa">

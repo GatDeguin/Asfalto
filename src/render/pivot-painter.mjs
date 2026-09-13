@@ -51,7 +51,7 @@ export function createPivotPainter(T,{root,quality='high'}={}){
  const records=new Map(),geometryCache=new Map(),materials=new Set();let tier='high',disposed=false;
  function classify(o){
   if(!o.isMesh||o.isSkinnedMesh||!o.geometry?.attributes.position||o.geometry.attributes.asfaltoDetailedTree||o.geometry.drawRange.count===0)return null;
-  let path='';for(let p=o;p&&p!==root;p=p.parent)path+=' '+p.name;
+  let path='';for(let p=o;p;p=p.parent){if(p.userData?.pivotPainter===false)return null;if(p===root)break;path+=' '+p.name;}
   if(/grass|cesped|césped|billboard|resource.owner|source.owner|detail.template/i.test(path)||o.userData.asfaltoRealisticGrass)return null;
   const mats=materialList(o);if(mats.some(m=>!m?.isMeshStandardMaterial))return null;
   const names=path+' '+mats.map(m=>m.name).join(' ');

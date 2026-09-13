@@ -1,6 +1,7 @@
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs';
+import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs';
 import {createWorkshopContactShadow} from './workshop-contact-shadow.mjs';
 import { createWorkshopCollection } from './workshop-collection.mjs';
-import { reflectorClass } from './reflector-factory.mjs';
 import { hdrLoaderClass } from './hdr-loader-factory.mjs';
 import { createChevyPaintController } from './chevy-paint-controller.mjs';
 import { createWorkshopDetailPass, applyPatina } from './workshop-detail-pass.mjs';
@@ -12,7 +13,7 @@ const SURFACES = Object.freeze({
   MAT_Floor_Concrete_Oily: { id: 'floor', tile: 3, color: '#b7b5ae', roughness: .88, normal: .55, depthM: .006 },
   MAT_Wall_Plaster_Aged: { id: 'plaster', tile: 4, color: '#c9bca7', roughness: .94, normal: .42, depthM: .008 },
   MAT_Wall_Blue_OilPaint: { id: 'blue-paint', tile: 2, color: '#6d8988', roughness: .82, normal: .34, depthM: .0035 },
-  MAT_Wood_Dark_Oiled: { id: 'wood', tile: 1.2, color: '#a5947f', roughness: .76, normal: .30, depthM: .004, silhouette: true, detail: true },
+  MAT_Wood_Dark_Oiled: { id: 'wood', tile: 1.2, color: '#c8c0b3', roughness: .86, normal: 0, baseOnly: true, detail: true, baseColorAsset: 'workshop-detail/wood-use-baseColor-1k.jpg' },
   MAT_Steel_Blackened: { id: 'steel', tile: .75, color: '#4e504b', roughness: .68, normal: .22, depthM: .0015, silhouette: true, metalness: .7, detail: true },
   MAT_PaintedMetal_Teal: { id: 'steel', tile: .7, color: '#3b6860', roughness: .74, normal: .18, depthM: .001, silhouette: true, metalness: .2, detail: true },
   MAT_PaintedMetal_Red: { id: 'steel', tile: .7, color: '#9b3728', roughness: .69, normal: .18, depthM: .001, silhouette: true, metalness: .2, detail: true },
@@ -50,9 +51,9 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   configureSurfaceRelief(T);
   let reflector = null;
   let hdriEnvironment = null, detailsRoot = null;
-  let staticBatches=null;
+  let staticBatches=null,architecture=null,livedIn=null;
   let collection=null,collectionItems=[],collectionPosters=[],collectionMemories=[],collectionLoad=null,collectionDisposed=false,room=null;
-  const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(0,2.2,4);collectionLight.castShadow=false;
+  const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(-5.8,2.2,4.7);collectionLight.castShadow=false;
   let detailPass = null, night = false, lastTime = null, probeDirty = false, contactShadow=null;
   const invalidateContact=()=>contactShadow?.invalidate();
   const previousEnvironment = scene.environment;
@@ -64,6 +65,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     staticBatches?.dispose();staticBatches=null;
     detailPass?.dispose(); detailPass=null;
     for (const [object,state] of originals.splice(0)) Object.assign(object,state);
+    livedIn?.dispose();livedIn=null;architecture?.dispose();architecture=null;
     reflector?.removeFromParent();
     detailsRoot?.removeFromParent();
     if (hdriEnvironment && scene.environment === hdriEnvironment.texture) {
@@ -79,7 +81,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     const key = `${spec.id}:${role}`;
     if (textureTasks.has(key)) return textureTasks.get(key);
     const task = (async () => {
-    const asset = role === 'height' ? `workshop-surfaces/${spec.id}-height-1k.png`
+    const asset = role === 'baseColor' && spec.baseColorAsset ? spec.baseColorAsset : role === 'height' ? `workshop-surfaces/${spec.id}-height-1k.png`
       : `${spec.detail ? 'workshop-detail' : 'workshop-surfaces'}/${spec.id}-${role}-${spec.detail ? '1k' : '2k'}.jpg`;
     const url = new URL(`../../assets/${asset}`, import.meta.url);
     const texture = await loader.loadAsync(url.href);
@@ -107,19 +109,21 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   // Wait for every in-flight load before cleanup: a rejected sibling must not
   // leave textures arriving after the failed initialization has been disposed.
   const materialLoads = await Promise.allSettled(Object.entries(SURFACES).map(async ([name, spec]) => {
-    const maps = await Promise.allSettled(['baseColor','normal','roughness','height'].map(role => load(spec, role)));
+    const maps = await Promise.allSettled((spec.baseOnly ? ['baseColor'] : ['baseColor','normal','roughness','height']).map(role => load(spec, role)));
     const failedMap = maps.find(result => result.status === 'rejected');
     if (failedMap) throw failedMap.reason;
     const [map, normalMap, roughnessMap, heightMap] = maps.map(result => result.value);
-    const material = new T.MeshPhysicalMaterial({name, map, normalMap, roughnessMap,
+    const material = new T.MeshPhysicalMaterial({name, map, normalMap:normalMap||null, roughnessMap:roughnessMap||null, bumpMap:spec.baseOnly?map:null, bumpScale:spec.baseOnly?.00035:1,
       color: spec.color, roughness: spec.roughness, metalness: spec.metalness || 0,
       normalScale: new T.Vector2(spec.normal, spec.normal),
-      clearcoat: spec.id === 'floor' ? .04 : .02,
+      clearcoat: spec.id === 'floor' ? 0 : .02,
       clearcoatRoughness: spec.id === 'floor' ? .45 : .5,
       side: T.DoubleSide});
+    // These PBR layers are already calibrated; the generic paint heuristic must not add another clearcoat.
+    material.userData.advancedMaterials=false;
     materials.set(name, material); owned.push(material);
     applyPatina(material, spec.id==='floor'?'floor':/plaster|blue-paint/.test(spec.id)?'wall':'metal');
-    installSurfaceRelief(material,{heightMap,metres:spec.tile,depthM:spec.depthM,silhouette:!!spec.silhouette});
+    if(heightMap)installSurfaceRelief(material,{heightMap,metres:spec.tile,depthM:spec.depthM,silhouette:!!spec.silhouette});
     material.vertexColors=true;
   }));
   const extras = await extraLoads;
@@ -142,11 +146,12 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   scene.environmentRotation?.set(0, .72, 0);
   detailsRoot = extras[1].value;
   detailsRoot.name = 'Workshop_Blender_Service_Details'; scene.add(detailsRoot);
+  architecture=createWorkshopArchitectureE31(T,workshop);livedIn=createWorkshopLivedInE31(T,workshop);
 
   root.updateMatrixWorld(true);
   const floorBounds = new T.Box3();
   let hiddenDecals = 0, texturedMeshes = 0;
-  for (const scenePart of [root, detailsRoot]) {
+  for (const scenePart of [root, detailsRoot,architecture.root,livedIn.root]) {
   scenePart.updateMatrixWorld(true);
   scenePart.traverse(object => {
     if (!object.isMesh) return;
@@ -186,11 +191,11 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     object.castShadow = true; object.receiveShadow = true;
   });
   detailPass=createWorkshopDetailPass(T,workshop,{floorY:floorBounds.isEmpty()?.188:floorBounds.max.y});
-  staticBatches=createWorkshopStaticBatches(T,scene,[root,detailsRoot]);
+  staticBatches=createWorkshopStaticBatches(T,scene,[root,detailsRoot,architecture.staticRoot,livedIn.root]);
   const collectionWood=materials.get('MAT_Wood_Dark_Oiled');
   function rebuildCollection(){
     const next=createWorkshopCollection(T,{textures:{wood:collectionWood?.map,woodNormal:collectionWood?.normalMap,woodRoughness:collectionWood?.roughnessMap},collection:collectionItems,posters:collectionMemories.length?collectionMemories:collectionPosters});
-    next.root.position.set(0,floorBounds.isEmpty()?.18:floorBounds.max.y+.001,5.70);next.root.rotation.y=Math.PI;
+    next.root.position.set(-5.8,floorBounds.isEmpty()?.18:floorBounds.max.y+.001,5.70);next.root.rotation.y=Math.PI;
     if(room)next.setEnvironment(room.texture);collection?.dispose();collection=next;scene.add(next.root);probeDirty=true;
   }
   rebuildCollection();scene.add(collectionLight);
@@ -239,7 +244,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     scene.fog = new T.FogExp2('#171511', .012);
     workshop.hotspots.bench = {yaw:.5,pitch:.22,radius:4.8,target:[-2.3,1.35,-4.4]};
     collectionLight.intensity=night?20:18;
-    workshop.hotspots.collection={yaw:Math.PI,pitch:.025,radius:3.8,target:[0,1.28,5.55]};
+    workshop.hotspots.collection={yaw:Math.PI,pitch:.025,radius:3.8,target:[-5.8,1.28,5.55]};
     detailPass?.setNight(night);
   }
   configure();
@@ -283,56 +288,13 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();}
   }
 
-  if (!floorBounds.isEmpty()) {
-    const size = floorBounds.getSize(new T.Vector3()), center = floorBounds.getCenter(new T.Vector3());
-    const floor = materials.get('MAT_Floor_Concrete_Oily');
-    const Reflector = reflectorClass(T);
-    const shader = {
-      name:'Workshop_Worn_Concrete_Reflection',
-      uniforms:{color:{value:null},tDiffuse:{value:null},textureMatrix:{value:null},
-        roughMap:{value:floor.roughnessMap},normalMap:{value:floor.normalMap},
-        repeats:{value:new T.Vector2(size.x/3,size.z/3)}},
-      vertexShader:`uniform mat4 textureMatrix; varying vec4 vReflection; varying vec2 vSurface;
-        #include <common>
-        #include <logdepthbuf_pars_vertex>
-        void main(){vSurface=uv;vReflection=textureMatrix*vec4(position,1.0);
-        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);
-        #include <logdepthbuf_vertex>
-        }`,
-      fragmentShader:`uniform sampler2D tDiffuse;uniform sampler2D roughMap;uniform sampler2D normalMap;
-        uniform vec2 repeats;varying vec4 vReflection;varying vec2 vSurface;
-        #include <logdepthbuf_pars_fragment>
-        void main(){
-        #include <logdepthbuf_fragment>
-        vec2 p=vSurface*repeats;float rough=texture2D(roughMap,p).r;
-        vec2 n=(texture2D(normalMap,p).rg-.5)*.022;
-        vec2 uv=vReflection.xy/vReflection.w+n;vec2 d=vec2(.003+.006*rough);
-        vec3 reflected=(texture2D(tDiffuse,uv+d).rgb+texture2D(tDiffuse,uv-d).rgb+
-          texture2D(tDiffuse,uv+vec2(d.x,-d.y)).rgb+texture2D(tDiffuse,uv+vec2(-d.x,d.y)).rgb)*.25;
-        gl_FragColor=vec4(reflected,.025+(1.0-rough)*.12);
-        #include <tonemapping_fragment>
-        #include <colorspace_fragment>
-        }`,
-    };
-    const geometry = new T.PlaneGeometry(size.x, size.z);
-    reflector = new Reflector(geometry,{shader,textureWidth:768,textureHeight:512,multisample:0,clipBias:.002});
-    // Reflector clones custom uniform textures. Share the managed PBR maps so
-    // it does not upload and retain two additional, undisposed GPU textures.
-    for (const [uniform, texture] of [['roughMap',floor.roughnessMap],['normalMap',floor.normalMap]]) {
-      reflector.material.uniforms[uniform].value.dispose();
-      reflector.material.uniforms[uniform].value = texture;
-    }
-    reflector.name = 'Workshop_Concrete_Reflection';
-    reflector.rotation.x = -Math.PI/2;
-    reflector.position.set(center.x,floorBounds.max.y+.008,center.z);
-    reflector.material.transparent = true; reflector.material.depthWrite = false;
-    reflector.renderOrder = 2;
-    scene.add(reflector); owned.push(geometry, reflector);
-  }
+  // Dry porous concrete uses its rough PBR response. A full-room mirror overlay
+  // made absorbed workshop stains read as standing water, even at low alpha.
   contactShadow=createWorkshopContactShadow(T,{renderer,scene,car,floorY:floorBounds.isEmpty()?.18:floorBounds.max.y,getRevision:()=>workshop.vehiclePresentation?.root.uuid||'initial'});
   globalThis.window?.addEventListener?.('chevy:vehicle-config',invalidateContact);
   const presentation = {
     configure,prepareCollection,
+    setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);probeDirty=true;return architecture.diagnostics();},
     invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
     setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
     // Earned memories are borrowed from the album lease. Rebuild before the host
@@ -350,8 +312,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       contactShadow.update();
       if(workshop.camera&&!workshop.drag&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))refreshRoomReflection();
     },
-    diagnostics:()=>({contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:true,planarReflection:!!reflector,textures:textureTasks.size,
-      surfaceRelief:{...surfaceReliefDiagnostics(),materials:materials.size,heightMaps:5},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},
+    diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:true,planarReflection:!!reflector,textures:textureTasks.size,
+      surfaceRelief:{...surfaceReliefDiagnostics(),materials:[...materials.values()].filter(m=>m.asfaltoHeightTexture).length,heightMaps:new Set([...materials.values()].map(m=>m.asfaltoHeightTexture).filter(Boolean)).size},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},
       hdri:'Poly Haven Workshop 2K CC0',environmentIntensity:scene.environmentIntensity,details:true,staticBatches:staticBatches.diagnostics(),detailPass:detailPass.diagnostics(),paint:paint.diagnostics()}),
     dispose(){ disposeOwned(); if (workshop.presentation === presentation) workshop.presentation = null; },
   };

@@ -68,7 +68,7 @@ export function resolveAtmosphereParameters({scope='world',environment={},weathe
  const cloud=Math.max(weatherCloud,Number.isFinite(cycle?.cloudiness)?clamp(cycle.cloudiness,0,1):id==='overcast'?.6:0);
  const explicitDensity=Number.isFinite(fogOverride?.density)?fogOverride.density:Number.isFinite(environment.atmosphere?.density)?environment.atmosphere.density:null;
  const naturalDensity=weatherId==='clear'?finite(environment.fog?.density,FOG_DENSITY.clear):(FOG_DENSITY[weatherId]??FOG_DENSITY.clear);
- const density=clamp(explicitDensity??(scope==='workshop'?.0055:naturalDensity),0,.08);
+ const density=clamp(explicitDensity??(scope==='workshop'?.0011:naturalDensity),0,.08);
  return {skyId:id,weatherId,night,sunIntensity:sunIntensity*(1-cloud*.5),sunDirection:[Math.sin(azimuth)*Math.cos(elevation),Math.sin(elevation),Math.cos(azimuth)*Math.cos(elevation)],sunColor:environment.sun?.color||(night?'#a6bed9':'#fff5e4'),
   density,baseHeight:finite(environment.atmosphere?.baseHeight??environment.fog?.baseHeight),falloff:clamp(finite(environment.atmosphere?.heightFalloff,scope==='workshop'?.10:.0025),0,1),
   fogColor:fogOverride?.color||environment.fog?.color||(night?'#101727':'#bfd2df'),ambientIntensity:clamp(finite(environment.ambient?.intensity,night?.12:.7),0,4)*.35,

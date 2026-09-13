@@ -105,3 +105,4 @@ function reprojectValleyScenery(T,root,before,after,returnField){
     if(changed){mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();}
   });root.userData.asfaltoValleySceneryMoved=moved;root.userData.asfaltoReturnSceneryExcluded=removed;
 }
+

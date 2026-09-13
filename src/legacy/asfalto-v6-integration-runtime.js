@@ -1166,6 +1166,7 @@
       this._previousRivalSnapshot = null;
       this._currentRivalSnapshot = null;
       this._physicalObservers = new Set();
+      this._vehicleMaintenance = options.vehicleMaintenance || null;
       this._physicalSessionSequence = 0;
       this._physicalQAMutated = false;
       this._physicalTeleportBaseline = 0;
@@ -1253,10 +1254,11 @@
     }
 
     _emitPhysicalStep(statusBefore, previousTime) {
-      if (!this._physicalObservers.size || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
+      if ((!this._physicalObservers.size && !this._vehicleMaintenance) || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
       const snapshot = this._snapshot;
       const environment = this._physicsSession.environment?.({worldPosition:snapshot.chassis.position,speedMps:Math.hypot(...snapshot.chassis.linearVelocity)}) || {};
       const frame = freezeDeep({sessionSequence:this._physicalSessionSequence,tick:Math.round(snapshot.timeSeconds*120),statusBefore,running:statusBefore==='RUNNING',snapshot,projection:cloneProjection(this._projection),environment:{...environment},qa:this._physicalQAMutated,teleports:this._playerTeleportCount-this._physicalTeleportBaseline,recoveries:this._recoveryCount,referenceChart:this._referenceChart});
+      this._vehicleMaintenance?.sample(frame);
       for (const observer of [...this._physicalObservers]) {
         if (!this._physicalObservers.has(observer)) continue;
         try { observer.sample(frame); } catch { this._physicalObservers.delete(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
@@ -1612,6 +1614,7 @@
     }
 
     start() {
+      const persistentDamage=this._vehicleMaintenance?.begin({vehicleSpec:this._physicsSession?.spec});
       if (this._championshipOptions && (!this._rival || this._rules.settings.mode !== 'race')) throw new Error('Championship requires the prepared physical Falcon in race mode');
       this._invalidatePhysicalObservers('session-restarted');
       this._physicalSessionSequence++;
@@ -1663,7 +1666,8 @@
           frame,
           startEngine: true,
           resetClock: true,
-          resetDamage: true,
+          resetDamage: !persistentDamage,
+          damageState: persistentDamage,
         });
         if (resetSnapshot && typeof resetSnapshot === 'object') this._snapshot = resetSnapshot;
       } else if (typeof this._physicsSession?.teleport === 'function') {
@@ -1694,6 +1698,7 @@
     }
 
     resume() {
+      if(this._vehicleMaintenance && !this._vehicleMaintenance.canDrive()) return this.getState();
       this._championshipPaused = false;
       this._rules.resume();
       this._resetSnapshotHistory(this._snapshot);
@@ -1998,7 +2003,7 @@
     }
 
     _advanceFixed(input) {
-      if (!this._physicalObservers.size) return this._advanceRulesFixed(input);
+      if (!this._physicalObservers.size && !this._vehicleMaintenance) return this._advanceRulesFixed(input);
       const statusBefore=this._rules.state.status,previousTime=this._snapshot?.timeSeconds;
       const feedback=this._advanceRulesFixed(input);
       this._emitPhysicalStep(statusBefore,previousTime);

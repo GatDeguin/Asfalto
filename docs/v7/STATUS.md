@@ -1,20 +1,30 @@
-# Estado de v7 · 10 de septiembre de 2026
+# Asfalto Nacional v7 — actualización del 12 de septiembre de 2026
 
-Versión en desarrollo publicada por pedido del propietario. La existencia del código y las pruebas CPU no equivale a aceptación visual o de conducción.
+Versión en desarrollo para Chrome. Publicación: https://gatdeguin.github.io/Asfalto/
 
-- Cinco circuitos y variantes de ambiente integrados; últimos ajustes de follaje, materiales y cataratas pendientes de nueva inspección GPU.
-- Campeonato de 5, 10 y 15 etapas con clasificación física, persistencia y premios diferenciados; falta completar temporadas reales de aceptación.
-- Doce pruebas con observación física 120 Hz y guardado idempotente: 62 regresiones CPU aprobadas. Falta conducir los 12 objetivos en Chrome y verificar su jugabilidad completa.
-- Mueble con 5 trofeos regionales, 12 medallas y 3 copas; los nuevos modelos esculpidos en Blender aún no están integrados en esta instantánea.
-- Contacto bajo el auto: nuevo shader cargó sin errores en la revisión; su calidad visual sigue examinándose.
-- Ronda visual inicial: 4,8/10, 0 errores JS/HTTP y 4 bloqueantes visuales. Auditoría exhaustiva adicional de autos en curso.
-- Arquitectura: revisión geométrica detectó puertas tapadas por muros, mueble delante del portón y soportes de medallas sin conexión visible. Pendiente corrección y revisión independiente en Chrome.
-- Rendimiento de laptop, matriz completa de 174 ambientes, 20 ciclos de recursos, audio y aceptación 100/100 no certificados.
+## Cambios de este lote
 
-## Criterio arquitectónico solicitado
+- Taller habitado, desgaste localizado, materiales y portón revisados. El usuario cerró el trabajo artístico del taller; su última evaluación visual independiente fue 7,2/10.
+- Selector con Chevy 250 SS Serie 2 y Chevrolet 400. Las selecciones retiradas se migran a la SS, conservando datos y premios anteriores.
+- Corrección de normales del frente visible desde la cabina. Se mantienen geometría de referencia y UV; la fidelidad de cada cockpit sigue pendiente de revisión.
+- Etapas reales de preparación visibles antes de la salida y precarga de calidad limitada a la elección del jugador.
+- Persistencia de averías y reparación, rescate por vuelco, regreso por averías terminales y combustible agotado; requieren cerrar la revisión jugable completa.
+- Ciclo opcional de día y noche de seis minutos, variaciones posteriores de clima y lluvia del parabrisas.
+- 174 previsualizaciones de ruta/cielo/clima, nueva foto de Viaje, volumen de menús y nueva identidad gráfica.
+- Streaming de Lipán más estable y límites de calidad. Un ensayo estacionario previo dio 52,44 FPS en una RTX 3060 Ti, mayormente en calidad baja: no acredita 60 FPS ni rendimiento en notebook.
 
-Cada nueva presentación recibe un crítico arquitectónico separado. Un puntaje 4–7 requiere mejora; se acepta progreso con 8 o más. Por debajo de 8, el constructor documenta problemas y realiza 3 intentos antes de presentar otra revisión. Se exigen planta, cortes, elevaciones, detalles, medidas y capturas propias. Los planos derivados del juego no son una certificación estructural de una obra real.
+## Trabajo pendiente
 
-## Diferencias de empaquetado
+- Bel Air 1957 convertible y Chevrolet Sapo 1953: en construcción; no están incluidos como autos jugables.
+- Corrección geométrica de guardarraíles de Lipán: en staging, sin integrar en este lote. La revisión visual parcial del entorno anterior fue 4,0/10.
+- Mejorar y auditar a fondo los modelos SS/400, sus cabinas, iluminación y percepción fotográfica.
+- Verificar carga y semáforo en las cámaras definitivas, campeonatos y premios de principio a fin, daños visuales y todas las averías.
+- Pruebas de audio, recorridos y hardware objetivo. No hay aprobación global de 8/10 ni cierre de los 100 puntos.
 
-El juego corresponde al candidato local congelado. Esta copia añade documentación, configuración inicial portable y un directorio de guardado .local-data/v7 excluido de Git. Los cambios en preparación permanecen fuera del paquete.
+La intro es una película generada, no una captura del juego. El objetivo de igualar su percepción visual sigue abierto.
+
+## Datos y ejecución
+
+GitHub Pages conserva ajustes y avances en el navegador de cada jugador. La publicación incorpora calibración pública de cabina y ningún archivo personal de Configuracion. Para ejecutar una copia local: INICIAR_JUEGO.bat o node server.mjs; no abrir index.html mediante file:.
+
+Las atribuciones y licencias se conservan junto a los recursos.

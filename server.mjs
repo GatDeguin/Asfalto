@@ -144,7 +144,7 @@ export async function main() {
     throw new RangeError('Rango de puertos invalido.');
   }
   const root = path.dirname(fileURLToPath(import.meta.url));
-  const cockpitDataDirectory=await prepareV7DataDirectory({sourceDirectory:path.resolve(root,'assets','configuration'),targetDirectory:path.resolve(root,'.local-data','v7')});
+  const cockpitDataDirectory=await prepareV7DataDirectory({sourceDirectory:path.resolve(root,'..','Configuracion'),targetDirectory:path.resolve(root,'..','Configuracion','v7')});
   let instance = null;
   let lastError = null;
   for (let port = firstPort; port <= lastPort; port += 1) {

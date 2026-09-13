@@ -2,6 +2,7 @@ import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
 import { mountMenuSections } from './menu-sections.mjs';
 import { mountMenuRefinements } from './menu-refinements.mjs';
+import { mountWorkshopService } from './workshop-service.mjs';
 import { fitMenuCar } from './menu-refinement-state.mjs';
 
 const ICONS = {
@@ -60,6 +61,7 @@ function mount() {
   const intro = document.createElement('section'); intro.id = 'an-intro'; intro.hidden = true;
   intro.setAttribute('role', 'dialog'); intro.setAttribute('aria-modal', 'true'); intro.setAttribute('aria-label', 'Presentación de Asfalto Nacional');
   intro.innerHTML = '<video playsinline preload="none"></video><div class="an-intro-top"><span class="an-intro-kind">Asfalto Nacional · Animática</span><button type="button" class="an-intro-skip">Saltar <kbd>ESC</kbd></button></div><button type="button" class="an-intro-resume" hidden>Reproducir con sonido ▷</button><p class="an-intro-status" role="status">Preparando presentación…</p>';
+  const introBrand=new Image();introBrand.src=new URL('../../assets/brand/asfalto-nacional-v7.webp',import.meta.url).href;introBrand.alt='Asfalto Nacional';introBrand.className='an-intro-brand';intro.querySelector('.an-intro-top').prepend(introBrand);
   document.body.append(intro);
   const video = intro.querySelector('video');
   const skip = intro.querySelector('.an-intro-skip');
@@ -73,6 +75,7 @@ function mount() {
     } else nav.find(button => button.dataset.v6Panel === panel)?.click();
   } });
 
+  const service = mountWorkshopService({root,game});
   const refinements = mountMenuRefinements({root,game});
   function sync() {
     root.dataset.anView = state.view;
@@ -86,6 +89,7 @@ function mount() {
     root.dataset.anInspection=String(section&&state.panel==='workshop'&&!!root.querySelector('[data-workshop-tab=chassis][aria-selected=true],[data-workshop-tab=mechanics][aria-selected=true],[data-workshop-tab=condition][aria-selected=true],[data-workshop-tab=tuning][aria-selected=true]')); 
     root.dataset.anAppearance = String(section && state.panel === 'workshop' && !!root.querySelector('[data-workshop-tab="appearance"][aria-selected="true"]'));
     refinements.refresh();
+    service.refresh();
     back.querySelector('.an-back-label').textContent = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
     content.hidden = !section;
     content.inert = !section;
@@ -113,6 +117,7 @@ function mount() {
     }
   }
   function onPanel(panel) {
+    if(panel==='workshop')root.querySelector('[data-workshop-tab=condition]')?.click();
     sectionStep = 'modes';
     sections?.refresh();
     if (panel === 'tests') sections?.ensureTestSelected();

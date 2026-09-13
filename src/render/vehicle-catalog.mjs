@@ -4,7 +4,7 @@ export const VEHICLE_CATALOG=freeze({
   "chevy": {
     "id": "chevy",
     "label": "Chevy V3",
-    "selectable": true,
+    "selectable": false,
     "supportsDetailedEngine": true
   },
   "falcon": {
@@ -88,7 +88,7 @@ export const VEHICLE_CATALOG=freeze({
     },
     "sourceBytes": 64852916,
     "sourceModifiedUtc": "2026-09-06T23:26:37.146128+00:00",
-    "label": "Chevy 1969",
+    "label": "Chevy 250 SS Serie 2",
     "selectable": true,
     "preserveAuthoredMaterials": true,
     "supportsDetailedEngine": true,
@@ -255,7 +255,7 @@ export const VEHICLE_CATALOG=freeze({
       "sourceWheelY": -0.15268300699999993,
       "sourceHalfTrack": 0.32959999999999995
     },
-    "label": "Chevy 400 1957",
+    "label": "Chevrolet 400",
     "selectable": true,
     "preserveAuthoredMaterials": true,
     "supportsDetailedEngine": true,

@@ -332,30 +332,38 @@
       ? { x: (measuredHull.minX + measuredHull.maxX) / 2, y: -.02,
           z: (measuredHull.minZ + measuredHull.maxZ) / 2 }
       : { x: -.03, y: -.02, z: 0 };
-    const lowerMass = spec.massKg * .72;
+    const lowerMass = spec.massKg * .72, upperMass = spec.massKg * .28;
+    const upperHalf = { x: spec.dimensionsM.length * .21, y: spec.dimensionsM.height * .16, z: spec.dimensionsM.width * .34 };
+    const upperCenter = { x: -.22, y: spec.dimensionsM.height * .25, z: 0 };
+    // Chassis origin is the declared centre of gravity: axle offsets and
+    // cgHeightM are expressed relative to it. Recenter the two-box mass model
+    // without moving collision skins or changing its inertia about its COM.
+    // These inertias remain a geometric approximation, not factory measurements.
+    const massOrigin = { x: -.03 * .72 + upperCenter.x * .28,
+      y: -.02 * .72 + upperCenter.y * .28, z: 0 };
     const lower = RAPIER.ColliderDesc.cuboid(
       measuredHull ? (measuredHull.maxX - measuredHull.minX) / 2 : legacyHalf.x,
       legacyHalf.y,
       measuredHull ? (measuredHull.maxZ - measuredHull.minZ) / 2 : legacyHalf.z,
     )
       .setTranslation(lowerCenter.x, lowerCenter.y, lowerCenter.z)
-      // Changing the collision skin must not silently change handling. Preserve
-      // the original box's mass, mass center and inertia tensor exactly.
+      // Shape and inertial model are independent; preserve the box inertia.
       .setMassProperties(lowerMass,
-        { x: -.03 - lowerCenter.x, y: 0, z: -lowerCenter.z },
+        { x: -.03 - lowerCenter.x - massOrigin.x, y: -massOrigin.y, z: -lowerCenter.z },
         { x: lowerMass / 3 * (legacyHalf.y ** 2 + legacyHalf.z ** 2),
           y: lowerMass / 3 * (legacyHalf.x ** 2 + legacyHalf.z ** 2),
           z: lowerMass / 3 * (legacyHalf.x ** 2 + legacyHalf.y ** 2) },
         { x: 0, y: 0, z: 0, w: 1 })
       .setFriction(0.04)
       .setRestitution(0.04);
-    const upper = RAPIER.ColliderDesc.cuboid(
-      spec.dimensionsM.length * 0.21,
-      spec.dimensionsM.height * 0.16,
-      spec.dimensionsM.width * 0.34,
-    )
-      .setTranslation(-0.22, spec.dimensionsM.height * 0.25, 0)
-      .setMass(spec.massKg * 0.28)
+    const upper = RAPIER.ColliderDesc.cuboid(upperHalf.x, upperHalf.y, upperHalf.z)
+      .setTranslation(upperCenter.x, upperCenter.y, upperCenter.z)
+      .setMassProperties(upperMass,
+        { x: -massOrigin.x, y: -massOrigin.y, z: 0 },
+        { x: upperMass / 3 * (upperHalf.y ** 2 + upperHalf.z ** 2),
+          y: upperMass / 3 * (upperHalf.x ** 2 + upperHalf.z ** 2),
+          z: upperMass / 3 * (upperHalf.x ** 2 + upperHalf.y ** 2) },
+        { x: 0, y: 0, z: 0, w: 1 })
       .setFriction(0.04)
       .setRestitution(0.04);
     const colliders = Object.freeze([
@@ -1260,7 +1268,9 @@
         rearTemperatureC: 20,
       };
       this.absModulation = [1, 1, 1, 1];
-      if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
+      if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
+      else if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
+      else if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
       if (options?.resetClock !== false) this.timeSeconds = 0;
       if (options?.startEngine === true) {
         this.ignitionSequence = ++nextIgnitionSequence;

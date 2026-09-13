@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
+<meta name="asfalto-persistence" content="browser">
 <script src="./src/runtime/versioned-storage.js"></script>
 <script type="module" src="./src/runtime/asset-core.mjs"></script>
 <meta name="asfalto-v6-source-sha256" content="A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA">
@@ -65,6 +66,7 @@
 <script id="asfalto-v6-integration-runtime" src="./src/legacy/asfalto-v6-integration-runtime.js"></script>
 <link rel="stylesheet" href="./assets/styles/menu-refinements.css">
 <link rel="stylesheet" href="assets/styles/workshop-chassis.css">
+<link rel="stylesheet" href="assets/styles/brand-identity.css">
 </head>
 <body>
 <main id="app">
@@ -275,7 +277,7 @@
     <section class="race-panel-section">
       <h2>Prueba y entorno</h2>
       <label class="race-setting-row"><span>Cielo / momento</span><select id="race-environment-preset" aria-label="Cielo y momento del día" aria-describedby="race-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select></label>
-      <label class="race-setting-row"><span>Paso del tiempo</span><select id="race-day-cycle" data-race-day-cycle aria-label="Ciclo día y noche"><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select></label>
+      <label class="race-setting-row"><span>Paso del tiempo</span><select id="race-day-cycle" data-race-day-cycle aria-label="Ciclo día y noche"><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select></label>
       <label class="race-setting-row"><span>Clima</span><select id="race-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
       <small id="race-sky-note">Cielo inicial. El ciclo dura 12 min de carrera, se detiene en pausa y conserva el clima elegido.</small>
       <label class="race-setting-row" hidden><span>Momento compatible</span><select id="race-time-of-day"><option value="day">Día</option><option value="afternoon">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option><option value="dawn">Tarde dorada · guardado anterior</option></select></label>
@@ -428,7 +430,7 @@
           <div class="v6-tech-row"><span>Condición</span><strong id="v6-drive-condition">Lista para salir</strong><small id="v6-drive-condition-detail">Aceite, frenos y neumáticos verificados</small></div>
           <div class="v6-tech-row"><span>Ruta / clima</span><strong><select id="v6-drive-route" aria-label="Ruta"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></strong><select id="v6-drive-weather" aria-label="Clima"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></div>
           <div class="v6-tech-row"><label for="v6-drive-sky">Cielo / momento</label><select id="v6-drive-sky" aria-describedby="v6-drive-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-drive-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></div>
-          <div class="v6-tech-row"><label for="v6-drive-day-cycle">Paso del tiempo</label><select id="v6-drive-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></div>
+          <div class="v6-tech-row"><label for="v6-drive-day-cycle">Paso del tiempo</label><select id="v6-drive-day-cycle" data-race-day-cycle><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></div>
         </div>
         <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-drive-start" type="button">Girar la llave</button><button class="v6-btn" type="button" data-open-panel="workshop">Revisar en taller</button></div>
       </section>
@@ -458,14 +460,14 @@
           <label class="v6-field"><span>Vueltas</span><select id="v6-comp-laps"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></label>
           <label class="v6-field"><span>Clima</span><select id="v6-comp-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
           <label class="v6-field"><span>Cielo / momento</span><select id="v6-comp-sky" aria-describedby="v6-comp-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-comp-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></label>
-          <label class="v6-field"><span>Paso del tiempo</span><select id="v6-comp-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></label>
+          <label class="v6-field"><span>Paso del tiempo</span><select id="v6-comp-day-cycle" data-race-day-cycle><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></label>
         </div>
         <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-competition-start" type="button" disabled>Inscribirse y salir</button><button class="v6-btn" id="v6-championship-view" type="button">Campeonato de club</button></div>
       </section>
 
       <section class="v6-panel" id="v6-workshop-panel" role="tabpanel" aria-labelledby="v6-tab-workshop">
         <header class="v6-panel-head"><div><span class="v6-kicker">Santuario técnico</span><h2>Taller mecánico</h2></div><p>Inspeccionar, mantener, documentar y ajustar. Cada cambio declara beneficio, contrapartida y clase.</p></header>
-        <div class="an-workshop-vehicle-select"><label for="v6-workshop-vehicle">Auto en el taller</label><select id="v6-workshop-vehicle"><option value="chevy">Chevy 250 Serie 2 · 1973</option><option value="chevy_400_1957">Chevrolet 400 · 1957</option><option value="chevrolet_1969">Chevrolet · 1969</option></select><span id="v6-workshop-vehicle-status" role="status">Chevy 250 Serie 2 · 1973</span></div>
+        <div class="an-workshop-vehicle-select"><label for="v6-workshop-vehicle">Auto en el taller</label><select id="v6-workshop-vehicle"><option value="chevrolet_1969">Chevy 250 SS Serie 2</option><option value="chevy_400_1957">Chevrolet 400</option></select><span id="v6-workshop-vehicle-status" role="status">Preparando el auto…</span></div>
         <div class="v6-originality"><span class="v6-class-badge" id="v6-workshop-class">Original</span><div><b id="v6-originality-title">Configuración histórica preservada</b><div id="v6-originality-copy">Sin conversiones modernas instaladas.</div></div></div>
         <nav id="v6-workshop-rail" role="tablist" aria-label="Secciones del taller">
           <button class="v6-rail-btn" role="tab" aria-selected="true" data-workshop-tab="appearance">Apariencia</button>

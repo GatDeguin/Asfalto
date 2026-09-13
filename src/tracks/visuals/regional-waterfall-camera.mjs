@@ -18,3 +18,4 @@ export function waterfallCameraProfile(T,root,{query,falls,heightAt}){
  if(!finalists.length)throw Error('No supported waterfall camera location');const best=finalists[0];delete best.score;
  return {key:'cataratas',...best,fov:31.417,lensMm:35,cameraMode:best.heightAboveGroundM>18?'regional-aerial':'regional-overlook',targetFallNames:chosen.map(f=>f.mesh.name),subjectBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},impactTargets:targets.filter((_,i)=>i%3===2).map(v=>v.toArray()),derivation:'actual main waterfall curtain bounds and contact impacts; supported-ground candidates; opaque terrain/rock ray checks',status:'awaiting GPU review',occlusionLimit:'alpha foliage and future return scenery require GPU confirmation'};
 }
+

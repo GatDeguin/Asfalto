@@ -33,3 +33,4 @@ export function sessionResultFacts({activity='',race={},elapsedMs,valid,reason='
  const penaltySeconds=finite(race.penaltyTime),activeSeconds=activity==='competition'?finite(race.totalTime):Number.isFinite(elapsedMs)?Math.max(0,elapsedMs)/1000:null;
  return {activeSeconds,penaltySeconds,totalSeconds:activeSeconds!==null&&penaltySeconds!==null?activeSeconds+penaltySeconds:null,valid,reason,progress};
 }
+

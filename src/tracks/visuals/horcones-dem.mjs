@@ -25,3 +25,5 @@ export function addHorconesDEM(T,root,asset,{heightAt=null}={}){
  const mesh=new T.Mesh(g,material);mesh.name='ASFALTO_HORCONES_GEOGRAPHIC_DEM';mesh.userData.asfaltoVertexVariation=true;mesh.userData.asfaltoGeographicDEM=true;mesh.userData.asfaltoDistantRidge={layer:0,triangles:indices.length/3,source:'Copernicus DEM GLO30',visualOnly:true};root.add(mesh);root.userData.asfaltoGeographicMountain={...asset.provenance,acceptance:'awaiting GPU review',apron:{widthM:600,triangles:1280,heightSource:'existing visual terrain where supported, otherwise scenic floor -120m'}};
  return {mountainTriangles:indices.length/3,mountainLayers:1,mountainSource:'Copernicus DEM GLO30'};
 }
+
+

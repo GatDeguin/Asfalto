@@ -25,6 +25,9 @@ export function installSurfaceRelief(material,{heightMap,metres=3,depthM=.045,pr
   material.userData.asfaltoRelief={depthM,metres,projection,silhouette,physicalDeltaM:0};
   material.onBeforeCompile=function(shader,renderer){
     previous.call(this,shader,renderer);
+    // Relief uses visible-surface normals and lighting chunks; native shadow
+    // passes keep their depth/alpha implementation and actual mesh silhouette.
+    if(this.isMeshDepthMaterial||this.isMeshDistanceMaterial)return;
     Object.assign(shader.uniforms,quality,{anHeightMap:{value:heightMap},anReliefDepth:{value:depthM}});
     if(triplanar)shader.defines={...shader.defines,AN_RELIEF_LANDSCAPE:1};
     if(silhouette)shader.defines={...shader.defines,AN_RELIEF_SILHOUETTE:1};

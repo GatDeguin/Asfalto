@@ -1,3 +1,5 @@
+> Plan de referencia conservado. Para el estado y alcance de esta actualización, ver [STATUS.md](STATUS.md). El catálogo vigente es SS/400; Bel Air y Sapo están en construcción. Los estados de la tabla corresponden a la planificación anterior, no acreditan aceptación actual.
+
 # Plan v7 · 100 mejoras
 
 Estado del registro de trabajo al publicar; no constituye una aceptación global.
