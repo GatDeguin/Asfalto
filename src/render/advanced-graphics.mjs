@@ -2,12 +2,12 @@ import {createAdvancedMaterials}from'./advanced-materials.mjs';
 import {createPivotPainter}from'./pivot-painter.mjs?v=phone-r3-20260913';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=phone-r6-20260913';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs';
-export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=()=> 'high',allowPivotPainter=true}={}){
+export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=()=> 'high',allowPivotPainter=true,samples=2,onRenderStage=null}={}){
  let settings=readAdvancedGraphics(),quality=effectiveGraphicsQuality(settings,getQuality()),disposed=false,lastRefresh=-10,lastSignature='',lastField=-10,frames=0;
- const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality});
+ const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,onStage:onRenderStage});
  function configure(){
   quality=effectiveGraphicsQuality(settings,getQuality());const budget=screenLightingPolicy(quality);
   materials.setQuality(settings.materials?quality:'off');pivot.setQuality(settings.pivotPainter?quality:'off');field.setQuality(settings.dfao?quality:'off');

@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8561,
-      "sha256": "D74DE3C2CF932B42ABEE10E56095B3BE9AA2759D219292183389C850E0E1FFFD"
+      "bytes": 9278,
+      "sha256": "239A5A54DAD45F12F75961AE0FE38AD21CE194F0D36FA6A2D0D29157EE49B6F3"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 8561,
-      "sha256": "D74DE3C2CF932B42ABEE10E56095B3BE9AA2759D219292183389C850E0E1FFFD"
+      "bytes": 9278,
+      "sha256": "239A5A54DAD45F12F75961AE0FE38AD21CE194F0D36FA6A2D0D29157EE49B6F3"
     },
     {
       "path": "index.html",
       "bytes": 80674,
-      "sha256": "F2F754F5416C5350DCBE902E63218F9B996AB988BA4E4FC8CCAAF44D387B9312"
+      "sha256": "D336AE036F701CC656E9302B5B5C3FA3B33E469C1A3EBA32EA7ACC845ED075CF"
     },
     {
       "path": "server.mjs",
@@ -2829,13 +2829,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 549868,
-      "sha256": "0AD5BE9A5D980A1D4AF1DFE4E5D36EB265F8D602951D4B2136D191C8ED09229D"
+      "bytes": 550340,
+      "sha256": "14A9F8A69DDA2A6455B61CBDEF33C0084DB281061B0673E414666A5E9F81C104"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
       "bytes": 127348,
-      "sha256": "385AEBE668BE9651C0FAA4887EA48CAF5C760103FB363CF5425DB8019799902F"
+      "sha256": "8688A60496744DF408D89E5A695F53F2CD3AA4EDD286FF4C26A72872E49B10C5"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -3084,8 +3084,8 @@
     },
     {
       "path": "src/render/advanced-graphics.mjs",
-      "bytes": 4072,
-      "sha256": "1AA8DAC4D67C0FF6E62D06AD4D10A2FFAAFCEE8F6B23312133A3ACFB42C29EC4"
+      "bytes": 4151,
+      "sha256": "41101DC9D8D6D4F5799DCE37884EA80C15DC0419AAE1EE9634E794472BD2859F"
     },
     {
       "path": "src/render/advanced-materials.mjs",
@@ -3134,8 +3134,8 @@
     },
     {
       "path": "src/render/cockpit-render-pass.mjs",
-      "bytes": 2974,
-      "sha256": "2FD560A2BC05C73B18410EC181049C4AF81F4F55A06DA4983E3D2D622F667EBF"
+      "bytes": 3073,
+      "sha256": "2F87C66F76428788DBD7F508385DEB0107C526319D2BB71622D4C1501CC84CB9"
     },
     {
       "path": "src/render/cube-lut.mjs",
@@ -3229,8 +3229,8 @@
     },
     {
       "path": "src/render/race-color-grade.mjs",
-      "bytes": 11385,
-      "sha256": "7F7F9084DB7CA224937F6510FBAD45E66F94321211F6AAF6B4FB55F5FE2524BC"
+      "bytes": 11531,
+      "sha256": "6FA841312C9908B7FEC5511A2ED1DBADA37BFCD110377188B1C3687ECE24C338"
     },
     {
       "path": "src/render/race-start-signal.mjs",
@@ -3284,8 +3284,8 @@
     },
     {
       "path": "src/render/screen-space-lighting.mjs",
-      "bytes": 14546,
-      "sha256": "8E4679844431499678238F690E7986CB86F5230CC03E9D982AB9AFC0CBBC9A2A"
+      "bytes": 14876,
+      "sha256": "C48C9EECB8609BD5E46DF6641D910B938BB7945362C81388BDE87E3FB0AD761D"
     },
     {
       "path": "src/render/sky-matched-fog.mjs",
@@ -3520,12 +3520,12 @@
     {
       "path": "src/runtime/phone-cockpit-assets.mjs",
       "bytes": 1216,
-      "sha256": "F32652197AD0D0DEF8F6060FB913F4B9174E1F11BD8F4DB18F369986F7EFE9EF"
+      "sha256": "DC906F4A65AD1412EE1339A1955B28283E6508A63BBA14EF420FDFA950BC74BD"
     },
     {
       "path": "src/runtime/phone-load-diagnostics.js",
       "bytes": 2954,
-      "sha256": "10885B7CCF36C32A76EB8E0DDE906FC6B700246BABF1BC844B7A7595420BE778"
+      "sha256": "8151C88589831B94D3A9F2015B08D5D054B748DB87F009616928E6209B62E167"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -3535,7 +3535,7 @@
     {
       "path": "src/runtime/phone-start-memory.mjs",
       "bytes": 1338,
-      "sha256": "4F081DD44909C1ABB287674DD4575C20BDA3452DC2925FA3477B87EEC8FB0316"
+      "sha256": "591626BBEF643B447F9155DC6AA6FBD8DD46109551C60E9F109411A028B150C0"
     },
     {
       "path": "src/runtime/profile-persistence.mjs",
@@ -4424,8 +4424,8 @@
     }
   ],
   "fileCount": 868,
-  "totalBytes": 952360218,
-  "inventorySha256": "99F59CA593D534830F7B78E6A36B57325709F4FEA592AA29262A93423F13742C",
+  "totalBytes": 952362778,
+  "inventorySha256": "F8E3B279B3006C2D7A08F64598F5C5BFDAA58458B480A7B1114D9FF9BA1A41BD",
   "selectionCases": 174,
   "environmentCases": [
     {

@@ -14,7 +14,7 @@ const compositeGLSL="uniform sampler2D anSceneColor,anLighting;\nuniform vec2 an
 const compositeMain="\nvoid main(){\n vec4 color=texture2D(anSceneColor,vUv);float depth=anReadDepth(vUv);vec3 p=anViewPosition(vUv);\n vec4 lighting=vec4(0.);float weight=0.;\n for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){\n  vec2 uv=clamp(vUv+vec2(float(x),float(y))/anLightingResolution,vec2(.001),vec2(.999));\n  float delta=abs(anViewPosition(uv).z-p.z),w=exp(-delta/max(.06,-p.z*.004))*((x==0&&y==0)?2.:1.);\n  lighting+=texture2D(anLighting,uv)*w;weight+=w;\n }\n lighting/=max(weight,.0001);vec3 result=color.rgb;\n if(depth<.999999){result*=lighting.a;result+=lighting.rgb*min(color.rgb+.06,vec3(1.));}\n result=anApplyAtmosphere(result,p,vUv);\n gl_FragColor=vec4(max(result,vec3(0.)),color.a);\n gl_FragDepth=depth;\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}";
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
-export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced'}={}){
+export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,onStage=null}={}){
  let disposed=false,rendering=false,frames=0,targets=null,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
  const size=new T.Vector2(),viewport=new T.Vector4(),scissor=new T.Vector4(),clearColor=new T.Color();
  const definitions=gtaoShaderDefinitions(T),noise=definitions.generateMagicSquareNoise(5);
@@ -35,6 +35,7 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  function hasEffects(){return hasIndirect()||volumeEnabled();}
  function releaseTargets(){if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;}
  function captureSamples(){
+  if(samples===0)return 0;
   if((renderer.capabilities.maxSamples??0)<2)return 0;
   const gl=renderer.getContext();
   if(typeof gl.getInternalformatParameter==='function'){
@@ -60,19 +61,19 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()||0,oldMip=renderer.getActiveMipmapLevel?.()||0,oldAutoClear=renderer.autoClear,oldInfo=renderer.info.autoReset,oldScissor=renderer.getScissorTest(),oldAlpha=renderer.getClearAlpha();
    renderer.getViewport(viewport);renderer.getScissor(scissor);renderer.getClearColor(clearColor);const oldFog=scene.fog;
    try{
-    ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
+    onStage?.('Primer cuadro: buffers de iluminación');ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
     gtaoUniforms.cameraNear.value=camera.near;gtaoUniforms.cameraFar.value=camera.far;gtaoUniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);gtaoUniforms.cameraProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);gtaoUniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
     uniforms.anUseDfa.value=distanceField&&features.dfao&&policy.dfao?1:0;
     renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
     if(volumeEnabled())scene.fog=null;
-    draw();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
-    renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
-    renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
-    renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
+    onStage?.('Primer cuadro: captura del mundo');draw();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
+    onStage?.('Primer cuadro: oclusión GTAO');renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
+    onStage?.('Primer cuadro: iluminación indirecta');renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
+    onStage?.('Primer cuadro: composición del mundo');renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
    }catch(error){lastError=error.message;throw error;}
    finally{scene.fog=oldFog;renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;rendering=false;}
   },
-  diagnostics:()=>({enabled:policy.enabled,policy,frames,targets:targets?3:0,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
+  diagnostics:()=>({enabled:policy.enabled,policy,frames,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
   dispose(){if(disposed)return;disposed=true;releaseTargets();noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
  };
 }
