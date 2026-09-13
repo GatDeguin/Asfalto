@@ -48,3 +48,11 @@ El usuario confirmó que la mitigación anterior no solucionó el reinicio en Ch
 La carga guarda su última etapa localmente. Si quedó incompleta, la próxima apertura muestra un aviso con diagnóstico copiable. El aviso no afirma por sí solo un cierre por memoria: una recarga manual también puede dejar una preparación incompleta.
 
 117 pruebas CPU aprobadas, incluidas comparaciones exactas de los atributos de las seis piezas móviles originales. Revisión independiente CPU:8/10 dentro del alcance de esta mitigación. Esto no confirma resolución en el iPhone físico; esa verificación sigue pendiente.
+
+## Arranque móvil R3 — 13 de septiembre
+
+La captura física confirmó queR2 tampoco resolvió el reinicio. La última etiqueta de radio cubría también la preparación gráfica y el primer render; no demuestra una falla de la radio. La radio se mantiene funcional.
+
+El primer render móvil ahora espera la aplicación de ajustes y un cuadro de interfaz. El diagnóstico distingue descarga/modelo/control de radio, editor, efectos y cada subpaso del primer cuadro. En teléfono se evita construir la jerarquía adicional PivotPainter: la medición anterior registró591meshes,13geometrías y1773materiales derivados incluso con el efecto finalmente desactivado. Se conservan vegetación, materiales y viento base;PC mantiene la jerarquía completa y sus ajustes.
+
+122 pruebas de regresión y22 pruebas específicas de vegetación/render/materiales pasaron. La validación en iPhone físico sigue pendiente.

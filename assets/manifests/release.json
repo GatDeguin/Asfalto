@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5802,
-      "sha256": "849ED93E8DF15F4F23BB54B7A7F8F6E8D2CEABE1460B00E025B28A7EBCB780BA"
+      "bytes": 6713,
+      "sha256": "13760F0A76E91A0C0FBA9759A8D67E15621145F28EB05F3C4F21654ECFCE2287"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 5802,
-      "sha256": "849ED93E8DF15F4F23BB54B7A7F8F6E8D2CEABE1460B00E025B28A7EBCB780BA"
+      "bytes": 6713,
+      "sha256": "13760F0A76E91A0C0FBA9759A8D67E15621145F28EB05F3C4F21654ECFCE2287"
     },
     {
       "path": "index.html",
       "bytes": 80674,
-      "sha256": "9DFF08B66AA8C4702F366C9B4A6E148190A0EEB866F8E4DCC14B729DD2CD647D"
+      "sha256": "6405EA30E2F09A8C44A40752EA17C71994038F4B309DD34D73F21F7F45A5E602"
     },
     {
       "path": "server.mjs",
@@ -2829,8 +2829,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 546797,
-      "sha256": "9D28F62FBF52C6D9236A4809787D140EFA8C0FBBCE7DE41A1FA8316AC0FA6107"
+      "bytes": 548336,
+      "sha256": "95E214F2B21F73C4BCC1269182BADF2796E741D6C9513EFC2A440F494E385346"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3084,13 +3084,18 @@
     },
     {
       "path": "src/render/advanced-graphics.mjs",
-      "bytes": 4003,
-      "sha256": "469683C4DABFA1E952148975E9FF7258C3DC15F1F5A0D36DA0EE6F56A966B11F"
+      "bytes": 4072,
+      "sha256": "1AA8DAC4D67C0FF6E62D06AD4D10A2FFAAFCEE8F6B23312133A3ACFB42C29EC4"
     },
     {
       "path": "src/render/advanced-materials.mjs",
       "bytes": 20848,
       "sha256": "C05839B0CA73BB8241ED7F86F8D73287415967D7504AD633ACAA9CCC7DE4844A"
+    },
+    {
+      "path": "src/render/boot-render-gate.mjs",
+      "bytes": 232,
+      "sha256": "23F2BEE9107DD8CA6A3FDB0F6F96CDC26DE00CCF27D6C12D3AC2F1A9210CE70E"
     },
     {
       "path": "src/render/chassis-lab-geometry.mjs",
@@ -3204,8 +3209,8 @@
     },
     {
       "path": "src/render/pivot-painter.mjs",
-      "bytes": 13194,
-      "sha256": "5C31AD435A07184C4F126F59B3E009B5873A97ED7FEFC035ACA2BA5BB7D9AFAE"
+      "bytes": 13245,
+      "sha256": "ED43250D6C4B8BA73C3A0B0653CD9665958AC8F442ADD84DF8834DAAA76F5620"
     },
     {
       "path": "src/render/presented-frame-capture.mjs",
@@ -3510,7 +3515,7 @@
     {
       "path": "src/runtime/phone-load-diagnostics.js",
       "bytes": 2954,
-      "sha256": "6B7A7C418B943B076F18B771A25F8681BFFA9AC59F1CDA802993EFFC17483400"
+      "sha256": "FF8327B9D545DB21C09E56E6C87E69311D26263F1F2B17858704223CBC30E113"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -4408,9 +4413,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 865,
-  "totalBytes": 988365026,
-  "inventorySha256": "6456B2B31B5149CE930E9A7E3955B1C273723D3D419BE56D3A9EB9B80EEB5B5E",
+  "fileCount": 866,
+  "totalBytes": 988368739,
+  "inventorySha256": "667940E693CA9B52230D7ADF3C021271FA33FCD4460845D250AD2A5A5B4376CA",
   "selectionCases": 174,
   "environmentCases": [
     {
