@@ -56,3 +56,11 @@ La captura física confirmó queR2 tampoco resolvió el reinicio. La última eti
 El primer render móvil ahora espera la aplicación de ajustes y un cuadro de interfaz. El diagnóstico distingue descarga/modelo/control de radio, editor, efectos y cada subpaso del primer cuadro. En teléfono se evita construir la jerarquía adicional PivotPainter: la medición anterior registró591meshes,13geometrías y1773materiales derivados incluso con el efecto finalmente desactivado. Se conservan vegetación, materiales y viento base;PC mantiene la jerarquía completa y sus ajustes.
 
 122 pruebas de regresión y22 pruebas específicas de vegetación/render/materiales pasaron. La validación en iPhone físico sigue pendiente.
+
+## Cockpit móvil R4 — 13 de septiembre
+
+El diagnóstico físico deR3 registra interrupción durante decodificación del volante, antes de radio/render; la causa única sigue sin demostrarse. Se elimina la carga de mallas de edición completas de cabina/tablero/volante/palanca en teléfono: carga directamente las geometrías de juego ya existentes, conserva matrices exactas mediante los límites fuente y evita descargar otroLOD para esas piezas. En el editor móvil esas cuatro piezas también usan la malla de juego;PC conserva las fuentes completas.
+
+Texturas de las seis piezas preparadas offline a1024 píxeles, sólo teléfono. Transferencia80,883,712→44,867,780 bytes. La suma teóricaRGBA de esas imágenes pasa161,218,560→82,575,360 bytes; no es medición de RAM ni GPU total o pico físico. Frente y pedales conservan geometría.
+
+128pruebas de regresión y4 específicasLOD/editor aprobadas; comparación exacta de matrices/UV/posiciones/normales/índices y materiales. Revisión técnica independiente8/10 dentro de este alcance. Confirmación de estabilidad en iPhone físico pendiente.
