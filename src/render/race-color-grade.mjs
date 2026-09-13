@@ -58,7 +58,7 @@ void main(){
 }`;
 
 /** World and cockpit must both be drawn inside the supplied synchronous callback. */
-export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=null,manifestUrl=new URL('../../assets/luts/manifest.json',import.meta.url),fetch:fetcher=globalThis.fetch,cacheLimit=3,samples=2}={}){
+export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=null,manifestUrl=new URL('../../assets/luts/manifest.json',import.meta.url),fetch:fetcher=globalThis.fetch,cacheLimit=3,samples=2,onStage=null}={}){
  if(!T||!renderer)throw new TypeError('Color grade requires THREE and renderer');
  const limit=clamp(Math.floor(cacheLimit)||3,1,4),cache=new Map(),pending=new Map();
  let manifestPromise=initialManifest?Promise.resolve(initialManifest):null,requested={...DEFAULT_COLOR_GRADE_SETTINGS},settings={...requested},activeEntry=null,sequence=0,disposed=false,lastError=null,pass=null,rendering=false,renderCount=0;
@@ -120,7 +120,7 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
    const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()??0,oldMip=renderer.getActiveMipmapLevel?.()??0,oldScissor=renderer.getScissorTest(),oldAutoClear=renderer.autoClear,oldInfoAutoReset=renderer.info?.autoReset;
    renderer.getCurrentViewport?.(savedViewport);
    try{
-    ensurePass();const u=pass.material.uniforms;
+    onStage?.('Primer cuadro: buffer HDR de color');ensurePass();const u=pass.material.uniforms;
     u.uToneMapping.value=renderer.toneMapping;u.toneMappingExposure.value=renderer.toneMappingExposure;
     u.uLutKind.value=activeEntry?(activeEntry.lut.kind==='3D'?3:1):0;
     u.uLut3D.value=activeEntry?.lut.kind==='3D'?activeEntry.texture:null;u.uLut1D.value=activeEntry?.lut.kind==='1D'?activeEntry.texture:null;
@@ -128,7 +128,7 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
     for(const key of ['intensity','contrast','saturation','temperature','tint'])u['u'+key[0].toUpperCase()+key.slice(1)].value=settings[key];
     renderer.setRenderTarget(pass.target);renderer.setScissorTest(false);renderer.clear(true,true,true);drawSceneCallback({linearOutput:true});
     renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setScissorTest(oldScissor);renderer.autoClear=false;if(renderer.info)renderer.info.autoReset=false;
-    renderer.render(pass.scene,pass.camera);renderCount++;
+    onStage?.('Primer cuadro: composición de color');renderer.render(pass.scene,pass.camera);renderCount++;
    }finally{
     renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setScissorTest(oldScissor);renderer.autoClear=oldAutoClear;if(renderer.info)renderer.info.autoReset=oldInfoAutoReset;
     // Preserve a caller's camera viewport as well as its target and global viewport settings.
@@ -136,7 +136,7 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
     rendering=false;
    }
   },
-  diagnostics:()=>({disposed,settings:{...settings},requestedSettings:{...requested},activeLut:activeEntry?.id??'none',cachedLuts:cache.size,pendingLoads:pending.size,cacheLimit:limit,renderTargetAllocated:!!pass,renderTargetSize:pass?[pass.target.width,pass.target.height]:null,renderCount,lastError,pipeline:'linear HDR -> renderer tone mapping -> display sRGB -> LUT -> parameters',sourceFilesModified:false}),
+  diagnostics:()=>({disposed,settings:{...settings},requestedSettings:{...requested},activeLut:activeEntry?.id??'none',cachedLuts:cache.size,pendingLoads:pending.size,cacheLimit:limit,renderTargetAllocated:!!pass,samples:pass?.target.samples??null,renderTargetSize:pass?[pass.target.width,pass.target.height]:null,renderCount,lastError,pipeline:'linear HDR -> renderer tone mapping -> display sRGB -> LUT -> parameters',sourceFilesModified:false}),
   dispose(){if(disposed)return;disposed=true;sequence++;for(const record of pending.values())record.abort.abort();pending.clear();activeEntry=null;for(const entry of cache.values())entry.texture.dispose();cache.clear();releasePass();},
  };
 }

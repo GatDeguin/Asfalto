@@ -70,3 +70,9 @@ Texturas de las seis piezas preparadas offline a1024 píxeles, sólo teléfono. 
 R4 volvió a interrumpirse en iPhone tras el marcador de primer cuadro; ese marcador sólo confirmaba retorno del dibujo en JavaScript. R5 mantiene bloqueado el primer render hasta preparar auto seleccionado y circuito. En teléfono, el exterior seleccionado carga sólo LOD0 (máximo detalle); PC conserva tres niveles. La confirmación GPU es asíncrona, con cancelación y timeout, y tiene marcadores separados de envío y finalización. El editor conserva apertura antes de iniciar carrera.
 
 La causa física única y la estabilidad en iPhone siguen pendientes de confirmación; Chrome emulado no las certifica. La barrera protege el primer arranque, no todas las selecciones posteriores.
+
+## Presupuesto de render móvil R6 — 13 de septiembre
+
+R5 volvió a fallar en iPhone dentro del render de mundo/cockpit. R6 limita a512px las imágenes decodificadas por el cargador móvil, desactiva MSAA del canvas y de los buffers HDR de iluminación/color y usa media resolución para refracción. PC conserva sus tamaños y antialiasing. Se mantienen HDR, materiales, LUT y efectos; en móvil puede perderse detalle fino y suavizado de bordes. No es un límite universal para texturas procedurales o cielo.
+
+El diagnóstico distingue buffers, captura del mundo, GTAO, iluminación indirecta, composición, interior y color. La estabilidad en iPhone físico permanece pendiente; Chrome emulado no la certifica.
