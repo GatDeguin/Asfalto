@@ -1,3 +1,4 @@
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs';
@@ -1857,7 +1858,7 @@ async function compressedAssetToObject(THREE, key, label, { signal } = {}) {
   if (signal?.aborted) throw signal.reason;
   const compressedSource = payload[key];
   delete payload[key];
-  const bytes = await gunzipBase64(compressedSource);
+  const bytes = runtimeDeviceProfile.phone ? await readPhoneCockpitPart(key,signal) : await gunzipBase64(compressedSource);
   if (signal?.aborted) throw signal.reason;
   const object = await compactGlbToObject(THREE, bytes, label);
   if (signal?.aborted) throw signal.reason;
@@ -4572,7 +4573,7 @@ try {
   // Publish the exact shared Three/template for home before any cockpit/race preparation.
   const deferredStartupAssets = await startupDemand.run(async ({signal,stage}) => {
     stage('Cargando recursos del cockpit…',0,2);
-    const fullPayload = startupPayload.full ? payload : JSON.parse(new TextDecoder().decode(await readDeferredPayload(payloadScript,signal)));
+    const fullPayload = runtimeDeviceProfile.phone ? {} : startupPayload.full ? payload : JSON.parse(new TextDecoder().decode(await readDeferredPayload(payloadScript,signal)));
     stage('Cargando trazado inicial…',1,2);
     const routeNode = document.getElementById('asfalto-v5-dos-lagos-route');
     const routeBytes = routeNode.dataset.encoding === 'external-url' ? await readDeferredPayload(routeNode,signal) : await globalThis.AsfaltoV5PayloadCore.decodePayloadById(document,'asfalto-v5-dos-lagos-route',gunzipBase64);

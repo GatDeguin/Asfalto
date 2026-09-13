@@ -9,7 +9,7 @@ Versión en desarrollo: https://gatdeguin.github.io/Asfalto/
 - Panel compacto en paisaje, velocidad en km/h, encuadre móvil con raycasting alineado, áreas seguras y liberación de entradas en pausa/cancelación/cambio de orientación.
 - Arranque manual coherente en neutro, con indicación de engranar primera. Automático sale en primera. El reset genérico conserva su comportamiento anterior.
 - Perfil de teléfono independiente: presupuestos móviles de resolución/texturas, HUD sin contexto WebGL adicional, Page Cache y recuperación de audio. Los límites y fuentes PC permanecen intactos.
-- Paquete opcional de imágenes de cabina para teléfono. Mantiene geometría y UV originales; reduce imágenes grandes antes de decodificarlas. Añade 15,25 MB de descarga fría y no elimina el JSON original de 59 MB. El ahorro de memoria citado en los informes es teórico, no una medición del iPhone.
+- Paquete opcional de imágenes de cabina para teléfono. Mantiene geometría y UV originales; reduce imágenes grandes antes de decodificarlas. La primera versión añadía 15,25 MB y conservaba el JSON; la corrección móvil del 13 de septiembre descrita abajo reemplaza esa ruta. El ahorro de memoria citado en los informes es teórico, no una medición del iPhone.
 - Guardarraíles de los primeros sectores de Lipán alineados con la colisión autoritativa, perfil continuo y postes apoyados. Geometría de ruta/colisión conservada; no es certificación vial ni relevamiento de obra.
 - Rótulos del vehículo coherentes con la selección SS/400.
 
@@ -32,3 +32,11 @@ La intro es una película generada, no una captura del juego. Igualar su percepc
 ## Datos
 
 GitHub Pages conserva progreso y ajustes en el navegador del jugador. Se publica sólo calibración pública de cabina y un preset de iluminación vacío; ningún archivo personal de Configuracion. Se conservan atribuciones y licencias.
+
+## Corrección de entrada a carrera móvil — 13 de septiembre
+
+Ante el reporte de recarga de Chrome en iPhone antes de largar, se redujo la acumulación de recursos durante la preparación. El taller libera su escena antes de cargar la carrera y se reconstruye al volver. Una transición vigente impide que volver de otra app reactive el taller a mitad de carga. Se espera cualquier cambio de vehículo pendiente.
+
+El teléfono ahora carga seis piezas GLB secuencialmente y evita el JSON de cabina de 59 MB y sus cadenas base64. La geometría y las texturas móviles son las mismas; PC conserva su carga y configuración gráfica. Los GLB suman80,88MB: es una mitigación del pico de memoria, no una reducción de transferencia ni una medición de RAM del iPhone.
+
+Prueba local: entrada a pista, aceleración y regreso al taller reconstruido. Revisión independiente CPU y pruebas de cancelación/visibilidad/propiedad de transición. La causa del reinicio físico sigue sin confirmar; falta que el usuario pruebe nuevamente en su iPhone.
