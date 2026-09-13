@@ -1,0 +1,57 @@
+/* Phone-only controls: the entire left side remains available to the actual 3D wheel. */
+body.an-phone-controls{--an-mobile-controls-height:146px}
+#an-mobile-driving-controls{position:fixed;inset:0;z-index:11000;pointer-events:none;color:#fff4e3;font:700 12px/1.15 system-ui,sans-serif}
+#an-mobile-driving-controls[hidden]{display:none!important}
+#an-mobile-driving-controls *{box-sizing:border-box}
+.an-mobile-deck{position:absolute;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));width:min(188px,calc(50vw - max(8px,env(safe-area-inset-right))));display:grid;gap:6px;pointer-events:none}
+#an-mobile-driving-controls button,.an-mobile-secondary>summary{appearance:none;min-width:44px;min-height:44px;border:1px solid #e4d4b669;border-radius:10px;padding:6px 8px;background:#101615e8;color:inherit;font:inherit;pointer-events:auto;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#an-mobile-driving-controls [data-mobile-hold]{touch-action:none}
+#an-mobile-driving-controls button.active{background:#744019;border-color:#ffb760;box-shadow:inset 0 0 0 2px #ffb76050}
+#an-mobile-driving-controls button:disabled{opacity:.4}
+#an-mobile-driving-controls button:focus-visible,.an-mobile-secondary>summary:focus-visible{outline:2px solid #ffd399;outline-offset:2px}
+.an-mobile-tools{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:stretch;pointer-events:none}
+#an-mobile-driving-controls [data-mobile-command=pause]{font-size:11px}
+.an-mobile-secondary{position:relative;pointer-events:none}
+.an-mobile-secondary>summary{height:100%;display:grid;place-items:center;list-style:none;font-size:11px;cursor:pointer}
+.an-mobile-secondary>summary::-webkit-details-marker{display:none}
+.an-mobile-secondary-panel{position:absolute;right:0;bottom:calc(100% + 8px);width:188px;max-width:calc(50vw - max(8px,env(safe-area-inset-right)));max-height:calc(100vh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)) - 152px);max-height:calc(100dvh - max(8px,env(safe-area-inset-top)) - max(8px,env(safe-area-inset-bottom)) - 152px);overflow:auto;overscroll-behavior:contain;padding:6px;border:1px solid #e4d4b640;border-radius:10px;background:#0d1413f5;pointer-events:none}
+.an-mobile-commands,.an-mobile-aux-pedals{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+#an-mobile-driving-controls .an-mobile-commands button,#an-mobile-driving-controls .an-mobile-aux-pedals button{font-size:10px}
+.an-mobile-gears{display:grid;grid-template-columns:repeat(3,minmax(44px,1fr));gap:5px;margin:6px 0}
+#an-mobile-driving-controls [data-mobile-command=mode]{grid-column:1/-1;font-size:11px}
+#an-mobile-driving-controls [data-mobile-gear=R]{grid-row:1;grid-column:1}
+#an-mobile-driving-controls [data-mobile-gear=N]{grid-row:1;grid-column:2}
+.an-mobile-gear{grid-row:1;grid-column:3;display:grid;place-items:center;min-width:28px;min-height:44px;border-radius:8px;background:#111918d9;font-size:20px;pointer-events:none}
+#an-mobile-driving-controls [data-mobile-gear=down]{grid-row:2;grid-column:1}
+#an-mobile-driving-controls [data-mobile-gear=up]{grid-row:2;grid-column:3}
+.an-mobile-rpm{display:none}
+.an-mobile-pedals{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:8px;pointer-events:none}
+#an-mobile-driving-controls [data-mobile-hold=throttle]{height:88px;color:#cbf7d1;border-color:#8dd19c}
+#an-mobile-driving-controls [data-mobile-hold=brake]{height:88px;color:#ffd1c7;border-color:#dba192}
+.an-mobile-status{margin:0 0 6px;padding:8px;border:1px solid #e4d4b650;border-radius:6px;color:#fff4e3;background:#213029;font:500 12px/1.35 system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere;pointer-events:none}
+.an-mobile-status:empty{display:none}
+/* One phone input layer; desktop retains all existing layers and bindings. */
+body.an-phone-controls.v6-driving #race-touch-controls,body.an-phone-controls.v6-driving #v5-touch,body.an-phone-controls.v6-driving #v6-touch-pause,body.an-phone-controls.v6-driving #race-camera-control{display:none!important}
+body.an-phone-controls .an-race-pause{padding:max(24px,env(safe-area-inset-top)) max(25px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(25px,env(safe-area-inset-left))}
+body.an-phone-controls #v6-game-shell #v6-return-menu{min-height:44px!important}
+@media(max-height:600px) and (orientation:landscape){
+ /* Keep the short landscape drawer within the right half; only this box owns native pan. */
+ #an-mobile-driving-controls .an-mobile-secondary-panel{width:300px;pointer-events:auto;touch-action:pan-y;overscroll-behavior:contain;scrollbar-gutter:stable}
+ #an-mobile-driving-controls .an-mobile-commands{grid-template-columns:repeat(3,minmax(44px,1fr))}
+ #an-mobile-driving-controls .an-mobile-gears{grid-template-columns:repeat(5,minmax(44px,1fr))}
+ #an-mobile-driving-controls .an-mobile-aux-pedals{grid-template-columns:repeat(3,minmax(44px,1fr))}
+ #an-mobile-driving-controls [data-mobile-command=mode]{grid-column:auto}
+ #an-mobile-driving-controls [data-mobile-gear],#an-mobile-driving-controls .an-mobile-gear{grid-row:auto;grid-column:auto}
+ #an-mobile-driving-controls .an-mobile-commands button,#an-mobile-driving-controls .an-mobile-aux-pedals button{height:44px;padding:4px;font-size:10px}
+ #an-mobile-driving-controls .an-mobile-rpm{display:grid;align-content:center;justify-items:center;min-width:44px;min-height:44px;border:1px solid #e4d4b640;border-radius:8px;background:#111918;font-size:10px;color:#fff4e3;font-variant-numeric:tabular-nums}
+ #an-mobile-driving-controls .an-mobile-rpm output{font-size:18px;line-height:1.1;font-weight:700}
+ 
+ body.an-phone-controls .an-race-pause{padding:max(20px,env(safe-area-inset-top)) max(30px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(30px,env(safe-area-inset-left))}
+}
+@media(prefers-reduced-motion:reduce){#an-mobile-driving-controls *{animation:none!important;transition:none!important}}
+
+@media(orientation:landscape) and (max-height:600px){
+ #an-mobile-driving-controls .an-mobile-secondary-panel{padding:5px}
+ #an-mobile-driving-controls .an-mobile-gears{margin:4px 0;gap:4px}
+ #an-mobile-driving-controls .an-mobile-status{padding:4px;margin-bottom:4px;font-size:12px;line-height:1.2}
+}

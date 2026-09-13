@@ -378,7 +378,12 @@ export function createCuestaLipanAdapter(dependencies) {
       tx.streamer = createSectorStreamer({
         sectors: tx.sectors,
         stableQualityGeometry: true,
-        updateVisualQuality: updateSectorVisualQuality,
+        updateVisualQuality(root, state) {
+          // A prepared replacement becomes visible only after the streamer
+          // disposes its predecessor; partial loads never draw a second rail.
+          root.visible = true;
+          updateSectorVisualQuality(root, state);
+        },
         retryDelayMs: 1000,
         retryMaxDelayMs: 30000,
         signal: tx.controller.signal,
@@ -389,8 +394,9 @@ export function createCuestaLipanAdapter(dependencies) {
           current(tx);
           if (!validRoot(root)) throw new TypeError(`${sector.id} lod${lod} root is invalid`);
           setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
+          root.visible = false;
           tx.visualRoot.add(root);
-          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange:{startM:sector.startM,endM:sector.endM} });
+          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange:{startM:sector.startM,endM:sector.endM}, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
             tx.closureRoots?.carveSourceTerrain?.(root);
           current(tx);
           await dependencies.applyVisualEnvironment(root, tx.environment, { signal });

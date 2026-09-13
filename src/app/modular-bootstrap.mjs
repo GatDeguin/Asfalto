@@ -63,6 +63,6 @@ function getDiagnostics(){const active=trackManager?.active;const host=hostIniti
 
 const facade=Object.freeze({ready,selectTrack,get trackManager(){return trackManager},getDiagnostics,get releaseManifest(){return releaseManifest},beginHostInitialization,shutdown:shutdownModularHost});
 Object.defineProperty(globalThis,"__asfaltoV6Modular",{value:facade,enumerable:false,configurable:false,writable:false});
-globalThis.addEventListener?.("pagehide",()=>{const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})},{once:true});
+globalThis.addEventListener?.("pagehide",event=>{if(event.persisted)return;const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})});
 
 export {facade as modularFacade};

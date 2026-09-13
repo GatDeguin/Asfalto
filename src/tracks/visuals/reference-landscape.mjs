@@ -527,7 +527,7 @@ export async function loadSurfaceTextures(THREE, id, signal, sceneryOnly) {
   } catch (error) { for (const texture of owned) texture.dispose(); throw error; }
 }
 
-export async function prepareTrackVisual(root, { id, query, lengthM, signal, scenery = true, sceneryOnly = false, detailRange = null, THREE = globalThis.__chevyV6Three || globalThis.THREE } = {}) {
+export async function prepareTrackVisual(root, { id, query, lengthM, signal, scenery = true, sceneryOnly = false, detailRange = null, barrierSource = null, THREE = globalThis.__chevyV6Three || globalThis.THREE } = {}) {
   // Contract fixtures deliberately have no rendering engine or browser. Their route behavior stays independent.
   if (!root?.isObject3D || !THREE?.TextureLoader || typeof document === 'undefined') return null;
   if (root.userData.asfaltoReferenceVisual) return root.userData.asfaltoReferenceVisual;
@@ -577,7 +577,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   if (templates && query && Number.isFinite(lengthM)) details = { ...details,
     ...addRoadsideDetails(THREE, root, { id, query, lengthM, heightAt, templates, textures, treePlacements, detailRange }) };
   else if (templates) for (const geometry of new Set(templates.values())) geometry.dispose();
-  if(templates && heightAt && query)details={...details,...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange}),...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
+  if(templates && heightAt && query)details={...details,...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange,barrierSource:id==='cuesta_lipan'?barrierSource:null}),...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
   else if(scenery&&query)root.userData.asfaltoRegionalCameras=regionalCameraProfiles({id,query,lengthM});
   if(scenery&&heightAt&&query)details={...details,...refineRegionalShoreline(THREE,root,{id,query,heightAt,textures})};
   if(query){const ys=Array.from({length:41},(_,i)=>query.sample(lengthM*i/40).position[1]),minY=Math.min(...ys),maxY=Math.max(...ys);root.userData.asfaltoWeather={snowLineM:minY+(maxY-minY)*.62,valleyFloorM:minY};}

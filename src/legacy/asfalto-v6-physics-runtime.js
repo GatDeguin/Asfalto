@@ -1254,11 +1254,13 @@
       const state = this.core.createVehicleState(this.spec);
       this.wheels = state.wheels.map(wheel => ({ ...wheel }));
       this.previousCompression.fill(NaN);
+      const initialGear = Number.isInteger(options?.initialGear) && options.initialGear >= -1 && options.initialGear <= this.spec.gearbox.forward.length ? options.initialGear : 1;
+      const initialClutchEngagement = initialGear === 0 ? 0 : 1;
       this.powertrainState = {
         engineRpm: this.spec.engine.idleRpm,
-        gear: 1,
-        requestedGear: 1,
-        clutchEngagement: 1,
+        gear: initialGear,
+        requestedGear: initialGear,
+        clutchEngagement: initialClutchEngagement,
         clutchSlipRadps: 0,
         temperatureC: 20,
       };
@@ -1306,8 +1308,8 @@
           load: 0,
           torqueNm: 0,
         },
-        gearbox: { gear: 1, requestedGear: 1 },
-        clutch: { engagement: 1, slipRadps: 0 },
+        gearbox: { gear: initialGear, requestedGear: initialGear },
+        clutch: { engagement: initialClutchEngagement, slipRadps: 0 },
         brakes: {
           frontTemperatureC: 20,
           rearTemperatureC: 20,
@@ -1315,7 +1317,7 @@
           frontFade: 0,
           rearFade: 0,
         },
-        controls: { throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0, clutchEngagement: 1, requestedGear: 1 },
+        controls: { throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0, clutchEngagement: initialClutchEngagement, requestedGear: initialGear },
         impact: false,
         impacts: [],
         damage: this.damage,

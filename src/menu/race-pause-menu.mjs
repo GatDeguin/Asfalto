@@ -1,3 +1,5 @@
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs';
+
 let instanceCount = 0;
 
 /** UI-only state. Closing never resumes physics unless the caller receives resume. */
@@ -24,6 +26,7 @@ export function reduceRacePauseState(view, event) {
  */
 export function createRacePauseMenu({
   document: doc = globalThis.document,
+  vehicleEvents = globalThis, getVehicleId,
   onResume = () => {}, onRestart = () => {}, onSettings = () => {}, onReturnToWorkshop = () => {},
 } = {}) {
   if (!doc?.body) throw new TypeError('A document with a body is required.');
@@ -34,7 +37,7 @@ export function createRacePauseMenu({
   overlay.setAttribute('aria-labelledby', `${id}-title`);
   overlay.setAttribute('aria-describedby', `${id}-session`);
   overlay.innerHTML = `<div class="an-pause-shell">
-    <header class="an-pause-brand"><img class="an-pause-brand-logo" src="${new URL('../../assets/brand/asfalto-nacional-v7.webp', import.meta.url).href}" alt="Asfalto Nacional" width="540" height="180"><small>Chevy Serie 2 · 1973</small></header>
+    <header class="an-pause-brand"><img class="an-pause-brand-logo" src="${new URL('../../assets/brand/asfalto-nacional-v7.webp', import.meta.url).href}" alt="Asfalto Nacional" width="540" height="180"><small data-selected-vehicle-label>Vehículo seleccionado</small></header>
     <div class="an-pause-card">
       <div class="an-pause-heading"><p class="an-pause-kicker">Sesión en pausa</p><h1 id="${id}-title">Pausa</h1><p id="${id}-session" class="an-pause-session"></p><p class="an-pause-detail" hidden></p></div>
       <nav class="an-pause-actions" aria-label="Opciones de pausa">
@@ -52,6 +55,7 @@ export function createRacePauseMenu({
     <p class="an-pause-motto">La recta te llama. La curva te mide.</p>
   </div>`;
   doc.body.append(overlay);
+  const vehicleLabels = bindSelectedVehicleLabels({ root: overlay, events: vehicleEvents, getVehicleId });
   const heading = overlay.querySelector(`#${id}-title`);
   const session = overlay.querySelector(`#${id}-session`);
   const detail = overlay.querySelector('.an-pause-detail');
@@ -100,6 +104,7 @@ export function createRacePauseMenu({
       for (const [element] of background) element.inert = true;
       doc.body.classList.add('an-race-pause-open');
     }
+    vehicleLabels.refresh();
     heading.textContent = String(title || 'Pausa');
     session.textContent = String(sessionLabel || 'Sesión en curso');
     detail.textContent = String(copy || ''); detail.hidden = !copy;
@@ -137,6 +142,7 @@ export function createRacePauseMenu({
     dispose() {
       if (disposed) return;
       hide(); disposed = true;
+      vehicleLabels.dispose();
       overlay.removeEventListener('click', onClick);
       doc.removeEventListener('keydown', onKeyDown, true);
       doc.removeEventListener('keyup', onKeyUp, true);
