@@ -1613,7 +1613,7 @@
       };
     }
 
-    start() {
+    start({ initialGear } = {}) {
       const persistentDamage=this._vehicleMaintenance?.begin({vehicleSpec:this._physicsSession?.spec});
       if (this._championshipOptions && (!this._rival || this._rules.settings.mode !== 'race')) throw new Error('Championship requires the prepared physical Falcon in race mode');
       this._invalidatePhysicalObservers('session-restarted');
@@ -1665,6 +1665,7 @@
         const resetSnapshot = this._physicsSession.reset({
           frame,
           startEngine: true,
+          initialGear,
           resetClock: true,
           resetDamage: !persistentDamage,
           damageState: persistentDamage,

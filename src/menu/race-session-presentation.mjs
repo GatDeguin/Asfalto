@@ -59,7 +59,7 @@ function onState(event) {
   game()?.setSessionPaused?.(status === 'PAUSED');
   if (status === 'PAUSED') {
     body.classList.add('an-race-paused');
-    if (reason !== 'menu' && reason !== 'settings') showPause();
+    if (!['menu','settings','mobile-inspection'].includes(reason)) showPause();
   } else closePause();
   syncAudio();
 }

@@ -1,3 +1,4 @@
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
 import { mountMenuSections } from './menu-sections.mjs';
@@ -35,7 +36,7 @@ function mount() {
 
   root.classList.add('an-cinematic-menu');
   root.setAttribute('aria-label', 'Menú principal de Asfalto Nacional');
-  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption">Chevy Serie 2 <span>·</span> 1973</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
+  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption" data-selected-vehicle-label>Vehículo seleccionado</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
   nav.forEach(button => {
     const label = document.createElement('span'); label.textContent = button.textContent;
     button.innerHTML = svg(button.dataset.v6Panel); button.append(label);
@@ -43,8 +44,9 @@ function mount() {
   });
   const homePlate = document.createElement('aside');
   homePlate.className = 'an-vehicle-plate'; homePlate.setAttribute('aria-label', 'Vehículo seleccionado');
-  homePlate.innerHTML = '<div class="an-plate-engine"><strong>Chevrolet 250</strong><span>Seis en línea</span><small>Tracción trasera</small></div><p>El gran turismo argentino.<br>Potencia elástica, andar sólido y presencia en cada ruta.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg>1973</b>';
+  homePlate.innerHTML = '<div class="an-plate-engine"><strong data-selected-vehicle-label>Vehículo seleccionado</strong><span>Listo para tu próxima salida</span></div><p>Cada ruta, una historia.<br>Prepará el auto y salí a conducir.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg></b>';
   root.append(homePlate);
+  const vehicleLabels = bindSelectedVehicleLabels({ root, getVehicleId: () => game.workshop?.vehicleId });
   const footer = document.createElement('footer'); footer.className = 'an-menu-footer';
   footer.innerHTML = '<p class="an-controls-hint"><kbd>↵</kbd> Seleccionar <kbd>ESC</kbd> Volver</p><button type="button" class="an-replay">Ver animática <span aria-hidden="true">▷</span></button>';
   root.append(footer);
@@ -78,6 +80,7 @@ function mount() {
   const service = mountWorkshopService({root,game});
   const refinements = mountMenuRefinements({root,game});
   function sync() {
+    vehicleLabels.refresh();
     root.dataset.anView = state.view;
     root.dataset.anPanel = state.panel;
     const section = state.view === 'section';
@@ -267,7 +270,7 @@ function mount() {
     else void session?.resume();
   });
 
-  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; } };
+  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; }, dispose() { vehicleLabels.dispose(); sections?.dispose(); refinements.dispose(); service.dispose(); } };
   globalThis.__asfaltoMenuPresentation = api;
   configureWorkshop(game.workshop);
   window.addEventListener('resize', () => { if (state.view === 'home') configureWorkshop(game.workshop); });

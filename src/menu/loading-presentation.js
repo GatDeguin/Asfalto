@@ -215,6 +215,7 @@
     }
   },true);
   document.addEventListener('visibilitychange',reconcile);
+  window.addEventListener('pageshow',event=>{if(event.persisted)reconcile();});
   motion.addEventListener('change',reconcile);
   window.addEventListener('pagehide',()=>{for(const s of surfaces)s.stop();});
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
