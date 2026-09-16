@@ -1,4 +1,4 @@
-import {AUXILIARY_CAPTURE_RATES} from './auxiliary-capture-schedule.mjs?v=full-r1-20260916';
+import {AUXILIARY_CAPTURE_RATES} from './auxiliary-capture-schedule.mjs?v=photo-r1-20260916';
 // One nearby water plane captures the actual bank/terrain. It supplements the
 // physical HDR environment; out-of-capture pixels keep that continuous fallback.
 const TIERS={low:[256,144,AUXILIARY_CAPTURE_RATES.low.water],balanced:[384,216,AUXILIARY_CAPTURE_RATES.balanced.water],high:[640,360,AUXILIARY_CAPTURE_RATES.high.water]};

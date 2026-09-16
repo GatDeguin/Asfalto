@@ -260,6 +260,10 @@
         aoMap: occlusionMap,
         aoMapIntensity: definition.occlusionTexture?.strength ?? 1,
       });
+      // Preserve authored surface ownership and semantic metadata from Blender.
+      if (definition.extras && typeof definition.extras === 'object') {
+        material.userData = { ...material.userData, ...JSON.parse(JSON.stringify(definition.extras)) };
+      }
       if (normalMap && material.normalScale) {
         const scale = definition.normalTexture?.scale ?? 1;
         material.normalScale.set(scale, scale);

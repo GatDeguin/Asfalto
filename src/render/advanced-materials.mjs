@@ -30,7 +30,7 @@ export function classifyAdvancedSurface(material,object=null,scope='world') {
   if(leaf)return 'foliage';
   if(/wax|cera(?:_|\b)/.test(name))return 'wax';
   if(/thin.?plastic|plastic.?thin|plastico.?fino|translucent.?plastic|milk.?plastic/.test(name))return 'thin-plastic';
-  if(/fabric|cloth|textile|upholster|tapizado|tela|seat.?cover/.test(name))return 'fabric';
+  if(/fabric|cloth|textile|canvas|lona|upholster|tapizado|tela|seat.?cover/.test(name))return 'fabric';
   if(/paint|pintura|stripeatlas|car.?body|body.?coat/.test(name))return 'paint';
   if(/varnish|barniz|lacquer|lacado|polished.?wood/.test(name))return 'varnish';
   if(/brush|cepill|steel|alumin|inox|machined|brake.?rotor|brake.?disc/.test(name))return 'brushed-metal';

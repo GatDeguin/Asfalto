@@ -90,3 +90,7 @@ Bel Air 1957 convertible y Chevrolet 3100 Pickup disponibles en el taller, junto
 ## Render y compatibilidad — 16 de septiembre de 2026
 
 Se preservan propiedades físicas de materiales glTF, rugosidad de pintura y desgaste. Se evita trabajo redundante de vegetación, espejos y limpiaparabrisas. Se preparan familias de render durante la carga y se corrige la carrera de inicialización del audio. Sin reducir deliberadamente resolución, geometría, efectos ni frecuencia de espejos. No equivale a certificación fotorrealista ni garantía universal de 60 FPS. Perfil iPhone emulado; comprobación física pendiente.
+
+## Acabados y ópticas — 16 de septiembre de 2026
+
+Revisión photo-r1: cavidades y reflectores del 400, vidrio óptico, lona, vinilo, madera y cromo. Se conserva metadata de materiales glTF. Referencias y límites documentados en PHOTO-2026-09-16.md. No representa certificación de fotorrealismo pleno ni validación física de iPhone.

@@ -1,6 +1,6 @@
 import {createRacePhotoCapture} from './v7-race-photo-capture.mjs';
 import {createEarnedPhotoStore,earnedPhotoMetadata,PHOTO_LIMIT} from './v7-earned-photo-store.mjs';
-import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=full-r1-20260916';
+import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=photo-r1-20260916';
 import {resumeRun} from './v7-championship-state.mjs';
 import {createMemoryPosterLease} from './v7-memory-posters.mjs';
 export function createEarnedAlbum(host){
