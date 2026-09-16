@@ -1,7 +1,7 @@
 import {createVehicleConditionAppearance} from './vehicle-condition-appearance.mjs';
 import {thickenVehicleGlass} from './vehicle-glass.mjs';
 import {createVehicleChassis} from './vehicle-chassis.mjs';
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=vehicles-r1-20260916';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=full-r1-20260916';
 import {createVehicleLighting} from './vehicle-lighting.mjs';
 import {createVehiclePhysicalCalibration} from './vehicle-physical-calibration.mjs';
 // Surface/animation presentation only. The physical chassis, collision hull,
@@ -63,6 +63,7 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
     for(const level of lodLevels) {
       if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
       const url=new URL(`../../assets/vehicles/${vehicle}-lod${level}.glb`,import.meta.url);
+      if(vehicle==='chevy_400_1957')url.searchParams.set('v','panel-r1-20260916');
       lods.push(await loadGlb(url.href,`${vehicle} exterior LOD ${level}`,signal));
     }
     if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
@@ -122,7 +123,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     if(/Chrome/.test(m.name)){m.metalness=1;if(!definition?.preserveAuthoredMaterials)m.roughness=.22;m.envMapIntensity=.92;}
     if(/Rubber/.test(m.name)){m.metalness=0;m.roughness=.83;}
     if(/Paint|StripeAtlas|Black_lacquer/.test(m.name)) {
-      const prior=m.onBeforeCompile,paint=/Paint/.test(m.name),atlas=/Atlas/.test(m.name),paintRoughness=definition?.preserveAuthoredMaterials?clamp(m.roughness,.08,.7):.26;
+      const prior=m.onBeforeCompile,paint=/Paint/.test(m.name),atlas=/Atlas/.test(m.name);
       m.onBeforeCompile=shader=>{
         prior?.call(m,shader);Object.assign(shader.uniforms,uniforms);shader.uniforms.vehicleAuthoringMatrix={value:m.userData.vehicleAuthoredMatrix};
         shader.vertexShader='varying vec3 vehicleAuthoredPosition;\nuniform mat4 vehicleAuthoringMatrix;\n'+shader.vertexShader;
@@ -160,13 +161,13 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
 
         `);
         shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-          roughnessFactor=mix(roughnessFactor,clamp(${paintRoughness.toFixed(3)}+(vehicleGrain-.5)*.032,${(paintRoughness-.03).toFixed(3)},${(paintRoughness+.03).toFixed(3)}),vehiclePigment);
+          roughnessFactor=clamp(roughnessFactor+(vehicleGrain-.5)*.032*vehiclePigment,0.0,1.0);
           roughnessFactor=mix(roughnessFactor,.76,max(vehicleAbrasion,vehiclePaintWear*.5));
           roughnessFactor=mix(roughnessFactor,.83,vehicleDirtMask*.6);
           roughnessFactor=mix(roughnessFactor,.17,vehicleWet*.7);
         `);
       };
-      m.customProgramCacheKey=()=>`approved-vehicle-surface-v7-sep12:${vehicle}:${paint}:${atlas}`;m.needsUpdate=true;
+      m.customProgramCacheKey=()=>`approved-vehicle-surface-v7-sep16:${vehicle}:${paint}:${atlas}`;m.needsUpdate=true;
     }
   }
   replacedMaterials.forEach(m=>m.dispose());replacedGeometries.forEach(g=>g.dispose());

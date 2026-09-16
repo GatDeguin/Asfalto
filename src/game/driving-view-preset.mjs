@@ -1,4 +1,4 @@
-import {sanitizeCockpitCalibration} from './vehicle-camera-rig.mjs?v=vehicles-r1-20260916';
+import {sanitizeCockpitCalibration} from './vehicle-camera-rig.mjs?v=full-r1-20260916';
 export const DRIVING_VIEW=Object.freeze({id:'driving',focalLengthMm:24,horizontalFovDeg:2*Math.atan(36/48)*180/Math.PI,eyeOffsetM:Object.freeze([-.22,.12,0])});
 export function resolveDrivingView(personal,{selected='personal',editing=false}={}){
  if(selected!=='driving'||editing)return{calibration:personal,eyeOffsetM:[0,0,0],effective:'personal'};

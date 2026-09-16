@@ -178,6 +178,19 @@
   }
 
 
+  // glTF factors are linear; color textures alone are decoded as sRGB.
+  async function applyPhysicalMaterialExtensions(THREE, material, extensions, loadTexture) {
+    const c=extensions.KHR_materials_clearcoat,t=extensions.KHR_materials_transmission,i=extensions.KHR_materials_ior,v=extensions.KHR_materials_volume,h=extensions.KHR_materials_sheen;
+    const maps=[];
+    const map=(field,info,srgb=false)=>{if(info)maps.push(Promise.resolve(loadTexture(info,srgb)).then(texture=>{material[field]=texture;}));};
+    if(c&&'clearcoat'in material){material.clearcoat=c.clearcoatFactor??0;material.clearcoatRoughness=c.clearcoatRoughnessFactor??0;map('clearcoatMap',c.clearcoatTexture);map('clearcoatRoughnessMap',c.clearcoatRoughnessTexture);map('clearcoatNormalMap',c.clearcoatNormalTexture);if(c.clearcoatNormalTexture)material.clearcoatNormalScale?.setScalar(c.clearcoatNormalTexture.scale??1);}
+    if(t&&'transmission'in material){material.transmission=t.transmissionFactor??0;map('transmissionMap',t.transmissionTexture);}
+    if(i&&'ior'in material)material.ior=i.ior??1.5;
+    if(v&&'thickness'in material){material.thickness=v.thicknessFactor??0;material.attenuationDistance=v.attenuationDistance??Infinity;material.attenuationColor.fromArray(v.attenuationColor??[1,1,1]);map('thicknessMap',v.thicknessTexture);}
+    if(h&&'sheen'in material){material.sheen=1;material.sheenColor.fromArray(h.sheenColorFactor??[0,0,0]);material.sheenRoughness=h.sheenRoughnessFactor??0;map('sheenColorMap',h.sheenColorTexture,true);map('sheenRoughnessMap',h.sheenRoughnessTexture);}
+    await Promise.all(maps);
+  }
+
   async function completeGlbToObject(THREE, bytes, label, helpers) {
     for (const name of ['parseGlb', 'makeAttribute', 'textureFromInfo']) {
       if (!helpers || typeof helpers[name] !== 'function') {
@@ -213,7 +226,7 @@
       const ior = extensions.KHR_materials_ior;
       const emissiveStrength = extensions.KHR_materials_emissive_strength?.emissiveStrength ?? 1;
       const PhysicalMaterial = THREE.MeshPhysicalMaterial || THREE.MeshStandardMaterial;
-      const MaterialType = clearcoat || transmission || ior
+      const MaterialType = clearcoat || transmission || ior || extensions.KHR_materials_sheen || extensions.KHR_materials_volume
         ? PhysicalMaterial
         : THREE.MeshStandardMaterial;
       const base = pbr.baseColorFactor || [1, 1, 1, 1];
@@ -251,14 +264,7 @@
         const scale = definition.normalTexture?.scale ?? 1;
         material.normalScale.set(scale, scale);
       }
-      if (clearcoat && 'clearcoat' in material) {
-        material.clearcoat = clearcoat.clearcoatFactor ?? 0;
-        material.clearcoatRoughness = clearcoat.clearcoatRoughnessFactor ?? 0;
-      }
-      if (transmission && 'transmission' in material) {
-        material.transmission = transmission.transmissionFactor ?? 0;
-      }
-      if (ior && 'ior' in material) material.ior = ior.ior ?? 1.5;
+      await applyPhysicalMaterialExtensions(THREE,material,extensions,loadTexture);
       return material;
     }));
     const fallbackMaterial = new THREE.MeshStandardMaterial({
@@ -469,6 +475,7 @@
   root.AsfaltoV5PayloadCore = AsfaltoV5PayloadCore;
   root.AsfaltoV5GlbCore = Object.freeze({
     completeGlbToObject,
+    applyPhysicalMaterialExtensions,
     decodeMeshoptDocument,
     createCollisionImpactBridge,
     createCollisionProbe,

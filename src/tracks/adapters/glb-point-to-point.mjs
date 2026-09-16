@@ -3,7 +3,7 @@ import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mj
 import { createRouteQuery } from '../route-query.mjs';
 import { createGameplayBridge } from '../gameplay-bridge.mjs';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=full-r1-20260916';
 const ENV = new Set(['clear','overcast','golden','sunset','moonrise','night']);
 const freeze = (v,seen=new Set()) => { if (!v || typeof v !== 'object' || Object.isFrozen(v) || seen.has(v)) return v; seen.add(v); Object.values(v).forEach(child=>freeze(child,seen)); return Object.freeze(v); };
 const abortError = () => Object.assign(new Error('operation aborted'), { name: 'AbortError' });

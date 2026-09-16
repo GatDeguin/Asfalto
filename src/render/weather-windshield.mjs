@@ -51,7 +51,9 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
   }
  }
  root.visible=false;pane.visible=false;let time=0,film=0,cycle=0,disposed=false;
+ let lastPhase=NaN;
  function setPhase(phase){
+  if(phase===lastPhase)return;lastPhase=phase;
   const angle=fit.angleMin+phase*(fit.angleMax-fit.angleMin);
   for(const pivot of wipers)pivot.rotation.z=angle-Math.PI/2;
   for(const {part,index,near,far,original} of curvedParts){
@@ -85,11 +87,11 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
    const rate=wiperMode==='off'?0:wiperMode==='fast'?1.2:wiperMode==='slow'?.62:rain>.8?1.1:rain>.02?.66:0,previousCycle=cycle;
    if(rate>0)cycle+=dt*rate;else if(cycle%1>1e-7)cycle=Math.min(Math.ceil(cycle),cycle+dt*.8);
    const movingRate=dt>0?(cycle-previousCycle)/dt:0,refill=rain*1.9+.025,decay=Math.exp(-dt*refill);
-   if(dt>0){for(let i=0;i<wipeSamples;i++){
+   if(dt>0){let changed=false;for(let i=0;i<wipeSamples;i++){
     const outward=outwardPass[i],inward=1-outward,lastOut=Math.floor(cycle-outward)+outward,lastIn=Math.floor(cycle-inward)+inward,lastPass=Math.max(lastOut,lastIn);
     wipeStrength[i]=movingRate>0&&lastPass>previousCycle&&lastPass<=cycle?Math.exp(-(cycle-lastPass)/movingRate*refill):wipeStrength[i]*decay;
-    wipeBytes[i]=Math.round(wipeStrength[i]*255);
-   }wipeMemory.needsUpdate=true;}
+    const next=Math.round(wipeStrength[i]*255);if(next!==wipeBytes[i]){wipeBytes[i]=next;changed=true;}
+   }if(changed)wipeMemory.needsUpdate=true;}
    const phase=(1-Math.cos(cycle*Math.PI*2))*.5;
    uniforms.uTime.value=time;uniforms.uRain.value=Math.max(rain,film*.42);uniforms.uSpeed.value=speedMps;uniforms.uPhase.value=phase;uniforms.uSweep.value=cycle%1>.5?1:0;uniforms.uFilm.value=film;uniforms.uCycles.value=cycle;uniforms.uRate.value=movingRate;setPhase(phase);
    pane.visible=rain>.005||film>.005;

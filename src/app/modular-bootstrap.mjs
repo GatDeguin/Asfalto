@@ -1,10 +1,10 @@
 import {createTrackManager} from "../tracks/track-manager.mjs";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs";
+import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=full-r1-20260916";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=full-r1-20260916";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=full-r1-20260916";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=full-r1-20260916";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=full-r1-20260916";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
