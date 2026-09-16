@@ -8,7 +8,7 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
  if(!doc?.body)return null;
  let prefs={...defaults},audio=null,disposed=false,lastHud={},lastAlert='',loadTicket=null;
  try{const saved=JSON.parse(globalThis.__asfaltoV7Storage?.getItem(PREF_KEY)||'null');if(saved&&typeof saved==='object')for(const key of Object.keys(defaults))if(typeof saved[key]===typeof defaults[key])prefs[key]=typeof defaults[key]==='number'?Math.max(0,Math.min(1,saved[key])):saved[key];}catch{}
- const style=doc.createElement('link');style.rel='stylesheet';style.href=new URL('../../assets/styles/menu-v7-experience.css?v=photo-r1-20260916',import.meta.url).href;doc.head.append(style);
+ const style=doc.createElement('link');style.rel='stylesheet';style.href=new URL('../../assets/styles/menu-v7-experience.css?v=body-r2-20260916',import.meta.url).href;doc.head.append(style);
  const hud=doc.createElement('aside');hud.className='an-v7-drive-strip';hud.hidden=true;hud.setAttribute('aria-label','Instrumentos esenciales');hud.innerHTML='<span><b data-speed>0</b><small>km/h</small></span><span><b data-gear>N</b><small>marcha</small></span><p data-alert role="status" aria-live="polite"></p>';
  const live=doc.createElement('p');live.className='an-v7-live';live.setAttribute('role','status');live.setAttribute('aria-live','polite');
  const quality=doc.createElement('p');quality.className='an-v7-quality';quality.hidden=true;

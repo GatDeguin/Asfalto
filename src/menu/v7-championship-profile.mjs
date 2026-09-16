@@ -1,5 +1,5 @@
 import {createRun,beginStage,cancelStage,acceptStage,resumeRun} from './v7-championship-state.mjs';
-import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=photo-r1-20260916';
+import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=body-r2-20260916';
 import {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock,profileRevision} from '../runtime/profile-persistence.mjs';
 export {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock};
 const clone=x=>structuredClone(x),revision=p=>p?.motorsportV7?.revision||0;

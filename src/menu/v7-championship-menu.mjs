@@ -1,6 +1,6 @@
 import {CHAMPIONSHIPS,createSchedule} from './v7-championship-catalog.mjs';
 import {resumeRun,standings} from './v7-championship-state.mjs';
-import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=photo-r1-20260916';
+import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=body-r2-20260916';
 import {createChampionshipSession} from './v7-championship-session.mjs';
 export {configurationFingerprint} from './v7-championship-result.mjs';
 const route={dos_lagos:'Dos Lagos',aconcagua_horcones:'Horcones',cuesta_lipan:'Lipán',paso_garibaldi:'Garibaldi',cataratas_iguazu:'Iguazú'},sky={clear:'Día',overcast:'Cubierto','golden-hour':'Hora dorada',sunset:'Atardecer',moonrise:'Salida de luna',night:'Noche'},weather={clear:'Despejado',cloudy:'Nublado',rain:'Lluvia',storm:'Tormenta',fog:'Niebla'};

@@ -1,4 +1,4 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=photo-r1-20260916';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=body-r2-20260916';
 import { summarizeRoadTestRecords } from './roadtest-records.mjs';
 import { testPresentationState } from './menu-refinement-state.mjs';
 

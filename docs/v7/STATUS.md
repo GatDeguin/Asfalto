@@ -94,3 +94,7 @@ Se preservan propiedades físicas de materiales glTF, rugosidad de pintura y des
 ## Acabados y ópticas — 16 de septiembre de 2026
 
 Revisión photo-r1: cavidades y reflectores del 400, vidrio óptico, lona, vinilo, madera y cromo. Se conserva metadata de materiales glTF. Referencias y límites documentados en PHOTO-2026-09-16.md. No representa certificación de fotorrealismo pleno ni validación física de iPhone.
+
+## Chapa y lona — body-r2-20260916
+
+Se corrigen normales de los laterales y puertas de Chevy Serie 2 sin mover vértices del master. Se detalla lona Bel Air. Comparación de cámaras idénticas, LOD y ciclo daño/reparación. Alcance y límites en BODY-R2-2026-09-16.md.
