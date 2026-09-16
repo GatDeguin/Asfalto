@@ -76,3 +76,9 @@ La causa física única y la estabilidad en iPhone siguen pendientes de confirma
 R5 volvió a fallar en iPhone dentro del render de mundo/cockpit. R6 limita a512px las imágenes decodificadas por el cargador móvil, desactiva MSAA del canvas y de los buffers HDR de iluminación/color y usa media resolución para refracción. PC conserva sus tamaños y antialiasing. Se mantienen HDR, materiales, LUT y efectos; en móvil puede perderse detalle fino y suavizado de bordes. No es un límite universal para texturas procedurales o cielo.
 
 El diagnóstico distingue buffers, captura del mundo, GTAO, iluminación indirecta, composición, interior y color. La estabilidad en iPhone físico permanece pendiente; Chrome emulado no la certifica.
+
+## PC: reducción de tirones — 15 de septiembre de 2026
+
+El audio ambiental se genera en un worker cancelable en PC. La carga prepara los materiales de los tres niveles de detalle del auto y resuelve enlaces pendientes de shaders. Las instancias evitan copiar matrices idénticas y la oclusión desactivada no recorre la escena. Se conservan resolución, modelos, texturas, antialiasing y efectos de PC. iPhone mantiene su recorrido de carga R6 y sus límites propios.
+
+El objetivo sigue siendo 60 FPS. Esta entrega reduce bloqueos de primera utilización; no certifica 60 FPS sostenidos en todos los circuitos o equipos. La preparación inicial puede tardar más y mantiene más recursos del auto residentes en PC.

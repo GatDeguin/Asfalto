@@ -1,9 +1,10 @@
-import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=phone-r6-20260913';
+import {prepareSoundscapeBanks} from '../audio/prepare-soundscape-banks.mjs';
+import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=pc60-r1-20260915';
 import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs';
 import {createBootRenderGate} from '../render/boot-render-gate.mjs';
 import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs';
 const phoneTextureQueue=createSerialTextureQueue();
-import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=phone-r6-20260913';
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=pc60-r1-20260915';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs';
@@ -23,12 +24,12 @@ import {installDrivingViewPreset} from '../game/driving-view-preset.mjs';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs';
 import {createFramePacer} from '../performance/frame-pacer.mjs';
 import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs';
-import {prepareRenderPolicies,prewarmStableScene} from '../performance/render-warmup.mjs?v=phone-r6-20260913';
+import {prepareRenderPolicies,prewarmStableScene,prewarmViews} from '../performance/render-warmup.mjs?v=pc60-r1-20260915';
 import {renderPixelRatio} from '../render/render-resolution.mjs';
 import {withFrameMatrices} from '../render/frame-matrices.mjs';
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs';
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=phone-r6-20260913';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=pc60-r1-20260915';
 import {installAdvancedGraphicsSettings} from '../render/advanced-graphics-settings.mjs';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs';
 import { connectModularHost } from '../app/modular-bootstrap.mjs';
@@ -44,17 +45,17 @@ import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mj
 import { createRaceOpening } from '../game/race-opening.mjs';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs';
 import {createLightingEditor} from '../menu/lighting-editor.mjs';
-import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=phone-r6-20260913';
+import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=pc60-r1-20260915';
 import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs';
 import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs';
 import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs';
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs';
 import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs';
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs';
-import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=phone-r6-20260913';
+import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=pc60-r1-20260915';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs';
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs';
-import { createRaceSoundscape } from '../audio/race-soundscape.mjs';
+import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=pc60-r1-20260915';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs';
@@ -5868,6 +5869,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
 
   function createRaceAudio() {
     let soundscape=null,drivingFx=null;
+    const audioLifetime=new AbortController();
     let context = null;
     let master = null;
     let ambientGain = null;
@@ -5897,6 +5899,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     async function ensureStartedInternal() {
       const sharedAudioReady = await ensureAudioStarted();
       if(sharedAudioReady===false)return false;
+      if(audioLifetime.signal.aborted)return false;
       if (started && context && context.state!=='closed') { if (context.state !== 'running') await context.resume(); return context.state==='running'; }
       if(started){soundscape?.dispose();drivingFx?.dispose();master?.disconnect();started=false;}
       globalThis.__asfaltoV7Experience?.bindAudio(getSharedAudioContext(),options.getUiAudioDestination?.()||getSharedAudioDestination());
@@ -5909,8 +5912,10 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
         context = new AudioContextClass({ latencyHint: 'interactive' });
         ownsContext = true;
       }
+      const prepared=runtimeDeviceProfile.phone?null:await prepareSoundscapeBanks(context,{signal:audioLifetime.signal});
+      if(audioLifetime.signal.aborted)return false;
       master = context.createGain(); master.gain.value = 0.7; master.connect(getSharedAudioDestination() || context.destination);
-      soundscape=createRaceSoundscape({context,destination:master});
+      soundscape=createRaceSoundscape({context,destination:master,prepared});
       drivingFx=createRaceDrivingAudio({context,destination:master});
       started = true;
       await context.resume();
@@ -5954,6 +5959,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     async function suspend() { silenceSignals();drivingFx?.setActive(false);soundscape?.setActive(false);if(master&&context)master.gain.setValueAtTime(0,context.currentTime);try { if (ownsContext) await context?.suspend(); } catch { /* ignored */ } }
     async function resume() { try { await context?.resume(); } catch { /* ignored */ } }
     async function dispose() {
+      audioLifetime.abort();
       silenceSignals();
       drivingFx?.dispose();drivingFx=null;soundscape?.dispose();soundscape=null;
       for (const source of [ambientSource, surfaceSource, tireSource, rivalOscillator]) try { source?.stop(); } catch { /* stopped */ }
@@ -8406,7 +8412,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     onDispose:()=>mobileDrivingControls?.dispose(),
     beforeResume:()=>{if(!runtimeDeviceProfile.phone)return true;setRaceCameraMode('cockpit');return raceCameraState.current==='cockpit';},
     getTargetFps:()=>framePacingSettings?.getTargetFps()||60,
-    precompileGraphics:({signal}={})=>prewarmStableScene({setLocked:value=>{visualPrecompileInProgress=value;},settleStreaming:()=>trackStreamingPromise,compile:()=>{const visible=raceChevyV3.visible;try{raceChevyV3.visible=true;scene.updateMatrixWorld(true);renderer.compile(scene,camera);}finally{raceChevyV3.visible=visible;}},draw:async()=>{bootRenderGate.release();renderFrame();if(runtimeDeviceProfile.phone){globalThis.__asfaltoPhoneLoad?.stage('Esperando confirmación de GPU…');await waitForGpuFrame(renderer.getContext(),{signal});globalThis.__asfaltoPhoneLoad?.stage('GPU confirmó el cuadro de salida');}}}),
+    precompileGraphics:({signal}={})=>prewarmStableScene({setLocked:value=>{visualPrecompileInProgress=value;},settleStreaming:()=>trackStreamingPromise,compile:()=>{const visible=raceChevyV3.visible;try{raceChevyV3.visible=true;scene.updateMatrixWorld(true);renderer.compile(scene,camera);}finally{raceChevyV3.visible=visible;}},draw:async()=>{bootRenderGate.release();renderFrame();if(!runtimeDeviceProfile.phone){await prewarmViews({capture:()=>{const lods=[],culling=[];raceChevyV3.traverse(node=>{if(/_Exterior_LOD\d$/.test(node.name))lods.push([node,node.visible]);if(node.isMesh)culling.push([node,node.frustumCulled]);});return {camera:camera.clone(false),cockpitVisible:cockpit.visible,carVisible:raceChevyV3.visible,lods,culling,initialized:raceCameraInitialized};},select:()=>{raceCameraInitialized=true;cockpit.visible=false;raceChevyV3.visible=true;raceChevyV3.traverse(node=>{if(/_Exterior_LOD\d$/.test(node.name))node.visible=true;if(node.isMesh)node.frustumCulled=false;});const target=new THREE.Vector3();raceChevyV3.getWorldPosition(target);camera.position.copy(target).add(new THREE.Vector3(4,2.4,-7));camera.lookAt(target);camera.updateMatrixWorld(true);},draw:()=>{signal?.throwIfAborted();renderFrame();},restore:state=>{camera.copy(state.camera,false);camera.updateMatrixWorld(true);cockpit.visible=state.cockpitVisible;raceChevyV3.visible=state.carVisible;for(const [node,visible] of state.lods)node.visible=visible;for(const [node,value] of state.culling)node.frustumCulled=value;raceCameraInitialized=state.initialized;}});}if(runtimeDeviceProfile.phone){globalThis.__asfaltoPhoneLoad?.stage('Esperando confirmación de GPU…');await waitForGpuFrame(renderer.getContext(),{signal});globalThis.__asfaltoPhoneLoad?.stage('GPU confirmó el cuadro de salida');}}}),
     onRenderingScaleChanged() {
       if (typeof resize === 'function') resize();
     },

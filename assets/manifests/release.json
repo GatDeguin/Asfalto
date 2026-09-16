@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9278,
-      "sha256": "239A5A54DAD45F12F75961AE0FE38AD21CE194F0D36FA6A2D0D29157EE49B6F3"
+      "bytes": 9997,
+      "sha256": "48EB1104360818FA160AE0FF6BE609FF3C47E799DC4DFF696D7602B188485B70"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2484,13 +2484,13 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 9278,
-      "sha256": "239A5A54DAD45F12F75961AE0FE38AD21CE194F0D36FA6A2D0D29157EE49B6F3"
+      "bytes": 9997,
+      "sha256": "48EB1104360818FA160AE0FF6BE609FF3C47E799DC4DFF696D7602B188485B70"
     },
     {
       "path": "index.html",
-      "bytes": 80674,
-      "sha256": "D336AE036F701CC656E9302B5B5C3FA3B33E469C1A3EBA32EA7ACC845ED075CF"
+      "bytes": 80671,
+      "sha256": "1D16629F7827FB10C81894458E0B1C869E4DD1A88FBCE7E33A7B35AC5EF10DF5"
     },
     {
       "path": "server.mjs",
@@ -2506,6 +2506,11 @@
       "path": "src/app/modular-bootstrap.mjs",
       "bytes": 8629,
       "sha256": "3C202D4C9D049ED9A46743BEF1A82E16507E13F80B1B6DD628DB73AB5E98808D"
+    },
+    {
+      "path": "src/audio/prepare-soundscape-banks.mjs",
+      "bytes": 1321,
+      "sha256": "4240011396846620AF21EE7794BFDFBF859803451CAD5FC81F187890F42D37EF"
     },
     {
       "path": "src/audio/race-acoustic-world.mjs",
@@ -2524,8 +2529,18 @@
     },
     {
       "path": "src/audio/race-soundscape.mjs",
-      "bytes": 10880,
-      "sha256": "E85F307A03CEB9F869F3B374AA7E94898B2C6CC0CC1965662DC4B11D4FC799B9"
+      "bytes": 8519,
+      "sha256": "1B884BAA68A6C8534E503453D07E41AB8A9007D7AE6A27DFE63677BF0B791499"
+    },
+    {
+      "path": "src/audio/soundscape-banks-worker.mjs",
+      "bytes": 529,
+      "sha256": "D903A90EFA53A40A91B766F2467D4801B0C3E75CA0D9053225C91F22D03DBE3E"
+    },
+    {
+      "path": "src/audio/soundscape-banks.mjs",
+      "bytes": 3122,
+      "sha256": "4DFA237A950E08D8B64C54EC176F6EF3EC4CF0B1ACFE8CD498B4C030CF74B96A"
     },
     {
       "path": "src/audio/v7-audio-state.mjs",
@@ -2829,13 +2844,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 550340,
-      "sha256": "14A9F8A69DDA2A6455B61CBDEF33C0084DB281061B0673E414666A5E9F81C104"
+      "bytes": 551921,
+      "sha256": "49DBF991440041B2BB42773EA63575C6007467D9C0AAFFC76F24AC288694509E"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 127348,
-      "sha256": "8688A60496744DF408D89E5A695F53F2CD3AA4EDD286FF4C26A72872E49B10C5"
+      "bytes": 127346,
+      "sha256": "F1551ECE0C5E270A1F464A7D967CBF30195F113FD56BC1548E78DC9B7DAE8271"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -3059,8 +3074,8 @@
     },
     {
       "path": "src/performance/render-warmup.mjs",
-      "bytes": 1011,
-      "sha256": "145488D16BAE1F7D66280DC55A7BF650D1605834E4A4D6E38CDBB4A5D9C54465"
+      "bytes": 1258,
+      "sha256": "24A8D8023CF1EA7B5E72062E18A558CD63BF914FC7F223D7858BCC549277A582"
     },
     {
       "path": "src/performance/track-performance-governor.mjs",
@@ -3084,8 +3099,8 @@
     },
     {
       "path": "src/render/advanced-graphics.mjs",
-      "bytes": 4151,
-      "sha256": "41101DC9D8D6D4F5799DCE37884EA80C15DC0419AAE1EE9634E794472BD2859F"
+      "bytes": 4227,
+      "sha256": "F2163074B8979138FAC9FFC9F4C8C6CC42F9BA06D8D59C8A0F665A0D3E1391F6"
     },
     {
       "path": "src/render/advanced-materials.mjs",
@@ -3519,13 +3534,13 @@
     },
     {
       "path": "src/runtime/phone-cockpit-assets.mjs",
-      "bytes": 1216,
-      "sha256": "DC906F4A65AD1412EE1339A1955B28283E6508A63BBA14EF420FDFA950BC74BD"
+      "bytes": 1210,
+      "sha256": "ECAABFD68F65476E57D723FCB5C826CA139A0B012D02530B5880AE02F393D895"
     },
     {
       "path": "src/runtime/phone-load-diagnostics.js",
-      "bytes": 2954,
-      "sha256": "8151C88589831B94D3A9F2015B08D5D054B748DB87F009616928E6209B62E167"
+      "bytes": 2953,
+      "sha256": "9E4C5B96F4FA4961ABFB041FAC98D7761E113FB10E9820C030F9EDFF6165C925"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -3534,8 +3549,8 @@
     },
     {
       "path": "src/runtime/phone-start-memory.mjs",
-      "bytes": 1338,
-      "sha256": "591626BBEF643B447F9155DC6AA6FBD8DD46109551C60E9F109411A028B150C0"
+      "bytes": 1337,
+      "sha256": "5D60D0BC9A1C940F4668CD0529D827D745BF78EA7A36847A3E61B4F65C69CCF9"
     },
     {
       "path": "src/runtime/profile-persistence.mjs",
@@ -3629,8 +3644,8 @@
     },
     {
       "path": "src/tracks/seam-copy-factory.mjs",
-      "bytes": 6078,
-      "sha256": "CE48A88AAA0198FA4147BE54B84949201DAB72CA0D9030B59FCF832EB578411C"
+      "bytes": 6310,
+      "sha256": "23848D694F06583516D90B4175134FBB86110866038AED8B52E7BF0C87DE39DA"
     },
     {
       "path": "src/tracks/seam-projector.mjs",
@@ -3694,8 +3709,8 @@
     },
     {
       "path": "src/tracks/visuals/iguazu-landscape.mjs",
-      "bytes": 9827,
-      "sha256": "F6A73F8AE0335AFD5F7A0F8F0281D3AF97D893E42D4515B57877020003D95E18"
+      "bytes": 9846,
+      "sha256": "284C95B80A569739EAC216A2EA16247195CD5164BF1EF94ADB87939F54896247"
     },
     {
       "path": "src/tracks/visuals/mountain-profile.mjs",
@@ -3764,8 +3779,8 @@
     },
     {
       "path": "src/tracks/visuals/roadside-details.mjs",
-      "bytes": 12888,
-      "sha256": "B4DAEB957433A07B3F771120DEB209A7FDDBDDA23F338CDB765738897C61832A"
+      "bytes": 12907,
+      "sha256": "F7685A0849D140287F22F7C727FAF85081D2E0F055A563F163C4C24F62F7E22F"
     },
     {
       "path": "src/tracks/visuals/route-closure.mjs",
@@ -4423,9 +4438,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 868,
-  "totalBytes": 952362778,
-  "inventorySha256": "F8E3B279B3006C2D7A08F64598F5C5BFDAA58458B480A7B1114D9FF9BA1A41BD",
+  "fileCount": 871,
+  "totalBytes": 952368988,
+  "inventorySha256": "71CDE31CA266B3E8EFC8197F446BDC6FF7F617393FE321D6572324A7FC4D5EA3",
   "selectionCases": 174,
   "environmentCases": [
     {
