@@ -1,7 +1,7 @@
-import {createVehiclePresentation} from './vehicle-presentation.mjs?v=vehicles-r1-20260916';
+import {createVehiclePresentation} from './vehicle-presentation.mjs?v=full-r1-20260916';
 import {createWorkshopInspection} from './workshop-inspection.mjs';
 import {createWorkshopChassis} from './workshop-chassis.mjs';
-import {createWorkshopEngine} from './workshop-engine.mjs?v=vehicles-r1-20260916';
+import {createWorkshopEngine} from './workshop-engine.mjs?v=full-r1-20260916';
 export async function prepareWorkshopVehicle(T,workshop,vehicle) {
  const parent=workshop.car,stage=new T.Group();stage.name=`WorkshopVehicle_${vehicle}`;stage.userData.vehicleSelectionMount=true;stage.visible=false;parent.add(stage);let presentation,committed=false,released=false;
  try{presentation=await createVehiclePresentation(T,{vehicle,modelRoot:stage,lodLevels:[0],loadGlb:globalThis.__asfaltoLoadVehicleModel,paintColor:['belair_1957','pickup_3100'].includes(vehicle)?undefined:(workshop.paintColor||globalThis.__chevyPaintColor||'#d66a24')});presentation.setEnvironment(workshop.presentation?.getRoomEnvironment()||null);}catch(error){stage.removeFromParent();throw error;}

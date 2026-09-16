@@ -2,7 +2,7 @@
 (()=>{
  const phone=/iPhone|iPod|Android.*Mobile/i.test(navigator.userAgent)||((navigator.maxTouchPoints||0)>0&&Math.min(screen.width,screen.height)<600);
  if(!phone)return;
- const key='asfalto-phone-load-r2',build='vehicles-r1-20260916';let current=null,previous=null,sequence=0;
+ const key='asfalto-phone-load-r2',build='full-r1-20260916';let current=null,previous=null,sequence=0;
  try{const saved=JSON.parse(localStorage.getItem(key)||'null');if(saved&&['loading','failed'].includes(saved.status))previous=saved;}catch{}
  const persist=()=>{try{localStorage.setItem(key,JSON.stringify(current));}catch{}};
  const api={

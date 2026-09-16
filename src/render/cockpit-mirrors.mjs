@@ -127,11 +127,11 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
     if (!renderer || !scene || !cockpitVisible || !enabled || renderer.getContext?.().isContextLost?.()) return 0;
-    const poses = cameraPoses || mirrorCameraPoses(THREE, carPose);
-    if (!poses) return 0;
     setQuality(nextQuality);
     const due = ['center', 'left'].filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
     if (!due.length) return 0;
+    const poses = (typeof cameraPoses === 'function' ? cameraPoses() : cameraPoses) || mirrorCameraPoses(THREE, carPose);
+    if (!poses) return 0;
     const previousTarget = renderer.getRenderTarget(), previousCubeFace = renderer.getActiveCubeFace?.() || 0, previousMipmap = renderer.getActiveMipmapLevel?.() || 0;
     const previousScissorTest = renderer.getScissorTest(), previousAlpha = renderer.getClearAlpha(), previousAutoClear = renderer.autoClear;
     const previousShadowAuto = renderer.shadowMap?.autoUpdate, previousShadowDirty = renderer.shadowMap?.needsUpdate, previousXR = renderer.xr?.enabled;

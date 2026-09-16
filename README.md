@@ -86,3 +86,7 @@ El objetivo sigue siendo 60 FPS. Esta entrega reduce bloqueos de primera utiliza
 ## Vehículos adicionales — 16 de septiembre de 2026
 
 Bel Air 1957 convertible y Chevrolet 3100 Pickup disponibles en el taller, junto con Chevy 250 SS Serie 2 y Chevrolet 400. Modelos propios, tres niveles de detalle, cockpit, volante y agujas animadas, espejos, lluvia y daño/pintura persistentes. Revisión visual independiente: 8/10 por modelo; no equivale a certificación fotorrealista AAAA. Dinámica estimada y audio/powertrain compartidos. Se conservan las mejoras recientes de audio móvil, capturas escalonadas y carga discreta. Pruebas móviles en Chrome emulado; iPhone físico pendiente.
+
+## Render y compatibilidad — 16 de septiembre de 2026
+
+Se preservan propiedades físicas de materiales glTF, rugosidad de pintura y desgaste. Se evita trabajo redundante de vegetación, espejos y limpiaparabrisas. Se preparan familias de render durante la carga y se corrige la carrera de inicialización del audio. Sin reducir deliberadamente resolución, geometría, efectos ni frecuencia de espejos. No equivale a certificación fotorrealista ni garantía universal de 60 FPS. Perfil iPhone emulado; comprobación física pendiente.
