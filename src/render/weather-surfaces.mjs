@@ -1,4 +1,4 @@
-import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=full-r1-20260916';
+import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=photo-r1-20260916';
 import {resolveWaterOptics} from './weather-water-optics.mjs';
 import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;

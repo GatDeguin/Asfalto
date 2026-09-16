@@ -1,5 +1,5 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=full-r1-20260916';
-import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=full-r1-20260916';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=photo-r1-20260916';
+import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=photo-r1-20260916';
 // Optical faces share the existing capture feeds, but sit on each authored housing.
 export function attachAuthoredMirrors(T,presentation,id,feeds){
  if(getVehicleDefinition(id)?.cockpit!=='authored-interior')return null;

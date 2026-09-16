@@ -1,5 +1,5 @@
 import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs';
-import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=full-r1-20260916';
+import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=photo-r1-20260916';
 import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs';
 // Blender-authored, local-metre meshes. All instances are visual and have no collision role.
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);

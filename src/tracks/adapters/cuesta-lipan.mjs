@@ -5,7 +5,7 @@ import { createSectorStreamer } from '../sector-streamer.mjs';
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=full-r1-20260916';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=photo-r1-20260916';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,

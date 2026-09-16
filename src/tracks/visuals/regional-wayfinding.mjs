@@ -1,5 +1,5 @@
 // Distances and natural landmarks are located on the authored route, never on the return connector.
-import {instanceDetailTiles} from './roadside-details.mjs?v=full-r1-20260916';
+import {instanceDetailTiles} from './roadside-details.mjs?v=photo-r1-20260916';
 const random=n=>{const x=Math.sin(n*19.31+7.17)*45371.63;return x-Math.floor(x);};
 export function addRegionalWayfinding(T,root,{id,query,lengthM,heightAt,templates,textures,detailRange=null}){
   const group=new T.Group();group.name='ASFALTO_REGIONAL_WAYFINDING';root.updateMatrixWorld(true);group.matrix.copy(root.matrixWorld).invert();group.matrixAutoUpdate=false;

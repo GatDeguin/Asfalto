@@ -1,7 +1,7 @@
 import {createVehicleConditionAppearance} from './vehicle-condition-appearance.mjs';
 import {thickenVehicleGlass} from './vehicle-glass.mjs';
 import {createVehicleChassis} from './vehicle-chassis.mjs';
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=full-r1-20260916';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=photo-r1-20260916';
 import {createVehicleLighting} from './vehicle-lighting.mjs';
 import {createVehiclePhysicalCalibration} from './vehicle-physical-calibration.mjs';
 // Surface/animation presentation only. The physical chassis, collision hull,
@@ -63,7 +63,7 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
     for(const level of lodLevels) {
       if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
       const url=new URL(`../../assets/vehicles/${vehicle}-lod${level}.glb`,import.meta.url);
-      if(vehicle==='chevy_400_1957')url.searchParams.set('v','panel-r1-20260916');
+      url.searchParams.set('v','photo-r1-20260916');
       lods.push(await loadGlb(url.href,`${vehicle} exterior LOD ${level}`,signal));
     }
     if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
