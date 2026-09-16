@@ -104,8 +104,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 11482,
-      "sha256": "583EFCB49E73C227BBD9978DB51B810BC1F5F5A23F11FDDF0C94AB25FE590CF8"
+      "bytes": 11756,
+      "sha256": "00DAAED0CED404F3921FC01835021DBC43F23D867B1D1ABA703708CC416BE6E3"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2244,33 +2244,33 @@
     },
     {
       "path": "assets/vehicles/belair_1957-lod0.glb",
-      "bytes": 6031900,
-      "sha256": "BB9D56F4E10C2CD825A6AE1D1E4723FFE531851A0E17894208AEEDF857AF84B4"
+      "bytes": 6043440,
+      "sha256": "EF78FB425570D3F132F71FF776251BC98DFF0B1AFCB7D17E197689B5136A679C"
     },
     {
       "path": "assets/vehicles/belair_1957-lod1.glb",
-      "bytes": 3539200,
-      "sha256": "9493320238CF844FED6B9DC8CEBB06979711EE4A9305CDF4334E63B009133B33"
+      "bytes": 3550736,
+      "sha256": "251D82A0D7F2BC01A449F55649C85B13D7587D69521E84BA8F07FFE2F632B3DB"
     },
     {
       "path": "assets/vehicles/belair_1957-lod2.glb",
-      "bytes": 1969480,
-      "sha256": "0470D11ED8D53F0A377942E11FA4B7EF9215F758773DE0E15FD43F3CF9CC0545"
+      "bytes": 1981020,
+      "sha256": "97252CA13BA23F805751FDE440368CED6A647DB213DB91C23670F00ECA52C5EB"
     },
     {
       "path": "assets/vehicles/chevrolet_1969-lod0.glb",
-      "bytes": 11725760,
-      "sha256": "DDC9798FECFCBA681559162A75EE9A2F1ED38F8478F10FD01660C49B5FD84BE4"
+      "bytes": 11917608,
+      "sha256": "D9F4B12EBF8D3625C31C584A24CC5335AD74204B69FC10FE66C5BD63C5C5EFEC"
     },
     {
       "path": "assets/vehicles/chevrolet_1969-lod1.glb",
-      "bytes": 7645492,
-      "sha256": "89162A807E3D660FDB7DACC3C437B3854C007E35872772AEE174C8C982B7D08B"
+      "bytes": 7803816,
+      "sha256": "5EF282A3103CD95355284DE5C682DB6A5201C403979DA7DD532E189FF3EBAFD6"
     },
     {
       "path": "assets/vehicles/chevrolet_1969-lod2.glb",
-      "bytes": 6209480,
-      "sha256": "64C668656086AA696F6D53071C33C8AFEBCA3E6579B6B54BD537EC810BC56443"
+      "bytes": 6367824,
+      "sha256": "6B9A8B4CE518E1C220BC59A9F4F78CED048BAABE410687D7757EA4A5CFD1CB26"
     },
     {
       "path": "assets/vehicles/chevy-lod0.glb",
@@ -2513,6 +2513,11 @@
       "sha256": "BF3B8520828B13230E5B7FF85A35A61ADC8239A4B865E7650C799C66E08B8E13"
     },
     {
+      "path": "docs/v7/BODY-R2-2026-09-16.md",
+      "bytes": 4355,
+      "sha256": "5734C34447D4AD11D5FF5624587D111D6FC66874372A9E1CB36534ACEEC1BF1F"
+    },
+    {
       "path": "docs/v7/PHOTO-2026-09-16.md",
       "bytes": 5035,
       "sha256": "421BFB973D7BE4710EEE6AE96E3D9D51299EFC617ABD94F6731BEE2EC28F2208"
@@ -2524,18 +2529,18 @@
     },
     {
       "path": "docs/v7/STATUS.md",
-      "bytes": 11482,
-      "sha256": "583EFCB49E73C227BBD9978DB51B810BC1F5F5A23F11FDDF0C94AB25FE590CF8"
+      "bytes": 11756,
+      "sha256": "00DAAED0CED404F3921FC01835021DBC43F23D867B1D1ABA703708CC416BE6E3"
     },
     {
       "path": "index.html",
-      "bytes": 80754,
-      "sha256": "E40AD17CE8FB9AAFDBED465C4D64F8831FD4DBAA487E58A4190C12590494FF29"
+      "bytes": 80747,
+      "sha256": "A1A471B83473FD2BC290A87621707044471B7995A773B5E6B9251452FABB6E85"
     },
     {
       "path": "server.mjs",
-      "bytes": 8447,
-      "sha256": "D2988F8156632574D6DA3815C3704D716E7AC0EF7B34562DE3FD20D5432A1E7E"
+      "bytes": 8445,
+      "sha256": "CB841CF5F24AB36485DF53349E73CF019D5CE8DCFF969DC21B290B3291FDAFEA"
     },
     {
       "path": "server.py",
@@ -2544,8 +2549,8 @@
     },
     {
       "path": "src/app/modular-bootstrap.mjs",
-      "bytes": 8729,
-      "sha256": "B24C399B3C4D985AA51C7D1D299781110A1112F0BF8CF6A7E42CF1121B405058"
+      "bytes": 8724,
+      "sha256": "71F731662CA923AC47BD773B5E8329683F091C142A49FB0CC644E80E6FDD2DFC"
     },
     {
       "path": "src/audio/prepare-soundscape-banks.mjs",
@@ -2679,13 +2684,13 @@
     },
     {
       "path": "src/game/cockpit-layout-file.mjs",
-      "bytes": 4486,
-      "sha256": "20FAC3D48D5844102A45857B97D503D758392923B7C4D3D104F3B33656FF44FE"
+      "bytes": 4485,
+      "sha256": "5B59FA02C60BC84E2FEA69D03AC4DCB72E05C9CCE03B7D55995EE8B98822F6E2"
     },
     {
       "path": "src/game/composition-editor-state.mjs",
-      "bytes": 10786,
-      "sha256": "C1F7A197DB1BA0E912BBADCAC4768A177541A07E53E56BB30FA70E8EBC966BF1"
+      "bytes": 10785,
+      "sha256": "06974EBB8EF1B5E2EE564F9875BD0643267E10D1BFD3DEB8486EED457EF17B7C"
     },
     {
       "path": "src/game/driver-control-pipeline.mjs",
@@ -2694,13 +2699,13 @@
     },
     {
       "path": "src/game/driving-view-preset.mjs",
-      "bytes": 3147,
-      "sha256": "0F3E859DB00FE8B163D4E916E3FE8D32EEE692CE044286683A9202646306BA3D"
+      "bytes": 3146,
+      "sha256": "A5F908AA3F178DBE275BD4DE14A7B26FB7D6F990E98D93F7775C70234000660D"
     },
     {
       "path": "src/game/expansion-vehicle-runtime.mjs",
-      "bytes": 1365,
-      "sha256": "F372BE1FC022DCF87243F48320E81B3FE6B1218D760F677405A5201ED2536E90"
+      "bytes": 1364,
+      "sha256": "2109FDCD93D44734E320F02C79EDF57AAF8D768DD07C8A007C1816DC73DA9EC0"
     },
     {
       "path": "src/game/fuel-observer.mjs",
@@ -2769,8 +2774,8 @@
     },
     {
       "path": "src/game/vehicle-condition.mjs",
-      "bytes": 8824,
-      "sha256": "1600186D130F320B62B66829BD01081A06DE0774EE8F5E6494A0A2B6D324F76D"
+      "bytes": 8823,
+      "sha256": "3FA35E2487A8457B9C18C91BC591D46B748B0F0BA747788049A3AE6774F73E0E"
     },
     {
       "path": "src/game/vehicle-light-control.mjs",
@@ -2779,13 +2784,13 @@
     },
     {
       "path": "src/game/vehicle-maintenance.mjs",
-      "bytes": 3513,
-      "sha256": "9AAFAE88366E6C78FBA1801A7621265AC9CBCA6F6F708B31CAB4055349C51981"
+      "bytes": 3512,
+      "sha256": "B37AB34E4A1E8108842C70EEA2244B1EF26C664229CBFFAF49644BE52F33439D"
     },
     {
       "path": "src/game/vehicle-selection.mjs",
-      "bytes": 2068,
-      "sha256": "0D88B1453480CF9356B418F7B32D255C0FF08D85B88DF60A524BEAD627AE2E36"
+      "bytes": 2067,
+      "sha256": "E72912B32D9E0386EDA831BD71783D39BB5A779E8BA16022F8B047A256C65EC2"
     },
     {
       "path": "src/legacy/asfalto-v3-camera-state.js",
@@ -2894,13 +2899,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 566380,
-      "sha256": "B49538CD01C549E0DEF602A1AA208CFA476432CFF23FF2FEFB1E681BBED777F1"
+      "bytes": 566358,
+      "sha256": "9BA01E220203A4876AAE0399ED923189B88EB94F12A154077EF8E3F0C2B2E432"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 127778,
-      "sha256": "F1E2653B1B9AEC6FD1A9CED51601A32C06E4E4A026BAC9254EE03E335FEE5447"
+      "bytes": 127765,
+      "sha256": "BBDBA8514467FA69BA50FF0FB1712EE74D5FBD53DFC383072BF54D65AB68E6E7"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -2929,8 +2934,8 @@
     },
     {
       "path": "src/menu/menu-presentation.mjs",
-      "bytes": 19181,
-      "sha256": "1ADC399511A560323752187E42B4C421E711C58926022AB399FF72546D65CBC0"
+      "bytes": 19179,
+      "sha256": "914DAC77502F156CEF32D8A11CDC71AC3BAE876CF19FDD41B896B36E2400A948"
     },
     {
       "path": "src/menu/menu-refinement-state.mjs",
@@ -2944,8 +2949,8 @@
     },
     {
       "path": "src/menu/menu-sections.mjs",
-      "bytes": 12806,
-      "sha256": "40CFEB7722DB168A9A2427EA834C044371A8E7DDD083DD6AC1113C3FD220CBD8"
+      "bytes": 12805,
+      "sha256": "32FA5381564F423647AD6E451EC0C2A85DD417EA0C367B4F30376B67FAB88668"
     },
     {
       "path": "src/menu/menu-state.mjs",
@@ -2959,13 +2964,13 @@
     },
     {
       "path": "src/menu/race-pause-menu.mjs",
-      "bytes": 9149,
-      "sha256": "C62350E40F677C881298FEA4F3F4E0287B68D53DCAB55CC0DB31F3FFEBB1C506"
+      "bytes": 9148,
+      "sha256": "DE42A0CDD830544C47AC2F06959E20D51FDCC40A717CDD9AA15EA8835EB006BB"
     },
     {
       "path": "src/menu/race-session-presentation.mjs",
-      "bytes": 5808,
-      "sha256": "D294724EE5506EC7B29FD373E1991C1746E9AB5D75FF68ACA5E821AB794A64E3"
+      "bytes": 5806,
+      "sha256": "0B2586B8F5D7EFA3BD16DE02A32FE2F4F3FEB27C54D52BF20DDA2A47B59E1413"
     },
     {
       "path": "src/menu/roadtest-records.mjs",
@@ -2979,8 +2984,8 @@
     },
     {
       "path": "src/menu/selected-vehicle-labels.mjs",
-      "bytes": 2028,
-      "sha256": "841775372F7D9003E41751AE19CEF50B34F1222B38C6F43672AA02948C02B1FC"
+      "bytes": 2027,
+      "sha256": "A9BBF7AF6887FB84AE1EAEFDCEC0CB26A149D9CF4232A075768F825A9C19D52A"
     },
     {
       "path": "src/menu/v7-championship-catalog.mjs",
@@ -2989,13 +2994,13 @@
     },
     {
       "path": "src/menu/v7-championship-menu.mjs",
-      "bytes": 6252,
-      "sha256": "3381B9D2343EDD87D87CD5A1EF2C60BEB9AE99F3D7EA06E96AA7804B7A822A85"
+      "bytes": 6251,
+      "sha256": "D30441CEBCCE276FE53191DF4D06A84C7F2007F637A72BDFBD86834A91C9FE59"
     },
     {
       "path": "src/menu/v7-championship-profile.mjs",
-      "bytes": 5804,
-      "sha256": "006178FB1B3030638F0F7B650D68E313F4A0AE29257C3866338BEB6D659D2FD3"
+      "bytes": 5803,
+      "sha256": "A484E0CD7A2B5EFCBEE7E2B39D36114B860CAB57E71E2C65D0B4A08FEEDA722C"
     },
     {
       "path": "src/menu/v7-championship-result.mjs",
@@ -3014,13 +3019,13 @@
     },
     {
       "path": "src/menu/v7-earned-album.mjs",
-      "bytes": 9483,
-      "sha256": "2CF9AF4A07EE56C856CC4D9936D16A8E461557B00428E62303123B9115E7BB89"
+      "bytes": 9482,
+      "sha256": "09E5514D09D0A67B4CEC5322F0AD303F0A36F369CFE3648D5D910EDDA55EE2B9"
     },
     {
       "path": "src/menu/v7-earned-collection.mjs",
-      "bytes": 1461,
-      "sha256": "4A511B5138789C87B1CBA6F9D9F873B347CC805204D686A4C4730C5DCAAB8ECB"
+      "bytes": 1460,
+      "sha256": "C1F3963D4CC12D978D67939336BD209F2FC5EB66ACBA8CFB5F3024A3FCD7B33C"
     },
     {
       "path": "src/menu/v7-earned-photo-store.mjs",
@@ -3034,8 +3039,8 @@
     },
     {
       "path": "src/menu/v7-experience.mjs",
-      "bytes": 10853,
-      "sha256": "84A21BD89FD0EC9B88007CF4F592EC3A26D3C11B6354037B53962A31D2FF0782"
+      "bytes": 10852,
+      "sha256": "263E6D236FEF628ABAC9E3D915F35531BBE923D60D563CCC86EECA18EB318EAF"
     },
     {
       "path": "src/menu/v7-memory-posters.mjs",
@@ -3049,18 +3054,18 @@
     },
     {
       "path": "src/menu/v7-roadtest-profile.mjs",
-      "bytes": 4894,
-      "sha256": "69C463A3151F5DA7CB75A9AF98ECC8CAB9893557B5FC0321725E3415F86F6AD4"
+      "bytes": 4893,
+      "sha256": "A89DCB82F15F6943FDDFF0DC2B5BCB7F18221CC8EBB3BE620E8684C6CA2E1EE4"
     },
     {
       "path": "src/menu/v7-roadtest-receipts.mjs",
-      "bytes": 7390,
-      "sha256": "65F54AA8EB8DDD90EC47737E5A155F6702A1B6C1C723D11021C7303DF87285E7"
+      "bytes": 7389,
+      "sha256": "AA3F174592C3B016773CFAE40520F5B56515A31D3BF21C16D0C6043483C5D203"
     },
     {
       "path": "src/menu/v7-roadtest-session.mjs",
-      "bytes": 3455,
-      "sha256": "C42E0F2BCDECA53855C0D23701E0132D6F652A18E30A424A8E474F6B150FD70C"
+      "bytes": 3454,
+      "sha256": "3DAD7A04ACF0D16C1A22D250BBCADA0B20DCABE9E38F41FAF6D7310AA23176F4"
     },
     {
       "path": "src/menu/v7-route-catalog.mjs",
@@ -3089,8 +3094,8 @@
     },
     {
       "path": "src/menu/workshop-vehicle-selector.mjs",
-      "bytes": 2131,
-      "sha256": "252B6E18FCBAAB67D415A2727ED7F5F2965D1CBEBD4015E3D3AA7C942A19D45A"
+      "bytes": 2129,
+      "sha256": "21B8125EC0884371CD78981DC2CBEB61E4B617CCF6AF15B3282169F0F884FC28"
     },
     {
       "path": "src/performance/frame-pacer.mjs",
@@ -3149,8 +3154,8 @@
     },
     {
       "path": "src/render/advanced-graphics.mjs",
-      "bytes": 4248,
-      "sha256": "41E6804306FE278F75A549416D97599D4DC9FD6C5C75B180B30A907A74CD1876"
+      "bytes": 4245,
+      "sha256": "5ED97B1D960651450D350992A79D80BB5E8E9BDA46858F45E9600248391B6732"
     },
     {
       "path": "src/render/advanced-materials.mjs",
@@ -3159,8 +3164,8 @@
     },
     {
       "path": "src/render/authored-vehicle-mirrors.mjs",
-      "bytes": 2193,
-      "sha256": "C974716F7EBF4C68E23D5154EA3315962EB340D974F5BF445462704C05C9B1D1"
+      "bytes": 2191,
+      "sha256": "8B765346CE95F6B9F9F87BFF8865D3D5B17DA25B25A1D8DCEED96605A129CBC1"
     },
     {
       "path": "src/render/auxiliary-capture-schedule.mjs",
@@ -3329,8 +3334,8 @@
     },
     {
       "path": "src/render/race-weather-effects.mjs",
-      "bytes": 9031,
-      "sha256": "F99AB1A50ECD88C873278F836D38E23FB3740195A2BB74C1A932179C2A7C2FBA"
+      "bytes": 9027,
+      "sha256": "936750B131C5D21D460DD7CB07825EADBDA9A832E2901CEEB3C74EF80F05B85E"
     },
     {
       "path": "src/render/ray-bvh-worker.mjs",
@@ -3389,8 +3394,8 @@
     },
     {
       "path": "src/render/vehicle-catalog.mjs",
-      "bytes": 9138,
-      "sha256": "817B205E2FFA7E498FEB65A69D22857A6C6166100837AB3967746659C66F0088"
+      "bytes": 9137,
+      "sha256": "9533100615A1B098EA8E36A08A4BB8530CB7D3DE2AE637C494E635C396B8E701"
     },
     {
       "path": "src/render/vehicle-chassis.mjs",
@@ -3409,8 +3414,8 @@
     },
     {
       "path": "src/render/vehicle-engine-mount.mjs",
-      "bytes": 4623,
-      "sha256": "771D9A004604E4C060B773D36501DD5CC86126470E49C45A748421DCF877962A"
+      "bytes": 4622,
+      "sha256": "56EF18BF060D306578ED0F9A8B1C6D84152005A23CA29C01120EF0C4F4A88DFA"
     },
     {
       "path": "src/render/vehicle-glass.mjs",
@@ -3429,13 +3434,13 @@
     },
     {
       "path": "src/render/vehicle-presentation.mjs",
-      "bytes": 24665,
-      "sha256": "38CDA48B2775B839D9E542E0FECB76958F4A87775406EB36DEA44A2DCC34C6A4"
+      "bytes": 24663,
+      "sha256": "F12BC0CAF891E2A1CEB4A90A7581ABEC790A360D5F37BF49D71A8E95F6DF17EB"
     },
     {
       "path": "src/render/vehicle-weather-particles.mjs",
-      "bytes": 12818,
-      "sha256": "BA36C96C33B51D54F0A5A021401CB135BC19172F8DCEFF47D228B8D5A6454C8B"
+      "bytes": 12816,
+      "sha256": "2F0AA0736B24FAE5DCC094B8F78B83C3BEA1AFA4947F1CDADBB4EF37211F9D89"
     },
     {
       "path": "src/render/vendor/GTAOShader.js",
@@ -3464,8 +3469,8 @@
     },
     {
       "path": "src/render/water-scene-reflection.mjs",
-      "bytes": 6233,
-      "sha256": "707ABA5BA06404CE9FB0A9D37CAFE42B62F32CDF69C5B80B85F331D9E8B42DDA"
+      "bytes": 6232,
+      "sha256": "9B2979187785A57FE0D06F0FD4BF366CF7CF715B86B8590DCAA5FD0F2872675B"
     },
     {
       "path": "src/render/weather-dynamics.mjs",
@@ -3494,8 +3499,8 @@
     },
     {
       "path": "src/render/weather-rival-particles.mjs",
-      "bytes": 3788,
-      "sha256": "74A24AED97581055AC59577D545DE0110882EAF5FA4B573A41EB78A948AD1B3E"
+      "bytes": 3787,
+      "sha256": "0E60708E71E71FF2BDB718F30F9D1B252DDF72C4EB50DE2C4A4EA95CF1CF89E7"
     },
     {
       "path": "src/render/weather-road-wetness.mjs",
@@ -3504,8 +3509,8 @@
     },
     {
       "path": "src/render/weather-surfaces.mjs",
-      "bytes": 21956,
-      "sha256": "56541457945421E6BD949EEC97BBF07E3753AF8F4255A65D23A6C07B0F1A57A2"
+      "bytes": 21955,
+      "sha256": "D67DE2CB1B284A077D5A3D902A0BA244760F284C7D769E8FC1F37CEF4249CC91"
     },
     {
       "path": "src/render/weather-vehicle-surface.mjs",
@@ -3564,8 +3569,8 @@
     },
     {
       "path": "src/render/workshop-engine.mjs",
-      "bytes": 20644,
-      "sha256": "D8170CCE4096A590F4B37BE914ED9F37CB6F753F618EF1D732F8D46CC0743022"
+      "bytes": 20642,
+      "sha256": "BEF5D1F880EAB148BE818F41ECFBFD9683457454FC145D6F3DDFA6E0C31D8175"
     },
     {
       "path": "src/render/workshop-inspection.mjs",
@@ -3594,8 +3599,8 @@
     },
     {
       "path": "src/render/workshop-vehicle-selection.mjs",
-      "bytes": 2495,
-      "sha256": "88A39423CF238B4AE04982C34C02FAB601B03F91821E41B6A49A728C47A9CEA2"
+      "bytes": 2493,
+      "sha256": "2E39EE87AA519E4917E4D0D3F260704D27275DC726B27603D3E8268E1AD9E4D0"
     },
     {
       "path": "src/render/workshop-vertex-colors.mjs",
@@ -3609,13 +3614,13 @@
     },
     {
       "path": "src/runtime/phone-cockpit-assets.mjs",
-      "bytes": 1216,
-      "sha256": "ED9D1E3A263AA92C8C4F37D64DDD006CE63F703EBC385B8867CE0FC1C2F93612"
+      "bytes": 1210,
+      "sha256": "A517DC81E42A508C6D0F2F0F828EB72AF116C9B26A45ED1F30760FB81BA8587C"
     },
     {
       "path": "src/runtime/phone-load-diagnostics.js",
-      "bytes": 2954,
-      "sha256": "4E53524AC643477396D938E31B5FE7FFE0D57F068CAD28128E08F51AEC167194"
+      "bytes": 2953,
+      "sha256": "35E75ED32DF95D6A345985443B80D6443DFB8017387119BA4A0CA599C8814C78"
     },
     {
       "path": "src/runtime/phone-resource-memory.mjs",
@@ -3624,8 +3629,8 @@
     },
     {
       "path": "src/runtime/phone-start-memory.mjs",
-      "bytes": 1338,
-      "sha256": "B31E318CE57AE37BA295792C0C280F9A0719145E5924AF7B46E568A001EFBE9A"
+      "bytes": 1337,
+      "sha256": "B6E3A3FBC4251944D325A905E4B585F0A64EEAD024DF0FB114B147B92E5324E6"
     },
     {
       "path": "src/runtime/profile-persistence.mjs",
@@ -3654,13 +3659,13 @@
     },
     {
       "path": "src/server/cockpit-layout-store.mjs",
-      "bytes": 10476,
-      "sha256": "4371F84246CE6ADEEAA479ED8D2BB3FDB42AF76C8A23506400C4CDEA05CCD6D7"
+      "bytes": 10474,
+      "sha256": "0F139B64BEBCF1B703F9BAAA712C8E729ECB1CA689547F653C9675A0B30F8192"
     },
     {
       "path": "src/server/lighting-preset-store.mjs",
-      "bytes": 3101,
-      "sha256": "9E8774BCFB48CD4F321F702653E95CB6C4781559073579C4CE1EA1ECF6C7E155"
+      "bytes": 3100,
+      "sha256": "915C62BD05F7AE821A109A821997B41EBA395586C1FD5CC1211B31ED71C6C127"
     },
     {
       "path": "src/server/v7-data-directory.mjs",
@@ -3669,13 +3674,13 @@
     },
     {
       "path": "src/tracks/adapters/aconcagua-horcones.mjs",
-      "bytes": 7174,
-      "sha256": "DEAA19F8FDB50773733145EAFA9031351AB2404B6981FC484A7AC6119B884ABE"
+      "bytes": 7173,
+      "sha256": "8E8A91C6002E6D0FF0E2C039824B7ADDEE2BB58638FC798060987D964B52D0B1"
     },
     {
       "path": "src/tracks/adapters/cataratas-iguazu.mjs",
-      "bytes": 3301,
-      "sha256": "5C5E316746131A42FF98C6D1ECEF8C3C26393C0A8BAC5FCF85462BA866395558"
+      "bytes": 3298,
+      "sha256": "75DE2DB504002B8F1D230F4E89796BEE4C32D2A9D7C197FCBFF1310F1F2BF652"
     },
     {
       "path": "src/tracks/adapters/closed-route-support.mjs",
@@ -3684,23 +3689,23 @@
     },
     {
       "path": "src/tracks/adapters/cuesta-lipan.mjs",
-      "bytes": 31560,
-      "sha256": "3B9A160F56183B9D6357BAC20EB432ECAE74CBAAF05344775E42A0C9350AA440"
+      "bytes": 31559,
+      "sha256": "3CB6CCF6C64BA74AFC4A3416758FEDD8F6EF091F82DCBDAE780E2812AA8D124D"
     },
     {
       "path": "src/tracks/adapters/dos-lagos.mjs",
-      "bytes": 57633,
-      "sha256": "F44808A9396171E5352DF1494A8C0E429898F095E896AFEA2237D8A0EB5A36D8"
+      "bytes": 57632,
+      "sha256": "6C04AA12F01B4DF0CF646EB432BD671BC5E38FBB0EB9768A68024B15DF77881E"
     },
     {
       "path": "src/tracks/adapters/glb-point-to-point.mjs",
-      "bytes": 26206,
-      "sha256": "ADBFCABF8A43C428223FF3948F4B7749F2175E9E81330344CA43D3530BEB3ADB"
+      "bytes": 26205,
+      "sha256": "AE157B6D064C6F4E04CD96A51A4CA06773BEC8F3514BAAFEED724A20B5334D7D"
     },
     {
       "path": "src/tracks/adapters/paso-garibaldi.mjs",
-      "bytes": 8009,
-      "sha256": "9851DEA6E7F9023F4F2D9ECB6B323BF9F0EAA156A4FA90FCE5875A3137F4EE91"
+      "bytes": 8008,
+      "sha256": "3A9127452F5BD1D302C574F3E59C64C1463323BCB49FC48BB504C13E1275DF3E"
     },
     {
       "path": "src/tracks/gameplay-bridge.mjs",
@@ -3769,8 +3774,8 @@
     },
     {
       "path": "src/tracks/visuals/closure-terrain.mjs",
-      "bytes": 11279,
-      "sha256": "0C33EF3AAE838CB0CD6E0DDB0B12492736122A5BD0343771B28A9E0E81F42D9C"
+      "bytes": 11278,
+      "sha256": "A7F276AD81775B68DCED93E15DCE20939CA34CF885C38A15DA25E644B6C4E729"
     },
     {
       "path": "src/tracks/visuals/forest-terrain-detail.mjs",
@@ -3784,8 +3789,8 @@
     },
     {
       "path": "src/tracks/visuals/iguazu-landscape.mjs",
-      "bytes": 9887,
-      "sha256": "7751BC1BEE68FFDB93CBD12EAA9E857F8C10C0A223F83EF97FFDF6BB5645DFCB"
+      "bytes": 9884,
+      "sha256": "F34993E8934CFD9EFA75AE154B58C8975685BA58490670570F31AD4637E64369"
     },
     {
       "path": "src/tracks/visuals/mountain-profile.mjs",
@@ -3794,8 +3799,8 @@
     },
     {
       "path": "src/tracks/visuals/reference-landscape.mjs",
-      "bytes": 45502,
-      "sha256": "66D814F028F9A7B2437D2272EAC88A51B68BC9AA18DE0418A3A7C0FA2F23EF0D"
+      "bytes": 45499,
+      "sha256": "A8734121734115BD3771EC7D6DFC86158568D45493443ACD38D7B507C85A29B8"
     },
     {
       "path": "src/tracks/visuals/regional-boulders.mjs",
@@ -3814,8 +3819,8 @@
     },
     {
       "path": "src/tracks/visuals/regional-landscape-details.mjs",
-      "bytes": 24198,
-      "sha256": "51BAD7B2A143CAF5311467A6B8C48FDF1FE2240FDC08FA2E1A2448107A143541"
+      "bytes": 24197,
+      "sha256": "8F6E0CD98EDF68D25E205A272B49920B13C9ECEA86EB740B25142266214CBC68"
     },
     {
       "path": "src/tracks/visuals/regional-review-plan.mjs",
@@ -3849,18 +3854,18 @@
     },
     {
       "path": "src/tracks/visuals/regional-wayfinding.mjs",
-      "bytes": 5075,
-      "sha256": "9A7C147A7F7717183A7D804DCD5125EB4A9C1E5C1C12EAEBBD0566922CD10474"
+      "bytes": 5074,
+      "sha256": "59F33ECEA2068B77BB26656B8B90D98099B5FC5A40F775B78C5276759D9ABBF0"
     },
     {
       "path": "src/tracks/visuals/roadside-details.mjs",
-      "bytes": 12908,
-      "sha256": "2891BE3E40AF98C1A3E3A44AA009AC6244434D13CACCB93CC22840F89FE96BA5"
+      "bytes": 12907,
+      "sha256": "7B1552CEB477FA5D931FFE2674C841605BE3390FE6F3305C62F979F0576E6792"
     },
     {
       "path": "src/tracks/visuals/route-closure.mjs",
-      "bytes": 15963,
-      "sha256": "224D82E821B941749801A3AD766F4B04138CAB560E28E2D2117C86C21AEAB286"
+      "bytes": 15962,
+      "sha256": "6FEBCF2F5DD7BBB13F9EC83B4D528A2E5292B49C373364031AAC8A100AF67699"
     },
     {
       "path": "src/tracks/visuals/sector-collision-guardrails.mjs",
@@ -3934,13 +3939,13 @@
     },
     {
       "path": "tools/serve-local.mjs",
-      "bytes": 179,
-      "sha256": "4DF6E224C2516590D0BE68E0DA975EF143E5584D69383D661A88883805E74716"
+      "bytes": 178,
+      "sha256": "27C0DA505FB3248D02E882A0C0DFEC4B18E69FBD3DB44A7D643E89B989519EDA"
     },
     {
       "path": "tools/v7-audio-lifecycle.test.mjs",
-      "bytes": 3653,
-      "sha256": "39C90692B60D6DB57B478594BF5F611E20385838B344DA07E1C61F837B0FEEF9"
+      "bytes": 3652,
+      "sha256": "365C59712CA453F20A1B66B675CCE5E22FFEFF30F5029FB1E74F2E75BA9BC5C4"
     },
     {
       "path": "tools/v7-audit-exact-route-previews.mjs",
@@ -3959,18 +3964,18 @@
     },
     {
       "path": "tools/v7-capture-exact-route-previews.mjs",
-      "bytes": 7592,
-      "sha256": "725A17153583BBA00931BB82713CCA869D0025A270553DEAE2D02776A6BF0C46"
+      "bytes": 7591,
+      "sha256": "3454D2F771F5F83CEAE8C1AE3D4B8A3F1DEDB5FFD3216449053F7BC8240488B5"
     },
     {
       "path": "tools/v7-championship-host.test.mjs",
-      "bytes": 3018,
-      "sha256": "BF748E08A1A7E9FFFB7E5E2BFC0EA17C3842D9AA61F54C0BC4E48D70168DB05E"
+      "bytes": 3017,
+      "sha256": "BEA30C81690E49C51F2D8052A9A0088951672401118F814579D4046488022E66"
     },
     {
       "path": "tools/v7-championship-profile.test.mjs",
-      "bytes": 6340,
-      "sha256": "69AA8D50212714DD2FDC0C53E7298400C2DB10238B79DDC07180F49293A795C4"
+      "bytes": 6339,
+      "sha256": "69485B5FF4CCBC83C320ED91BE87696CCF0293FDF8E47EE9B15BD2D3FF02CEF9"
     },
     {
       "path": "tools/v7-championship-result.test.mjs",
@@ -3979,8 +3984,8 @@
     },
     {
       "path": "tools/v7-championship-session.test.mjs",
-      "bytes": 4548,
-      "sha256": "8BE8089707EE164F612C4C83E97FD5110785AB8A0DC388F89826E47320864ED3"
+      "bytes": 4547,
+      "sha256": "5F1C6E67B57BE318BF692C3D61FE77D63DBC416AAE131ABB2A030FADAC81793C"
     },
     {
       "path": "tools/v7-championship.test.mjs",
@@ -3989,18 +3994,18 @@
     },
     {
       "path": "tools/v7-cockpit-defaults.test.mjs",
-      "bytes": 9042,
-      "sha256": "DC8AF96FEBF1F261A4FFC502BDBF7215CA1AAC06A74E7C4B1993E04555B92688"
+      "bytes": 9039,
+      "sha256": "7CE469FFA96C5F5990DBE017612791E9CED5DD1C3E1E2BF224F70C02B3CCE556"
     },
     {
       "path": "tools/v7-deferred-vehicle.test.mjs",
-      "bytes": 1250,
-      "sha256": "3F668638A30A7F70A22442E9023802B36E20BC2344A047A3C5FC94CDDDBD43E6"
+      "bytes": 1249,
+      "sha256": "D470BE7C2DB42EAA4B8725CBA24CE1887D6A0BFB0A7C0B6FB74E82C18AE591E0"
     },
     {
       "path": "tools/v7-earned-collection.test.mjs",
-      "bytes": 4648,
-      "sha256": "99F86AB447959B4A510138555C8D3B0DD9575EE37F515779A1D727F9213E028F"
+      "bytes": 4646,
+      "sha256": "9CEF343A8271BB2EA8E7C7F298D332DCBD23441DF71E715E2CCF8A1D33686810"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -4024,13 +4029,13 @@
     },
     {
       "path": "tools/v7-home-ready.test.mjs",
-      "bytes": 5043,
-      "sha256": "D9E9ED1DF81A4FCD9AC055653C66E98C99774C74EAFF9ECFF6F63A1BF8AB720A"
+      "bytes": 5041,
+      "sha256": "53527EE18CC41C20AC143DE0276E04962793590B443EAF82DA8DA23BD986FE9D"
     },
     {
       "path": "tools/v7-host-flow.test.mjs",
-      "bytes": 3946,
-      "sha256": "AEA0D6CF44D5362E480300BCCFD22C51BD6CC522A6E24A1AA65E3D8C1C74673E"
+      "bytes": 3945,
+      "sha256": "F74C8B77FB16A9E11A24D0F9294E1033D80F7F2BC2AFE200A80EF71A2485865B"
     },
     {
       "path": "tools/v7-loading-startup.test.mjs",
@@ -4054,8 +4059,8 @@
     },
     {
       "path": "tools/v7-menu-service-preview-review.mjs",
-      "bytes": 9796,
-      "sha256": "8025802E52A291C0EFBFE985B82A18F445758B1EEBCBEA32185CED5C4FE1BF02"
+      "bytes": 9795,
+      "sha256": "B3A7BED1175BB0CB1A5A32D17B9B8EC2B277E359216A4EEDA63DBB0A20AE4A48"
     },
     {
       "path": "tools/v7-pack-viaje-photo.mjs",
@@ -4074,8 +4079,8 @@
     },
     {
       "path": "tools/v7-profile-writers.test.mjs",
-      "bytes": 1465,
-      "sha256": "DA9C4BAC3415E3D286508FAA4B13B99E1E9E4C02BCFE39FF369A4BB5DC729474"
+      "bytes": 1464,
+      "sha256": "FDFC417967D39CBB29FEFC6137C771F4EDBA1B88C184C43BC55C51D501A2FFDA"
     },
     {
       "path": "tools/v7-publication-startup.test.mjs",
@@ -4099,8 +4104,8 @@
     },
     {
       "path": "tools/v7-road-layer-diagnostic.mjs",
-      "bytes": 1059,
-      "sha256": "569048212726918AC01E3A36F955E9BD1C9D8ED4F0F55EC493AE8F4AE66FDB67"
+      "bytes": 1058,
+      "sha256": "B17F79A5869A6CAC31035A909F4B89595787E885E39F8907F2CCDC2C6AF93A02"
     },
     {
       "path": "tools/v7-road-map-diagnostic.mjs",
@@ -4124,13 +4129,13 @@
     },
     {
       "path": "tools/v7-roadtest-host.test.mjs",
-      "bytes": 6010,
-      "sha256": "C993C8FC14B32B493999E9685294F8FECB23CC2E94A2758D4635ED490340337A"
+      "bytes": 6009,
+      "sha256": "A928EC54C789F684F930FD7D9887570CED309CEE270A45FC005646CC44C70A27"
     },
     {
       "path": "tools/v7-roadtest-integration.test.mjs",
-      "bytes": 16950,
-      "sha256": "9727D3B8A4C22E40FD683B4B24EAECA268B12D55A84D2B499270CCB6BAD5A18D"
+      "bytes": 16946,
+      "sha256": "AF0DB588B19FC7CFE84177B163C4A010808491ECC063CFE75F0B71F10DA2EA2F"
     },
     {
       "path": "tools/v7-route-catalog.test.mjs",
@@ -4144,8 +4149,8 @@
     },
     {
       "path": "tools/v7-sep12-condition.test.mjs",
-      "bytes": 8321,
-      "sha256": "829A767089641ED1BDD5CD62E960E65FA9EFD9980966DA4A47DE1D6D8F07B02C"
+      "bytes": 8319,
+      "sha256": "77965EDBF568DEF3C903EAEE66B6394AB286B22DC1AD185191A07969F35085B3"
     },
     {
       "path": "tools/v7-sep12-environment-clock.test.mjs",
@@ -4159,13 +4164,13 @@
     },
     {
       "path": "tools/v7-sep12-environment-windshield.test.mjs",
-      "bytes": 3527,
-      "sha256": "563518DEC43B212D45E96994B22A18382D7508C5A08275DE5ECAA8F6997D520D"
+      "bytes": 3526,
+      "sha256": "91372A85DBC423C9DF25EB0C0274AD065AEC8908DA4269BC0AA648C8457B3E52"
     },
     {
       "path": "tools/v7-server-transport.test.mjs",
-      "bytes": 1972,
-      "sha256": "845EF4425AE507EAC7A04413C0B7762C9462498EFEE7592D67E909462FB92D7E"
+      "bytes": 1971,
+      "sha256": "EC4516AF56300C8AE36800CBCDCE000862FE163F5542DF6EB18F67F23233F8C3"
     },
     {
       "path": "tools/v7-session-runtime.test.mjs",
@@ -4179,8 +4184,8 @@
     },
     {
       "path": "tools/v7-startup-integration.test.mjs",
-      "bytes": 2889,
-      "sha256": "962693AC4F1FB2638A43E3FA6BFE0AB6DC60A78E6907F7E4E7EEF57D50A99124"
+      "bytes": 2888,
+      "sha256": "C6A27159DD330EB8268C21C834A1D8809E5579598F213947C6089F85CCDF5FDD"
     },
     {
       "path": "tools/v7-water-reflection-diagnostic.mjs",
@@ -4513,9 +4518,9 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 886,
-  "totalBytes": 975628069,
-  "inventorySha256": "3FA91647081A3D4E9E50E06D39E23020445C8ABBA48782EAC558281CADED52A1",
+  "fileCount": 887,
+  "totalBytes": 976175951,
+  "inventorySha256": "D8969C8A065D931F0DE12A7B6A0C97BC395E619F5DA869CABC98E4DEDF9914D4",
   "selectionCases": 174,
   "environmentCases": [
     {

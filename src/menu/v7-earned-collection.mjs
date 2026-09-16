@@ -1,4 +1,4 @@
-import {getRoadTestDisplayItems} from './v7-roadtest-receipts.mjs?v=photo-r1-20260916';
+import {getRoadTestDisplayItems} from './v7-roadtest-receipts.mjs?v=body-r2-20260916';
 import {AWARDS as AWARD_CATALOG} from './v7-championship-catalog.mjs';
 import {resumeRun,earnedAwards} from './v7-championship-state.mjs';
 export {AWARD_CATALOG};

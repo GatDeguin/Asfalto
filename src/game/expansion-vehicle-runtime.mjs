@@ -1,4 +1,4 @@
-import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=photo-r1-20260916';
+import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=body-r2-20260916';
 export function buildVehiclePhysicsSpec(base,id){
  const definition=getVehicleDefinition(id);if(!definition?.physicsEstimate)return base;
  return {...structuredClone(base),...structuredClone(definition.physicsEstimate),id:`${id}-${base.profile||'original'}`,label:definition.label,isCalibrationOnly:true};

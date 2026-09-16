@@ -1,7 +1,7 @@
 import fs from 'node:fs';import crypto from 'node:crypto';import path from 'node:path';import assert from 'node:assert/strict';import {createRequire} from 'node:module';
 const {chromium}=createRequire(import.meta.url)('C:/Users/Gaston/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const out=path.resolve('Reports/Asfalto_Nacional_v7/menu-service-preview-2026-09-12');fs.mkdirSync(out,{recursive:true});
-const {startServer}=await import('../server.mjs?v=photo-r1-20260916');const server=await startServer({root:path.resolve('Asfalto_Nacional_v7'),port:0,cockpitDataDirectory:path.join(out,'isolated-data')});
+const {startServer}=await import('../server.mjs?v=body-r2-20260916');const server=await startServer({root:path.resolve('Asfalto_Nacional_v7'),port:0,cockpitDataDirectory:path.join(out,'isolated-data')});
 const report={startedAt:new Date().toISOString(),errors:[],requests:[],checks:[],screenshots:[],loadedSourceHashes:{}};const save=()=>fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));let browser;
 try {
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',args:['--use-angle=d3d11','--remote-debugging-port=9227']});

@@ -1,4 +1,4 @@
-import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS} from './vehicle-condition.mjs?v=photo-r1-20260916';
+import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS} from './vehicle-condition.mjs?v=body-r2-20260916';
 /** Persistent maintenance is fed by actual 120 Hz player steps, independent of test receipts. */
 export function createVehicleMaintenance({getProfile,getVehicleId,save=()=>{},onChanged=()=>{},onFault=()=>{}}){
  let session=null,sessionVehicle=null,lastPublishedTick=0,lastSavedTick=0,faultLatched=false;
