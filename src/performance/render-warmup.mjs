@@ -12,3 +12,7 @@ export async function prepareRenderPolicies({getTier,applyTier,prepare,paint=asy
 export async function prewarmStableScene({setLocked,settleStreaming,compile,draw}){
  setLocked(true);try{await settleStreaming();compile();await draw();}finally{setLocked(false);}
 }
+
+/** Pay first-use exterior GPU work behind loading, without advancing camera animation. */
+export async function prewarmViews({capture,select,draw,restore}){const state=capture();try{select();await draw();}finally{restore(state);}await draw();}
+

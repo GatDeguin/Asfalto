@@ -2,7 +2,7 @@ import {createAdvancedMaterials}from'./advanced-materials.mjs';
 import {createPivotPainter}from'./pivot-painter.mjs?v=phone-r3-20260913';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=phone-r6-20260913';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=pc60-r1-20260915';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=()=> 'high',allowPivotPainter=true,samples=2,onRenderStage=null}={}){
@@ -15,14 +15,14 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
   setSurfaceReliefPDO(settings.pdo&&quality!=='off'&&quality!=='low');
   return budget;
  }
- function refresh(){if(disposed)return;pivot.refresh();materials.refresh();field.refresh({camera});lastSignature=[scene.children.length,renderer.info.memory.geometries].join(':');}
+ function refresh(){if(disposed)return;pivot.refresh();materials.refresh();if(settings.dfao&&screenLightingPolicy(quality).dfao){field.refresh({camera});lastField=lastRefresh;}lastSignature=[scene.children.length,renderer.info.memory.geometries].join(':');}
  function setSettings(value){settings=normalizeAdvancedGraphics(value);configure();}
  const change=event=>setSettings(event.detail||{});globalThis.addEventListener?.('asfalto:advanced-graphics',change);configure();refresh();
  return{
   refresh,setSettings,getEffectiveQuality:()=>quality,
   update({time=0,environment=getEnvironment()}={}){
    if(disposed)return;const next=effectiveGraphicsQuality(settings,getQuality());if(next!==quality)configure();setSurfaceReliefPDO(settings.pdo&&quality!=='off'&&quality!=='low');
-   const signature=[scene.children.length,renderer.info.memory.geometries].join(':');if(time-lastRefresh>2||(time-lastRefresh>1&&signature!==lastSignature)){refresh();lastRefresh=time;}
+   const signature=[scene.children.length,renderer.info.memory.geometries].join(':');if(time-lastRefresh>2||(time-lastRefresh>1&&signature!==lastSignature)){lastRefresh=time;refresh();}
    const sunDirection=environment.keyLightDirection||environment.sunDirection,sunColor=environment.keyLightColor||environment.sunColor;
    materials.update({time,sunDirection,sunColor,sunIntensity:environment.sunIntensity??2.5});
    pivot.update({time,windDirection:environment.wind?.direction||[.8,.4],windSpeed:environment.wind?.speedMps??environment.windSpeed??(environment.weather==='storm'?7:environment.weather==='rain'?3.5:1.2)});
