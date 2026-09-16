@@ -341,6 +341,10 @@
         ? meshTemplates[definition.mesh].clone(true)
         : new THREE.Group();
       object.name = definition.name || 'Node_' + index;
+      // Controls and mechanical ownership belong to nodes, including instanced meshes.
+      if(definition.extras && typeof definition.extras==='object' && !Array.isArray(definition.extras)) {
+        object.userData={...object.userData,...JSON.parse(JSON.stringify(definition.extras))};
+      }
       if (definition.matrix) {
         object.matrix.fromArray(definition.matrix);
         object.matrixAutoUpdate = false;

@@ -1,7 +1,7 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=vehicles-r1-20260916';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
-import { mountMenuSections } from './menu-sections.mjs';
+import { mountMenuSections } from './menu-sections.mjs?v=vehicles-r1-20260916';
 import { mountMenuRefinements } from './menu-refinements.mjs';
 import { mountWorkshopService } from './workshop-service.mjs';
 import { fitMenuCar } from './menu-refinement-state.mjs';
@@ -148,7 +148,9 @@ function mount() {
     if(state.view!=='home' && !appearance && !modes){camera.clearViewOffset();return;}
     camera.fov=rect.width/rect.height<1.5?54:46;
     const reservedLeftPx=appearance ? content.getBoundingClientRect().right-rect.left+Math.max(24,rect.width*.02) : undefined;
-    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:-.82,pitch:.13,reservedLeftPx});
+    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)?-.9:-.82,pitch:.13,reservedLeftPx});
+    // Keep the PC overview in the clear aisle before the foreground posts.
+    if(!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)){pose.radius=Math.min(pose.radius,8.75);pose.target=[0,1.05,0];}
     camera.setViewOffset(rect.width,rect.height,...pose.offset,rect.width,rect.height);
     workshop.hotspots.general=pose;
     const reduced=(document.body.classList.contains('v6-reduce-motion') || document.body.classList.contains('an-v7-reduce-motion')) || matchMedia('(prefers-reduced-motion: reduce)').matches;

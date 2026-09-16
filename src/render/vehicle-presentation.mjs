@@ -1,7 +1,7 @@
 import {createVehicleConditionAppearance} from './vehicle-condition-appearance.mjs';
 import {thickenVehicleGlass} from './vehicle-glass.mjs';
 import {createVehicleChassis} from './vehicle-chassis.mjs';
-import {getVehicleDefinition} from './vehicle-catalog.mjs';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=vehicles-r1-20260916';
 import {createVehicleLighting} from './vehicle-lighting.mjs';
 import {createVehiclePhysicalCalibration} from './vehicle-physical-calibration.mjs';
 // Surface/animation presentation only. The physical chassis, collision hull,
@@ -73,29 +73,32 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
 export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,paintColor,initialCondition='clean',physicalCalibration=false,lightScene=null}={}) {
   const definition=getVehicleDefinition(vehicle),centers=definition?.centers||CENTERS[vehicle];
   if(!centers||!modelRoot?.add||!Array.isArray(lods)||![1,3].includes(lods.length))throw new TypeError('Vehicle presentation needs a vehicle root and one or three complete LODs');
+  const conditionTransform=new T.Matrix4();if(definition?.conditionSpace){const cs=definition.conditionSpace;conditionTransform.makeScale(...cs.scale);conditionTransform.setPosition(...cs.offset);}
+  paintColor=paintColor||definition?.defaultPaint;
   const state=createVehiclePresentationState(vehicle),appearance=createVehicleConditionAppearance(T),root=new T.Group();root.name=`${vehicle}_ApprovedExterior`;root.rotation.y=vehicle==='falcon'?Math.PI:0;
   const previous=[];modelRoot.traverse(o=>{if(o.isMesh)previous.push({object:o,visible:o.visible});});
   let disposed=false,lodIndex=0,hoodAmount=0,engineBayVisible=true,engineAncillariesVisible=true;const restCompression=new Map(),wheelDiagnostics={};
   const uniforms={vehiclePaint:{value:new T.Color(paintColor||(vehicle==='falcon'?'#761a2a':'#d66a24'))},vehicleDirt:{value:0},vehicleWet:{value:0},vehiclePaintWear:{value:0},vehicleBodyWear:{value:0},vehicleDamageFrontRear:{value:new T.Vector2()},vehicleDamageSidesRoof:{value:new T.Vector3()},vehicleDust:{value:new T.Color('#6c5740')}};
-  const engineBayAncillaryNodes=[],engineBayNodes=[],brakes=[],headlamps=[],flexible=[],hoods=[],tiers=[],materials=new Set(),replacedMaterials=new Set(),replacedGeometries=new Set();
+  let instrumentFuel=1;const steeringPivots=[],instrumentPivots=[];const steeringAxis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
+  const staticWiperNodes=[],engineBayAncillaryNodes=[],engineBayNodes=[],brakes=[],headlamps=[],flexible=[],hoods=[],tiers=[],materials=new Set(),replacedMaterials=new Set(),replacedGeometries=new Set();
   const colorValue=new T.Color(),worldPosition=new T.Vector3(),scaleVector=new T.Vector3();
   for(let level=0;level<lods.length;level++) {
-    const model=lods[level];model.traverse(o=>{if(/_Primitive_/.test(o.name))return;if(o.userData?.system==='engineBayAncillary'||/EngineBay_Ancillary/i.test(o.name))engineBayAncillaryNodes.push(o);else if(o.userData?.system==='engineBay'||/EngineBay(?:_|$)/i.test(o.name))engineBayNodes.push(o);});model.name=`${vehicle}_Exterior_LOD${level}`;root.add(model);model.updateMatrixWorld(true);
+    const model=lods[level];model.traverse(o=>{if(/_Primitive_/.test(o.name))return;if(o.userData?.system==='wiperHardware')staticWiperNodes.push(o);if(o.userData?.system==='engineBayAncillary'||/EngineBay_Ancillary/i.test(o.name))engineBayAncillaryNodes.push(o);else if(o.userData?.system==='engineBay'||/EngineBay(?:_|$)/i.test(o.name))engineBayNodes.push(o);});model.name=`${vehicle}_Exterior_LOD${level}`;root.add(model);model.updateMatrixWorld(true);
     const wheels=Object.fromEntries(IDS.map((id,i)=>{const pivot=new T.Group();pivot.name=`${vehicle}_${id}_PresentationPivot`;pivot.position.fromArray(centers[i]);model.add(pivot);return[id,pivot];}));
     const stationaryWheels=Object.fromEntries(IDS.map((id,i)=>{const pivot=new T.Group();pivot.name=`${vehicle}_${id}_StationaryBrakePivot`;pivot.position.fromArray(centers[i]);model.add(pivot);return[id,pivot];}));
     const pending=[];model.traverse(o=>{if(!o.isMesh)return;let owner=o;
       // glTF may instance one mesh (and its name) under several wheel nodes.
       // Animation ownership comes from the authored node, not a reused primitive.
-      for(let ancestor=o;ancestor&&ancestor!==model;ancestor=ancestor.parent){if(ancestor.userData?.wheelId||ancestor.userData?.stationaryWheelId||ancestor.userData?.hoodHingeAuthored||(!/_Primitive_/.test(ancestor.name)&&/_wheel_|_hood_|_stationary_/i.test(ancestor.name)))owner=ancestor;}
+      for(let ancestor=o;ancestor&&ancestor!==model;ancestor=ancestor.parent){if(ancestor.userData?.wheelId||ancestor.userData?.stationaryWheelId||ancestor.userData?.hoodHingeAuthored||ancestor.userData?.steeringWheel||ancestor.userData?.instrumentType||(!/_Primitive_/.test(ancestor.name)&&/_wheel_|_hood_|_stationary_/i.test(ancestor.name)))owner=ancestor;}
       const name=owner.name;const stationary=!!owner.userData?.stationaryWheelId||/_stationary_/i.test(name);const wheelId=owner.userData?.wheelId||owner.userData?.stationaryWheelId||IDS.find(id=>name.includes(id));
       const hood=owner.userData?.hoodHingeAuthored||(/_hood_/i.test(name)?definition?.hoodHinge||[-.306,.093,0]:null);
-      if(wheelId||hood)pending.push({owner,wheelId,hood,stationary});
+      if(wheelId||hood||owner.userData?.steeringWheel||owner.userData?.instrumentType)pending.push({owner,wheelId,hood,stationary});
       // This supplied revision bakes AO in TEXCOORD_1. The legacy loader exposes
       // that stream as uv2; Three r180 selects the second stream through uv1.
       if(vehicle==='chevy_400_1957'&&o.geometry?.attributes.uv2){o.geometry.setAttribute('uv1',o.geometry.attributes.uv2);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.aoMap){m.aoMap.channel=1;m.needsUpdate=true;}}
       if(/Glass/.test(o.material?.name)&&!definition?.preserveAuthoredMaterials){const original=thickenVehicleGlass(T,o,model);if(original)replacedGeometries.add(original);}
       o.castShadow=!/Glass/.test(o.material?.name);o.receiveShadow=true;
-      if((Array.isArray(o.material)?o.material:[o.material]).some(m=>/Paint|StripeAtlas|Black_lacquer/.test(m?.name||''))&&!wheelId){appearance.add(o,new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld));}
+      if((Array.isArray(o.material)?o.material:[o.material]).some(m=>/Paint|StripeAtlas|Black_lacquer/.test(m?.name||''))&&!wheelId){appearance.add(o,new T.Matrix4().copy(conditionTransform).multiply(new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld)));}
       const mapMaterial=m=>{if(!m)return m;
         // Some supplied GLBs share red lens material with cabin controls and
         // passive quarter reflectors. Only rear-facing tail assemblies emit.
@@ -104,22 +107,22 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
           const center=o.geometry.boundingBox.getCenter(new T.Vector3()).applyMatrix4(o.matrixWorld).applyMatrix4(new T.Matrix4().copy(model.matrixWorld).invert());
           if(center.x<.88){const passive=m.clone();passive.name=m.name.replace('BrakeLens','PassiveRed');passive.emissiveIntensity=0;materials.add(passive);return passive;}
         }
-        if(/Paint|StripeAtlas|Black_lacquer/.test(m.name)){const clone=m.clone();clone.userData.vehicleAuthoredMatrix=new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld);replacedMaterials.add(m);materials.add(clone);return clone;}materials.add(m);return m;};
+        if(/Paint|StripeAtlas|Black_lacquer/.test(m.name)){const clone=m.clone();clone.userData.vehicleAuthoredMatrix=new T.Matrix4().copy(conditionTransform).multiply(new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld));replacedMaterials.add(m);materials.add(clone);return clone;}materials.add(m);return m;};
       o.material=Array.isArray(o.material)?o.material.map(mapMaterial):mapMaterial(o.material);
       if(/Mirror_|mirror|ExhaustTip|exhaust|Antenna|antenna/.test(name)&&!/Face|Stem|Hanger|Bore|Pipe/.test(name))flexible.push({object:owner,rotation:owner.rotation.clone(),position:owner.position.clone(),antenna:/antenna/i.test(name)});
     });
     const moved=new Set();
-    for(const {owner,wheelId,hood,stationary} of pending){if(moved.has(owner))continue;moved.add(owner);if(wheelId)(stationary?stationaryWheels:wheels)[wheelId].attach(owner);else{const pivot=new T.Group();pivot.name=`${vehicle}_HoodHinge`;pivot.position.fromArray(hood);model.add(pivot);pivot.attach(owner);hoods.push(pivot);}}
+    for(const {owner,wheelId,hood,stationary} of pending){if(moved.has(owner))continue;moved.add(owner);if(wheelId)(stationary?stationaryWheels:wheels)[wheelId].attach(owner);else if(owner.userData?.steeringWheel){const pivot=new T.Group();pivot.name=`${vehicle}_SteeringWheel`;pivot.position.fromArray(definition.steeringCenterSource);model.add(pivot);pivot.attach(owner);steeringPivots.push(pivot);}else if(owner.userData?.instrumentType){const pivot=new T.Group();pivot.name=`${vehicle}_${owner.userData.instrumentType}_Needle`;pivot.position.fromArray(owner.userData.instrumentPivotAuthored);model.add(pivot);pivot.attach(owner);instrumentPivots.push({pivot,type:owner.userData.instrumentType,min:finite(owner.userData.instrumentMinAngle,Math.PI*.15),max:finite(owner.userData.instrumentMaxAngle,-Math.PI*1.15),range:finite(owner.userData.instrumentMaxValue,owner.userData.instrumentType==='speed'?(vehicle==='pickup_3100'?140:180):owner.userData.instrumentType==='rpm'?6000:1)});}else{const pivot=new T.Group();pivot.name=`${vehicle}_HoodHinge`;pivot.position.fromArray(hood);model.add(pivot);pivot.attach(owner);hoods.push(pivot);}}
     tiers.push({model,wheels,stationaryWheels});model.visible=level===0;
   }
   for(const m of materials) {
     if(/Glass/.test(m.name)&&!definition?.preserveAuthoredMaterials){m.transparent=true;m.opacity=1-Math.sqrt(1-.22);m.depthWrite=false;m.side=T.FrontSide;m.envMapIntensity=.85;}
     if(/BrakeLens/.test(m.name)){m.emissive?.set('#a0180e');m.emissiveIntensity=.12;brakes.push(m);}
     if(/Headlamp/.test(m.name)){m.emissive?.set('#fff0cc');headlamps.push(m);}
-    if(/Chrome/.test(m.name)){m.metalness=1;m.roughness=.22;m.envMapIntensity=.92;}
+    if(/Chrome/.test(m.name)){m.metalness=1;if(!definition?.preserveAuthoredMaterials)m.roughness=.22;m.envMapIntensity=.92;}
     if(/Rubber/.test(m.name)){m.metalness=0;m.roughness=.83;}
     if(/Paint|StripeAtlas|Black_lacquer/.test(m.name)) {
-      const prior=m.onBeforeCompile,paint=/Paint/.test(m.name),atlas=/Atlas/.test(m.name);
+      const prior=m.onBeforeCompile,paint=/Paint/.test(m.name),atlas=/Atlas/.test(m.name),paintRoughness=definition?.preserveAuthoredMaterials?clamp(m.roughness,.08,.7):.26;
       m.onBeforeCompile=shader=>{
         prior?.call(m,shader);Object.assign(shader.uniforms,uniforms);shader.uniforms.vehicleAuthoringMatrix={value:m.userData.vehicleAuthoredMatrix};
         shader.vertexShader='varying vec3 vehicleAuthoredPosition;\nuniform mat4 vehicleAuthoringMatrix;\n'+shader.vertexShader;
@@ -157,7 +160,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
 
         `);
         shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-          roughnessFactor=mix(roughnessFactor,clamp(.26+(vehicleGrain-.5)*.032,.23,.29),vehiclePigment);
+          roughnessFactor=mix(roughnessFactor,clamp(${paintRoughness.toFixed(3)}+(vehicleGrain-.5)*.032,${(paintRoughness-.03).toFixed(3)},${(paintRoughness+.03).toFixed(3)}),vehiclePigment);
           roughnessFactor=mix(roughnessFactor,.76,max(vehicleAbrasion,vehiclePaintWear*.5));
           roughnessFactor=mix(roughnessFactor,.83,vehicleDirtMask*.6);
           roughnessFactor=mix(roughnessFactor,.17,vehicleWet*.7);
@@ -173,12 +176,13 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const lighting=createVehicleLighting(T,{vehicle,root,scene:lightScene,headlamps,brakes,lampAnchor:definition?.lampAnchor});
   const controller={
     root,
+    getSteeringTargets:()=>steeringPivots.filter(p=>{let o=p;while(o&&o!==root){if(!o.visible)return false;o=o.parent;}return true;}),
     setChassisConfig(value){if(disposed)return false;const result=chassis.setConfiguration(value);calibration?.setChassisRadiusScale(chassis.diagnostics().radiusScale);return result;},
     getChassisSourceWheels:()=>chassis.sourceWheels(),getChassisInspectionMatrix:()=>chassis.inspectionMatrix(),
     setChassisInspection(value){chassisInspection=value;},
     setPaintColor(hex){if(disposed||typeof hex!=='string'||!/^#[a-f\d]{6}$/i.test(hex))return false;uniforms.vehiclePaint.value.set(hex);return true;},
     setEnvironment(texture){if(disposed||(texture!==null&&!texture?.isTexture))return false;chassis.setEnvironment(texture);for(const material of materials){if(material.envMap===texture)continue;material.envMap=texture;material.needsUpdate=true;}return true;},
-    setPersistentCondition(condition){if(disposed)return false;appearance.set(condition);const c=appearance.diagnostics().condition;state.setPersistentCondition(c);uniforms.vehicleDirt.value=c.dirt/100;uniforms.vehiclePaintWear.value=1-c.paint/100;uniforms.vehicleBodyWear.value=1-c.body/100;uniforms.vehicleDamageFrontRear.value.set(c.damageZones.front,c.damageZones.rear);uniforms.vehicleDamageSidesRoof.value.set(c.damageZones.left,c.damageZones.right,c.damageZones.roof);return true;},
+    setPersistentCondition(condition){if(disposed)return false;appearance.set(condition);const c=appearance.diagnostics().condition;state.setPersistentCondition(c);instrumentFuel=c.fuel/100;uniforms.vehicleDirt.value=c.dirt/100;uniforms.vehiclePaintWear.value=1-c.paint/100;uniforms.vehicleBodyWear.value=1-c.body/100;uniforms.vehicleDamageFrontRear.value.set(c.damageZones.front,c.damageZones.rear);uniforms.vehicleDamageSidesRoof.value.set(c.damageZones.left,c.damageZones.right,c.damageZones.roof);return true;},
     setCondition(condition){const result=state.setCondition(condition);const now=state.diagnostics();uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;return result;},
     resetCondition(){if(disposed)return false;state.reset();uniforms.vehicleDirt.value=uniforms.vehicleWet.value=0;restCompression.clear();for(const item of flexible)item.object.rotation.copy(item.rotation);return true;},
     setEngineBayVisible(value,{includeAncillaries=false}={}){if(disposed)return false;engineBayVisible=!!value;engineBayNodes.forEach(node=>{node.visible=engineBayVisible;});if(includeAncillaries){engineAncillariesVisible=!!value;engineBayAncillaryNodes.forEach(node=>{node.visible=engineAncillariesVisible;});}return true;},
@@ -193,8 +197,9 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       if(disposed)return false;
       const snapshot=sample.snapshot||chassisInspection||{},controls=snapshot.controls||snapshot.input||{};
       state.update({...sample,speedMps:finite(sample.speedMps,finite(snapshot.speedMps,finite(snapshot.chassis?.speedMps))),rpm:finite(sample.rpm,finite(snapshot.engine?.rpm)),brake:finite(sample.brake,finite(controls.brake))});
+      for(const node of staticWiperNodes)node.visible=!physicalCalibration||sample.cameraMode!=='cockpit';
       if(sample.paused)return true;
-      const now=state.diagnostics();uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;
+      const now=state.diagnostics();for(const pivot of steeringPivots)pivot.quaternion.setFromAxisAngle(steeringAxis,-clamp(finite(controls.steer),-1,1)*Math.PI*2.5);for(const {pivot,type,min,max,range} of instrumentPivots){const value=type==='speed'?Math.abs(now.speedMps)*3.6:type==='rpm'?now.rpm:instrumentFuel;pivot.rotation.x=min+clamp(value/range)*(max-min);}uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;
       if(/lipan|sand|gravel/i.test(sample.surface||sample.trackId||''))uniforms.vehicleDust.value.set('#9c7151');else if(/garibaldi|mud/i.test(sample.trackId||''))uniforms.vehicleDust.value.set('#514e3c');else uniforms.vehicleDust.value.set('#6c5740');
       let px=sample.projectedPixels;
       if(!Number.isFinite(px)&&sample.camera){root.getWorldPosition(worldPosition);const distance=worldPosition.distanceTo(sample.camera.getWorldPosition(new T.Vector3()));px=4.8*finite(sample.viewportHeight,800)/(2*Math.tan(finite(sample.camera.fov,46)*Math.PI/360)*Math.max(distance,.1));}
@@ -212,7 +217,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       lighting.update({...sample,brake:now.brake});
       return true;
     },
-    diagnostics:()=>({...state.diagnostics(),persistentCondition:appearance.diagnostics(),paintColor:'#'+uniforms.vehiclePaint.value.getHexString(),lod:lodIndex,chassis:chassis.diagnostics(),calibration:calibration?.diagnostics()||null,hoodAngleRad:hoodAmount*1.04,headlights:lighting.diagnostics().mode!=='off',lightMode:lighting.diagnostics().mode,lighting:lighting.diagnostics(),engineBayVisible,engineBayNodes:engineBayNodes.length,engineAncillariesVisible,engineBayAncillaryNodes:engineBayAncillaryNodes.length,wheels:{...wheelDiagnostics},sourceFrontAxis:'-X',presentationYawRad:root.rotation.y,materials:materials.size,drawMeshes:tiers.map(t=>{let count=0;t.model.traverse(o=>{if(o.isMesh)count++;});return count;})}),
+    diagnostics:()=>({...state.diagnostics(),persistentCondition:appearance.diagnostics(),paintColor:'#'+uniforms.vehiclePaint.value.getHexString(),lod:lodIndex,chassis:chassis.diagnostics(),calibration:calibration?.diagnostics()||null,hoodAngleRad:hoodAmount*1.04,headlights:lighting.diagnostics().mode!=='off',lightMode:lighting.diagnostics().mode,lighting:lighting.diagnostics(),engineBayVisible,engineBayNodes:engineBayNodes.length,engineAncillariesVisible,engineBayAncillaryNodes:engineBayAncillaryNodes.length,wheels:{...wheelDiagnostics},authoredControls:{steeringPivots:steeringPivots.length,instrumentPivots:instrumentPivots.length},sourceFrontAxis:'-X',presentationYawRad:root.rotation.y,materials:materials.size,drawMeshes:tiers.map(t=>{let count=0;t.model.traverse(o=>{if(o.isMesh)count++;});return count;})}),
     dispose(){if(disposed)return false;disposed=true;state.dispose();chassis.dispose();lighting.dispose();root.removeFromParent();previous.forEach(({object,visible})=>{object.visible=visible;});releaseModels(lods,appearance.originalGeometries());appearance.dispose();return true;},
   };
   controller.update({dt:0});return controller;

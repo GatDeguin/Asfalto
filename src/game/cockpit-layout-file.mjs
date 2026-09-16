@@ -1,6 +1,6 @@
 import {staticSeedUrl} from './hosting-mode.mjs';
 import { COCKPIT_FACTORY_LAYOUT } from './cockpit-layout-default.mjs';
-import { sanitizeCompositionState, sanitizeTransform, migrateCompositionState } from './composition-editor-state.mjs';
+import { sanitizeCompositionState, sanitizeTransform, migrateCompositionState } from './composition-editor-state.mjs?v=vehicles-r1-20260916';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const valid = value => record(value) && [1, 2, 3].includes(value.version) && record(value.transforms);

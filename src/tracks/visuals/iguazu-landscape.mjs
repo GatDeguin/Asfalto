@@ -3,7 +3,7 @@ import {regionalReviewPlan} from './regional-review-plan.mjs';
 import {createIguazuFern} from './regional-forest.mjs';
 import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs';
-import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=pc60-r1-20260915';
+import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=vehicles-r1-20260916';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs';
 
 const sourceTemplates=new WeakMap();

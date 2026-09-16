@@ -2,7 +2,7 @@ import {createAdvancedMaterials}from'./advanced-materials.mjs';
 import {createPivotPainter}from'./pivot-painter.mjs?v=phone-r3-20260913';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=pc60-r1-20260915';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=vehicles-r1-20260916';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=()=> 'high',allowPivotPainter=true,samples=2,onRenderStage=null}={}){
