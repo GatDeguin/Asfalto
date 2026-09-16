@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from '../../Web/vendor/three.module.js';
-import {createWeatherWindshield,windshieldLayout} from '../src/render/weather-windshield.mjs';
+import {createWeatherWindshield,windshieldLayout} from '../src/render/weather-windshield.mjs?v=vehicles-r1-20260916';
 function fixture(){const cabin=new T.Group(),controller=createWeatherWindshield(T,{cabinMount:cabin}),pane=cabin.getObjectByName('AN_DropsOnCabinGlass');return{cabin,controller,pane};}
 function run(controller,seconds,options={}){for(let i=0;i<Math.round(seconds*60);i++)controller.update({dt:1/60,rain:1,...options});}
 test('a wiped sector remains clear with stopped blades, then refills from fresh rain',()=>{

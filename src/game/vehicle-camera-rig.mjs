@@ -207,11 +207,11 @@ function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
   let look;
   let baseHorizontalFovDeg = CAMERA_TOKENS[mode].horizontalFovDeg;
   if (mode === 'cockpit') {
-    position = localPoint(origin, basis, add(CAMERA_TOKENS.cockpit.anchorM, cockpitCalibration.positionOffsetM));
-    look = add(position, scale(basis.forward, 14));
+    position = localPoint(origin, basis, add(vector(frame.cockpitAnchorM,CAMERA_TOKENS.cockpit.anchorM), cockpitCalibration.positionOffsetM));
+    look = add(add(position, scale(basis.forward, 14)),scale(basis.up,-Math.tan(clamp(finite(frame.cockpitLookDownDeg),0,15)*DEG)*14));
     baseHorizontalFovDeg = cockpitCalibration.baseHorizontalFovDeg;
   } else if (mode === 'hood') {
-    position = localPoint(origin, basis, CAMERA_TOKENS.hood.anchorM);
+    position = localPoint(origin, basis, vector(frame.hoodAnchorM,CAMERA_TOKENS.hood.anchorM));
     look = add(position, scale(basis.forward, 18));
   } else if (mode === 'chase') {
     position = add(origin, add(
@@ -329,7 +329,9 @@ export function createVehicleCameraRig(options = {}) {
     const suppressCockpitMotion = mode === 'cockpit' && options.cockpitPhysicalMotion === false;
     const motion = snap || suppressCockpitMotion ? { pitchRad: 0, rollRad: 0, heaveM: 0 } : physicalMotion(snapshot, dt);
     const target = poseTarget(mode, snapshot, frame, motion, cockpitCalibration);
-    if (!initialized || snap) {
+    // Geometry-based interiors share the interpolated chassis pose; world-space lag
+    // would pull the eye outside the cabin at speed. Head motion is applied separately.
+    if (!initialized || snap || (mode === 'cockpit' && frame.bodyMountedCockpit)) {
       position = [...target.position];
       look = [...target.look];
     } else {

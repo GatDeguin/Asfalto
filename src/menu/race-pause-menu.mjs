@@ -1,4 +1,4 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=vehicles-r1-20260916';
 
 let instanceCount = 0;
 

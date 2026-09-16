@@ -123,14 +123,14 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   }
   setQuality(quality);
 
-  function update({ renderer, scene, carPose, cockpitVisible = true, enabled = true, quality: nextQuality = currentQuality, nowMs = globalThis.performance?.now?.() || Date.now(), force = false } = {}) {
+  function update({ renderer, scene, carPose, cameraPoses = null, cockpitVisible = true, enabled = true, quality: nextQuality = currentQuality, nowMs = globalThis.performance?.now?.() || Date.now(), force = false, captureSchedule = null } = {}) {
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
     if (!renderer || !scene || !cockpitVisible || !enabled || renderer.getContext?.().isContextLost?.()) return 0;
-    const poses = mirrorCameraPoses(THREE, carPose);
+    const poses = cameraPoses || mirrorCameraPoses(THREE, carPose);
     if (!poses) return 0;
     setQuality(nextQuality);
-    const due = ['center', 'left'].filter(id => force || nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]);
+    const due = ['center', 'left'].filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
     if (!due.length) return 0;
     const previousTarget = renderer.getRenderTarget(), previousCubeFace = renderer.getActiveCubeFace?.() || 0, previousMipmap = renderer.getActiveMipmapLevel?.() || 0;
     const previousScissorTest = renderer.getScissorTest(), previousAlpha = renderer.getClearAlpha(), previousAutoClear = renderer.autoClear;

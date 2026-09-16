@@ -82,3 +82,7 @@ El diagnóstico distingue buffers, captura del mundo, GTAO, iluminación indirec
 El audio ambiental se genera en un worker cancelable en PC. La carga prepara los materiales de los tres niveles de detalle del auto y resuelve enlaces pendientes de shaders. Las instancias evitan copiar matrices idénticas y la oclusión desactivada no recorre la escena. Se conservan resolución, modelos, texturas, antialiasing y efectos de PC. iPhone mantiene su recorrido de carga R6 y sus límites propios.
 
 El objetivo sigue siendo 60 FPS. Esta entrega reduce bloqueos de primera utilización; no certifica 60 FPS sostenidos en todos los circuitos o equipos. La preparación inicial puede tardar más y mantiene más recursos del auto residentes en PC.
+
+## Vehículos adicionales — 16 de septiembre de 2026
+
+Bel Air 1957 convertible y Chevrolet 3100 Pickup disponibles en el taller, junto con Chevy 250 SS Serie 2 y Chevrolet 400. Modelos propios, tres niveles de detalle, cockpit, volante y agujas animadas, espejos, lluvia y daño/pintura persistentes. Revisión visual independiente: 8/10 por modelo; no equivale a certificación fotorrealista AAAA. Dinámica estimada y audio/powertrain compartidos. Se conservan las mejoras recientes de audio móvil, capturas escalonadas y carga discreta. Pruebas móviles en Chrome emulado; iPhone físico pendiente.

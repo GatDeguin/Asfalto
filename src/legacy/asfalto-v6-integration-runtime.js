@@ -758,9 +758,10 @@
     }
     if (typeof RAPIER.init === 'function') await RAPIER.init();
     const vehicleProfile = resolveVehicleProfile(options);
-    const vehicleSpec = vehicleProfile === 'restomod'
+    const baseVehicleSpec = vehicleProfile === 'restomod'
       ? vehicleCore.CHEVY_RESTOMOD_SPEC
       : vehicleCore.CHEVY_ORIGINAL_SPEC;
+    const vehicleSpec=root.__asfaltoBuildSelectedVehicleSpec?.(baseVehicleSpec,root.__asfaltoSelectedPlayerVehicle)||baseVehicleSpec;
     if (!vehicleSpec) {
       throw new Error('perfil fisico v6 incompleto');
     }
