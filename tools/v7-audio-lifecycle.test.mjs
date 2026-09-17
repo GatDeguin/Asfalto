@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRaceDrivingAudio} from '../src/audio/race-driving-audio.mjs';
-import {createRaceSoundscape} from '../src/audio/race-soundscape.mjs?v=body-r2-20260916';
+import {createRaceSoundscape} from '../src/audio/race-soundscape.mjs?v=body-r3-20260916';
 import {createV7InteractionSound} from '../src/audio/v7-interaction-sound.mjs';
 class Parameter{value=0;setTargetAtTime(v){this.value=v;}setValueAtTime(v){this.value=v;}linearRampToValueAtTime(v){this.value=v;}exponentialRampToValueAtTime(v){this.value=v;}cancelScheduledValues(){}}
 class Node{constructor(context){this.context=context;context.nodes.push(this);for(const key of ['gain','frequency','Q','pan','threshold','knee','ratio','attack','release'])this[key]=new Parameter();}connect(next){this.connected=true;return next;}disconnect(){this.connected=false;}start(){this.started=true;}stop(when=0){if(when>this.context.currentTime){this.stopAt=when;return;}this.stopped=true;this.onended?.();}}

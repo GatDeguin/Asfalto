@@ -98,3 +98,7 @@ Revisión photo-r1: cavidades y reflectores del 400, vidrio óptico, lona, vinil
 ## Chapa y lona — body-r2-20260916
 
 Se corrigen normales de los laterales y puertas de Chevy Serie 2 sin mover vértices del master. Se detalla lona Bel Air. Comparación de cámaras idénticas, LOD y ciclo daño/reparación. Alcance y límites en BODY-R2-2026-09-16.md.
+
+## Atlas de chapa — body-r3-20260916
+
+Se corrige el canal UV de oclusión de cuatro mallas Chevy en los tres LOD. No cambian posiciones, normales, índices ni materiales. Alcance y límites en BODY-R3-2026-09-16.md.

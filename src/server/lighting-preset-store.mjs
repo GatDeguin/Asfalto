@@ -1,6 +1,6 @@
 import {lstat,mkdir,readFile} from 'node:fs/promises';
 import path from 'node:path';
-import {atomicWrite,enforceSameOrigin,readJSONBody,sendJSON} from './cockpit-layout-store.mjs?v=body-r2-20260916';
+import {atomicWrite,enforceSameOrigin,readJSONBody,sendJSON} from './cockpit-layout-store.mjs?v=body-r3-20260916';
 import {lightingPresetKey,validateLightingEntry} from '../game/lighting-presets.mjs';
 const FILE='iluminacion-carreras.json',LIMIT=4*1024*1024;
 export function createLightingPresetEndpoint(directory=null){

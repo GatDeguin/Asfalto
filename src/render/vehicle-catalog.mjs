@@ -1,4 +1,4 @@
-import {EXPANSION_VEHICLES} from './expansion-vehicle-definitions.mjs?v=body-r2-20260916';
+import {EXPANSION_VEHICLES} from './expansion-vehicle-definitions.mjs?v=body-r3-20260916';
 // Source identities and dimensions are measured from the supplied GLB, not factory specifications.
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
 export const VEHICLE_CATALOG=freeze({

@@ -3,7 +3,7 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=body-r2-20260916';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=body-r3-20260916';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({

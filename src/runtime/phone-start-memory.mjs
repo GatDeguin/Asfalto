@@ -1,4 +1,4 @@
-import {phoneCockpitAssets} from './phone-cockpit-assets.mjs?v=body-r2-20260916';
+import {phoneCockpitAssets} from './phone-cockpit-assets.mjs?v=body-r3-20260916';
 import {readDeferredPayload} from './workshop-bootstrap.mjs';
 export async function readPhoneCockpitPart(key,signal,read=readDeferredPayload){
  const entry=phoneCockpitAssets[key];if(!entry)throw new Error('Pieza móvil desconocida: '+key);

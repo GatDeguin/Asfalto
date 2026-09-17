@@ -1,4 +1,4 @@
-import { terrainHeightSampler } from './reference-landscape.mjs?v=body-r2-20260916';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=body-r3-20260916';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
 const terrainNode=o=>o.isMesh&&!o.userData?.asfaltoReplacedTerrain&&!/^(COLLISION_|ASFALTO_TERRAIN_SOURCE_OWNER|RETURN_)/.test(o.name||'')&&(/ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION/.test(o.name||'')||/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(o.material?.name||''));
