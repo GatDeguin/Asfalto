@@ -1,8 +1,8 @@
-import {createAdvancedMaterials}from'./advanced-materials.mjs?v=body-r2-20260916';
-import {createPivotPainter}from'./pivot-painter.mjs?v=body-r2-20260916';
+import {createAdvancedMaterials}from'./advanced-materials.mjs?v=body-r3-20260916';
+import {createPivotPainter}from'./pivot-painter.mjs?v=body-r3-20260916';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=body-r2-20260916';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=body-r3-20260916';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=()=> 'high',allowPivotPainter=true,samples=2,onRenderStage=null}={}){

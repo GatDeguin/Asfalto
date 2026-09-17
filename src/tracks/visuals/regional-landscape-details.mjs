@@ -2,7 +2,7 @@ import {addRetainingTalus} from './regional-talus.mjs';
 import {addSectorCollisionGuardrails} from './sector-collision-guardrails.mjs';
 // Regional details follow the read-only route and terrain. All additions are visual.
 import { applyPhotographicLeafCutout } from './regional-forest.mjs';
-import { instanceDetailTiles } from './roadside-details.mjs?v=body-r2-20260916';
+import { instanceDetailTiles } from './roadside-details.mjs?v=body-r3-20260916';
 const FOREST=new Set(['dos_lagos','paso_garibaldi']);
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const rand=n=>{const v=Math.sin(n*127.17+19.73)*43758.5453;return v-Math.floor(v);};
