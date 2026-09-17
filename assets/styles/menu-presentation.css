@@ -502,3 +502,5 @@ body.v6-reduce-motion #v6-main-menu.an-cinematic-menu * { animation:none!importa
 @media(max-width:600px){#v6-main-menu .an-token-balance{font-size:12px;padding:8px}.an-menu-footer{gap:8px}.an-menu-footer .an-replay{font-size:11px!important}}
 
 @media(max-width:600px){#v6-main-menu.an-cinematic-menu .an-menu-footer .an-v7-quick-drive{margin-inline-end:0}#v6-main-menu.an-cinematic-menu .an-menu-footer .an-replay{font-size:11px!important;padding-inline:4px}}
+
+#v6-main-menu.an-cinematic-menu[data-an-view=section] .an-token-balance{margin-left:clamp(105px,14vw,200px)}

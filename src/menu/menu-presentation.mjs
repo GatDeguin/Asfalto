@@ -61,7 +61,8 @@ function mount() {
   const quickDrive=document.createElement('button');quickDrive.type='button';quickDrive.className='an-v7-quick-drive';quickDrive.textContent='Salir a la ruta →';quickDrive.setAttribute('aria-label','Conducir con la ruta y el vehículo seleccionados');footer.append(quickDrive);
   quickDrive.addEventListener('click',async()=>{if(quickDrive.disabled)return;quickDrive.disabled=true;quickDrive.textContent='Preparando la salida…';try{await game.startDrive(game.profile().selectedDrive||'free');}catch(error){globalThis.__asfaltoV7Experience?.announce('No se pudo preparar la salida. Podés reintentar.');console.error('Salida rápida',error);}finally{quickDrive.disabled=false;quickDrive.textContent='Salir a la ruta →';}});
   const back = document.createElement('button'); back.type = 'button'; back.className = 'an-panel-back';
-  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver al menú</span>';
+  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver</span>';
+  back.setAttribute('aria-label', 'Volver al menú');
   content.prepend(back);
   for (const heading of content.querySelectorAll('.v6-panel h2')) heading.tabIndex = -1;
   for (const panel of root.querySelectorAll('.v6-panel')) {
@@ -100,7 +101,9 @@ function mount() {
     root.dataset.anAppearance = String(section && state.panel === 'workshop' && !!root.querySelector('[data-workshop-tab="appearance"][aria-selected="true"]'));
     refinements.refresh();
     service.refresh();
-    back.querySelector('.an-back-label').textContent = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
+    const backDescription = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
+    back.setAttribute('aria-label', backDescription);
+    back.querySelector('.an-back-label').textContent = 'Volver';
     content.hidden = !section;
     content.inert = !section;
     homePlate.hidden = section && !modes;
