@@ -1,7 +1,7 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=400-review-r144-20260917';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=balance-20260917';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
-import { mountMenuSections } from './menu-sections.mjs?v=400-review-r144-20260917';
+import { mountMenuSections } from './menu-sections.mjs?v=balance-20260917';
 import { mountMenuRefinements } from './menu-refinements.mjs';
 import { mountWorkshopService } from './workshop-service.mjs';
 import { fitMenuCar } from './menu-refinement-state.mjs';
@@ -50,6 +50,13 @@ function mount() {
   const footer = document.createElement('footer'); footer.className = 'an-menu-footer';
   footer.innerHTML = '<p class="an-controls-hint"><kbd>↵</kbd> Seleccionar <kbd>ESC</kbd> Volver</p><button type="button" class="an-replay">Ver animática <span aria-hidden="true">▷</span></button>';
   root.append(footer);
+  const balance = document.createElement('output');
+  balance.className = 'an-token-balance';
+  balance.setAttribute('aria-live', 'polite');
+  balance.setAttribute('aria-atomic', 'true');
+  balance.textContent = new Intl.NumberFormat('es-AR').format(game.profile().workshopTokens ?? 0) + ' fichas';
+  balance.setAttribute('aria-label', 'Fichas disponibles');
+  footer.querySelector('.an-controls-hint').replaceWith(balance);
   const replay = footer.querySelector('button');
   const quickDrive=document.createElement('button');quickDrive.type='button';quickDrive.className='an-v7-quick-drive';quickDrive.textContent='Salir a la ruta →';quickDrive.setAttribute('aria-label','Conducir con la ruta y el vehículo seleccionados');footer.append(quickDrive);
   quickDrive.addEventListener('click',async()=>{if(quickDrive.disabled)return;quickDrive.disabled=true;quickDrive.textContent='Preparando la salida…';try{await game.startDrive(game.profile().selectedDrive||'free');}catch(error){globalThis.__asfaltoV7Experience?.announce('No se pudo preparar la salida. Podés reintentar.');console.error('Salida rápida',error);}finally{quickDrive.disabled=false;quickDrive.textContent='Salir a la ruta →';}});

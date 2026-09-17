@@ -1,5 +1,5 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=400-review-r144-20260917';
-import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=400-review-r144-20260917';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=balance-20260917';
+import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=balance-20260917';
 // Optical faces share the existing capture feeds, but sit on each authored housing.
 export function attachAuthoredMirrors(T,presentation,id,feeds){
  if(getVehicleDefinition(id)?.cockpit!=='authored-interior')return null;

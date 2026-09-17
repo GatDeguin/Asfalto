@@ -1,4 +1,4 @@
-import { VEHICLE_CATALOG } from '../render/vehicle-catalog.mjs?v=400-review-r144-20260917';
+import { VEHICLE_CATALOG } from '../render/vehicle-catalog.mjs?v=balance-20260917';
 
 const FALLBACK = 'Vehículo seleccionado';
 function definition(id, catalog) {

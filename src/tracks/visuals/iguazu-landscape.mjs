@@ -1,9 +1,9 @@
 import {waterfallCameraProfile} from './regional-waterfall-camera.mjs';
 import {regionalReviewPlan} from './regional-review-plan.mjs';
 import {createIguazuFern} from './regional-forest.mjs';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=400-review-r144-20260917';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=balance-20260917';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs';
-import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=400-review-r144-20260917';
+import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=balance-20260917';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs';
 
 const sourceTemplates=new WeakMap();
@@ -71,7 +71,7 @@ export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=400-review-r144-20260917'),heightAt=terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=balance-20260917'),heightAt=terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;
     const family=band<30?(rand(seed+3)>.4?'fern':'shrub'):rand(seed+4)>.8?'palmito':'tree',parts=templates.filter(t=>t.family===family),variant=Math.floor(rand(seed+8)*Math.max(1,parts.length/2)),chosen=parts.slice(variant*2,variant*2+2);if(!chosen.length)continue;

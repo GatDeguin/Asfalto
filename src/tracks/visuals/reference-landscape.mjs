@@ -5,15 +5,15 @@ import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs';
 import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=400-review-r144-20260917';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=balance-20260917';
 import { refineRegionalBoulders } from './regional-boulders.mjs';
 import { refineRegionalShoreline } from './regional-shoreline.mjs';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=400-review-r144-20260917';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=balance-20260917';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs';
-import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=400-review-r144-20260917';
+import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=balance-20260917';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs';
 import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs';

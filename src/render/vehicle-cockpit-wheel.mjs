@@ -1,7 +1,7 @@
 /** Vehicle-specific wheel, prepared transactionally with the exterior selection.
  * The editable mount and animated steering pivot remain the input/animation contract.
  */
-const SS250_URL=new URL('../../assets/cockpit/v7/400-ss250-wheel.glb?v=400-review-r144-20260917',import.meta.url).href;
+const SS250_URL=new URL('../../assets/cockpit/v7/400-ss250-wheel.glb?v=balance-20260917',import.meta.url).href;
 const releasedRoots=new WeakSet();
 function release(root){
  if(!root||releasedRoots.has(root))return;releasedRoots.add(root);root.removeFromParent();const geometries=new Set(),materials=new Set();
