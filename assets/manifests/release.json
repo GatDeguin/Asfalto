@@ -2064,8 +2064,8 @@
     },
     {
       "path": "assets/styles/menu-presentation.css",
-      "bytes": 47907,
-      "sha256": "95CA4413DFAD7A8DC1AC8E78C64737D536DD60C48E1470B01763823B92B92802"
+      "bytes": 48017,
+      "sha256": "227552CC920C7841642EC2589DA34BD6C838953F303640D25EB74F3763B91E61"
     },
     {
       "path": "assets/styles/menu-refinements.css",
@@ -2949,8 +2949,8 @@
     },
     {
       "path": "src/menu/menu-presentation.mjs",
-      "bytes": 19604,
-      "sha256": "D8D23C02524838C811547AF76EC61553DDB1DAAC81A1C2F810B21BF58DF41C18"
+      "bytes": 19741,
+      "sha256": "B752B475DDE12787E883CEB5E6876EF7C13BF40045F28CDF6DF93FB4A5133FA0"
     },
     {
       "path": "src/menu/menu-refinement-state.mjs",
@@ -4569,8 +4569,8 @@
     }
   ],
   "fileCount": 897,
-  "totalBytes": 992155658,
-  "inventorySha256": "DFCF754C97308D8BC412204AB6F0EC1F512FDA9EA3331EB8519BA6C84CC24573",
+  "totalBytes": 992155905,
+  "inventorySha256": "A2846B732C9BFF01C5E3510541322E177D0C8BD997D055605E07E63B17878417",
   "selectionCases": 174,
   "environmentCases": [
     {
