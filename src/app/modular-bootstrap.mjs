@@ -1,10 +1,10 @@
 import {createTrackManager} from "../tracks/track-manager.mjs";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=body-r3-20260916";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=body-r3-20260916";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=body-r3-20260916";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=body-r3-20260916";
+import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=400-review-r144-20260917";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=400-review-r144-20260917";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=400-review-r144-20260917";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=400-review-r144-20260917";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=body-r3-20260916";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=400-review-r144-20260917";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;

@@ -1,4 +1,4 @@
-import {EXPANSION_VEHICLES} from './expansion-vehicle-definitions.mjs?v=body-r3-20260916';
+import {EXPANSION_VEHICLES} from './expansion-vehicle-definitions.mjs?v=400-review-r144-20260917';
 // Source identities and dimensions are measured from the supplied GLB, not factory specifications.
 function freeze(value){if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;}
 export const VEHICLE_CATALOG=freeze({
@@ -247,11 +247,11 @@ export const VEHICLE_CATALOG=freeze({
       "cgHeightM": 0.56,
       "radiusM": 0.315,
       "tireWidthM": 0.185,
-      "heightM": 1.5732945177555087,
+      "heightM": 1.45,
       "frontWeight": 0.54,
       "frontTrackM": 1.48,
       "rearTrackM": 1.47,
-      "sourceRoof": 0.3330348011512452,
+      "sourceRoof": 0.33959659934043884,
       "sourceFrontX": -0.5740175990636309,
       "sourceRearX": 0.5638383946913661,
       "sourceWheelY": -0.15268300699999993,

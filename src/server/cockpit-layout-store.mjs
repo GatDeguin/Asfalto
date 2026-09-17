@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { lstat, mkdir, open, readFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { sanitizeCompositionState } from '../game/composition-editor-state.mjs?v=body-r3-20260916';
-import { COCKPIT_LENS_PRESETS } from '../game/vehicle-camera-rig.mjs?v=body-r3-20260916';
+import { sanitizeCompositionState } from '../game/composition-editor-state.mjs?v=400-review-r144-20260917';
+import { COCKPIT_LENS_PRESETS } from '../game/vehicle-camera-rig.mjs?v=400-review-r144-20260917';
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_FILE_BYTES = 4 * MAX_BODY_BYTES; // Pretty JSON adds indentation to bounded request data.

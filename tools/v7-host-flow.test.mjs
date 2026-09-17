@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=body-r3-20260916',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=400-review-r144-20260917',import.meta.url),'utf8');
 const fn=(name,next)=>source.slice(source.indexOf('function '+name+'('),source.indexOf('function '+next+'(',source.indexOf('function '+name+'(')));
 test('production host reads physical speed/gear rather than stale DOM',()=>{const context=vm.createContext({window:{__cockpit:{raceWorld:{getState:()=>({penaltyTime:4}),getRenderFrame:()=>({currentSnapshot:{chassis:{linearVelocity:[3,0,4]},gearbox:{gear:3}}})}}},q:()=>({textContent:'999'})});vm.runInContext(fn('getGameState','reconcileChassisConfig'),context);const value=vm.runInContext('getGameState()',context);assert.equal(value.speed,18);assert.equal(value.gear,3);assert.equal(value.penalty,4);});
 test('production pause clock excludes repeated pause exactly once',()=>{let now=2000;const activeSession={pausedAt:null,startTime:1000,startMeasure:1300,brakeStart:1500,lastTime:1900};const context=vm.createContext({activeSession,performance:{now:()=>now}});vm.runInContext(fn('setSessionPaused','restartSession').replace(/async\s*$/,''),context);vm.runInContext('setSessionPaused(true)',context);now=7000;vm.runInContext('setSessionPaused(true);setSessionPaused(false);setSessionPaused(false)',context);assert.equal(activeSession.startTime,6000);assert.equal(activeSession.startMeasure,6300);assert.equal(activeSession.lastTime,7000);});

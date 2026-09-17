@@ -8,7 +8,7 @@ const sharp=require('../../Motor_Chevy_250/validation_tools/node_modules/sharp')
 const root=path.resolve('Asfalto_Nacional_v7'), out=path.resolve('Reports/Asfalto_Nacional_v7/exact-route-previews-2026-09-12');
 const assets=path.join(root,'assets/menu/game-captures'); fs.mkdirSync(out,{recursive:true});
 const catalogFile=path.join(assets,'index.json'), catalog=JSON.parse(fs.readFileSync(catalogFile));
-const {startServer}=await import('../server.mjs?v=body-r3-20260916');
+const {startServer}=await import('../server.mjs?v=400-review-r144-20260917');
 const server=await startServer({root,port:0,cockpitDataDirectory:path.join(out,'isolated-data')});
 const report={startedAt:new Date().toISOString(),source:'actual-v7-renderer',expected:174,captures:[],errors:[]};
 const save=()=>fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));

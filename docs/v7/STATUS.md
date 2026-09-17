@@ -102,3 +102,7 @@ Se corrigen normales de los laterales y puertas de Chevy Serie 2 sin mover vért
 ## Atlas de chapa — body-r3-20260916
 
 Se corrige el canal UV de oclusión de cuatro mallas Chevy en los tres LOD. No cambian posiciones, normales, índices ni materiales. Alcance y límites en BODY-R3-2026-09-16.md.
+
+## Actualización 17 de septiembre de 2026
+
+Volante, instrumentación y cámara del Chevrolet 400; revisión detallada R144 disponible con ?ss250Interior=1 (PC, en desarrollo). El modelo normal y el perfil móvil mantienen los LOD publicados. Nueva partida: 100 créditos. Evaluación visual del modelo de revisión: cabina6.7/global6.5; objetivo9.5 pendiente. No se afirma validación física en iPhone.
