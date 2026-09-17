@@ -1,4 +1,4 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=body-r3-20260916';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=400-review-r144-20260917';
 
 let instanceCount = 0;
 

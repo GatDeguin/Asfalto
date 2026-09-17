@@ -1,16 +1,16 @@
 import { createRoadWetnessField } from './weather-road-wetness.mjs';
-import { createRivalWeatherParticles } from './weather-rival-particles.mjs?v=body-r3-20260916';
+import { createRivalWeatherParticles } from './weather-rival-particles.mjs?v=400-review-r144-20260917';
 import { createWaterfallEffects } from './weather-waterfalls.mjs';
 import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs';
 import { weatherEffectsPolicy, createVehicleEmissionState } from './weather-effects-policy.mjs';
 import { createWeatherLayers } from './weather-layers.mjs';
-import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=body-r3-20260916';
-import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=body-r3-20260916';
+import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=400-review-r144-20260917';
+import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=400-review-r144-20260917';
 import { createSkyMatchedFog } from './sky-matched-fog.mjs';
 import { createWeatherDynamics } from './weather-dynamics.mjs';
 import { createWeatherWind } from './weather-wind.mjs';
 import { createWeatherLightning } from './weather-lightning.mjs';
-import { createWeatherWindshield } from './weather-windshield.mjs?v=body-r3-20260916';
+import { createWeatherWindshield } from './weather-windshield.mjs?v=400-review-r144-20260917';
 import { createVehicleRainSurfaces } from './weather-vehicle-surface.mjs';
 
 /** Visual-only effects in the live renderer's metre-scale scene coordinates. */

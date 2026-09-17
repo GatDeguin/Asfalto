@@ -208,7 +208,7 @@ function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
   let baseHorizontalFovDeg = CAMERA_TOKENS[mode].horizontalFovDeg;
   if (mode === 'cockpit') {
     position = localPoint(origin, basis, add(vector(frame.cockpitAnchorM,CAMERA_TOKENS.cockpit.anchorM), cockpitCalibration.positionOffsetM));
-    look = add(add(position, scale(basis.forward, 14)),scale(basis.up,-Math.tan(clamp(finite(frame.cockpitLookDownDeg),0,15)*DEG)*14));
+    look = add(add(position, scale(basis.forward, 14)),scale(basis.up,-Math.tan(clamp(finite(frame.cockpitLookDownDeg),0,30)*DEG)*14));
     baseHorizontalFovDeg = cockpitCalibration.baseHorizontalFovDeg;
   } else if (mode === 'hood') {
     position = localPoint(origin, basis, vector(frame.hoodAnchorM,CAMERA_TOKENS.hood.anchorM));

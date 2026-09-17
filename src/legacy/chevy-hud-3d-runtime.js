@@ -2,6 +2,7 @@
 (() => {
 'use strict';
 const VERSION='1.0.0';
+const reviewInterior=new URLSearchParams(location.search).get('ss250Interior')==='1';
 const $=(selector,root=document)=>root.querySelector(selector);
 const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
 const normalizeDegrees=value=>((Number(value)||0)%360+360)%360;
@@ -20,7 +21,7 @@ const elements={
 const publicState={
   objective:{main:'CONDUCCIÓN LIBRE',sub:'SIN MEDICIÓN ACTIVA'},timerMs:0,
   navigation:{heading:0,distanceKm:0,mode:'RECORRIDO'},
-  telemetry:{gear:'N',rpm:820,oilStatus:'normal',temperatureC:88,temperatureStatus:'normal'},
+  telemetry:{gear:'—',rpm:null,oilStatus:'unavailable',temperatureC:null,temperatureStatus:'unavailable',oilSource:'unavailable',source:'unavailable'},
   renderer:{ready:false,errors:[],contextCount:1}
 };
 const api=window.__chevyHud3D={
@@ -33,7 +34,7 @@ let renderer=null;
 let entries=[];
 let lastProfile=null;
 let lastProfileRead=0;
-let smoothedTemperature=88;
+let vehicleHudTelemetry=null;
 
 function waitForThree(){
   const current=window.__chevyV6Three||window.THREE;
@@ -241,6 +242,8 @@ function applyModelState(){
   const navigation=entries.find(entry=>entry.key==='navigation');
   if(navigation?.needle)navigation.needle.rotation.z=navigation.needleBase-publicState.navigation.heading*Math.PI/180;
   const telemetry=entries.find(entry=>entry.key==='telemetry'),active=Math.min(12,Math.max(0,Math.ceil(publicState.telemetry.rpm/8000*12)));
+  const compact=reviewInterior&&document.body.classList.contains('an-ss250-clear-console')&&!document.body.classList.contains('an-phone-hud')&&innerWidth>900;
+  for(const [name,node] of telemetry?.nodeMap||[])if(/^(OilIcon_|TemperatureIcon_)/.test(name))node.visible=!compact;
   telemetry?.rpmSegments?.forEach((node,index)=>{
     const isActive=index<active,color=index<7?0xff4d00:index<10?0xe93600:0xc91f00;
     node.traverse(object=>{if(!object.isMesh)return;for(const material of (Array.isArray(object.material)?object.material:[object.material])){
@@ -302,32 +305,27 @@ function deriveNavigation(race,objective){
   return {heading,distanceKm:meters/1000,mode:label};
 }
 function deriveTelemetry(full,race,time){
-  const rpm=clamp(Number(full?.vehicle?.rpm??race?.rpm??$('#rpm-value')?.textContent??820)||820,0,8000);
-  const rawGear=String(full?.gear?.gear??race?.gear??$('#gear-value')?.textContent??'N').toUpperCase(),gear=['R','N','1','2','3','4','5'].includes(rawGear)?rawGear:'N';
-  const profile=readProfile(time),engineCondition=clamp(Number(profile?.condition?.engine??92),0,100),oilCondition=clamp(Number(profile?.condition?.oil??84),0,100);
-  const elapsed=Math.max(0,Number(race?.totalTime)||0),speed=Math.abs(Number(full?.vehicle?.speedKmh??race?.feedback?.speedMps*3.6??0)||0),weather=race?.settings?.weather||'clear';
-  const weatherHeat={clear:1,cloudy:0,rain:-5,storm:-7,fog:-2}[weather]??0;
-  const target=clamp(84+(rpm/8000)*18+Math.min(11,elapsed/150)+(100-engineCondition)*.16+(speed<20&&rpm>3000?4:0)+weatherHeat,72,122);
-  smoothedTemperature+= (target-smoothedTemperature)*.08;
-  const temperatureC=Math.round(smoothedTemperature),temperatureStatus=temperatureC>=110?'critical':temperatureC>=100?'warning':'normal';
-  const oilStatus=oilCondition<35||temperatureC>=116?'critical':oilCondition<62||temperatureC>=104?'warning':'normal';
-  return {gear,rpm:Math.round(rpm),oilStatus,temperatureC,temperatureStatus};
+ const snapshot=window.__cockpit?.raceWorld?.getRenderFrame?.()?.currentSnapshot;
+ return vehicleHudTelemetry(snapshot,readProfile(time)?.condition?.oil);
 }
-function statusWord(status){return status==='critical'?'CRÍTICO':status==='warning'?'ALERTA':'NORMAL'}
+
+function statusWord(status){return status==='critical'?'CRÍTICO':status==='warning'?'ALERTA':status==='unavailable'?'SIN DATO':'NORMAL'}
 function updateDom(){
   elements.objectiveMain.textContent=publicState.objective.main;elements.objectiveSub.textContent=publicState.objective.sub;
   elements.timer.value=formatTimer(publicState.timerMs);
   elements.navHeading.textContent=cardinal(publicState.navigation.heading);elements.navHeading.setAttribute('aria-label',`${cardinal(publicState.navigation.heading)}, ${Math.round(publicState.navigation.heading)} grados`);
   elements.navValue.value=formatDistance(publicState.navigation.distanceKm);elements.navMode.textContent=publicState.navigation.mode;
-  elements.gear.value=publicState.telemetry.gear;elements.rpm.value=`${String(publicState.telemetry.rpm).padStart(4,'0')} RPM`;
-  elements.oil.textContent=`ACEITE ${statusWord(publicState.telemetry.oilStatus)}`;elements.oil.dataset.level=publicState.telemetry.oilStatus;
-  elements.temperature.textContent=`TEMPERATURA ${publicState.telemetry.temperatureC}°`;elements.temperature.dataset.level=publicState.telemetry.temperatureStatus;
+  elements.gear.value=publicState.telemetry.gear;elements.rpm.value=publicState.telemetry.rpm===null?'— RPM':`${String(publicState.telemetry.rpm).padStart(4,'0')} RPM`;
+  elements.oil.textContent=`CONDICIÓN ACEITE ${statusWord(publicState.telemetry.oilStatus)}`;elements.oil.dataset.level=publicState.telemetry.oilStatus;
+  elements.temperature.textContent=publicState.telemetry.temperatureC===null?'TEMPERATURA —':`TEMPERATURA ${publicState.telemetry.temperatureC}°`;elements.temperature.dataset.level=publicState.telemetry.temperatureStatus;
 }
 function updateHudState(time){
+  const clearConsole=reviewInterior&&window.__asfaltoSelectedPlayerVehicle==='chevy_400_1957'&&window.__cockpit?.raceCameraMode?.()==='cockpit';
+  document.body.classList.toggle('an-ss250-clear-console',clearConsole);
   const full=getCockpitState(),race=full?.race||{};publicState.objective=objectiveText();publicState.timerMs=deriveTimer(race);publicState.navigation=deriveNavigation(race,publicState.objective);publicState.telemetry=deriveTelemetry(full,race,time);updateDom();applyModelState();
 }
 async function boot(){
-  try{await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs',document.baseURI));if(detectDeviceProfile().phone){const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs',document.baseURI));renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));return;}const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());api.ready=true;publicState.renderer.ready=entries.length===4;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));console.info('[Chevy HUD 3D] cuatro módulos cargados en un canvas compartido',api.getDiagnostics())}
+  try{const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);({vehicleHudTelemetry}=await import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=400-review-r144-20260917',document.baseURI)));await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs',document.baseURI));if(detectDeviceProfile().phone){const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs',document.baseURI));renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));return;}const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());api.ready=true;publicState.renderer.ready=entries.length===4;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));console.info('[Chevy HUD 3D] cuatro módulos cargados en un canvas compartido',api.getDiagnostics())}
   catch(error){markRenderFailure(error);for(const host of document.querySelectorAll('.chevy-hud-host'))host.dataset.renderState='error';api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-error',{detail:{message:error?.message||String(error)}}))}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

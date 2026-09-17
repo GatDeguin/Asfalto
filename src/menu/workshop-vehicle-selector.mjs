@@ -1,5 +1,5 @@
-import {createVehicleSelection} from '../game/vehicle-selection.mjs?v=body-r3-20260916';
-import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=body-r3-20260916';
+import {createVehicleSelection} from '../game/vehicle-selection.mjs?v=400-review-r144-20260917';
+import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=400-review-r144-20260917';
 const labels=Object.fromEntries(Object.values(VEHICLE_CATALOG).map(v=>[v.id,v.label]));
 export function installWorkshopVehicleSelector({workshop,prepareRace,prepareWorkshop,root=document,storage=globalThis.__asfaltoV7Storage}={}){
  const select=root.querySelector('#v6-workshop-vehicle'),status=root.querySelector('#v6-workshop-vehicle-status'),container=select?.closest('.an-workshop-vehicle-select');if(!select||!status)return null;

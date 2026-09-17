@@ -1,8 +1,8 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=body-r3-20260916';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=400-review-r144-20260917';
 import {engineGLTFLoaderClass} from './engine-gltf-loader-factory.mjs';
 import {createEngineMechanism} from './engine-mechanism.mjs';
 import {cycleState} from './engine-chevy-math.mjs';
-import {resolveWorkshopEngineMount} from './vehicle-engine-mount.mjs?v=body-r3-20260916';
+import {resolveWorkshopEngineMount} from './vehicle-engine-mount.mjs?v=400-review-r144-20260917';
 const normalized=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
 const textureKeys=['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','bumpMap'];

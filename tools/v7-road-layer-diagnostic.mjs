@@ -1,4 +1,4 @@
-import {createWeatherSurfaceController} from '../src/render/weather-surfaces.mjs?v=body-r3-20260916';
+import {createWeatherSurfaceController} from '../src/render/weather-surfaces.mjs?v=400-review-r144-20260917';
 export async function layers({regional=false,weather=false}={}){
  globalThis.qaRebuild.reliefOnly(); const T=__chevyV6Three;
  const fake={children:qaRoadMeshes.map(e=>e.mesh),userData:{},updateMatrixWorld(){},traverse(callback){for(const e of qaRoadMeshes)callback(e.mesh);}};

@@ -1,7 +1,7 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=body-r3-20260916';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=400-review-r144-20260917';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
-import { mountMenuSections } from './menu-sections.mjs?v=body-r3-20260916';
+import { mountMenuSections } from './menu-sections.mjs?v=400-review-r144-20260917';
 import { mountMenuRefinements } from './menu-refinements.mjs';
 import { mountWorkshopService } from './workshop-service.mjs';
 import { fitMenuCar } from './menu-refinement-state.mjs';
