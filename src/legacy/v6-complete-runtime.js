@@ -97,7 +97,7 @@ const COLLECTION=[
 const DEFAULT_PROFILE={
  version:6,createdAt:new Date().toISOString(),name:'Propietario',level:1,xp:0,
  axes:{dominio:0,mecanica:0,historia:0,ruta:0,competencia:0,coleccion:0},
- workshopTokens:2,
+ workshopTokens:100,
  appearance:{body:'naranja',stripe:'black',wheel:'steel',tire:'bias',height:0,plate:'C-1973',dirt:18},
  parts:Object.fromEntries(PARTS.map(p=>[p.id,'original'])),
  tuning:Object.fromEntries(TUNING.map(t=>[t.id,t.base])),

@@ -2539,8 +2539,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 80747,
-      "sha256": "410DE4C51736B6BEC392A3CBC65DF49809A55AB7C40BFF45F6F081A11F2F0F1B"
+      "bytes": 80750,
+      "sha256": "84F82265669769633CB95768BF0DC824303BEDBCEC030DFB539D90DD975756B6"
     },
     {
       "path": "server.mjs",
@@ -2909,8 +2909,8 @@
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 127765,
-      "sha256": "2BAFADDA3E3488153809BBCDE7B84CC7F1D01BC7E354A96704282A684E4783AB"
+      "bytes": 127767,
+      "sha256": "0FAB07BBB42D81491D62C289850520AA5AC0635A03216A77699936F16B60FFC4"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -4524,7 +4524,7 @@
     }
   ],
   "fileCount": 888,
-  "totalBytes": 976051134,
+  "totalBytes": 976051139,
   "inventorySha256": "C16FA8B415FCF173D9E90A1DEF08A38DB083EDAB0652D55CE8BFF44D987B3069",
   "selectionCases": 174,
   "environmentCases": [
