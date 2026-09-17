@@ -1,5 +1,5 @@
-import {ss250InteriorReviewEnabled,SS250_REVIEW_EYE} from '../render/ss250-interior-review.mjs?v=400-review-r144-20260917';
-import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=400-review-r144-20260917';
+import {ss250InteriorReviewEnabled,SS250_REVIEW_EYE} from '../render/ss250-interior-review.mjs?v=balance-20260917';
+import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=balance-20260917';
 export function buildVehiclePhysicsSpec(base,id){
  const definition=getVehicleDefinition(id);if(!definition?.physicsEstimate)return base;
  return {...structuredClone(base),...structuredClone(definition.physicsEstimate),id:`${id}-${base.profile||'original'}`,label:definition.label,isCalibrationOnly:true};

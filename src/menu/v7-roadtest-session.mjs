@@ -1,5 +1,5 @@
 import {createPhysicalRoadTestValidator,createSlalomCourse} from '../game/physical-road-tests.mjs';
-import {freezeRoadTestData,validateRoadTestReceipt} from './v7-roadtest-receipts.mjs?v=400-review-r144-20260917';
+import {freezeRoadTestData,validateRoadTestReceipt} from './v7-roadtest-receipts.mjs?v=balance-20260917';
 export {createSlalomCourse};
 export {configurationFingerprint} from './v7-championship-result.mjs';
 /** Subscribe only after the awaited raceStart. RAF may display this state; it cannot produce results. */
