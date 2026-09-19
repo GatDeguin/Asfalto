@@ -4,7 +4,7 @@ on:
     branches: [graphics/cinematic-ultra-20260918]
     paths: [.github/workflows/cinematic-verify.yml]
   pull_request:
-    paths: ['src/render/**', 'src/performance/**', 'tools/cinematic-*', '.github/workflows/cinematic-verify.yml']
+    paths: ['index.html', 'src/legacy/module-02.mjs', 'src/legacy/v6-complete-runtime.js', 'src/tracks/visuals/**', 'src/render/**', 'src/performance/**', 'tools/cinematic-*', '.github/workflows/cinematic-verify.yml']
 permissions:
   contents: read
 concurrency:
@@ -23,6 +23,7 @@ jobs:
           mkdir -p qa-output
           git rev-parse HEAD | tee qa-output/revision.txt
           node --version | tee qa-output/node-version.txt
+          set -o pipefail
           node --test tools/cinematic-*.test.mjs | tee qa-output/cinematic-contracts.tap
           node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
           node --check src/legacy/module-02.mjs
@@ -54,6 +55,7 @@ jobs:
           path: qa-output/
           retention-days: 7
       - name: Exercise actual workshop and five circuit scenarios
+        if: ${{ !cancelled() }}
         timeout-minutes: 12
         run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/browser --full-game --skip-fixtures
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

@@ -26,7 +26,7 @@ def main():
         try:
             page.goto(args.base_url + '/?qa=1', wait_until='domcontentloaded', timeout=60000)
             page.evaluate('globalThis.__asfaltoIntro?.skip?.()')
-            page.wait_for_function('__chevyV6Complete?.homeReady', timeout=240000)
+            page.wait_for_function('globalThis.__chevyV6Complete?.homeReady', timeout=240000)
             page.evaluate('__chevyV6Complete.workshop.setActive(false)')
             for mode in ['unchanged', 'no-ao', 'no-local-env', 'no-received-shadow', 'no-material-hooks', 'normal-debug']:
                 data = page.evaluate("""mode=>{
