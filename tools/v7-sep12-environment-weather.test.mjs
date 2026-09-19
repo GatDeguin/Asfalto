@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../../Web/vendor/three.module.js';
+import {THREE} from './cinematic-three.mjs';
 import {createRaceDayCycle,createRaceDayEnvironment,sampleRaceDayCycle} from '../src/environment/race-day-cycle.mjs';
 import {resolveEnvironment,getWeatherOptionsForTrack} from '../src/environment/environment-profiles.mjs';
 const weatherModule=await import('../src/environment/race-weather-cycle.mjs').catch(()=>({}));

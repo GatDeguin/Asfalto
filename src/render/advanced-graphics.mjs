@@ -1,3 +1,4 @@
+import {createWorkshopRenderBudget} from './render-budget.mjs';
 import {createTextureFiltering} from './texture-filtering.mjs';
 import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs';
 import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs';
@@ -8,18 +9,19 @@ import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs';
 import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=balance-20260917';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs';
-export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,samples=2,onRenderStage=null}={}){
+export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
  let settings=readAdvancedGraphics(),disposed=false,lastRefresh=-10,lastSignature='',lastField=-10,frames=0;
  // Reuse the same governor for the workshop's own frame intervals. Never feed
  // animation-clamped dt or synthetic FPS into it; the race keeps its existing owner.
+ const rendererBudget=scope==='workshop'?createWorkshopRenderBudget(T,{renderer,phone}):null;
  const maximum=()=>maximumTierForGraphicsQuality(getMaximumQuality(),settings.quality);
- const performanceGovernor=scope==='workshop'&&!getQuality?createTrackPerformanceGovernor({initialTier:maximum(),maximumTier:maximum(),onTierChange:()=>{}}):null;
+ const performanceGovernor=scope==='workshop'&&!getQuality?createTrackPerformanceGovernor({initialTier:maximum(),maximumTier:maximum(),onTierChange:transition=>rendererBudget?.apply(transition.tier)}):null;
  const governed=()=>getQuality?.()??performanceGovernor?.tier()??'high';
  let quality=effectiveGraphicsQuality(settings,governed()),frameTime=null,lastFrameTime=null,pendingFrame=false,lastLimitCheck=-Infinity;
  const filtering=createTextureFiltering(T,{root:scene,renderer,quality});
- const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,onStage:onRenderStage});
+ const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,phone,framePassCount:scope==='workshop'?1:2,onStage:onRenderStage});
  function configure(){
-  performanceGovernor?.setMaximumTier(maximum());quality=effectiveGraphicsQuality(settings,governed());filtering.setQuality(quality);const budget=screenLightingPolicy(quality);
+  performanceGovernor?.setMaximumTier(maximum());rendererBudget?.apply(governed());quality=effectiveGraphicsQuality(settings,governed());filtering.setQuality(quality);const budget=screenLightingPolicy(quality);
   materials.setQuality(settings.materials?quality:'off');pivot.setQuality(settings.pivotPainter?quality:'off');field.setQuality(settings.dfao?quality:'off');
   atmosphere.setQuality(settings.volumetrics||settings.sky?quality:'off');post.setQuality(quality);post.setFeatures(settings);
   setSurfaceReliefPDO(settings.pdo&&quality!=='off'&&quality!=='low');
@@ -30,6 +32,8 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  const change=event=>setSettings(event.detail||{});globalThis.addEventListener?.('asfalto:advanced-graphics',change);configure();refresh();
  return{
   refresh,setSettings,getEffectiveQuality:()=>quality,
+  resizeRenderer:dimensions=>rendererBudget?.apply(governed(),dimensions),
+  getRendererQuality:()=>governed(),
   beginFrameWindow(){lastFrameTime=null;pendingFrame=false;return performanceGovernor?.beginWindow('workshop-visible');},
   update({time=0,environment=getEnvironment()}={}){
    if(disposed)return;
@@ -55,7 +59,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
     }
    }
   },
-  diagnostics:()=>({scope,settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
-  dispose(){if(disposed)return;disposed=true;globalThis.removeEventListener?.('asfalto:advanced-graphics',change);post.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
+  diagnostics:()=>({scope,settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),rendererBudget:rendererBudget?.diagnostics()||null,measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
+  dispose(){if(disposed)return;disposed=true;globalThis.removeEventListener?.('asfalto:advanced-graphics',change);post.dispose();rendererBudget?.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
  };
 }

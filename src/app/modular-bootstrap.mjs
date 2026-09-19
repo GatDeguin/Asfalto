@@ -1,3 +1,4 @@
+import {waitForSignal} from '../runtime/abortable.mjs';
 import {createTrackManager} from "../tracks/track-manager.mjs";
 import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=balance-20260917";
 import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=balance-20260917";
@@ -37,7 +38,7 @@ async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loadin
 
 export function connectModularHost(boundary){if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));if(connectPromise)return connectPromise;runtimeBoundary=Object.freeze({...boundary});connectPromise=ensureBoot().then(({registry:loadedRegistry,trackManager:manager})=>{const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;return manager.select(selectedId)}).then(adapter=>{if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");resolveReady(adapter);return adapter});connectPromise.catch(()=>{});return connectPromise}
 
-async function selectTrack(id){if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await ensureBoot();const adapter=await manager.select(id);if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
+async function selectTrack(id,{signal,timeoutMs}={}){signal?.throwIfAborted();if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await waitForSignal(ensureBoot(),signal);const adapter=await manager.select(id,{signal,timeoutMs});if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
 function beginHostInitialization(){
  if(hostInitialization)return hostInitialization.api;
  let resolveCompletion;let rejectCompletion;let settled=false;let failure=null;let ownedOperation=null;

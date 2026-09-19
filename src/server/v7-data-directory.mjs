@@ -10,7 +10,7 @@ export async function prepareV7DataDirectory({sourceDirectory,targetDirectory}){
  if(sourceReal===targetReal)throw new RangeError('El destino v7 debe ser diferente del original.');
  for(const file of ['cockpit-layout.json','iluminacion-carreras.json']){
   try{await copyFile(path.join(source,file),path.join(target,file),constants.COPYFILE_EXCL);}
-  catch(error){if(error.code!=='EEXIST'&&error.code!=='ENOENT')throw error;}
+  catch(error){if(error.code==='ENOENT'&&file==='iluminacion-carreras.json'){try{await copyFile(path.join(source,'lighting-presets.json'),path.join(target,file),constants.COPYFILE_EXCL);}catch(fallback){if(fallback.code!=='EEXIST'&&fallback.code!=='ENOENT')throw fallback;}}else if(error.code!=='EEXIST'&&error.code!=='ENOENT')throw error;}
  }
  return targetReal;
 }

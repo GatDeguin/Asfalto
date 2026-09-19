@@ -13,7 +13,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  const box=()=>primitive('box',()=>new T.BoxGeometry(1,1,1));
  const cylinder=(n=32)=>primitive('cyl'+n,()=>new T.CylinderGeometry(1,1,1,n,1));
  const cone=()=>primitive('cone',()=>new T.ConeGeometry(1,1,16,1));
- const ring=(arc=Math.PI*2)=>primitive('ring'+arc,()=>new T.TorusGeometry(1,.08,8,48,arc));
+ const ring=(arc=Math.PI*2,segments=48,radial=8)=>primitive('ring'+arc+':'+segments+':'+radial,()=>new T.TorusGeometry(1,.08,radial,segments,arc));
  function beveledBox(size,radius){
   const r=Math.min(radius,...size.map(v=>v/4)),key='bevel:'+size.join(',')+':'+r;
   return primitive(key,()=>{const g=new T.BoxGeometry(1,1,1,3,3,3),p=g.attributes.position,n=g.attributes.normal;
@@ -22,7 +22,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  }
  function batch(parent,name,boxBevel=.002){const pieces=new Map();return{
   add(g,m,p=[0,0,0],s=[1,1,1],r=[0,0,0]){if(g===box()&&(m===wood||m===stone||name.includes(':'))){g=beveledBox(s,boxBevel);s=[1,1,1];}const geometry=g.index?g.toNonIndexed():g.clone();const matrix=new T.Matrix4().compose(new T.Vector3(...p),new T.Quaternion().setFromEuler(new T.Euler(...r)),new T.Vector3(...s));geometry.applyMatrix4(matrix);if(!pieces.has(m))pieces.set(m,[]);pieces.get(m).push(geometry);},
-  finish(){for(const [m,list] of pieces){const count=list.reduce((n,g)=>n+g.attributes.position.count,0),geometry=new T.BufferGeometry(),arrays={position:new Float32Array(count*3),normal:new Float32Array(count*3),uv:new Float32Array(count*2)};let offset=0;for(const g of list){for(const key of Object.keys(arrays)){const attr=g.attributes[key],size=key==='uv'?2:3;if(attr)arrays[key].set(attr.array,offset*size);}offset+=g.attributes.position.count;g.dispose();}for(const [key,array] of Object.entries(arrays))geometry.setAttribute(key,new T.Float32BufferAttribute(array,key==='uv'?2:3));geometry.computeBoundingBox();geometry.computeBoundingSphere();owned.geometries.add(geometry);const mesh=new T.Mesh(geometry,m);mesh.name=name+'_'+m.name;mesh.receiveShadow=true;mesh.castShadow=true;parent.add(mesh);}pieces.clear();}
+  finish({castShadow=true,receiveShadow=true}={}){for(const [m,list] of pieces){const count=list.reduce((n,g)=>n+g.attributes.position.count,0),geometry=new T.BufferGeometry(),arrays={position:new Float32Array(count*3),normal:new Float32Array(count*3),uv:new Float32Array(count*2)};let offset=0;for(const g of list){for(const key of Object.keys(arrays)){const attr=g.attributes[key],size=key==='uv'?2:3;if(attr)arrays[key].set(attr.array,offset*size);}offset+=g.attributes.position.count;g.dispose();}for(const [key,array] of Object.entries(arrays))geometry.setAttribute(key,new T.Float32BufferAttribute(array,key==='uv'?2:3));geometry.computeBoundingBox();geometry.computeBoundingSphere();owned.geometries.add(geometry);const mesh=new T.Mesh(geometry,m);mesh.name=name+'_'+m.name;mesh.receiveShadow=receiveShadow;mesh.castShadow=castShadow;parent.add(mesh);}pieces.clear();}
  };}
  function bar(b,m,a,z,width=.02){const first=new T.Vector3(...a),last=new T.Vector3(...z),delta=last.clone().sub(first),q=new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),delta.clone().normalize()),e=new T.Euler().setFromQuaternion(q);b.add(cylinder(12),m,first.add(last).multiplyScalar(.5).toArray(),[width,delta.length(),width],[e.x,e.y,e.z]);}
  function path(b,m,points,width=.02){for(let i=1;i<points.length;i++)bar(b,m,points[i-1],points[i],width);}
@@ -44,7 +44,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  AWARDS.forEach((a,i)=>{const p=positionFor(a,i);slots.push({id:a.id,kind:a.kind,position:[...p],heightM:a.heightM});if(a.kind==='test-medal'){cabinet.add(cylinder(8),bronze,[p[0],p[1]+.073,-.004],[.005,.288,.005],[Math.PI/2,0,0]);cabinet.add(cylinder(8),bronze,[p[0],p[1]+.079,.141],[.005,.022,.005]);}else cabinet.add(box(),bronze,[p[0],p[1]-.006,.045],[a.kind==='cup'?.31:.29,.006,.22]);});
  cabinet.finish();
  const stripMaterial=material('WarmShelfStrip','#b69060',.72,.05);stripMaterial.emissive.set('#f1bf7e');stripMaterial.emissiveIntensity=.35;
- const strips=batch(root,'ShelfStrips');for(const y of [.9865,1.4765,2.109])strips.add(box(),stripMaterial,[0,y,.17],[3.48,.0005,.009]);strips.finish();
+ const strips=batch(root,'ShelfStrips');for(const y of [.9865,1.4765,2.109])strips.add(box(),stripMaterial,[0,y,.17],[3.48,.0005,.009]);strips.finish({castShadow:false,receiveShadow:false});
 
  // One local atlas for all plaques. Textures supplied by the host are never mutated/disposed.
  const labelRows=[{text:'ARCHIVO DEL TALLER',p:[0,2.153,.21],w:1.12,h:.067},...AWARDS.map((a,i)=>{const p=positionFor(a,i);return{text:a.title.toUpperCase(),p:[p[0],a.kind==='test-medal'?p[1]-.035:p[1]-.044,.21],w:a.kind==='test-medal'?.46:.6,h:a.kind==='test-medal'?.031:.035};}),{text:'ESPACIOS RESERVADOS PARA PREMIOS OBTENIDOS',p:[0,.944,.21],w:2.3,h:.035}];
@@ -61,8 +61,8 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
 
  function awardGeometry(a,index){const group=new T.Group();group.name='Award_'+a.id;group.userData={awardId:a.id,shape:a.shape,heightM:a.heightM,earned:false};const b=batch(group,a.id,.002/a.heightM);const main=a.material.includes('silver')||a.material.includes('nickel')||a.material.includes('aluminium')?silver:a.material.includes('copper')?copper:a.kind==='cup'&&a.championshipId==='gran_nacional'?gold:bronze;
   if(a.kind==='test-medal'){
-   const k=index-5;b.add(cylinder([24,10,12,8,16,14,24,8,20,12,24,16][k]),main,[0,.5,0],[.5,.08,.5],[Math.PI/2,0,0]);b.add(ring(),gold,[0,.5,.046],[.445,.445,.445]);
-   const line=(pts,w=.022)=>path(b,gold,pts.map(([x,y])=>[x,y,.075]),w),arc=(x,y,r,angle=Math.PI*2,rot=0)=>b.add(ring(angle),gold,[x,y,.075],[r,r,r],[0,0,rot]);
+   const k=index-5;b.add(cylinder([24,10,12,8,16,14,24,8,20,12,24,16][k]),main,[0,.5,0],[.5,.08,.5],[Math.PI/2,0,0]);b.add(ring(Math.PI*2,32,6),gold,[0,.5,.046],[.445,.445,.445]);
+   const line=(pts,w=.022)=>path(b,gold,pts.map(([x,y])=>[x,y,.075]),w),arc=(x,y,r,angle=Math.PI*2,rot=0)=>b.add(ring(angle,32,6),gold,[x,y,.075],[r,r,r],[0,0,rot]);
    if(k===0){arc(0,.51,.27,Math.PI,0);line([[0,.45],[.25,.77]],.027);}
    if(k===1||k===2){arc(-.16,.52,.13);arc(.17,.52,k===2?.21:.13);if(k===2)line([[-.29,.29],[.29,.29]]);}
    if(k===3||k===4){line([[-.32,.5],[.32,.5]]);for(let j=0;j<(k===3?5:10);j++){const x=-.28+j*.56/(k===3?4:9);line([[x,.42],[x,.59]],.011);}}
