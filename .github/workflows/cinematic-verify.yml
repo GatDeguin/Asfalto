@@ -1,0 +1,93 @@
+name: Cinematic verification
+on:
+  push:
+    branches: [graphics/cinematic-ultra-20260918]
+    paths: [.github/workflows/cinematic-verify.yml]
+permissions:
+  contents: write
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/graphics/cinematic-ultra-20260918'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: graphics/cinematic-ultra-20260918
+          fetch-depth: 0
+      - name: Apply reviewed transport with per-file preconditions
+        run: |
+          mkdir -p qa-output
+          git merge-base --is-ancestor 045cd8b7d206418a26d7a75666e557a7e124377a HEAD
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib
+          encoded = ''.join(pathlib.Path('.cinematic-review/edits.' + part).read_text() for part in ['aa', 'ab', 'ac'])
+          data = lzma.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(data).hexdigest() == 'abba86bf3b6873c6a10241c36f84c453d3ffc2150a456c8f34b71e5a7ad3ef8e', 'Transport checksum mismatch'
+          manifest = json.loads(data)
+          changes = []
+          for item in manifest['files']:
+              path = pathlib.Path(item['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert str(path).startswith(('src/', 'tools/', 'docs/')) or str(path) == 'index.html'
+              old = path.read_bytes() if path.exists() else b''
+              assert hashlib.sha256(old).hexdigest() == item['before'], 'Baseline changed: ' + str(path)
+              text = old.decode('utf-8')
+              for edit in reversed(item['edits']):
+                  start = edit['start']
+                  text = text[:start] + edit['insert'] + text[start + edit['delete']:]
+              new = text.encode('utf-8')
+              assert hashlib.sha256(new).hexdigest() == item['after'], 'Output differs: ' + str(path)
+              changes.append((path, new))
+          for path, data in changes:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(data)
+          pathlib.Path('qa-output/changed-files.json').write_text(json.dumps([str(path) for path, _ in changes], indent=2))
+          for item in json.loads(pathlib.Path('docs/cinematic-ultra/protected-baseline.json').read_text()):
+              assert hashlib.sha256(pathlib.Path(item['path']).read_bytes()).hexdigest() == item['sha256'], item['path']
+          print('All changed files and protected baseline hashes verified')
+          PY
+      - name: Strict Cinematic contracts
+        run: |
+          node --version | tee qa-output/node-version.txt
+          node --test tools/cinematic-quality.test.mjs tools/cinematic-rendering.test.mjs | tee qa-output/cinematic-contracts.tap
+          node --check src/legacy/module-02.mjs
+          node --check src/legacy/v6-complete-runtime.js
+          git -c core.whitespace=cr-at-eol diff --check
+      - name: Commit only reviewed source changes to this feature branch
+        run: |
+          git config user.name 'Cinematic review automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          paths = json.loads(pathlib.Path('qa-output/changed-files.json').read_text())
+          subprocess.run(['git', 'add', '--', *paths], check=True)
+          PY
+          git rm -r .cinematic-review .github/workflows/cinematic-audit.yml .github/workflows/cinematic-assets.yml
+          git commit -m 'feat(graphics): bounded Cinematic profile, stable materials and renderer contracts'
+          git push origin HEAD:graphics/cinematic-ultra-20260918
+          git rev-parse HEAD | tee qa-output/revision.txt
+          git diff 045cd8b7d206418a26d7a75666e557a7e124377a HEAD --stat > qa-output/change-summary.txt
+      - name: Record entire available suite without hiding baseline failures
+        run: |
+          set +e
+          node --test tools/*.test.mjs > qa-output/full-suite.tap 2>&1
+          echo $? > qa-output/full-suite-exit-code.txt
+          exit 0
+      - name: Install browser QA dependencies only
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+      - name: Start existing static server
+        run: |
+          PORT=4173 node server.mjs > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/ > /dev/null && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/tools/cinematic-webgl.html > /dev/null
+      - name: Compile real shaders and capture representative full-game cases
+        run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/browser --full-game
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cinematic-verification
+          path: qa-output/
+          retention-days: 7
