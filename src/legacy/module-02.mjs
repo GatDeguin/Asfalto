@@ -8401,6 +8401,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
     getDrivingAudioLevels: () => ({road:gameSettings.roadVolume,brakes:gameSettings.brakeVolume}),
     getTransmissionMode:()=>gameSettings.transmissionMode,
     onVehicleReset({ speedMps = 0, gear = 'N', reason } = {}) {
+      // Track/reset discontinuities must not interpolate from the previous route.
+      raceCameraInitialized=false;lastPhysicalCameraPose=null;
       mobileDrivingControls?.releaseAll();
       raceChevyPresentation?.resetCondition();
       cockpitIgnition?.resetMotion();

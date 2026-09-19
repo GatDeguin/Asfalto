@@ -118,16 +118,26 @@ def main():
                 case = {'track':track,'sky':sky,'weather':weather,'camera':camera,'status':'preparing'}
                 report['cases'].append(case)
                 save()
+                mirrors_before = page.evaluate('__cockpit.mirrorDiagnostics()')
                 page.evaluate("""([track,sky,weather])=>{window.__qaSelection=null;void __cockpit.raceSelectCircuit(track,{skyId:sky,weather}).then(()=>__cockpit.raceStart()).then(()=>__qaSelection={ok:true},error=>__qaSelection={error:String(error)});}""", [track,sky,weather])
                 wait('window.__qaSelection!==null', 'track-'+track, 150)
                 assert page.evaluate('__qaSelection.ok===true'), str(page.evaluate('__qaSelection'))
                 page.evaluate('(mode)=>__cockpit.raceSetCamera(mode)', camera)
-                page.evaluate('__cockpit.prepareRacePresentation();__cockpit.advance(3.25)')
-                case['diagnostics'] = page.evaluate("""()=>({render:__cockpit.v7RenderDiagnostics(),performance:__cockpit.raceWorld.getPerformanceDiagnostics(),state:__cockpit.raceGetState(),camera:__cockpit.raceCameraMode(),fault:__cockpit.runtimeFailureDiagnostics()})""")
+                page.evaluate('__cockpit.prepareRacePresentation();__cockpit.advance(3.25);__cockpit.prepareRacePresentation()')
+                case['diagnostics'] = page.evaluate("""()=>({render:__cockpit.v7RenderDiagnostics(),performance:__cockpit.raceWorld.getPerformanceDiagnostics(),state:__cockpit.raceGetState(),camera:__cockpit.raceCameraMode(),fault:__cockpit.runtimeFailureDiagnostics(),mirrors:__cockpit.mirrorDiagnostics()})""")
                 assert case['diagnostics']['state']['track']['id'] == track
                 assert case['diagnostics']['state']['physicsSnapshot']['fixedHz'] == 120, 'Physics frequency changed'
                 assert case['diagnostics']['state']['physicsSnapshot']['timeSeconds'] > 0, 'Fixed-step simulation did not advance'
                 assert not case['diagnostics']['fault']['fault'], 'Runtime failure boundary tripped'
+                camera_position = case['diagnostics']['render']['camera']['position']
+                car_position = case['diagnostics']['state']['physicsSnapshot']['chassis']['position']
+                distance = sum((a-b)**2 for a,b in zip(camera_position,car_position))**.5
+                case['cameraDistanceM'] = distance
+                assert distance < (3 if camera == 'cockpit' else 12), 'Camera retained the previous circuit pose: ' + str(distance)
+                if camera == 'cockpit':
+                    mirrors_after = case['diagnostics']['mirrors']
+                    for feed in ['centerFrames','leftFrames']:
+                        assert mirrors_after[feed] > mirrors_before[feed], 'Auxiliary capture starvation: '+feed
                 case['simulationAdvanceSeconds'] = 3.25
                 still(str(index)+'-'+track)
                 case['status'] = 'rendered-real-assets'
@@ -137,7 +147,7 @@ def main():
             report['pause'] = page.evaluate('({body:document.body.className,session:__chevyV6Complete.sessionDiagnostics()})')
             assert 'an-race-paused' in report['pause']['body'], 'Escape did not open pause'
             page.evaluate("__chevyV6Complete.openMenu('home')")
-            wait("document.body.classList.contains('v6-menu-open')", 'returned-to-workshop', 30)
+            wait("document.body.classList.contains('v6-menu-open')&&!document.body.classList.contains('an-loading-open')&&document.querySelector('#an-session-loading')?.hidden!==false&&__chevyV6Complete.workshop.active", 'returned-to-workshop', 60)
             still('workshop-return', workshop=True)
             assert not report['pageErrors'], 'Uncaught page errors: '+str(report['pageErrors'])
             assert not any('Shader Error' in message for message in report['consoleErrors']), 'Shader compilation failed'

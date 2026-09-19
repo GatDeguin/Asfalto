@@ -10,7 +10,8 @@ export function createAuxiliaryCaptureSchedule(){
  }
  return {beginFrame(time,{quality:next='balanced',mirrors=true}={}){
   if(!Number.isFinite(time))throw new TypeError('Finite frame timestamp required');
-  const reset=last===null||time<last||time-last>250||quality!==next;now=time;last=time;quality=next;rates=AUXILIARY_CAPTURE_RATES[next]||AUXILIARY_CAPTURE_RATES.balanced;
+  // Preserve relative deadlines across slow frames; resetting all of them would starve mirrors behind water.
+  const reset=last===null||time<last||quality!==next;now=time;last=time;quality=next;rates=AUXILIARY_CAPTURE_RATES[next]||AUXILIARY_CAPTURE_RATES.balanced;
   available=new Set(mirrors?['water','center','left']:['water']);used=0;
   for(const id of Object.keys(deadlines)){if(reset||deadlines[id]===null)deadlines[id]=now;if(!available.has(id))deadlines[id]=now;}
   plan();
