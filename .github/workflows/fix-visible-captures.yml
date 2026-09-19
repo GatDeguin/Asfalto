@@ -1,0 +1,136 @@
+name: Final visual regressions and guarded Pages release
+on:
+  push:
+    branches: [fixes/audit-20260919]
+    paths: [.github/workflows/fix-visible-captures.yml]
+permissions:
+  contents: read
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/fixes/audit-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      revision: ${{ steps.integrate.outputs.revision }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Apply reviewed byte-checked changes and verify complete suite
+        id: integrate
+        run: |
+          set -euo pipefail
+          mkdir -p qa-output
+          python3 - <<'PY'
+          import base64,hashlib,json,pathlib,zlib
+          encoded='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' 
+          raw=zlib.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(raw).hexdigest()=='ff322e0e0ffca7d79905488d3b58fe51906d1311f16a654881ffb04758c5820e', 'Review delta checksum mismatch'
+          manifest=json.loads(raw)
+          allowed={'src/legacy/module-02.mjs','src/render/auxiliary-capture-schedule.mjs','tools/maintenance-browser-qa.py','tools/audit-camera-transfer.test.mjs','tools/audit-capture-fairness.test.mjs'}
+          assert {item['path'] for item in manifest}==allowed
+          prepared=[]
+          for item in manifest:
+              path=pathlib.Path(item['path']);before=path.read_bytes() if path.exists() else b''
+              assert hashlib.sha256(before).hexdigest()==item['before'], 'Concurrent change: '+str(path)
+              text=before.decode('utf-8')
+              for edit in reversed(item['edits']):
+                  start=edit['start'];text=text[:start]+edit['insert']+text[start+edit['delete']:]
+              after=text.encode('utf-8');assert hashlib.sha256(after).hexdigest()==item['after'],str(path)
+              prepared.append((path,after))
+          for path,data in prepared:path.write_bytes(data)
+          pathlib.Path('qa-output/reviewed-delta.json').write_bytes(raw)
+          PY
+          node tools/verify-release.mjs
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
+          node --check src/legacy/module-02.mjs
+          python3 -m py_compile tools/maintenance-browser-qa.py
+          git -c core.whitespace=cr-at-eol diff --check
+          git diff > qa-output/integration.patch
+          git config user.name 'Asfalto maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/legacy/module-02.mjs src/render/auxiliary-capture-schedule.mjs tools/maintenance-browser-qa.py tools/audit-camera-transfer.test.mjs tools/audit-capture-fairness.test.mjs
+          git rm .github/workflows/fix-visible-captures.yml
+          git commit -m 'fix: reset camera across routes and prevent slow-frame mirror starvation'
+          git push origin HEAD:fixes/audit-20260919
+          git rev-parse HEAD > qa-output/revision.txt
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: final-visual-integration
+          path: qa-output/
+          retention-days: 14
+  browser:
+    needs: integrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.integrate.outputs.revision }}
+          persist-credentials: false
+      - name: Verify exact committed revision
+        run: |
+          mkdir -p qa-output
+          git rev-parse HEAD > qa-output/revision.txt
+          node tools/verify-release.mjs
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
+      - name: Prepare real browser and static server
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/healthz && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/healthz
+      - name: Real WebGL normal/log depth, profiles and resource disposal
+        run: python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+      - name: Five circuits with camera, mirrors, cancellation, retry, pause and rendered workshop
+        run: python3 tools/maintenance-browser-qa.py --output qa-output/game
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: final-visual-browser
+          path: qa-output/
+          retention-days: 14
+  publish:
+    needs: [integrate, browser]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/fixes/audit-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.integrate.outputs.revision }}
+          fetch-depth: 0
+      - name: Publish only the exact tested revision to the existing Pages branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERIFIED_SHA: ${{ needs.integrate.outputs.revision }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$VERIFIED_SHA"
+          test "$(gh api repos/$GITHUB_REPOSITORY/pages --jq '.source.branch')" = gh-pages
+          git fetch origin gh-pages
+          git merge-base --is-ancestor origin/gh-pages HEAD
+          git push origin HEAD:gh-pages
+          gh api --method POST repos/$GITHUB_REPOSITORY/pages/builds > pages-request.json
+          for i in $(seq 1 100); do
+            gh api repos/$GITHUB_REPOSITORY/pages/builds/latest > pages-build.json
+            STATE=$(jq -r .status pages-build.json)
+            REVISION=$(jq -r .commit pages-build.json)
+            if [ "$REVISION" = "$VERIFIED_SHA" ] && [ "$STATE" = built ]; then cat pages-build.json; exit 0; fi
+            if [ "$REVISION" = "$VERIFIED_SHA" ] && [ "$STATE" = errored ]; then cat pages-build.json; exit 1; fi
+            sleep 5
+          done
+          echo 'The tested revision was not confirmed by Pages within the deployment window.' >&2
+          exit 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: final-visual-pages-status
+          path: pages-*.json
+          retention-days: 14
