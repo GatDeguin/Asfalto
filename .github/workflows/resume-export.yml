@@ -1,0 +1,69 @@
+name: Resume exact source
+on:
+  push:
+    branches: [qa/resume-export-20260919]
+    paths: [.github/workflows/resume-export.yml]
+permissions:
+  contents: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 5d9f90324cce397d2102d351d208c6b8b0d827a4
+          persist-credentials: false
+      - name: Export code and assets with exact blob manifest
+        run: |
+          mkdir -p export
+          git rev-parse HEAD > export/revision.txt
+          git ls-tree -r HEAD > export/tree.txt
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          binary={'.glb','.bin','.png','.jpg','.jpeg','.webp','.av3hdri','.hdr','.wasm','.woff','.woff2','.mp3','.ogg','.wav','.mp4','.webm','.blend'}
+          names=[n for n in subprocess.check_output(['git','ls-files','-z']).decode().split('\0') if n]
+          with zipfile.ZipFile('export/source.zip','w',zipfile.ZIP_DEFLATED,compresslevel=3) as z:
+              for n in names:
+                  if pathlib.Path(n).suffix.lower() not in binary:z.write(n,n)
+          part=0; size=0; z=None
+          for n in names:
+              p=pathlib.Path(n)
+              if p.suffix.lower() not in binary:continue
+              if z is None or size+p.stat().st_size>300*1024*1024:
+                  if z:z.close()
+                  part+=1;size=0;z=zipfile.ZipFile(f'export/assets-{part}.zip','w',zipfile.ZIP_DEFLATED,compresslevel=1)
+              z.write(n,n);size+=p.stat().st_size
+          if z:z.close()
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: resume-source
+          path: |
+            export/source.zip
+            export/tree.txt
+            export/revision.txt
+          compression-level: 0
+          retention-days: 2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: resume-assets-1
+          path: export/assets-1.zip
+          compression-level: 0
+          retention-days: 2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: resume-assets-2
+          path: export/assets-2.zip
+          compression-level: 0
+          retention-days: 2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: resume-assets-rest
+          path: |
+            export/assets-3.zip
+            export/assets-4.zip
+            export/assets-5.zip
+            export/assets-6.zip
+          compression-level: 0
+          retention-days: 2
