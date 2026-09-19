@@ -32,6 +32,9 @@ jobs:
               assert not path.is_absolute() and '..' not in path.parts
               assert str(path).startswith(('src/','tools/','docs/','.github/workflows/')) or str(path) in ('server.mjs','.gitignore')
               before = path.read_bytes() if path.exists() else b''
+              if str(path).startswith('.github/workflows/'):
+                  assert hashlib.sha256(before).hexdigest() == item['after'], 'Workflow must be installed by authorized connector: ' + str(path)
+                  continue
               assert hashlib.sha256(before).hexdigest() == item['before'], 'Unexpected source: ' + str(path)
               text = before.decode('utf-8')
               for edit in reversed(item['edits']):
@@ -51,16 +54,17 @@ jobs:
           node --check src/legacy/module-02.mjs
           node --check src/legacy/v6-complete-runtime.js
           git -c core.whitespace=cr-at-eol diff --check
-      - name: Commit reviewed delta only to isolated branch
+      - name: Commit reviewed application delta only to isolated branch
         run: |
           git config user.name 'Asfalto maintenance verification'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           python3 - <<'PY'
           import json,pathlib,subprocess
           paths=json.loads(pathlib.Path('qa-output/changed-files.json').read_text())
+          assert not any(p.startswith('.github/') for p in paths)
           subprocess.run(['git','add','--',*paths],check=True)
           PY
-          git rm -r .maintenance-review .github/workflows/maintenance-integrate.yml
+          git rm -r .maintenance-review
           git commit -m 'fix: contain runtime failures, cancel stale loads and bound render budgets'
           git push origin HEAD:fixes/audit-20260919
           git rev-parse HEAD > qa-output/revision.txt
