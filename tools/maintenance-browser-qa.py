@@ -18,6 +18,7 @@ def main():
     out = pathlib.Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
     report = {'status': 'running', 'rendererClass': 'ANGLE SwiftShader software',
+              'viewportCSS': [640,360], 'DPR': 1, 'captureTimeoutSeconds': 120,
               'qualityForLifecycle': 'Eco / Low (Cinematic shaders tested separately)',
               'cases': [], 'stages': [], 'pageErrors': [], 'consoleErrors': [], 'httpErrors': []}
 
@@ -28,7 +29,7 @@ def main():
         browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--use-gl=angle',
             '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'])
         report['browser'] = browser.version
-        context = browser.new_context(viewport={'width': 960, 'height': 540}, device_scale_factor=1,
+        context = browser.new_context(viewport={'width': 640, 'height': 360}, device_scale_factor=1,
                                       reduced_motion='reduce')
         context.add_init_script("""localStorage.setItem('asfalto:v7:asfalto-v6-advanced-graphics-v1',JSON.stringify({quality:'low'}));localStorage.setItem('asfalto:v7:cockpit-chevy-settings-v6',JSON.stringify({graphicsQuality:'eco',soundEnabled:false}));""")
         page = context.new_page()
@@ -62,7 +63,7 @@ def main():
             else:
                 page.evaluate('__cockpit.setRendering(false)')
             try:
-                page.screenshot(path=str(out / (name + '.png')), timeout=30000)
+                page.screenshot(path=str(out / (name + '.png')), timeout=120000)
             finally:
                 if workshop:
                     page.evaluate('__chevyV6Complete.workshop.setActive(true)')
@@ -138,7 +139,7 @@ def main():
             try:
                 checkpoint('failure')
                 page.evaluate('globalThis.__chevyV6Complete?.workshop?.setActive(false);globalThis.__cockpit?.setRendering(false)')
-                page.screenshot(path=str(out / 'failure.png'), timeout=15000)
+                page.screenshot(path=str(out / 'failure.png'), timeout=30000)
             except Exception as capture_error:
                 report['captureError'] = str(capture_error)
         finally:
