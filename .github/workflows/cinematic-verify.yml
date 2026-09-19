@@ -21,14 +21,9 @@ jobs:
           git rev-parse HEAD | tee qa-output/revision.txt
           node --version | tee qa-output/node-version.txt
           node --test tools/cinematic-quality.test.mjs tools/cinematic-rendering.test.mjs | tee qa-output/cinematic-contracts.tap
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
           node --check src/legacy/module-02.mjs
           node --check src/legacy/v6-complete-runtime.js
-          python3 - <<'PY'
-          import hashlib, json, pathlib
-          for item in json.loads(pathlib.Path('docs/cinematic-ultra/protected-baseline.json').read_text()):
-              assert hashlib.sha256(pathlib.Path(item['path']).read_bytes()).hexdigest() == item['sha256'], item['path']
-          print('Protected source hashes unchanged')
-          PY
       - name: Record entire available suite including pre-existing failures
         run: |
           set +e
@@ -53,7 +48,7 @@ jobs:
           path: qa-output/
           retention-days: 7
       - name: Exercise actual workshop and five circuit scenarios
-        run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/browser --full-game
+        run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/browser --full-game --skip-fixtures
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

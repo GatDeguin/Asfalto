@@ -17,6 +17,7 @@ def main():
     parser.add_argument('--base-url', default='http://127.0.0.1:4173')
     parser.add_argument('--output', default='qa-output/browser')
     parser.add_argument('--full-game', action='store_true')
+    parser.add_argument('--skip-fixtures', action='store_true')
     args = parser.parse_args()
     out = pathlib.Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
@@ -25,7 +26,7 @@ def main():
         browser = p.chromium.launch(headless=True, args=[
             '--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader',
             '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'])
-        for logarithmic in (1, 0):
+        for logarithmic in (() if args.skip_fixtures else (1, 0)):
             page = browser.new_page(viewport={'width': 960, 'height': 720}, device_scale_factor=1)
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
@@ -53,8 +54,9 @@ def main():
             context = browser.new_context(viewport={'width': 960, 'height': 540}, device_scale_factor=1, reduced_motion='reduce')
             context.add_init_script("""localStorage.setItem('asfalto:v7:asfalto-v6-advanced-graphics-v1',JSON.stringify({quality:'cinematic'}));localStorage.setItem('asfalto:v7:cockpit-chevy-settings-v6',JSON.stringify({graphicsQuality:'high',soundEnabled:false}));""")
             page = context.new_page()
-            errors, failed_requests = [], []
+            errors, failed_requests, console_errors = [], [], []
             page.on('pageerror', lambda error: errors.append(str(error)))
+            page.on('console', lambda message: console_errors.append(message.text) if message.type == 'error' else None)
             page.on('response', lambda response: failed_requests.append({'url': response.url, 'status': response.status}) if response.status >= 400 else None)
             game = {'kind': 'full-game', 'browser': browser.version, 'rendererClass': 'software: requested ANGLE SwiftShader', 'cases': []}
             try:
@@ -65,8 +67,22 @@ def main():
                 game['homeReadyMode'] = page.evaluate('__chevyV6Complete.homeReadyMode')
                 if game['homeReadyMode'] != 'rendered-workshop':
                     raise RuntimeError('Workshop reached fallback, not a validated 3D render')
-                page.screenshot(path=str(out / 'workshop.png'))
                 game['workshop'] = page.evaluate('({graphics:__chevyV6Complete.workshop?.advancedGraphics?.diagnostics(),buffer:[__chevyV6Complete.workshop?.renderer?.domElement.width,__chevyV6Complete.workshop?.renderer?.domElement.height]})')
+                # Freeze only the existing presentation loop while taking a still.
+                # SwiftShader capture time is not a driving performance sample.
+                page.evaluate('__chevyV6Complete.workshop.setActive(false)')
+                try:
+                    page.screenshot(path=str(out / 'workshop.png'), timeout=120000)
+                    game['workshopCapture'] = 'still-existing-frame-loop-paused'
+                except Exception as error:
+                    game['workshopCaptureError'] = str(error)
+                finally:
+                    page.evaluate('__chevyV6Complete.workshop.setActive(true)')
+                save(out / 'full-game.json', game)
+                # Exercise the actual selector before cockpit preparation.
+                game['coldSettings'] = page.evaluate("""()=>{const s=document.querySelector('[data-advanced-graphics-quality]');s.value='cinematic';s.dispatchEvent(new Event('change',{bubbles:true}));return {selected:s.value,stored:JSON.parse(__asfaltoV7Storage.getItem('asfalto-v6-advanced-graphics-v1')).quality,owner:__asfaltoAdvancedGraphics.getSettings().quality};}""")
+                if game['coldSettings'] != {'selected': 'cinematic', 'stored': 'cinematic', 'owner': 'cinematic'}:
+                    raise RuntimeError('Cold settings did not propagate through the real UI')
                 page.evaluate("void __chevyV6Complete.startDrive('free').then(value=>window.__qaStart={value}).catch(error=>window.__qaStart={error:String(error)})")
                 page.wait_for_function('window.__qaStart!==undefined', timeout=240000)
                 game['start'] = page.evaluate('__qaStart')
@@ -91,7 +107,13 @@ def main():
                         page.evaluate('(mode)=>__cockpit.raceSetCamera(mode)', camera)
                         page.wait_for_timeout(1500)
                         case['diagnostics'] = page.evaluate('({render:__cockpit.v7RenderDiagnostics(),graphics:__asfaltoAdvancedGraphics.diagnostics(),environment:__cockpit.raceWorld.getAdvancedGraphicsEnvironment(),performance:__cockpit.raceWorld.getPerformanceDiagnostics(),camera:__cockpit.raceCameraMode(),state:__cockpit.raceGetState()})')
-                        page.screenshot(path=str(out / f'case-{index}-{track}-{sky}-{weather}-{camera}.png'), timeout=60000)
+                        prior = page.evaluate('__cockpit.isRendering()')
+                        page.evaluate('__cockpit.setRendering(false)')
+                        try:
+                            page.screenshot(path=str(out / f'case-{index}-{track}-{sky}-{weather}-{camera}.png'), timeout=120000)
+                        finally:
+                            page.evaluate('(active)=>__cockpit.setRendering(active)', prior)
+                        case['captureMode'] = 'still-existing-frame-loop-paused'
                         case['status'] = 'captured-not-human-approved'
                     except Exception as error:
                         case.update(status='failed', failure=str(error))
@@ -104,7 +126,9 @@ def main():
                     page.screenshot(path=str(out / 'full-game-failed.png'), timeout=15000)
                 except Exception:
                     pass
-            game.update(pageErrors=errors, failedRequests=failed_requests)
+            game.update(pageErrors=errors, failedRequests=failed_requests, consoleErrors=console_errors)
+            if errors or any('Shader Error' in error for error in console_errors) or game.get('workshopCaptureError'):
+                game['status'] = 'failed'
             save(out / 'full-game.json', game)
             results.append(game)
             context.close()

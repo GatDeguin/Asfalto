@@ -31,7 +31,7 @@ export function installAdvancedGraphicsSettings({root=document,storage=globalThi
 export function bootAdvancedGraphicsSettings({root=globalThis.document,host=globalThis}={}){
  if(!root?.querySelectorAll||host.__asfaltoAdvancedGraphics)return null;
  const active=()=>host.__chevyV6Complete?.workshop?.advancedGraphics;
- const settings=installAdvancedGraphicsSettings({root,storage:host.__asfaltoV7Storage,getDiagnostics:()=>active()?.diagnostics()||null});
+ const settings=installAdvancedGraphicsSettings({root,storage:host.__asfaltoV7Storage,getDiagnostics:()=>{const graphics=active();return graphics?.getEffectiveQuality?{effectiveQuality:graphics.getEffectiveQuality()}:graphics?.diagnostics()||null;}});
  const facade={getSettings:settings.getSettings,setSettings:settings.setSettings,setMode:settings.setMode,refreshStatus:settings.refresh,diagnostics:()=>active()?.diagnostics()||null,refresh:()=>active()?.refresh()};
  host.__asfaltoAdvancedGraphics=facade;
  const dispose=()=>{settings.dispose();if(host.__asfaltoAdvancedGraphics===facade)delete host.__asfaltoAdvancedGraphics;host.removeEventListener?.('pagehide',pagehide);};
