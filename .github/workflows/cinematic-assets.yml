@@ -1,0 +1,32 @@
+name: Cinematic asset audit
+on:
+  push:
+    branches: [graphics/cinematic-ultra-20260918]
+    paths: [.github/workflows/cinematic-assets.yml]
+permissions:
+  contents: read
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Package existing assets without modifying them
+        run: |
+          python3 - <<'PY'
+          import pathlib, subprocess, zipfile
+          extensions = {'.glb', '.bin', '.png', '.jpg', '.jpeg', '.webp', '.cube', '.av3hdri', '.gz', '.hdr', '.wasm', '.woff', '.woff2', '.mp3', '.ogg', '.wav'}
+          with zipfile.ZipFile('runtime-assets.zip', 'w', zipfile.ZIP_DEFLATED, compresslevel=1) as archive:
+              for name in subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0'):
+                  p = pathlib.Path(name)
+                  if name and p.is_file() and p.suffix.lower() in extensions:
+                      archive.write(p, name)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cinematic-runtime-assets
+          path: runtime-assets.zip
+          compression-level: 0
+          retention-days: 2
