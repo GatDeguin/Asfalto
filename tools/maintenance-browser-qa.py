@@ -21,6 +21,8 @@ def main():
               'browserChannel': 'chromium (new headless)', 'interactionTimeoutSeconds': 60,
               'viewportCSS': [640,360], 'DPR': 1, 'captureTimeoutSeconds': 120,
               'qualityForLifecycle': 'Eco / Low (Cinematic shaders tested separately)',
+              'renderCadence': 'one-shot captures between preparations; not a steady-frame benchmark',
+              'simulationProbe': 'existing fixed-step advance API; not wall-clock driving',
               'cases': [], 'stages': [], 'pageErrors': [], 'consoleErrors': [], 'httpErrors': []}
 
     def save():
@@ -63,13 +65,16 @@ def main():
                 page.evaluate('__chevyV6Complete.workshop.setActive(false)')
             else:
                 page.evaluate('__cockpit.setRendering(false)')
+                # Await the actual submitted work without feeding more frames to
+                # the software GPU. This fence is QA-only, never a per-frame wait.
+                page.evaluate("""async()=>{const {waitForGpuFrame}=await import('./src/render/phone-gpu-ready.mjs');const canvas=document.querySelector('#viewport canvas');if(!canvas)throw Error('Driving canvas missing');const gl=canvas.getContext('webgl2');if(!gl)throw Error('WebGL2 context missing');await waitForGpuFrame(gl,{timeoutMs:120000});}""")
             try:
                 page.screenshot(path=str(out / (name + '.png')), timeout=120000)
             finally:
                 if workshop:
                     page.evaluate('__chevyV6Complete.workshop.setActive(true)')
-                else:
-                    page.evaluate('__cockpit.setRendering(true)')
+                # Driving stays suspended between explicit captures. Scene
+                # preparation still executes its own real rendering callbacks.
 
         try:
             page.goto(args.base_url + '/?qa=1', wait_until='domcontentloaded', timeout=60000)
@@ -79,7 +84,7 @@ def main():
             report['workshop'] = page.evaluate('({graphics:__chevyV6Complete.workshop.advancedGraphics.diagnostics(),buffer:[__chevyV6Complete.workshop.canvas.width,__chevyV6Complete.workshop.canvas.height]})')
             still('workshop', workshop=True)
             # Observe the public method, preserving its behavior and the real click gesture.
-            page.evaluate("""()=>{const game=__chevyV6Complete,original=game.startDrive;window.__qaStarts=[];game.startDrive=(...args)=>original(...args).then(value=>{__qaStarts.push({value});return value;},error=>{__qaStarts.push({error:String(error)});throw error;});}""")
+            page.evaluate("""()=>{const game=__chevyV6Complete,original=game.startDrive;window.__qaStarts=[];game.startDrive=(...args)=>original(...args).then(value=>{__qaStarts.push({value});if(value)globalThis.__cockpit?.setRendering(false);return value;},error=>{__qaStarts.push({error:String(error)});throw error;});}""")
             page.locator('.an-v7-quick-drive').click()
             wait("globalThis.__asfaltoV7Startup?.diagnostics().phase==='loading'", 'cold-load-held', 30)
             deadline=time.monotonic()+10
@@ -117,9 +122,13 @@ def main():
                 wait('window.__qaSelection!==null', 'track-'+track, 150)
                 assert page.evaluate('__qaSelection.ok===true'), str(page.evaluate('__qaSelection'))
                 page.evaluate('(mode)=>__cockpit.raceSetCamera(mode)', camera)
-                page.wait_for_timeout(1200)
+                page.evaluate('__cockpit.prepareRacePresentation();__cockpit.advance(3.25)')
                 case['diagnostics'] = page.evaluate("""()=>({render:__cockpit.v7RenderDiagnostics(),performance:__cockpit.raceWorld.getPerformanceDiagnostics(),state:__cockpit.raceGetState(),camera:__cockpit.raceCameraMode(),fault:__cockpit.runtimeFailureDiagnostics()})""")
                 assert case['diagnostics']['state']['track']['id'] == track
+                assert case['diagnostics']['state']['physicsSnapshot']['fixedHz'] == 120, 'Physics frequency changed'
+                assert case['diagnostics']['state']['physicsSnapshot']['timeSeconds'] > 0, 'Fixed-step simulation did not advance'
+                assert not case['diagnostics']['fault']['fault'], 'Runtime failure boundary tripped'
+                case['simulationAdvanceSeconds'] = 3.25
                 still(str(index)+'-'+track)
                 case['status'] = 'rendered-real-assets'
                 save()
