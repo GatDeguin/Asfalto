@@ -1,3 +1,4 @@
+import {isHighGraphicsQuality} from '../../render/graphics-quality-policy.mjs';
 
 // Inward relief with local quadratic convex silhouette tracing. The curvature
 // approximation suits smooth rocks; it does not extrude prisms or change colliders.
@@ -6,8 +7,8 @@ let shaderChunks;
 const installedMaterials=new WeakSet();
 export function configureSurfaceRelief(THREE){shaderChunks=THREE.ShaderChunk;}
 export function setSurfaceReliefQuality(tier='high'){
-  quality.anReliefSteps.value=tier==='high'?24:12;
-  quality.anReliefRange.value=tier==='high'?95:48;
+  quality.anReliefSteps.value=isHighGraphicsQuality(tier)?24:12;
+  quality.anReliefRange.value=isHighGraphicsQuality(tier)?95:48;
   quality.anReliefEnabled.value=tier==='low'?0:1;
 }
 export function setSurfaceReliefPDO(enabled=true){quality.anReliefPDOEnabled.value=enabled?1:0;}

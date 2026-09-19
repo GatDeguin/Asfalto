@@ -1,6 +1,6 @@
 // Keep existing rates and normally render one auxiliary view per frame.
 // Permit one overdue recovery view on slower devices without an unbounded burst.
-export const AUXILIARY_CAPTURE_RATES=Object.freeze({high:Object.freeze({water:15,center:24,left:18}),balanced:Object.freeze({water:10,center:15,left:12}),low:Object.freeze({water:6,center:8,left:6})});
+export const AUXILIARY_CAPTURE_RATES=Object.freeze({cinematic:Object.freeze({water:15,center:24,left:18}),high:Object.freeze({water:15,center:24,left:18}),balanced:Object.freeze({water:10,center:15,left:12}),low:Object.freeze({water:6,center:8,left:6})});
 export function createAuxiliaryCaptureSchedule(){
  const deadlines={water:null,center:null,left:null};let now=0,last=null,quality=null,rates=null,available=new Set(),planned=new Set(),used=0;
  function plan(){

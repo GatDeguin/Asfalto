@@ -1,3 +1,4 @@
+import {supportedHdrSamples} from './render-target-capabilities.mjs';
 import {parseCubeLut,sampleCubeLut} from './cube-lut.mjs';
 
 export const DEFAULT_COLOR_GRADE_SETTINGS=Object.freeze({lutId:'none',intensity:1,contrast:1,saturation:1,temperature:0,tint:0});
@@ -62,6 +63,8 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
  if(!T||!renderer)throw new TypeError('Color grade requires THREE and renderer');
  const limit=clamp(Math.floor(cacheLimit)||3,1,4),cache=new Map(),pending=new Map();
  let manifestPromise=initialManifest?Promise.resolve(initialManifest):null,requested={...DEFAULT_COLOR_GRADE_SETTINGS},settings={...requested},activeEntry=null,sequence=0,disposed=false,lastError=null,pass=null,rendering=false,renderCount=0;
+ let requestedSamples=samples;
+ const contextRestored=()=>releasePass();renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
  const size=new T.Vector2(),savedViewport=new T.Vector4();
  function releasePass(){if(!pass)return;pass.target.dispose();pass.geometry.dispose();pass.material.dispose();pass=null;}
  function evict(){for(const [id,entry]of cache){if(cache.size<=limit)break;if(entry===activeEntry)continue;entry.texture.dispose();cache.delete(id);}}
@@ -95,13 +98,14 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
   renderer.getDrawingBufferSize(size);const width=Math.max(1,Math.floor(size.x)),height=Math.max(1,Math.floor(size.y));
   if(pass){if(pass.target.width!==width||pass.target.height!==height)pass.target.setSize(width,height);return;}
   const target=new T.WebGLRenderTarget(width,height,{type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:true,stencilBuffer:false});
-  target.texture.name='ASFALTO_COLOR_HDR';target.texture.colorSpace=T.LinearSRGBColorSpace;target.samples=Math.min(samples,renderer.capabilities?.maxSamples??0);
+  target.texture.name='ASFALTO_COLOR_HDR';target.texture.colorSpace=T.LinearSRGBColorSpace;target.samples=supportedHdrSamples(renderer,requestedSamples);
   const uniforms={uScene:{value:target.texture},uLut3D:{value:null},uLut1D:{value:null},uLutKind:{value:0},uLutSize:{value:2},uIntensity:{value:0},uContrast:{value:1},uSaturation:{value:1},uTemperature:{value:0},uTint:{value:0},uDomainMin:{value:new T.Vector3()},uDomainMax:{value:new T.Vector3(1,1,1)},uToneMapping:{value:0},toneMappingExposure:{value:1}};
   const material=new T.ShaderMaterial({name:'ASFALTO_COLOR_GRADE',uniforms,vertexShader,fragmentShader,depthTest:false,depthWrite:false,toneMapped:false,blending:T.NoBlending});
   const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));
   const quad=new T.Mesh(geometry,material);quad.frustumCulled=false;const scene=new T.Scene();scene.add(quad);pass={target,geometry,material,scene,camera:new T.Camera()};
  }
  return{
+  setSamples(value){const next=Math.max(0,Math.min(8,Math.floor(Number(value)||0)));if(next===requestedSamples)return;requestedSamples=next;if(pass&&pass.target.samples!==supportedHdrSamples(renderer,next))releasePass();},
   async setSettings(value={}){
    if(disposed)return{applied:false,stale:true};const ticket=++sequence;requested=normalizeColorGradeSettings({...requested,...value});const next={...requested};lastError=null;
    for(const [id,record]of pending)if(id!==next.lutId){pending.delete(id);record.abort.abort();}
@@ -136,7 +140,7 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
     rendering=false;
    }
   },
-  diagnostics:()=>({disposed,settings:{...settings},requestedSettings:{...requested},activeLut:activeEntry?.id??'none',cachedLuts:cache.size,pendingLoads:pending.size,cacheLimit:limit,renderTargetAllocated:!!pass,samples:pass?.target.samples??null,renderTargetSize:pass?[pass.target.width,pass.target.height]:null,renderCount,lastError,pipeline:'linear HDR -> renderer tone mapping -> display sRGB -> LUT -> parameters',sourceFilesModified:false}),
-  dispose(){if(disposed)return;disposed=true;sequence++;for(const record of pending.values())record.abort.abort();pending.clear();activeEntry=null;for(const entry of cache.values())entry.texture.dispose();cache.clear();releasePass();},
+  diagnostics:()=>({disposed,settings:{...settings},requestedSettings:{...requested},activeLut:activeEntry?.id??'none',requestedSamples,cachedLuts:cache.size,pendingLoads:pending.size,cacheLimit:limit,renderTargetAllocated:!!pass,samples:pass?.target.samples??null,renderTargetSize:pass?[pass.target.width,pass.target.height]:null,renderCount,lastError,pipeline:'linear HDR -> renderer tone mapping -> display sRGB -> LUT -> parameters',sourceFilesModified:false}),
+  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);sequence++;for(const record of pending.values())record.abort.abort();pending.clear();activeEntry=null;for(const entry of cache.values())entry.texture.dispose();cache.clear();releasePass();},
  };
 }

@@ -1,3 +1,4 @@
+import {isHighGraphicsQuality} from './graphics-quality-policy.mjs';
 import { effectsQuad } from './weather-layers.mjs';
 
 /** A foam footprint clipped against the actual receiving-water triangles. */
@@ -125,6 +126,6 @@ void main(){float crossStream=abs(vFoamUv.y-.5)*2.,edge=1.-smoothstep(.35,1.,cro
 
     spray=new T.Mesh(geometry,material);spray.name='AN_LocalWaterfallSpray';spray.frustumCulled=false;parent.add(spray);
   }
-  return{setTrack,clear,update({time,camera,wind,qualityTier='balanced',color,vehicle={}}){uniforms.uAnFallTime.value=time;if(!spray)return;camera.updateMatrixWorld();right.setFromMatrixColumn(camera.matrixWorld,0);up.setFromMatrixColumn(camera.matrixWorld,1);camera.getWorldPosition(eye);spray.material.uniforms.uEnclosed.value=vehicle.position&&vehicle.enclosed!==false?1:0;if(vehicle.position)spray.material.uniforms.uCarInverse.value.compose(vehicle.position,vehicle.quaternion||identity,carScale).invert();if(wind)spray.material.uniforms.uWind.value.copy(wind);if(color)spray.material.uniforms.uTint.value.copy(color);spray.geometry.instanceCount=emitters.length*(qualityTier==='high'?24:qualityTier==='low'?5:12);},
+  return{setTrack,clear,update({time,camera,wind,qualityTier='balanced',color,vehicle={}}){uniforms.uAnFallTime.value=time;if(!spray)return;camera.updateMatrixWorld();right.setFromMatrixColumn(camera.matrixWorld,0);up.setFromMatrixColumn(camera.matrixWorld,1);camera.getWorldPosition(eye);spray.material.uniforms.uEnclosed.value=vehicle.position&&vehicle.enclosed!==false?1:0;if(vehicle.position)spray.material.uniforms.uCarInverse.value.compose(vehicle.position,vehicle.quaternion||identity,carScale).invert();if(wind)spray.material.uniforms.uWind.value.copy(wind);if(color)spray.material.uniforms.uTint.value.copy(color);spray.geometry.instanceCount=emitters.length*(isHighGraphicsQuality(qualityTier)?24:qualityTier==='low'?5:12);},
     diagnostics:()=>({waterfalls:emitters.length,flowMaterials:owned.length,sprayInstances:spray?.geometry.instanceCount||0,drawBatches:(spray?1:0)+(foam?1:0),foamTriangles:(foam?.geometry.attributes.position.count||0)/3,time:uniforms.uAnFallTime.value,flowModel:'source-map-world-height-advection',sourceMistReplaced:hidden.length,impactOrigins:emitters.map(e=>e.center),impactSegmentCount:emitters.reduce((n,e)=>n+e.segments.length,0)}),dispose:clear};
 }

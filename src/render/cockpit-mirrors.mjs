@@ -1,6 +1,7 @@
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs';
 
 const QUALITY = Object.freeze({
+  cinematic: { center: [512, 144, 24], left: [256, 192, 18] },
   high: { center: [512, 144, 24], left: [256, 192, 18] },
   balanced: { center: [384, 108, 15], left: [192, 144, 12] },
   low: { center: [256, 72, 8], left: [128, 96, 6] },

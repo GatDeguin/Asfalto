@@ -1,3 +1,4 @@
+import {graphicsQualityFamily} from './graphics-quality-policy.mjs';
 // Analytic signed distance to camera-local OBB proxies. This is deliberately a
 // proxy approximation of opaque solids, not a voxel bake or a renamed BVH.
 const LIMIT=64,RANGE_M=25;
@@ -54,7 +55,7 @@ export function createDistanceFieldOcclusion(T,{scene,maxObjects=64}={}){
   proxies.forEach((p,i)=>{data.set([...p.center.toArray(),p.radius,...p.half.toArray(),1,...p.rotation.toArray(),p.distance,0,0,0],i*16);});
   uniforms.anDfaCount.value=proxies.length;texture.needsUpdate=true;return proxies.length;
  }
- function setQuality(value='high'){tier=value==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anDfaEnabled.value=tier==='low'?0:1;uniforms.anDfaRays.value=tier==='high'?3:2;uniforms.anDfaSteps.value=tier==='high'?4:3;uniforms.anDfaCount.value=Math.min(proxies.length,tier==='high'?16:8);}
+ function setQuality(value='high'){tier=graphicsQualityFamily(value)==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anDfaEnabled.value=tier==='low'?0:1;uniforms.anDfaRays.value=tier==='high'?3:2;uniforms.anDfaSteps.value=tier==='high'?4:3;uniforms.anDfaCount.value=Math.min(proxies.length,tier==='high'?16:8);}
  function sampleDistance(point){
   const p=point?.isVector3?point:new T.Vector3().fromArray(point),local=new T.Vector3();let result=1e4;
   for(const proxy of proxies){local.copy(p).sub(proxy.center).applyQuaternion(proxy.rotation.clone().conjugate());const x=Math.abs(local.x)-proxy.half.x,y=Math.abs(local.y)-proxy.half.y,z=Math.abs(local.z)-proxy.half.z;result=Math.min(result,Math.hypot(Math.max(x,0),Math.max(y,0),Math.max(z,0))+Math.min(Math.max(x,y,z),0));}

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/legacy/asfalto-v6-recovery-guard.js",
+    "sha256": "418fc5dd5d5bac79a8fb90979fee2ac272554f5200ad26ca939d5797940d666e"
+  },
+  {
+    "path": "src/legacy/asfalto-v6-input-runtime.js",
+    "sha256": "02731eed2a9c25662edd2f469cea086126ff98ef1a05d852ca39e90d0803e525"
+  },
+  {
+    "path": "src/legacy/asfalto-v6-physics-runtime.js",
+    "sha256": "3ad370e27dac5f89908c9fad6f140679a9865f550d3f463237e92659a4e2851c"
+  },
+  {
+    "path": "src/legacy/asfalto-v6-falcon-runtime.js",
+    "sha256": "15ab93d6b0a95166d7d2b97679912cdc15035fc3191bdfd7edbebfc806433b30"
+  },
+  {
+    "path": "src/legacy/asfalto-v6-rapier.js",
+    "sha256": "ed021e6227e745ac1b6239e4c8ca3a9c6c40685873fba7ae93a75b0144c4fa13"
+  },
+  {
+    "path": "src/game/vehicle-camera-rig.mjs",
+    "sha256": "e79cf3793651562a54c2786d1955fbe58c13258be93b95b23481477c0cc0429e"
+  },
+  {
+    "path": "src/physics/surface-conditions.mjs",
+    "sha256": "fa4a88a0445ba96d0c87a0f41b4a29f735a3eedc1cf085f57b3066249aa4f7a2"
+  },
+  {
+    "path": "src/render/chevy-paint-controller.mjs",
+    "sha256": "b8b3db1d5cfa5cf2aec4bcfa493d13ef338762600192130832eb405f2065e1d5"
+  },
+  {
+    "path": "src/environment/track-material-controller.mjs",
+    "sha256": "e146a794df1d5d5183d626c661542ca4d6417786d46f37c349f88880a3c83fda"
+  },
+  {
+    "path": "src/environment/environment-profiles.mjs",
+    "sha256": "6945d0df63f6301720ad7520cf0b6cfcb38b900fc21689718141dfeca0786a37"
+  },
+  {
+    "path": "src/environment/race-day-cycle.mjs",
+    "sha256": "c4e7317e552d550a7deae5d0f4ac2e7bdae10d91b80764b326765d8cec9997d0"
+  }
+]

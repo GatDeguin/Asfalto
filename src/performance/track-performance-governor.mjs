@@ -1,14 +1,16 @@
-const TIERS=Object.freeze(['high','balanced','low']);
+const TIERS=Object.freeze(['cinematic','high','balanced','low']);
 const RING_SIZE=600,DOWNGRADE_SAMPLES=240,UPGRADE_SAMPLES=600,STATS_EVERY=30;
 const HIGH_MAX=20,BALANCED_MAX=25;
 const POLICIES=Object.freeze({
+ // Cinematic increases screen-space precision, not geometry, capture cadence or simulation.
+ cinematic:Object.freeze({resolutionScale:1,shadows:true,vegetationLod:'high',mirrorHz:30,sectorPreloadRadius:2}),
  high:Object.freeze({resolutionScale:1,shadows:true,vegetationLod:'high',mirrorHz:30,sectorPreloadRadius:2}),
  balanced:Object.freeze({resolutionScale:.86,shadows:true,vegetationLod:'balanced',mirrorHz:22,sectorPreloadRadius:1}),
  low:Object.freeze({resolutionScale:.7,shadows:false,vegetationLod:'low',mirrorHz:15,sectorPreloadRadius:0})
 });
 const checked=(v,field)=>{if(!Number.isFinite(v)||v<0)throw new TypeError(field+' must be a finite non-negative number');return v;};
 function stats(values){const sorted=values.sort((a,b)=>a-b),p=q=>sorted.length?sorted[Math.max(0,Math.ceil(sorted.length*q)-1)]:0;return {p50:p(.5),p95:p(.95),p99:p(.99),max:sorted.at(-1)||0,hitches:sorted.filter(n=>n>100).length};}
-export const maximumTierForGraphicsQuality=quality=>quality==='eco'?'low':quality==='balanced'?'balanced':'high';
+export const maximumTierForGraphicsQuality=(quality,advancedQuality='auto')=>quality==='eco'?'low':quality==='balanced'?'balanced':advancedQuality==='cinematic'?'cinematic':'high';
 export function createTrackPerformanceGovernor({initialTier,onTierChange,maximumTier='high'}){
  if(!TIERS.includes(initialTier))throw new RangeError('Invalid performance tier: '+initialTier);
  if(!TIERS.includes(maximumTier))throw new RangeError('Invalid maximum performance tier: '+maximumTier);
@@ -27,18 +29,20 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
   const nextResources={heapBytes:checked(input.heapBytes,'heapBytes'),gpuTextures:checked(input.gpuTextures,'gpuTextures'),gpuGeometries:checked(input.gpuGeometries,'gpuGeometries')};
   targetFps=input.targetFps===30?30:60;const budgetScale=60/targetFps;
   resources=Object.freeze(nextResources);ring[cursor]=frameMs;workRing[cursor]=workMs;cursor=(cursor+1)%RING_SIZE;count=Math.min(RING_SIZE,count+1);sinceTransition++;dirty=true;
-  const slowBoundary=currentTier==='high'?HIGH_MAX*budgetScale:currentTier==='balanced'?BALANCED_MAX*budgetScale:Infinity;
-  const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:-Infinity;
+  const slowBoundary=(currentTier==='high'||currentTier==='cinematic')?HIGH_MAX*budgetScale:currentTier==='balanced'?BALANCED_MAX*budgetScale:Infinity;
+  const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:currentTier==='high'&&maximumTier==='cinematic'?16*budgetScale:-Infinity;
   slow=frameMs>slowBoundary?slow+1:0;healthy=frameMs<=healthyBoundary?healthy+1:0;
   if(sinceTransition%STATS_EVERY===0){
    refresh();
    if(sinceTransition>=DOWNGRADE_SAMPLES&&count>=DOWNGRADE_SAMPLES){
     const recent=stats(values(ring,DOWNGRADE_SAMPLES));
-    if(currentTier==='high'&&recent.p95>HIGH_MAX*budgetScale)transition('balanced','p95-above-target-budget');
+    if(currentTier==='cinematic'&&recent.p95>HIGH_MAX*budgetScale)transition('high','cinematic-p95-above-target-budget');
+    else if(currentTier==='high'&&recent.p95>HIGH_MAX*budgetScale)transition('balanced','p95-above-target-budget');
     else if(currentTier==='balanced'&&recent.p95>BALANCED_MAX*budgetScale)transition('low','p95-above-balanced-budget');
     else if(sinceTransition>=UPGRADE_SAMPLES&&count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary){
      if(currentTier==='low'&&maximumTier!=='low')transition('balanced','600-window-p95-at-22ms');
-     else if(currentTier==='balanced'&&maximumTier==='high')transition('high','600-window-p95-at-16.7ms');
+     else if(currentTier==='balanced'&&(maximumTier==='high'||maximumTier==='cinematic'))transition('high','600-window-p95-at-16.7ms');
+     else if(currentTier==='high'&&maximumTier==='cinematic')transition('cinematic','manual-cinematic-600-window-p95-at-16ms');
     }
    }
   }

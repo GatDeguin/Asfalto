@@ -40,7 +40,8 @@ import {withFrameMatrices} from '../render/frame-matrices.mjs';
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs';
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs';
 import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=balance-20260917';
-import {installAdvancedGraphicsSettings} from '../render/advanced-graphics-settings.mjs';
+import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs';
+import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs';
 import { connectModularHost } from '../app/modular-bootstrap.mjs?v=balance-20260917';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs';
@@ -7078,7 +7079,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       if (workshopEnvironmentPromise === pending) workshopEnvironmentPromise = null;
     }
   }
-  
+
 
   function getRouteOrigin() {
     if (!visualRoot) return Object.freeze([0, ROAD_Y, VIEW_Z]);
@@ -7650,7 +7651,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let environmentFrame=0;
   function updateEnvironmentInstances(force=false) {
     environmentFrame++;if(!force&&environmentFrame%2&&performanceState.qualityTier!=='high')return;
-    const maxByTier=performanceState.qualityTier==='high'?{grass:1500,flowers:300,trees:240,rocks:140}:performanceState.qualityTier==='balanced'?{grass:980,flowers:180,trees:170,rocks:95}:{grass:520,flowers:80,trees:100,rocks:50};
+    const maxByTier=isHighGraphicsQuality(performanceState.qualityTier)?{grass:1500,flowers:300,trees:240,rocks:140}:performanceState.qualityTier==='balanced'?{grass:980,flowers:180,trees:170,rocks:95}:{grass:520,flowers:80,trees:100,rocks:50};
     let count=0;
     for(const item of scatter.grass){if(count>=maxByTier.grass)break;const pose=objectPose(item);if(pose.ahead<-35||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.setScalar(pose.scale);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);grassMesh.setMatrixAt(count,tempMatrix);tempColor.set(track.palette.grassBottom).lerp(new THREE.Color(track.palette.grassTop),item.color);grassMesh.setColorAt(count,tempColor);count++;}grassMesh.count=count;grassMesh.instanceMatrix.needsUpdate=true;if(grassMesh.instanceColor)grassMesh.instanceColor.needsUpdate=true;
     count=0;
@@ -7664,7 +7665,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }trunkMesh.count=canopyMesh.count=treeContactShadows.count=treeCount;trunkMesh.instanceMatrix.needsUpdate=canopyMesh.instanceMatrix.needsUpdate=treeContactShadows.instanceMatrix.needsUpdate=true;if(trunkMesh.instanceColor)trunkMesh.instanceColor.needsUpdate=true;if(canopyMesh.instanceColor)canopyMesh.instanceColor.needsUpdate=true;
     count=0;
     for(const item of scatter.rocks){if(count>=maxByTier.rocks)break;const pose=objectPose(item,.15);if(pose.ahead<-30||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.set(pose.scale,pose.scale*.62,pose.scale*.85);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);rockMesh.setMatrixAt(count,tempMatrix);tempColor.set(track.environment==='mountain'?0x77736d:track.environment==='coast'?0xb2a37c:0x68675c).offsetHSL(0,0,(item.color-.5)*.12);rockMesh.setColorAt(count,tempColor);count++;}rockMesh.count=count;rockMesh.instanceMatrix.needsUpdate=true;if(rockMesh.instanceColor)rockMesh.instanceColor.needsUpdate=true;
-    if(rarGrassSceneRockMesh){count=0;const maxRar=performanceState.qualityTier==='high'?72:performanceState.qualityTier==='balanced'?48:24;for(let i=0;i<scatter.rocks.length&&count<maxRar;i+=2){const item=scatter.rocks[i];const pose=objectPose(item,.04);if(pose.ahead<-32||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.setScalar(pose.scale*.82);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);rarGrassSceneRockMesh.setMatrixAt(count,tempMatrix);count++;}rarGrassSceneRockMesh.count=count;rarGrassSceneRockMesh.instanceMatrix.needsUpdate=true;}
+    if(rarGrassSceneRockMesh){count=0;const maxRar=isHighGraphicsQuality(performanceState.qualityTier)?72:performanceState.qualityTier==='balanced'?48:24;for(let i=0;i<scatter.rocks.length&&count<maxRar;i+=2){const item=scatter.rocks[i];const pose=objectPose(item,.04);if(pose.ahead<-32||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.setScalar(pose.scale*.82);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);rarGrassSceneRockMesh.setMatrixAt(count,tempMatrix);count++;}rarGrassSceneRockMesh.count=count;rarGrassSceneRockMesh.instanceMatrix.needsUpdate=true;}
     count=0;const maxDecals=performanceState.qualityTier==='low'?52:96;for(const item of scatter.decals){if(count>=maxDecals)break;const pose=objectPose(item,.022);if(pose.ahead<-30||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.set(item.scaleX,1,item.scaleZ);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);roadDecals.setMatrixAt(count,tempMatrix);tempColor.setRGB(item.color,item.color*.98,item.color*.9);roadDecals.setColorAt(count,tempColor);count++;}roadDecals.count=count;roadDecals.instanceMatrix.needsUpdate=true;if(roadDecals.instanceColor)roadDecals.instanceColor.needsUpdate=true;
   }
 
@@ -7692,7 +7693,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     rarGrassSceneRockMesh = new THREE.InstancedMesh(geometry, material, 80);
     rarGrassSceneRockMesh.name = 'RARGrassSceneGLBRocks';
     rarGrassSceneRockMesh.frustumCulled = false;
-    rarGrassSceneRockMesh.castShadow = performanceState.qualityTier === 'high';
+    rarGrassSceneRockMesh.castShadow = isHighGraphicsQuality(performanceState.qualityTier);
     rarGrassSceneRockMesh.receiveShadow = true;
     rarGrassSceneRockMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     root.add(rarGrassSceneRockMesh);
@@ -7750,8 +7751,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
 
   const frameBudget = 1000/60;
   const hardwarePerformanceTier=runtimeDeviceProfile.phone?'balanced':(navigator.deviceMemory&&navigator.deviceMemory<=4)||navigator.hardwareConcurrency<=4?'low':'high';
-  const requestedMaximumTier=maximumTierForGraphicsQuality(deviceGraphicsQuality(gameSettings.graphicsQuality,runtimeDeviceProfile));
-  const initialPerformanceTier=gameSettings.graphicsQuality==='auto'?hardwarePerformanceTier:requestedMaximumTier;
+  const requestedMaximumTier=maximumTierForGraphicsQuality(deviceGraphicsQuality(gameSettings.graphicsQuality,runtimeDeviceProfile),readAdvancedGraphics().quality);
+  const initialPerformanceTier=requestedMaximumTier==='cinematic'?'cinematic':gameSettings.graphicsQuality==='auto'?hardwarePerformanceTier:requestedMaximumTier;
   const performanceState = {
     dynamicResolution: true,
     performanceScale: TRACK_RENDER_POLICIES[initialPerformanceTier].resolutionScale,
@@ -7765,7 +7766,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   };
   function applyPerformanceTier() {
     setSurfaceReliefQuality(performanceState.qualityTier);
-    if(performanceState.qualityTier==='high'){drawDistance=350;behindDistance=52;}
+    if(isHighGraphicsQuality(performanceState.qualityTier)){drawDistance=350;behindDistance=52;}
     else if(performanceState.qualityTier==='balanced'){drawDistance=280;behindDistance=45;}
     else{drawDistance=205;behindDistance=36;}
     visibleRoadStep=(drawDistance+behindDistance)/MAX_SEGMENTS;
@@ -7794,7 +7795,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
   }
   function getPerformanceScale(){return performanceState.performanceScale;}
   function getPerformanceTier(){return performanceState.qualityTier;}
-  function setPerformanceQuality(mode){return performanceGovernor.setMaximumTier(maximumTierForGraphicsQuality(deviceGraphicsQuality(mode,runtimeDeviceProfile)));}
+  const onAdvancedGraphicsQuality=()=>setPerformanceQuality(gameSettings.graphicsQuality);
+  window.addEventListener('asfalto:advanced-graphics',onAdvancedGraphicsQuality);
+  listeners.push(()=>window.removeEventListener('asfalto:advanced-graphics',onAdvancedGraphicsQuality));
+  function setPerformanceQuality(mode){return performanceGovernor.setMaximumTier(maximumTierForGraphicsQuality(deviceGraphicsQuality(mode,runtimeDeviceProfile),readAdvancedGraphics().quality));}
   function getPerformanceDiagnostics(){return {...performanceGovernor.diagnostics(),surfaceRelief:surfaceReliefDiagnostics(),warmup:visualWarmup,preparation:racePreparation};}
   renderer.shadowMap.enabled=TRACK_RENDER_POLICIES[initialPerformanceTier].shadows;
   applyPerformanceTier();
@@ -8052,7 +8056,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
           rpm:currentSnapshot.engine?.rpm ?? external.rpm,throttle:input.throttle,popsLevel:external.popsLevel,
           engineTemperatureC:currentSnapshot.engine?.temperatureC,engineDamage:currentSnapshot.damage?.engine,engineFire:currentSnapshot.damage?.engine?.fire === true}});
     }
-    visualAccumulator+=dt;const targetVisualRate=performanceState.qualityTier==='high'?1/60:performanceState.qualityTier==='balanced'?1/40:1/28;if(visualAccumulator>=targetVisualRate){visualAccumulator%=targetVisualRate;updateRoadGeometry();disableLegacyTrackLayers();updateRivals();updateGhost();}
+    visualAccumulator+=dt;const targetVisualRate=isHighGraphicsQuality(performanceState.qualityTier)?1/60:performanceState.qualityTier==='balanced'?1/40:1/28;if(visualAccumulator>=targetVisualRate){visualAccumulator%=targetVisualRate;updateRoadGeometry();disableLegacyTrackLayers();updateRivals();updateGhost();}
     processLatestEvent();updateHud(dt);raceAudio.update(dt,feedback,lastState,input,renderFrame);if(feedback.curbIntensity>.45&&Math.random()<dt*7)vibrate(16,.22+feedback.curbIntensity*.25);return{...feedback,controls:input,renderFrame,state:lastState};
   }
 
@@ -8075,7 +8079,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   function attachRearview(material) {rearviewMaterial=material||null;syncRearviewMaterial();return!!rearviewMaterial;}
   function renderRearview(force=false, physicalRearPose=null) {
     if(settings.rearviewEnabled === false) return false;
-    const rearviewInterval = performanceState.qualityTier === 'high' ? 1 / 30 : performanceState.qualityTier === 'balanced' ? 1 / 22 : 1 / 15;
+    const rearviewInterval = isHighGraphicsQuality(performanceState.qualityTier) ? 1 / 30 : performanceState.qualityTier === 'balanced' ? 1 / 22 : 1 / 15;
     if (!force && rearviewRenderAccumulator < rearviewInterval) return false;
     if(renderingRearview||contextLost||!renderer||!rearCamera||!rearviewTarget||!rearviewMaterial||!camera)return false;
     rearviewRenderAccumulator=0;
@@ -9727,9 +9731,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
     return { commit(){if(committed||released)return;preparedWheel.commit();authoredMirrors?.dispose();raceChevyPresentation?.dispose();for(const child of [...raceChevyV3Model.children])if(child!==stage){if(child.userData.vehicleSelectionMount)child.removeFromParent();else child.visible=false;}raceChevyPresentation=presentation;window.__asfaltoVehiclePresentations.chevy=presentation;window.__asfaltoSelectedPlayerVehicle=vehicle;authoredMirrors=attachAuthoredMirrors(THREE,presentation,vehicle,cockpitMirrors.feeds);raceWorld.attachWeatherWindshield(authoredWindshieldMount(THREE,presentation,vehicle)||{cabinMount});raceCameraInitialized=false;void raceWorld.invalidateVehiclePhysics();stage.visible=true;committed=true;presentation.setLightMode(raceWorld.getDrivingLights().mode);lightingEditor?.applyVehicles();rayTracing?.invalidate();},dispose(){if(released||committed)return;released=true;preparedWheel?.dispose();presentation.dispose();stage.removeFromParent();} };
   }
   setLoading('Preparando vegetación y efectos gráficos…');
-  advancedGraphics=createAdvancedGraphics(THREE,{renderer,scene,camera,allowPivotPainter:!runtimeDeviceProfile.phone,samples:runtimeDeviceProfile.phone?0:2,onRenderStage:markFirstFrame,getEnvironment:()=>raceWorld.getAdvancedGraphicsEnvironment(),getQuality:()=>raceWorld.getPerformanceTier()});
-  graphicsSettings=installAdvancedGraphicsSettings({getDiagnostics:()=>({targetFps:framePacingSettings?.getTargetFps()||60,effectiveQuality:(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.getEffectiveQuality()})});
-  globalThis.__asfaltoAdvancedGraphics={refreshStatus:()=>graphicsSettings?.refresh(),getSettings:()=>graphicsSettings.getSettings(),setSettings:value=>graphicsSettings.setSettings(value),setMode:value=>graphicsSettings.setMode(value),diagnostics:()=>advancedGraphics?.diagnostics(),refresh:()=>{advancedGraphics?.refresh();globalThis.__chevyV6Complete?.workshop?.advancedGraphics?.refresh();}};
+  advancedGraphics=createAdvancedGraphics(THREE,{renderer,scene,camera,allowPivotPainter:!runtimeDeviceProfile.phone,samples:runtimeDeviceProfile.phone?0:2,onRenderStage:markFirstFrame,getEnvironment:()=>raceWorld.getAdvancedGraphicsEnvironment(),getQuality:()=>raceWorld.getPerformanceTier(),getQualityDiagnostics:()=>raceWorld.getPerformanceDiagnostics()});
+  graphicsSettings=installAdvancedGraphicsSettings({getDiagnostics:()=>{const active=globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics;return{targetFps:framePacingSettings?.getTargetFps()||60,effectiveQuality:active?.getEffectiveQuality()};}});
+  globalThis.__asfaltoAdvancedGraphics={getMasterQuality:()=>gameSettings.graphicsQuality,refreshStatus:()=>graphicsSettings?.refresh(),getSettings:()=>graphicsSettings.getSettings(),setSettings:value=>graphicsSettings.setSettings(value),setMode:value=>graphicsSettings.setMode(value),diagnostics:()=>(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.diagnostics(),refresh:()=>{advancedGraphics?.refresh();globalThis.__chevyV6Complete?.workshop?.advancedGraphics?.refresh();}};
   framePacingSettings=installFramePacingSettings();
   cockpitViewPreset=installDrivingViewPreset({THREE,mount:cockpitViewMount});
   const cockpitRenderPass = createCockpitRenderPass({ renderer, scene, camera, cockpit, onStage:markFirstFrame, overlays:compositionEditor?.renderOverlays || [],renderWorld:()=>advancedGraphics.render(()=>{const restore=scene.fog?raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()}):null;try{opaqueTransmissionReuse.render(()=>renderer.render(scene,camera),scene,camera);}finally{restore?.();}}) });
@@ -9761,7 +9765,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     try {
       const activeAdapter=globalThis.__asfaltoV6Modular.trackManager?.active;
       const requestedQuality=gameSettings.graphicsQuality==='eco'?'low':gameSettings.graphicsQuality==='balanced'?'balanced':'high';
-      const governedQuality=raceWorld.getPerformanceTier();
+      const governedQuality=graphicsQualityFamily(raceWorld.getPerformanceTier()); // Rendering must not change physical streaming policy.
       const qualityRank={low:0,balanced:1,high:2};
       const quality=qualityRank[requestedQuality]<=qualityRank[governedQuality]?requestedQuality:governedQuality;
       const result=visualPrecompileInProgress?null:activeAdapter?.updateStreaming({sM:Number(raceWorld.state?.raceProgress)||0,quality,distanceM,cameraPosition,vehiclePosition});
@@ -9779,7 +9783,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       reportTrackStreamingError(error);
     }
     markFirstFrame('Primer cuadro: vegetación y atmósfera');
-    advancedGraphics.update({time:performance.now()/1000});graphicsSettings.refresh();
+    advancedGraphics.update({time:performance.now()/1000});colorGrading?.setSamples(runtimeDeviceProfile.phone?0:advancedGraphics.getEffectiveQuality()==='cinematic'?4:2);graphicsSettings.refresh();
     rayTracing.update({sceneKey:globalThis.__asfaltoV6Modular.trackManager?.active||scene});rayTracingSettings.refresh();
     gpuFrameTimer.begin();
     try{withFrameMatrices(scene,()=>{

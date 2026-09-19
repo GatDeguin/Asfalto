@@ -1,6 +1,7 @@
 import { metalContactEmission } from './weather-dynamics.mjs';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, Number(value) || 0));
 export const WEATHER_EFFECTS_TIERS = Object.freeze({
+  cinematic:Object.freeze({ rain:3200, snow:1600, clouds:16, mist:9, particles:560, transmission:.22 }),
   low:Object.freeze({ rain:650, snow:400, clouds:6, mist:3, particles:160, transmission:0 }),
   balanced:Object.freeze({ rain:1700, snow:950, clouds:10, mist:6, particles:320, transmission:.12 }),
   high:Object.freeze({ rain:3200, snow:1600, clouds:16, mist:9, particles:560, transmission:.22 }),

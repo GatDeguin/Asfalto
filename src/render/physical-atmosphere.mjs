@@ -4,7 +4,7 @@ export { AN_ATMOSPHERE_GLSL } from './volumetric-atmosphere.glsl.mjs';
 const PI=Math.PI;
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
-const QUALITY=Object.freeze({off:{skySteps:6,volumeSteps:0,lightSteps:0},low:{skySteps:6,volumeSteps:8,lightSteps:2},balanced:{skySteps:10,volumeSteps:12,lightSteps:3},high:{skySteps:16,volumeSteps:20,lightSteps:4},ultra:{skySteps:24,volumeSteps:32,lightSteps:4}});
+const QUALITY=Object.freeze({cinematic:{skySteps:16,volumeSteps:20,lightSteps:4},off:{skySteps:6,volumeSteps:0,lightSteps:0},low:{skySteps:6,volumeSteps:8,lightSteps:2},balanced:{skySteps:10,volumeSteps:12,lightSteps:3},high:{skySteps:16,volumeSteps:20,lightSteps:4},ultra:{skySteps:24,volumeSteps:32,lightSteps:4}});
 const PRESETS={clear:{elevation:52,azimuth:320,lux:90000},overcast:{elevation:55,azimuth:340,lux:18000},'golden-hour':{elevation:14,azimuth:280,lux:34000},sunset:{elevation:4,azimuth:270,lux:10000},moonrise:{elevation:18,azimuth:80,lux:1200},night:{elevation:-8,azimuth:0,lux:0}};
 const FOG_DENSITY={clear:.000045,cloudy:.0007,rain:.0013,storm:.0028,fog:.0075,'light-snow':.002,'heavy-snow':.006};
 const BETA_R=[.0058,.0135,.0331]; // inverse kilometres in the spherical sky integrator

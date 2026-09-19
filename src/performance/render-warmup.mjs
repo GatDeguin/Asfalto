@@ -1,5 +1,5 @@
 export async function prepareRenderPolicies({getTier,applyTier,prepare,paint=async()=>{},signal,maximumTier='high'}){
- const tiers=['low','balanced','high'],limit=tiers.indexOf(maximumTier);
+ const tiers=['low','balanced','high','cinematic'],limit=tiers.indexOf(maximumTier);
  if(limit<0)throw new RangeError('Unknown maximum rendering tier: '+maximumTier);
  const previous=getTier(),started=performance.now(),prepared=[];
  try{for(const tier of tiers.slice(0,limit+1)){signal?.throwIfAborted();applyTier(tier);await prepare(tier);prepared.push(tier);await paint();signal?.throwIfAborted();}return{prepared,durationMs:performance.now()-started};}

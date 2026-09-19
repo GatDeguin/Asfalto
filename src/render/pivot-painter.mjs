@@ -1,3 +1,4 @@
+import {graphicsQualityFamily} from './graphics-quality-policy.mjs';
 // Pivot Painter style hierarchy inferred from connected branch/leaf components.
 // Explicit local pivots and axes drive rotations; the source meshes and physics
 // stay unchanged. These are inferred pivots, not an authored Pivot Painter bake.
@@ -113,7 +114,7 @@ export function createPivotPainter(T,{root,quality='high',enabled=true}={}){
   releaseUnusedGeometry();
   root.traverse(o=>{if(records.has(o))return;const kind=classify(o);if(kind)attach(o,kind);});return records.size;
  }
- function setQuality(value='high'){tier=value==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anPpEnabled.value=tier==='low'||!enabled?0:1;uniforms.anPpLeafMotion.value=tier==='high'?1:.55;}
+ function setQuality(value='high'){tier=graphicsQualityFamily(value)==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anPpEnabled.value=tier==='low'||!enabled?0:1;uniforms.anPpLeafMotion.value=tier==='high'?1:.55;}
  function update({time,windSpeed,windDirection}={}){
   if(disposed)return;if(Number.isFinite(time))uniforms.anPpTime.value=Math.max(0,time);if(Number.isFinite(windSpeed))uniforms.anPpWindSpeed.value=clamp(windSpeed,0,32);
   if(windDirection){const x=windDirection.x??windDirection[0],z=windDirection.z??windDirection[windDirection.length===2?1:2];if(Number.isFinite(x)&&Number.isFinite(z)&&Math.hypot(x,z)>1e-6)uniforms.anPpWindDirection.value.set(x,0,z).normalize();}
