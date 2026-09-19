@@ -1,0 +1,90 @@
+name: Install and verify audited repairs
+on:
+  push:
+    branches: [fix/audit-stability-performance-20260919]
+    paths: [.github/workflows/apply-audit-repairs.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/fix/audit-stability-performance-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fix/audit-stability-performance-20260919
+          fetch-depth: 0
+      - name: Apply exact reviewed delta with before and after hashes
+        run: |
+          mkdir -p qa-output
+          git merge-base --is-ancestor 36d8c74638c3e588b1d6c68b0c4b56f123a9e2a3 HEAD
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib
+          encoded = ''.join(pathlib.Path(f'.audit-repairs/part{i}.txt').read_text() for i in range(4))
+          data = lzma.decompress(base64.b64decode(encoded, validate=True))
+          assert hashlib.sha256(data).hexdigest() == '32af040ad185c58f185b98cbf3beb83cf7b5ba9fecd71cb071f9adf197176b1a', 'Transport checksum mismatch'
+          manifest = json.loads(data)
+          assert manifest['base'] == '36d8c74638c3e588b1d6c68b0c4b56f123a9e2a3'
+          changes = []
+          for item in manifest['files']:
+              path = pathlib.Path(item['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert str(path).startswith(('src/', 'tools/', 'docs/')) or str(path) in ('index.html', 'server.mjs', '.gitignore')
+              old = path.read_bytes() if path.exists() else b''
+              assert hashlib.sha256(old).hexdigest() == item['before'], 'Baseline differs: ' + str(path)
+              text = old.decode('utf-8')
+              for edit in reversed(item['edits']):
+                  start = edit['start']
+                  text = text[:start] + edit['insert'] + text[start + edit['delete']:]
+              new = text.encode('utf-8')
+              assert hashlib.sha256(new).hexdigest() == item['after'], 'Output differs: ' + str(path)
+              changes.append((path, new))
+          for path, data in changes:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(data)
+          pathlib.Path('qa-output/changed-files.json').write_text(json.dumps([str(path) for path, _ in changes], indent=2))
+          print('Applied', len(changes), 'files with exact preconditions and outputs')
+          PY
+      - name: Full strict verification before committing
+        run: |
+          node tools/verify-release.mjs
+          git -c core.whitespace=cr-at-eol diff --check
+      - name: Commit source only to isolated feature branch and remove transport
+        run: |
+          git config user.name 'Asfalto maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          import json, pathlib, subprocess
+          paths = json.loads(pathlib.Path('qa-output/changed-files.json').read_text())
+          subprocess.run(['git', 'add', '--', *paths], check=True)
+          PY
+          git rm -r .audit-repairs .github/workflows/apply-audit-repairs.yml
+          git commit -m 'fix: repair audited lifecycle, rendering budgets, performance and standalone regressions'
+          git push origin HEAD:fix/audit-stability-performance-20260919
+          git rev-parse HEAD > qa-output/revision.txt
+          git diff --binary 36d8c74638c3e588b1d6c68b0c4b56f123a9e2a3 HEAD > qa-output/audit-repairs.patch
+          git config --local --unset-all http.https://github.com/.extraheader || true
+      - name: Prepare isolated actual browser tests
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/healthz > /dev/null && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/healthz
+      - name: Verify shaders and depth on real WebGL
+        run: python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: audited-repairs-fixture
+          path: qa-output/
+          retention-days: 7
+      - name: Verify actual workshop, cancel, retry, circuits and frame recovery
+        run: python3 tools/audit-browser-qa.py --output qa-output/browser
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: audited-repairs-browser
+          path: qa-output/
+          retention-days: 7
