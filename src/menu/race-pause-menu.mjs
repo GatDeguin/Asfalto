@@ -65,9 +65,9 @@ export function createRacePauseMenu({
   const button = action => buttons.find(node => node.dataset.pauseAction === action);
   const callbacks = { resume:onResume, restart:onRestart, settings:onSettings, workshop:onReturnToWorkshop };
   let view = 'closed', disposed = false, previousFocus = null, background = [], focusReturnTarget = null;
-  let bodyHadPauseClass = false;
+  let bodyHadPauseClass = false, resumeAllowed = true;
 
-  function focusDefault() { (view === 'confirm-restart' ? button('cancel') : button('resume')).focus({ preventScroll:true }); }
+  function focusDefault() { (view === 'confirm-restart' ? button('cancel') : resumeAllowed ? button('resume') : button('restart')).focus({ preventScroll:true }); }
   function renderView() {
     const confirming = view === 'confirm-restart';
     menu.hidden = confirming; confirmation.hidden = !confirming;
@@ -87,14 +87,14 @@ export function createRacePauseMenu({
     return true;
   }
   function activate(event) {
-    if (disposed) return;
+    if (disposed || (!resumeAllowed && (event === 'resume' || event === 'escape') && view === 'menu')) return;
     const next = reduceRacePauseState(view, event);
     if (next.view === view && !next.action) return;
     if (next.view === 'closed') hide({ restoreFocus:next.action === 'resume' });
     else { view = next.view; renderView(); }
     if (next.action) callbacks[next.action]();
   }
-  function show({ title = 'Pausa', sessionLabel = 'Sesión en curso', detail: copy = '', returnFocus = null } = {}) {
+  function show({ title = 'Pausa', sessionLabel = 'Sesión en curso', detail: copy = '', returnFocus = null, canResume = true } = {}) {
     if (disposed) return false;
     if (view === 'closed') {
       previousFocus = doc.activeElement;
@@ -104,6 +104,7 @@ export function createRacePauseMenu({
       for (const [element] of background) element.inert = true;
       doc.body.classList.add('an-race-pause-open');
     }
+    resumeAllowed = canResume !== false;button('resume').disabled = !resumeAllowed;
     vehicleLabels.refresh();
     heading.textContent = String(title || 'Pausa');
     session.textContent = String(sessionLabel || 'Sesión en curso');

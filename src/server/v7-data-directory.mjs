@@ -8,8 +8,8 @@ export async function prepareV7DataDirectory({sourceDirectory,targetDirectory}){
  let sourceReal;try{sourceReal=await realpath(source);}catch(error){if(error.code!=='ENOENT')throw error;}
  const targetReal=await realpath(target);
  if(sourceReal===targetReal)throw new RangeError('El destino v7 debe ser diferente del original.');
- for(const file of ['cockpit-layout.json','iluminacion-carreras.json']){
-  try{await copyFile(path.join(source,file),path.join(target,file),constants.COPYFILE_EXCL);}
+ for(const [file,destination] of [['cockpit-layout.json','cockpit-layout.json'],['iluminacion-carreras.json','iluminacion-carreras.json'],['lighting-presets.json','iluminacion-carreras.json']]){
+  try{await copyFile(path.join(source,file),path.join(target,destination),constants.COPYFILE_EXCL);}
   catch(error){if(error.code!=='EEXIST'&&error.code!=='ENOENT')throw error;}
  }
  return targetReal;

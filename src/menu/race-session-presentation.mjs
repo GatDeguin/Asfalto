@@ -24,7 +24,8 @@ const experienceV7 = mountV7Experience();
 function showPause() {
   if (body.classList.contains('v6-menu-open') || body.classList.contains('an-intro-open')) return;
   body.classList.add('an-race-paused', 'an-race-pause-visible');
-  pause.show({ sessionLabel:[world()?.track?.name, game()?.sessionTitle?.()].filter(Boolean).join(' · ') || 'Carrera en curso', detail:'La carrera está detenida.', returnFocus:document.querySelector('#viewport canvas') });
+  const failure=globalThis.__cockpit?.frameFailureDiagnostics?.();
+  pause.show({ title:failure?.failed?'Sesión detenida':'Pausa',canResume:!failure?.failed, sessionLabel:[world()?.track?.name, game()?.sessionTitle?.()].filter(Boolean).join(' · ') || 'Carrera en curso', detail:failure?.failed?'Se produjo un error gráfico. Reiniciá la sesión o volvé al taller; no se continúa con un cuadro inválido.':'La carrera está detenida.', returnFocus:document.querySelector('#viewport canvas') });
   syncAudio();
 }
 function closePause() {
@@ -76,6 +77,7 @@ const observer = new MutationObserver(() => {
   syncAudio();
 });
 observer.observe(body, { attributes:true, attributeFilter:['class'] });
+window.addEventListener('asfalto:frame-failure', showPause);
 window.addEventListener('asfalto:race-state', onState);
 window.addEventListener('asfalto:race-settings', onSettings);
 window.addEventListener('asfalto:audio-settings', syncAudio);
@@ -90,6 +92,7 @@ globalThis.__asfaltoRacePresentation = Object.freeze({
   diagnostics() { return { pauseOpen:pause.isOpen(), music:music.diagnostics() }; },
   dispose() {
     if (disposed) return; disposed = true; observer.disconnect(); experienceV7?.dispose(); pause.dispose(); music.dispose(); audio.remove();
+    window.removeEventListener('asfalto:frame-failure', showPause);
     window.removeEventListener('asfalto:race-state', onState); window.removeEventListener('asfalto:race-settings', onSettings); window.removeEventListener('asfalto:audio-settings', syncAudio);
     document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onGesture); document.removeEventListener('visibilitychange', onVisibility);
     body.classList.remove('an-race-paused', 'an-race-pause-visible');

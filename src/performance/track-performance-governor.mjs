@@ -1,6 +1,7 @@
 const TIERS=Object.freeze(['cinematic','high','balanced','low']);
 const RING_SIZE=600,DOWNGRADE_SAMPLES=240,UPGRADE_SAMPLES=600,STATS_EVERY=30;
 const HIGH_MAX=20,BALANCED_MAX=25;
+const EMERGENCY_MS=2000,EMERGENCY_SAMPLES=8;
 const POLICIES=Object.freeze({
  // Cinematic increases screen-space precision, not geometry, capture cadence or simulation.
  cinematic:Object.freeze({resolutionScale:1,shadows:true,vegetationLod:'high',mirrorHz:30,sectorPreloadRadius:2}),
@@ -17,21 +18,28 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
  initialTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];
  if(typeof onTierChange!=='function')throw new TypeError('Performance tier callback is required');
  const ring=new Float64Array(RING_SIZE),workRing=new Float64Array(RING_SIZE);
- let targetFps=60;
+ let targetFps=60,severeMs=0,severeSamples=0;
  let count=0,cursor=0,sinceTransition=0,currentTier=initialTier,transitions=0,phase='initial',transitionReason='initial',lastTransitionMs=0,slow=0,healthy=0,dirty=true;
  let resources=Object.freeze({heapBytes:0,gpuTextures:0,gpuGeometries:0}),frameStats=stats([]),workStats=stats([]);
  const values=(r,n=count)=>Array.from({length:Math.min(n,count)},(_,i)=>r[(cursor-1-i+RING_SIZE)%RING_SIZE]);
  const refresh=()=>{if(dirty){frameStats=stats(values(ring));workStats=stats(values(workRing));dirty=false;}};
- function snapshot(){return Object.freeze({tier:currentTier,maximumTier,targetFps,phase,p50FrameMs:frameStats.p50,p95FrameMs:frameStats.p95,p99FrameMs:frameStats.p99,maxFrameIntervalMs:frameStats.max,hitchesOver100Ms:frameStats.hitches,p50FrameWorkMs:workStats.p50,p95FrameWorkMs:workStats.p95,p99FrameWorkMs:workStats.p99,maxFrameWorkMs:workStats.max,samples:count,capacity:RING_SIZE,consecutiveSlow:slow,consecutiveHealthy:healthy,transitions,transitionReason,lastTransitionMs,renderPolicy:POLICIES[currentTier],resources,thresholds:Object.freeze({highMaxFrameMs:HIGH_MAX*60/targetFps,balancedMaxFrameMs:BALANCED_MAX*60/targetFps,downgradeSamples:DOWNGRADE_SAMPLES,upgradeSamples:UPGRADE_SAMPLES})});}
- function transition(next,reason){const previousTier=currentTier;currentTier=next;sinceTransition=0;slow=0;healthy=0;transitions++;transitionReason=reason;lastTransitionMs=Number(globalThis.performance?.now?.()??Date.now());onTierChange(Object.freeze({previousTier,tier:next,reason,renderPolicy:POLICIES[next],atMs:lastTransitionMs}));}
+ function snapshot(){return Object.freeze({tier:currentTier,maximumTier,targetFps,phase,p50FrameMs:frameStats.p50,p95FrameMs:frameStats.p95,p99FrameMs:frameStats.p99,maxFrameIntervalMs:frameStats.max,hitchesOver100Ms:frameStats.hitches,p50FrameWorkMs:workStats.p50,p95FrameWorkMs:workStats.p95,p99FrameWorkMs:workStats.p99,maxFrameWorkMs:workStats.max,samples:count,capacity:RING_SIZE,consecutiveSlow:slow,consecutiveHealthy:healthy,transitions,transitionReason,lastTransitionMs,renderPolicy:POLICIES[currentTier],resources,thresholds:Object.freeze({highMaxFrameMs:HIGH_MAX*60/targetFps,balancedMaxFrameMs:BALANCED_MAX*60/targetFps,downgradeSamples:DOWNGRADE_SAMPLES,upgradeSamples:UPGRADE_SAMPLES,emergencyWindowMs:EMERGENCY_MS,emergencyMinSamples:EMERGENCY_SAMPLES,severeFrameMs:3000/targetFps})});}
+ function transition(next,reason){const previousTier=currentTier;currentTier=next;sinceTransition=0;slow=0;healthy=0;severeMs=0;severeSamples=0;transitions++;transitionReason=reason;lastTransitionMs=Number(globalThis.performance?.now?.()??Date.now());onTierChange(Object.freeze({previousTier,tier:next,reason,renderPolicy:POLICIES[next],atMs:lastTransitionMs}));}
  function sample(input={}){
   const frameMs=checked(input.frameMs,'frameMs'),workMs=checked(input.frameWorkMs??frameMs,'frameWorkMs');
   const nextResources={heapBytes:checked(input.heapBytes,'heapBytes'),gpuTextures:checked(input.gpuTextures,'gpuTextures'),gpuGeometries:checked(input.gpuGeometries,'gpuGeometries')};
-  targetFps=input.targetFps===30?30:60;const budgetScale=60/targetFps;
+  const nextTarget=input.targetFps===30?30:60;if(nextTarget!==targetFps){severeMs=0;severeSamples=0;}targetFps=nextTarget;const budgetScale=60/targetFps;
   resources=Object.freeze(nextResources);ring[cursor]=frameMs;workRing[cursor]=workMs;cursor=(cursor+1)%RING_SIZE;count=Math.min(RING_SIZE,count+1);sinceTransition++;dirty=true;
   const slowBoundary=(currentTier==='high'||currentTier==='cinematic')?HIGH_MAX*budgetScale:currentTier==='balanced'?BALANCED_MAX*budgetScale:Infinity;
   const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:currentTier==='high'&&maximumTier==='cinematic'?16.7*budgetScale:-Infinity;
   slow=frameMs>slowBoundary?slow+1:0;healthy=frameMs<=healthyBoundary?healthy+1:0;
+  // Emergency reduction is measured in presentation time, not hundreds of
+  // already-slow frames. A single stall or background gap must not trigger it.
+  if(frameMs>=3000/targetFps){severeMs+=Math.min(frameMs,250);severeSamples++;}
+  else {severeMs=0;severeSamples=0;}
+  if(currentTier!=='low'&&severeMs>=EMERGENCY_MS&&severeSamples>=EMERGENCY_SAMPLES){
+   refresh();transition(TIERS[TIERS.indexOf(currentTier)+1],'sustained-severe-overload');return snapshot();
+  }
   if(sinceTransition%STATS_EVERY===0){
    refresh();
    if(sinceTransition>=DOWNGRADE_SAMPLES&&count>=DOWNGRADE_SAMPLES){
@@ -49,7 +57,7 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
   return snapshot();
  }
  function diagnostics(){refresh();return snapshot();}
- function beginWindow(nextPhase='driving'){ring.fill(0);workRing.fill(0);count=0;cursor=0;sinceTransition=0;slow=0;healthy=0;phase=nextPhase;dirty=true;return diagnostics();}
+ function beginWindow(nextPhase='driving'){ring.fill(0);workRing.fill(0);count=0;cursor=0;sinceTransition=0;slow=0;healthy=0;severeMs=0;severeSamples=0;phase=nextPhase;dirty=true;return diagnostics();}
  function setMaximumTier(next){if(!TIERS.includes(next))throw new RangeError('Invalid maximum performance tier: '+next);if(next===maximumTier)return diagnostics();maximumTier=next;if(TIERS.indexOf(currentTier)<TIERS.indexOf(next))transition(next,'requested-graphics-limit');return beginWindow('graphics-limit');}
  function reset(){currentTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];transitions=0;transitionReason='reset';lastTransitionMs=0;resources=Object.freeze({heapBytes:0,gpuTextures:0,gpuGeometries:0});return beginWindow('reset');}
  return Object.freeze({sample,tier:()=>currentTier,reset,beginWindow,diagnostics,setMaximumTier});

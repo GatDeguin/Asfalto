@@ -13,7 +13,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  const box=()=>primitive('box',()=>new T.BoxGeometry(1,1,1));
  const cylinder=(n=32)=>primitive('cyl'+n,()=>new T.CylinderGeometry(1,1,1,n,1));
  const cone=()=>primitive('cone',()=>new T.ConeGeometry(1,1,16,1));
- const ring=(arc=Math.PI*2)=>primitive('ring'+arc,()=>new T.TorusGeometry(1,.08,8,48,arc));
+ const ring=(arc=Math.PI*2)=>primitive('ring'+arc,()=>new T.TorusGeometry(1,.08,6,32,arc));
  function beveledBox(size,radius){
   const r=Math.min(radius,...size.map(v=>v/4)),key='bevel:'+size.join(',')+':'+r;
   return primitive(key,()=>{const g=new T.BoxGeometry(1,1,1,3,3,3),p=g.attributes.position,n=g.attributes.normal;
@@ -31,7 +31,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  // Four continuous back standards, shelf brackets and front ribs carry each tier to the base.
  for(const x of [-1.79,-.60,.60,1.79]){cabinet.add(box(),bronze,[x,1.08,-.145],[.035,2.12,.035]);for(const y of [.4,1.015,1.505]){cabinet.add(box(),bronze,[x,y-.044,.015],[.035,.035,.355]);bar(cabinet,bronze,[x,y-.20,-.13],[x,y-.047,.16],.007);}}
  for(const y of [.4,1.015,1.505])cabinet.add(box(),bronze,[0,y-.043,.178],[3.64,.03,.035]);
- for(const x of [-1.65,1.65]){cabinet.add(box(),bronze,[x,2.03,-.218],[.12,.16,.018]);cabinet.add(box(),bronze,[x,2.075,-.24],[.12,.025,.07]);for(const dx of [-.034,.034])cabinet.add(cylinder(8),silver,[x+dx,2.035,-.233],[.004,.018,.004],[Math.PI/2,0,0]);}
+ for(const x of [-1.65,1.65]){cabinet.add(box(),bronze,[x,2.03,-.201],[.12,.16,.014]);cabinet.add(box(),bronze,[x,2.075,-.190],[.12,.025,.036]);for(const dx of [-.034,.034])cabinet.add(cylinder(8),silver,[x+dx,2.035,-.202],[.004,.012,.004],[Math.PI/2,0,0]);}
  for(const y of [.633,.863])cabinet.add(box(),bronze,[0,y,-.146],[3.45,.030,.032]);
  cabinet.add(box(),back,[0,1.1,-.19],[3.8,2.2,.04]);
  for(const x of [-1.86,1.86])cabinet.add(box(),wood,[x,1.1,0],[.08,2.2,.42]);
@@ -44,7 +44,7 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
  AWARDS.forEach((a,i)=>{const p=positionFor(a,i);slots.push({id:a.id,kind:a.kind,position:[...p],heightM:a.heightM});if(a.kind==='test-medal'){cabinet.add(cylinder(8),bronze,[p[0],p[1]+.073,-.004],[.005,.288,.005],[Math.PI/2,0,0]);cabinet.add(cylinder(8),bronze,[p[0],p[1]+.079,.141],[.005,.022,.005]);}else cabinet.add(box(),bronze,[p[0],p[1]-.006,.045],[a.kind==='cup'?.31:.29,.006,.22]);});
  cabinet.finish();
  const stripMaterial=material('WarmShelfStrip','#b69060',.72,.05);stripMaterial.emissive.set('#f1bf7e');stripMaterial.emissiveIntensity=.35;
- const strips=batch(root,'ShelfStrips');for(const y of [.9865,1.4765,2.109])strips.add(box(),stripMaterial,[0,y,.17],[3.48,.0005,.009]);strips.finish();
+ const strips=batch(root,'ShelfStrips');for(const y of [.9865,1.4765,2.109])strips.add(box(),stripMaterial,[0,y,.17],[3.48,.0005,.009]);strips.finish();for(const mesh of root.children)if(mesh.material===stripMaterial){mesh.castShadow=false;mesh.receiveShadow=false;}
 
  // One local atlas for all plaques. Textures supplied by the host are never mutated/disposed.
  const labelRows=[{text:'ARCHIVO DEL TALLER',p:[0,2.153,.21],w:1.12,h:.067},...AWARDS.map((a,i)=>{const p=positionFor(a,i);return{text:a.title.toUpperCase(),p:[p[0],a.kind==='test-medal'?p[1]-.035:p[1]-.044,.21],w:a.kind==='test-medal'?.46:.6,h:a.kind==='test-medal'?.031:.035};}),{text:'ESPACIOS RESERVADOS PARA PREMIOS OBTENIDOS',p:[0,.944,.21],w:2.3,h:.035}];
@@ -88,12 +88,12 @@ export function createWorkshopCollection(T,{textures={},collection=[],posters=[]
     if(c===2){for(let j=0;j<3;j++){const pts=Array.from({length:9},(_,i)=>{const angle=j*Math.PI*2/3+i*.20;return[Math.sin(angle)*(.1+i*.022),.14+i*.082,Math.cos(angle)*(.1+i*.022)];});path(b,main,pts,.026);}b.add(ring(),main,[0,.85,0],[.3,.3,.3],[Math.PI/2,0,0]);for(let j=0;j<5;j++){const angle=j*Math.PI*2/5;b.add(cone(),gold,[Math.sin(angle)*.30,.93,Math.cos(angle)*.30],[.045,.16,.045]);}}
    }
   }
-  b.finish();group.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(group),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),scale=a.heightM/size.y;const matrix=new T.Matrix4().makeScale(scale,scale,scale).multiply(new T.Matrix4().makeTranslation(-center.x,-bounds.min.y,-center.z));group.traverse(o=>{if(o.isMesh){o.geometry.applyMatrix4(matrix);o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();}});if(a.kind==='test-medal'){const loop=new T.Mesh(new T.TorusGeometry(.008,.002,8,24),main);loop.name='Medal_HangingLoop';loop.position.set(0,a.heightM+.008,.004);loop.castShadow=true;owned.geometries.add(loop.geometry);group.add(loop);}
+  b.finish();group.updateMatrixWorld(true);const bounds=new T.Box3().setFromObject(group),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3()),scale=(a.kind==='test-medal'?a.heightM-.018:a.heightM)/size.y;const matrix=new T.Matrix4().makeScale(scale,scale,scale).multiply(new T.Matrix4().makeTranslation(-center.x,-bounds.min.y,-center.z));group.traverse(o=>{if(o.isMesh){o.geometry.applyMatrix4(matrix);o.geometry.computeBoundingBox();o.geometry.computeBoundingSphere();}});if(a.kind==='test-medal'){const loop=new T.Mesh(new T.TorusGeometry(.008,.002,8,24),main);loop.name='Medal_HangingLoop';loop.position.set(0,a.heightM-.010,.004);loop.castShadow=true;owned.geometries.add(loop.geometry);group.add(loop);}
   group.position.set(...positionFor(a,index));group.visible=false;awardsRoot.add(group);awardGroups.set(a.id,group);
  }
  AWARDS.forEach(awardGeometry);for(const g of primitives.values())g.dispose();primitives.clear();
  function setCollection(next=[]){if(disposed)throw new Error('Workshop collection disposed');if(!Array.isArray(next))throw new TypeError('Collection must be an array');const ids=new Set(next.map(x=>typeof x==='string'?x:x?.id));ignoredIds=[...ids].filter(id=>!awardGroups.has(id));for(const [id,group]of awardGroups){group.visible=ids.has(id);group.userData.earned=group.visible;}return diagnostics();}
- function diagnostics(){let drawCalls=0,triangles=0;root.traverseVisible(o=>{if(o.isMesh){drawCalls++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});return{disposed,front:'+Z',construction:{continuousBackStandards:4,bracketSpansM:[1.19,1.20,1.19],hookReachM:.288,hookBackGapM:0,antiTipPlates:2,selectiveShadows:true},dimensionsM:[3.8,2.2,.42],hardwareOverallDepthM:.485,occupiedIds:[...awardGroups].filter(([,g])=>g.visible).map(([id])=>id),ignoredIds:[...ignoredIds],slots:slots.map(s=>({...s,position:[...s.position]})),drawCalls,triangles,geometries:owned.geometries.size,materials:owned.materials.size,ownedTextures:owned.textures.size,atlasAvailable:!!ctx,decorativePosters:displayedPosters.length,transmissionPass:false};}
+ function diagnostics(){let drawCalls=0,triangles=0;root.traverseVisible(o=>{if(o.isMesh){drawCalls++;triangles+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});return{disposed,front:'+Z',construction:{continuousBackStandards:4,bracketSpansM:[1.19,1.20,1.19],hookReachM:.288,hookBackGapM:0,antiTipPlates:2,selectiveShadows:true},dimensionsM:[3.8,2.2,.42],hardwareOverallDepthM:.42,occupiedIds:[...awardGroups].filter(([,g])=>g.visible).map(([id])=>id),ignoredIds:[...ignoredIds],slots:slots.map(s=>({...s,position:[...s.position]})),drawCalls,triangles,geometries:owned.geometries.size,materials:owned.materials.size,ownedTextures:owned.textures.size,atlasAvailable:!!ctx,decorativePosters:displayedPosters.length,transmissionPass:false};}
  function dispose(){if(disposed)return;disposed=true;root.removeFromParent();root.clear();for(const set of Object.values(owned)){for(const resource of set)resource.dispose();set.clear();}awardGroups.clear();if(canvas){canvas.width=1;canvas.height=1;}canvas=null;}
  function setEnvironment(texture=null){if(disposed)throw new Error('Workshop collection disposed');for(const m of owned.materials)if(m.isMeshStandardMaterial&&m.envMap!==texture){m.envMap=texture;m.needsUpdate=true;}}
  setCollection(collection);return Object.freeze({root,setCollection,setEnvironment,diagnostics,dispose});

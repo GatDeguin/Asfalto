@@ -1,3 +1,4 @@
+import {waitWithSignal} from '../runtime/abortable-task.mjs';
 import { assertTrackAdapter } from './track-contract.mjs';
 
 const SAFE_ID = /^[a-z][a-z0-9_]{0,63}$/;
@@ -86,7 +87,8 @@ export function createTrackManager(context) {
     return entry;
   }
 
-  async function select(id) {
+  async function select(id, {signal} = {}) {
+    signal?.throwIfAborted();
     const entry = entryFor(id);
 
     if (active && activeId === id) {
@@ -98,6 +100,10 @@ export function createTrackManager(context) {
     const selectionToken = ++token;
     pending?.controller.abort();
     const controller = new AbortController();
+    const cancel = () => controller.abort(signal?.reason || abortError());
+    signal?.addEventListener('abort', cancel, {once: true});
+    const timeoutMs = context.selectionTimeoutMs ?? 180000;
+    const timeout = setTimeout(() => controller.abort(new DOMException('La carga del circuito tardó demasiado. Podés reintentar.', 'TimeoutError')), timeoutMs);
     let candidate = null;
     let candidateOwned = false;
 
@@ -110,17 +116,17 @@ export function createTrackManager(context) {
         const result = await candidate.validate({ id, entry, signal: controller.signal });
         const invalid = validationError(result);
         if (invalid) throw invalid;
-        if (controller.signal.aborted || selectionToken !== token) throw abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
 
         await candidate.load({ id, entry, signal: controller.signal });
-        if (controller.signal.aborted || selectionToken !== token) throw abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
         if (candidate.ready !== true) throw new Error('adapter ' + id + ' did not become ready');
 
         const previous = active;
         active = candidate;
         activeId = id;
         if (previous && previous !== candidate) await cleanup(previous);
-        if (controller.signal.aborted || selectionToken !== token) throw abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
         return candidate;
       } catch (error) {
         if (candidateOwned && active !== candidate) {
@@ -132,15 +138,20 @@ export function createTrackManager(context) {
             }
           }
         }
-        if (controller.signal.aborted || selectionToken !== token) throw abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
         throw error;
       } finally {
         if (pending?.token === selectionToken) pending = null;
       }
     })();
 
-    pending = { token: selectionToken, controller, promise };
-    return promise;
+    const result = waitWithSignal(promise, controller.signal).finally(() => {
+      clearTimeout(timeout);
+      signal?.removeEventListener('abort', cancel);
+      if (pending?.token === selectionToken) pending = null;
+    });
+    pending = { token: selectionToken, controller, promise: result };
+    return result;
   }
 
   async function unload() {

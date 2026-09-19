@@ -33,6 +33,7 @@ function decodePath(rawUrl) {
   if (decoded.startsWith('//') || decoded.includes('\0') || decoded.includes('\\')) return null;
   const segments = decoded.split('/').filter(Boolean);
   if (segments.length === 0) segments.push('index.html');
+  if (segments.some(segment => segment === '.local-data' || segment === '.git')) return null;
   if (segments.some(segment => segment === '.' || segment === '..' || /^[A-Za-z]:/.test(segment))) return null;
   return segments;
 }
@@ -144,7 +145,13 @@ export async function main() {
     throw new RangeError('Rango de puertos invalido.');
   }
   const root = path.dirname(fileURLToPath(import.meta.url));
-  const cockpitDataDirectory=await prepareV7DataDirectory({sourceDirectory:path.resolve(root,'..','Configuracion'),targetDirectory:path.resolve(root,'..','Configuracion','v7')});
+  // Prefer existing v7/legacy calibration on migration, then bundled defaults.
+  // COPYFILE_EXCL preserves every saved file; the published checkout is standalone.
+  const targetDirectory=path.resolve(process.env.ASFALTO_DATA_DIR||path.join(root,'.local-data','v7'));
+  for(const sourceDirectory of [path.resolve(root,'..','Configuracion','v7'),path.resolve(root,'..','Configuracion'),path.join(root,'assets','configuration')]){
+    if(sourceDirectory!==targetDirectory)await prepareV7DataDirectory({sourceDirectory,targetDirectory});
+  }
+  const cockpitDataDirectory=await realpath(targetDirectory);
   let instance = null;
   let lastError = null;
   for (let port = firstPort; port <= lastPort; port += 1) {

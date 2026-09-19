@@ -1,3 +1,4 @@
+import {waitWithSignal} from '../runtime/abortable-task.mjs';
 /** Single host session request; a scene implementation receives and must honor AbortSignal. */
 export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{}}={}){
  let current=null,epoch=0;
@@ -7,14 +8,14 @@ export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{}}=
   const isCurrent=()=>current===request&&!request.controller.signal.aborted;
   const presentation=begin({metadata,cancel:()=>{if(current===request)cancel();},retry:()=>{if(isCurrent())request.decide?.('retry');}})||{};
   request.presentation=presentation;const signal=request.controller.signal;
-  const canceled=new Promise(resolve=>signal.addEventListener('abort',()=>resolve({canceled:true}),{once:true}));
+  let resolveCancel;const canceled=new Promise(resolve=>{resolveCancel=resolve;});const onAbort=()=>resolveCancel({canceled:true});signal.addEventListener('abort',onAbort,{once:true});
   try{while(isCurrent()){
-   try{const operation=Promise.resolve().then(()=>isCurrent()?load({signal,isCurrent,wait:promise=>Promise.race([promise,canceled.then(()=>{throw new DOMException('Carga cancelada','AbortError');})]),stage:(...args)=>{if(isCurrent())presentation.stage?.(...args);}}):false);const outcome=await Promise.race([operation.then(value=>({value})),canceled]);
-    if(outcome.canceled||!isCurrent()){await operation.catch(()=>{});return false;}
+   try{const operation=Promise.resolve().then(()=>isCurrent()?load({signal,isCurrent,wait:promise=>waitWithSignal(promise,signal),stage:(...args)=>{if(isCurrent())presentation.stage?.(...args);}}):false);const outcome=await Promise.race([operation.then(value=>({value})),canceled]);
+    if(outcome.canceled||!isCurrent()){operation.catch(()=>{});return false;}
     if(outcome.value!==true)throw new Error('No se pudo preparar la sesión.');
     success=true;return true;
    }catch(error){if(!isCurrent()||error?.name==='AbortError')return false;presentation.fail?.(String(error?.message||error));if(presentation.canRetry===false)return false;const decision=await Promise.race([new Promise(resolve=>request.decide=resolve),canceled]);request.decide=null;if(decision!=='retry'||!isCurrent())return false;presentation.stage?.('Reintentando la preparación…');}
-  }return false;}finally{await presentation.end?.(success);const stillOwned=current===request;if(stillOwned)current=null;if(stillOwned&&request.userCanceled)onCancel(request.metadata);if(epoch!==request.epoch||signal.aborted)return false;}
+  }return false;}finally{signal.removeEventListener('abort',onAbort);await presentation.end?.(success);const stillOwned=current===request;if(stillOwned)current=null;if(stillOwned&&request.userCanceled)onCancel(request.metadata);if(epoch!==request.epoch||signal.aborted)return false;}
  }
  return {run,cancel,diagnostics:()=>({active:!!current,epoch,aborted:current?.controller.signal.aborted??false})};
 }

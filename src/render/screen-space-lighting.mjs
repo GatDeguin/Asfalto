@@ -1,3 +1,4 @@
+import {planMainRenderBudget} from './main-render-budget.mjs';
 import {supportedHdrSamples} from './render-target-capabilities.mjs';
 import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs';
 const policies=Object.freeze({
@@ -16,7 +17,7 @@ const compositeGLSL="uniform sampler2D anSceneColor,anLighting;\nuniform vec2 an
 const compositeMain="\nvoid main(){\n vec4 color=texture2D(anSceneColor,vUv);float depth=anReadDepth(vUv);vec3 p=anViewPosition(vUv);\n vec4 lighting=vec4(0.);float weight=0.;\n for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){\n  vec2 uv=clamp(vUv+vec2(float(x),float(y))/anLightingResolution,vec2(.001),vec2(.999));\n  float delta=abs(anViewPosition(uv).z-p.z),w=exp(-delta/max(.06,-p.z*.004))*((x==0&&y==0)?2.:1.);\n  lighting+=texture2D(anLighting,uv)*w;weight+=w;\n }\n lighting/=max(weight,.0001);vec3 result=color.rgb;\n if(depth<.999999){result*=lighting.a;result+=lighting.rgb*min(color.rgb+.06,vec3(1.));}\n result=anApplyAtmosphere(result,p,vUv);\n gl_FragColor=vec4(max(result,vec3(0.)),color.a);\n gl_FragDepth=depth;\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}";
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
-export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,onStage=null}={}){
+export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',phone=false,samples=2,onStage=null}={}){
  let disposed=false,rendering=false,frames=0,targets=null,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
  const size=new T.Vector2(),currentViewport=new T.Vector4(),viewport=new T.Vector4(),scissor=new T.Vector4(),clearColor=new T.Color();
  const definitions=gtaoShaderDefinitions(T),noise=definitions.generateMagicSquareNoise(5);
@@ -37,11 +38,11 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  function hasEffects(){return hasIndirect()||volumeEnabled();}
  function releaseTargets(){if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;}
  function captureSamples(){return supportedHdrSamples(renderer,samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples);}
- let targetSamples=captureSamples();
+ let targetSamples=captureSamples(),targetBudget=null;
  const contextRestored=()=>{releaseTargets();targetSamples=captureSamples();};
  renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
  function ensureTargets(){
-  const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);const width=Math.max(2,Math.floor(size.x)),height=Math.max(2,Math.floor(size.y)),scale=Math.min(policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height))),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
+  const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);targetBudget=planMainRenderBudget({width:size.x,height:size.y,quality,phone,samples:targetSamples,maxTextureSize:renderer.capabilities.maxTextureSize});const width=Math.max(2,targetBudget.width),height=Math.max(2,targetBudget.height),scale=Math.min(policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height))),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
   if(!targets){const params={type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false};const color=new T.WebGLRenderTarget(width,height,{...params,depthBuffer:true,samples:targetSamples});color.depthTexture=new T.DepthTexture(width,height,T.UnsignedIntType);color.texture.name='ASFALTO_INDIRECT_SOURCE';color.texture.colorSpace=T.LinearSRGBColorSpace;targets={color,ao:new T.WebGLRenderTarget(ew,eh,params),lighting:new T.WebGLRenderTarget(ew,eh,params)};}
   if(targets.color.width!==width||targets.color.height!==height)targets.color.setSize(width,height);
   for(const t of [targets.ao,targets.lighting])if(t.width!==ew||t.height!==eh)t.setSize(ew,eh);
@@ -50,7 +51,7 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  }
  return{
   setFeatures(value){features={...features,...value};uniforms.anAoStrength.value=features.gtao?.38:0;uniforms.anGiStrength.value=features.ssgi?.28:0;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;if(!hasEffects())releaseTargets();},
-  setQuality(tier){const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;releaseTargets();}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
+  setQuality(tier){quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;releaseTargets();}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
   render(draw){
    if(disposed||!policy.enabled||!hasEffects()||renderer.getContext().isContextLost()){if(!disposed&&(!policy.enabled||!hasEffects()))releaseTargets();draw();return;}
    if(rendering)throw Error('Screen lighting cannot render recursively');rendering=true;
@@ -69,7 +70,7 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    }catch(error){lastError=error.message;throw error;}
    finally{scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
   },
-  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples,supportedSamples:targetSamples,spatialOnly:true,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
+  diagnostics:()=>({mainRenderBudget:targetBudget,enabled:policy.enabled,policy,frames,requestedSamples:samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples,supportedSamples:targetSamples,spatialOnly:true,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
   dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
  };
 }
