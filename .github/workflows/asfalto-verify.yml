@@ -1,0 +1,98 @@
+name: Asfalto verification and guarded release
+on:
+  push:
+    paths: ['src/**', 'tools/**', 'tracks/**', 'assets/configuration/**', 'assets/manifests/**', 'index.html', 'server.mjs', '.github/workflows/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: asfalto-verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Run the complete suite, reject any failure
+        run: |
+          mkdir -p qa-output
+          git rev-parse HEAD > qa-output/revision.txt
+          node --version > qa-output/node-version.txt
+          node tools/verify-release.mjs
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
+          node --check src/legacy/module-02.mjs
+          node --check src/legacy/v6-complete-runtime.js
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: asfalto-contracts
+          path: qa-output/
+          retention-days: 14
+  browser:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Prepare browser and actual static server
+        run: |
+          mkdir -p qa-output
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/healthz && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/healthz
+      - name: Real WebGL normal/logarithmic depth and resource transitions
+        run: python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+      - name: Actual workshop and driving lifecycle
+        run: python3 tools/maintenance-browser-qa.py --output qa-output/game
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: asfalto-browser
+          path: qa-output/
+          retention-days: 14
+  publish:
+    needs: [contracts, browser]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/release/validated'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Promote only the verified revision and request the configured Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/$GITHUB_REPOSITORY/pages --jq '.source.branch')" = gh-pages
+          git fetch origin gh-pages
+          git merge-base --is-ancestor origin/gh-pages HEAD
+          git push origin HEAD:gh-pages
+          gh api --method POST repos/$GITHUB_REPOSITORY/pages/builds > pages-request.json
+          for i in $(seq 1 100); do
+            gh api repos/$GITHUB_REPOSITORY/pages/builds/latest > pages-build.json
+            STATE=$(jq -r .status pages-build.json)
+            REVISION=$(jq -r .commit pages-build.json)
+            if [ "$REVISION" = "$GITHUB_SHA" ] && [ "$STATE" = built ]; then cat pages-build.json; exit; fi
+            if [ "$REVISION" = "$GITHUB_SHA" ] && [ "$STATE" = errored ]; then cat pages-build.json; exit 1; fi
+            sleep 5
+          done
+          echo 'Pages did not confirm the verified revision within the deployment window.' >&2
+          exit 1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: asfalto-pages-status
+          path: pages-*.json
+          retention-days: 14

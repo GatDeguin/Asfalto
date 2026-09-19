@@ -1,10 +1,6 @@
 name: Cinematic verification
 on:
-  push:
-    branches: [graphics/cinematic-ultra-20260918]
-    paths: [.github/workflows/cinematic-verify.yml]
-  pull_request:
-    paths: ['index.html', 'src/legacy/module-02.mjs', 'src/legacy/v6-complete-runtime.js', 'src/tracks/visuals/**', 'src/render/**', 'src/performance/**', 'tools/cinematic-*', '.github/workflows/cinematic-verify.yml']
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
@@ -28,12 +24,8 @@ jobs:
           node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
           node --check src/legacy/module-02.mjs
           node --check src/legacy/v6-complete-runtime.js
-      - name: Record entire available suite including pre-existing failures
-        run: |
-          set +e
-          node --test tools/*.test.mjs > qa-output/full-suite.tap 2>&1
-          echo $? > qa-output/full-suite-exit-code.txt
-          exit 0
+      - name: Complete strict suite
+        run: node tools/verify-release.mjs
       - name: Install browser QA dependencies only
         run: |
           python3 -m pip install playwright==1.57.0
