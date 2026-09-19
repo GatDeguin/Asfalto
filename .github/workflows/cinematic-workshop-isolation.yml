@@ -1,0 +1,34 @@
+name: Cinematic workshop isolation
+on:
+  push:
+    branches: [graphics/cinematic-ultra-20260918]
+    paths: [.github/workflows/cinematic-workshop-isolation.yml]
+permissions:
+  contents: read
+jobs:
+  isolate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prepare actual baseline and existing servers
+        run: |
+          mkdir -p qa-output
+          git rev-parse HEAD > qa-output/revision.txt
+          git worktree add --detach /tmp/asfalto-baseline 045cd8b7d206418a26d7a75666e557a7e124377a
+          node server.mjs --port 4173 > qa-output/current-server.log 2>&1 &
+          (cd /tmp/asfalto-baseline && node server.mjs --port 4174) > qa-output/baseline-server.log 2>&1 &
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+      - name: Capture diagnostic stills from both actual applications
+        timeout-minutes: 10
+        run: python3 tools/cinematic-workshop-isolation.py --output qa-output/isolation
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cinematic-workshop-isolation
+          path: qa-output/
+          retention-days: 7
