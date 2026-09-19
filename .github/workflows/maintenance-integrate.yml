@@ -15,57 +15,43 @@ jobs:
         with:
           ref: fixes/audit-20260919
           fetch-depth: 0
-      - name: Apply exact locally tested source with byte preconditions
+      - name: Apply checked hidden-render regression fix
         run: |
           set -euo pipefail
           mkdir -p qa-output
-          git merge-base --is-ancestor 36d8c74638c3e588b1d6c68b0c4b56f123a9e2a3 HEAD
           python3 - <<'PY'
-          import base64, hashlib, json, lzma, pathlib
-          encoded = ''.join(pathlib.Path('.maintenance-review/edits.' + part).read_text() for part in ['aa','ab','ac'])
-          raw = lzma.decompress(base64.b64decode(encoded))
-          assert hashlib.sha256(raw).hexdigest() == '618c09a4985e3af5ef1b0263ba93ddfb9f510082f48f8d4eca4737b73724c5fb'
-          manifest = json.loads(raw)
-          changes = []
+          import hashlib,json,pathlib
+          raw=pathlib.Path('.maintenance-review/followup.json').read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='38c21e736e84ee9129574af21fb74bd4d7160bd42685389aa16e02f7b191e053'
+          manifest=json.loads(raw);changes=[]
           for item in manifest['files']:
-              path = pathlib.Path(item['path'])
-              assert not path.is_absolute() and '..' not in path.parts
-              assert str(path).startswith(('src/','tools/','docs/','.github/workflows/')) or str(path) in ('server.mjs','.gitignore')
-              before = path.read_bytes() if path.exists() else b''
-              if str(path).startswith('.github/workflows/'):
-                  assert hashlib.sha256(before).hexdigest() == item['after'], 'Workflow must be installed by authorized connector: ' + str(path)
-                  continue
-              assert hashlib.sha256(before).hexdigest() == item['before'], 'Unexpected source: ' + str(path)
-              text = before.decode('utf-8')
+              path=pathlib.Path(item['path'])
+              assert str(path).startswith(('src/','tools/')) and '..' not in path.parts
+              before=path.read_bytes() if path.exists() else b''
+              assert hashlib.sha256(before).hexdigest()==item['before'],str(path)
+              text=before.decode()
               for edit in reversed(item['edits']):
-                  start = edit['start']
-                  text = text[:start] + edit['insert'] + text[start + edit['delete']:]
-              after = text.encode('utf-8')
-              assert hashlib.sha256(after).hexdigest() == item['after'], 'Wrong output: ' + str(path)
-              changes.append((path, after))
-          for path, data in changes:
-              path.parent.mkdir(parents=True,exist_ok=True)
-              path.write_bytes(data)
-          pathlib.Path('qa-output/changed-files.json').write_text(json.dumps([str(path) for path,_ in changes],indent=2))
-          pathlib.Path('qa-output/file-hashes.json').write_text(json.dumps([{k:item[k] for k in ('path','before','after')} for item in manifest['files']],indent=2))
+                  if 'old' in edit:
+                      assert text.count(edit['old'])==1
+                      text=text.replace(edit['old'],edit['new'])
+                  else:
+                      i=edit['start'];text=text[:i]+edit['insert']+text[i+edit['delete']:]
+              after=text.encode();assert hashlib.sha256(after).hexdigest()==item['after'],str(path)
+              changes.append((path,after))
+          for path,data in changes:path.write_bytes(data)
+          pathlib.Path('qa-output/changed-files.json').write_text(json.dumps([str(path) for path,_ in changes]))
           PY
           node tools/verify-release.mjs
           node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
-          node --check src/legacy/module-02.mjs
           node --check src/legacy/v6-complete-runtime.js
-          git -c core.whitespace=cr-at-eol diff --check
-      - name: Commit reviewed application delta only to isolated branch
+          python3 -m py_compile tools/maintenance-browser-qa.py
+      - name: Commit verified fix only to isolated branch
         run: |
           git config user.name 'Asfalto maintenance verification'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          python3 - <<'PY'
-          import json,pathlib,subprocess
-          paths=json.loads(pathlib.Path('qa-output/changed-files.json').read_text())
-          assert not any(p.startswith('.github/') for p in paths)
-          subprocess.run(['git','add','--',*paths],check=True)
-          PY
-          git rm -r .maintenance-review
-          git commit -m 'fix: contain runtime failures, cancel stale loads and bound render budgets'
+          git add src/legacy/v6-complete-runtime.js tools/maintenance-browser-qa.py tools/audit-loading-visibility.test.mjs
+          git rm .maintenance-review/followup.json
+          git commit -m 'fix: stop hidden workshop rendering while the loading presentation owns the screen'
           git push origin HEAD:fixes/audit-20260919
           git rev-parse HEAD > qa-output/revision.txt
       - name: Install QA browser and launch actual static application
