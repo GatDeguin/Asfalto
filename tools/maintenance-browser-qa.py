@@ -42,7 +42,7 @@ def main():
 
         def checkpoint(label):
             report['phase'] = label
-            report['state'] = page.evaluate("""()=>({startup:globalThis.__asfaltoV7Startup?.diagnostics(),modular:globalThis.__asfaltoV6Modular?.getDiagnostics(),session:globalThis.__chevyV6Complete?.sessionDiagnostics(),phase:document.body.dataset.v7Phase,body:document.body.className,load:document.querySelector('.an-v7-load-state p')?.textContent,fault:globalThis.__cockpit?.runtimeFailureDiagnostics?.()})""")
+            report['state'] = page.evaluate("""()=>({startup:globalThis.__asfaltoV7Startup?.diagnostics(),modular:globalThis.__asfaltoV6Modular?.getDiagnostics(),session:globalThis.__chevyV6Complete?.sessionDiagnostics(),phase:document.body.dataset.v7Phase,body:document.body.className,load:document.querySelector('.an-v7-load-state p')?.textContent,fault:globalThis.__cockpit?.runtimeFailureDiagnostics?.(),workshopActive:globalThis.__chevyV6Complete?.workshop?.active,loadUi:[...document.querySelectorAll('.an-v7-load-state,#an-session-loading,.an-v7-load-state [data-cancel]')].map(el=>({tag:el.tagName,id:el.id,hidden:el.hidden,inert:el.inert,disabled:el.disabled,display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,rect:el.getBoundingClientRect().toJSON(),ancestors:[...function*(n){for(;n;n=n.parentElement)yield n;}(el)].map(n=>({id:n.id,hidden:n.hidden,inert:n.inert}))}))})""")
             report['stages'].append({'phase': label, 'load': report['state'].get('load')})
             save()
 
@@ -80,7 +80,11 @@ def main():
             page.evaluate("""()=>{const game=__chevyV6Complete,original=game.startDrive;window.__qaStarts=[];game.startDrive=(...args)=>original(...args).then(value=>{__qaStarts.push({value});return value;},error=>{__qaStarts.push({error:String(error)});throw error;});}""")
             page.locator('.an-v7-quick-drive').click()
             wait("globalThis.__asfaltoV7Startup?.diagnostics().phase==='loading'", 'cold-load-held', 30)
+            deadline=time.monotonic()+10
+            while not held and time.monotonic()<deadline:
+                page.wait_for_timeout(50)
             assert held, 'Cockpit request was not intercepted: cancellation scenario invalid'
+            assert page.evaluate('__chevyV6Complete.workshop.active===false'), 'Hidden workshop still rendering during loading'
             started = time.monotonic()
             page.locator('.an-v7-load-state [data-cancel]').click()
             wait("__qaStarts.length===1&&!__chevyV6Complete.sessionDiagnostics().request?.active", 'canceled-and-released', 10)
