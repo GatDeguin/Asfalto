@@ -129,11 +129,12 @@ function createEntry(T,material,role) {
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n'+FRAGMENT_DECLARATIONS);
     // The shared Chevy atlas declares its pigment mask in the map block.
     // Sample after that block, never tint the source before paint isolation.
-    const maskedPaint=entry.role==='paint'&&shader.fragmentShader.includes('float chevyPaintMask');
-    const detail=DETAIL_SAMPLE.replace('AN_AM_SURFACE_MASK',maskedPaint?'mix(1.,chevyPaintMask,anAMCinematic)':'1.');
+    const chevyMask=entry.role==='paint'&&shader.fragmentShader.includes('float chevyPaintMask');
+    const pigmentMask=chevyMask?'chevyPaintMask':entry.role==='paint'&&shader.fragmentShader.includes('float vehiclePigment')?'vehiclePigment':null;
+    const detail=DETAIL_SAMPLE.replace('AN_AM_SURFACE_MASK',pigmentMask?'mix(1.,'+pigmentMask+',anAMCinematic)':'1.');
     const roughness='roughnessFactor=mix(roughnessFactor,clamp(roughnessFactor+(anAMSample.b-.5)*anAMRoughnessStrength*anAMLocalQuality+anAMConvex*anAMWear*.16*anAMLocalQuality,.045,1.),step(.00001,anAMLocalQuality));';
-    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',detail+'\n#include <roughnessmap_fragment>'+(maskedPaint?'':'\n'+roughness));
-    if(maskedPaint)shader.fragmentShader=shader.fragmentShader.replace('roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);','roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);\n'+roughness);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',detail+'\n#include <roughnessmap_fragment>'+(chevyMask?'':'\n'+roughness));
+    if(chevyMask)shader.fragmentShader=shader.fragmentShader.replace('roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);','roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);\n'+roughness);
     shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n'+DETAIL_NORMAL);
     shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n'+THIN_SCATTERING);
   };
