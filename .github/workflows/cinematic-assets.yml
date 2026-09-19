@@ -24,9 +24,22 @@ jobs:
                   if name and p.is_file() and p.suffix.lower() in extensions:
                       archive.write(p, name)
           PY
+          split -b 200M runtime-assets.zip runtime-assets.part.
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: cinematic-runtime-assets
-          path: runtime-assets.zip
+          name: cinematic-runtime-aa
+          path: runtime-assets.part.aa
+          compression-level: 0
+          retention-days: 2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cinematic-runtime-ab
+          path: runtime-assets.part.ab
+          compression-level: 0
+          retention-days: 2
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cinematic-runtime-ac
+          path: runtime-assets.part.ac
           compression-level: 0
           retention-days: 2
