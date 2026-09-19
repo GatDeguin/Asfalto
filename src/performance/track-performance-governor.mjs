@@ -30,7 +30,7 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
   targetFps=input.targetFps===30?30:60;const budgetScale=60/targetFps;
   resources=Object.freeze(nextResources);ring[cursor]=frameMs;workRing[cursor]=workMs;cursor=(cursor+1)%RING_SIZE;count=Math.min(RING_SIZE,count+1);sinceTransition++;dirty=true;
   const slowBoundary=(currentTier==='high'||currentTier==='cinematic')?HIGH_MAX*budgetScale:currentTier==='balanced'?BALANCED_MAX*budgetScale:Infinity;
-  const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:currentTier==='high'&&maximumTier==='cinematic'?16*budgetScale:-Infinity;
+  const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:currentTier==='high'&&maximumTier==='cinematic'?16.7*budgetScale:-Infinity;
   slow=frameMs>slowBoundary?slow+1:0;healthy=frameMs<=healthyBoundary?healthy+1:0;
   if(sinceTransition%STATS_EVERY===0){
    refresh();
@@ -42,7 +42,7 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
     else if(sinceTransition>=UPGRADE_SAMPLES&&count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary){
      if(currentTier==='low'&&maximumTier!=='low')transition('balanced','600-window-p95-at-22ms');
      else if(currentTier==='balanced'&&(maximumTier==='high'||maximumTier==='cinematic'))transition('high','600-window-p95-at-16.7ms');
-     else if(currentTier==='high'&&maximumTier==='cinematic')transition('cinematic','manual-cinematic-600-window-p95-at-16ms');
+     else if(currentTier==='high'&&maximumTier==='cinematic')transition('cinematic','manual-cinematic-600-window-p95-at-16.7ms');
     }
    }
   }

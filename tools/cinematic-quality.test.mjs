@@ -46,7 +46,7 @@ test('master performance cap respects manual Cinematic, Eco and Balanced; Auto i
 test('Cinematic degrades only after the slow window, recovers gradually, and cannot exceed manual cap',()=>{
  const changes=[],g=createTrackPerformanceGovernor({initialTier:'cinematic',maximumTier:'cinematic',onTierChange:v=>changes.push(v)});
  sample(g,22,239);assert.equal(g.tier(),'cinematic');sample(g,22,1);assert.equal(g.tier(),'high');
- sample(g,16,599);assert.equal(g.tier(),'high');sample(g,16,1);assert.equal(g.tier(),'cinematic');
+ sample(g,1000/60,599);assert.equal(g.tier(),'high');sample(g,1000/60,1);assert.equal(g.tier(),'cinematic');
  g.setMaximumTier('high');assert.equal(g.tier(),'high');sample(g,8,1800);assert.equal(g.tier(),'high');
  assert.equal(g.diagnostics().maximumTier,'high');assert.ok(changes.length>=3);
  g.setMaximumTier('low');assert.equal(g.tier(),'low');
@@ -66,3 +66,29 @@ test('warmup enumerates Cinematic only for a manual cap and restores the origina
  await assert.rejects(prepareRenderPolicies({maximumTier:'cinematic',getTier:()=>tier,applyTier:t=>tier=t,prepare:async()=>{throw new Error('compile');}}),/compile/);assert.equal(tier,'balanced');
 });
 test('bundled actual Three revision remains r180',()=>assert.equal(T.REVISION,'180'));
+
+test('cold workshop and race share one settings owner and update its diagnostics provider',()=>{
+ const handlers=new Set(),store=new Map(),storage={getItem:k=>store.get(k),setItem:(k,v)=>store.set(k,v)};
+ const select={value:'',addEventListener:(_,f)=>handlers.add(f),removeEventListener:(_,f)=>handlers.delete(f)},status={textContent:''};
+ const root={querySelectorAll:s=>s.includes('-quality]')?[select]:[status]};
+ const cold=installAdvancedGraphicsSettings({root,storage,getDiagnostics:()=>({effectiveQuality:'cinematic'})});
+ cold.setMode('cinematic');
+ const race=installAdvancedGraphicsSettings({root,storage,getDiagnostics:()=>({effectiveQuality:'high'})});
+ assert.equal(cold,race);assert.equal(handlers.size,1);assert.match(status.textContent,/Efectivo: Alto/);
+ race.dispose();cold.setMode('off');assert.equal(readAdvancedGraphics(storage).quality,'cinematic','disposed owner cannot overwrite preferences');
+ assert.equal(handlers.size,0);
+ const restarted=installAdvancedGraphicsSettings({root,storage});assert.notEqual(restarted,cold);restarted.dispose();
+});
+test('cold browser settings are usable before heavy cockpit initialization',async()=>{
+ const module=await import('../src/render/advanced-graphics-settings.mjs');
+ assert.equal(typeof module.bootAdvancedGraphicsSettings,'function');
+ const handlers=new Map(),storage=new Map(),select={value:'',addEventListener:(k,f)=>handlers.set(k,f),removeEventListener:(k)=>handlers.delete(k)},status={textContent:''};
+ const root={querySelectorAll:s=>s.includes('-quality]')?[select]:[status]};
+ const host={__asfaltoV7Storage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v)},__chevyV6Complete:{workshop:{advancedGraphics:{diagnostics:()=>({effectiveQuality:'high',reductionReason:'presupuesto'})}}}};
+ const controller=module.bootAdvancedGraphicsSettings({root,host});
+ select.value='cinematic';handlers.get('change')({target:select});
+ assert.equal(host.__asfaltoAdvancedGraphics.getSettings().quality,'cinematic');
+ assert.equal(readAdvancedGraphics(host.__asfaltoV7Storage).quality,'cinematic');
+ assert.match(status.textContent,/Efectivo: Alto/);assert.match(status.textContent,/presupuesto/);
+ assert.equal(host.__asfaltoAdvancedGraphics.diagnostics().effectiveQuality,'high');controller.dispose();
+});
