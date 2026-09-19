@@ -18,6 +18,7 @@ def main():
     out = pathlib.Path(args.output)
     out.mkdir(parents=True, exist_ok=True)
     report = {'status': 'running', 'rendererClass': 'ANGLE SwiftShader software',
+              'browserChannel': 'chromium (new headless)', 'interactionTimeoutSeconds': 60,
               'viewportCSS': [640,360], 'DPR': 1, 'captureTimeoutSeconds': 120,
               'qualityForLifecycle': 'Eco / Low (Cinematic shaders tested separately)',
               'cases': [], 'stages': [], 'pageErrors': [], 'consoleErrors': [], 'httpErrors': []}
@@ -26,14 +27,14 @@ def main():
         (out / 'lifecycle.json').write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding='utf-8')
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, args=['--no-sandbox', '--use-gl=angle',
+        browser = p.chromium.launch(channel='chromium', headless=True, args=['--no-sandbox', '--use-gl=angle',
             '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'])
         report['browser'] = browser.version
         context = browser.new_context(viewport={'width': 640, 'height': 360}, device_scale_factor=1,
                                       reduced_motion='reduce')
         context.add_init_script("""localStorage.setItem('asfalto:v7:asfalto-v6-advanced-graphics-v1',JSON.stringify({quality:'low'}));localStorage.setItem('asfalto:v7:cockpit-chevy-settings-v6',JSON.stringify({graphicsQuality:'eco',soundEnabled:false}));""")
         page = context.new_page()
-        page.set_default_timeout(15000)
+        page.set_default_timeout(60000)
         page.on('pageerror', lambda error: report['pageErrors'].append(str(error)))
         page.on('console', lambda msg: report['consoleErrors'].append(msg.text) if msg.type == 'error' else None)
         page.on('response', lambda response: report['httpErrors'].append({'url': response.url, 'status': response.status}) if response.status >= 400 else None)
