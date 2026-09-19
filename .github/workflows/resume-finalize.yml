@@ -1,0 +1,98 @@
+name: Final audit integration and verification
+on:
+  push:
+    branches: [fixes/audit-20260919]
+    paths: [.github/workflows/resume-finalize.yml]
+permissions:
+  contents: read
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/fixes/audit-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      revision: ${{ steps.integrate.outputs.revision }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Apply exact reviewed delta, test, and commit to the repair branch
+        id: integrate
+        run: |
+          mkdir -p qa-output
+          python3 - <<'PY'
+          import base64,hashlib,json,pathlib,zlib
+          encoded='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'
+          raw=zlib.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(raw).hexdigest()=='b53e24b4b24977e0fa2b6c764b278586e22ab2813f901d1ba89b11aec233e980'
+          manifest=json.loads(raw);prepared=[]
+          allowed={'src/legacy/module-02.mjs','tools/maintenance-browser-qa.py','tools/audit-preparation-isolation.test.mjs'}
+          assert {v['path'] for v in manifest}==allowed
+          for item in manifest:
+              p=pathlib.Path(item['path']);before=p.read_bytes() if p.exists() else b''
+              assert hashlib.sha256(before).hexdigest()==item['before'],str(p)+' changed since review'
+              text=before.decode()
+              for edit in reversed(item['edits']):
+                  i=edit['start'];text=text[:i]+edit['insert']+text[i+edit['delete']:]
+              after=text.encode();assert hashlib.sha256(after).hexdigest()==item['after']
+              prepared.append((p,after))
+          for p,data in prepared:p.write_bytes(data)
+          pathlib.Path('qa-output/reviewed-delta.json').write_bytes(raw)
+          PY
+          node tools/verify-release.mjs
+          node --check src/legacy/module-02.mjs
+          python3 -m py_compile tools/maintenance-browser-qa.py
+          git -c core.whitespace=cr-at-eol diff --check
+          git diff > qa-output/integration.patch
+          git config user.name 'Asfalto maintenance'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/legacy/module-02.mjs tools/maintenance-browser-qa.py tools/audit-preparation-isolation.test.mjs
+          git rm .github/workflows/resume-finalize.yml
+          git commit -m 'fix: isolate race preparation from the driving loop and bound software-GPU QA'
+          git push origin HEAD:fixes/audit-20260919
+          git rev-parse HEAD > qa-output/revision.txt
+          echo "revision=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: audit-resume-integration
+          path: qa-output/
+          retention-days: 14
+  browser:
+    needs: integrate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ needs.integrate.outputs.revision }}
+          persist-credentials: false
+      - name: Full suite and preserved physics
+        run: |
+          mkdir -p qa-output
+          git rev-parse HEAD > qa-output/revision.txt
+          node tools/verify-release.mjs
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
+      - name: Prepare actual browser and static application
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/healthz && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/healthz
+      - name: Real normal/logarithmic depth, profile transitions and resource disposal
+        run: python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: audit-resume-fixture
+          path: qa-output/
+          retention-days: 14
+      - name: Actual cancel, retry, five circuits, simulation, pause and workshop return
+        run: python3 tools/maintenance-browser-qa.py --output qa-output/game
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: audit-resume-browser
+          path: qa-output/
+          retention-days: 14
