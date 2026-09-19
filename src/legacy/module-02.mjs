@@ -7650,7 +7650,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   }
   let environmentFrame=0;
   function updateEnvironmentInstances(force=false) {
-    environmentFrame++;if(!force&&environmentFrame%2&&performanceState.qualityTier!=='high')return;
+    environmentFrame++;if(!force&&environmentFrame%2&&!isHighGraphicsQuality(performanceState.qualityTier))return;
     const maxByTier=isHighGraphicsQuality(performanceState.qualityTier)?{grass:1500,flowers:300,trees:240,rocks:140}:performanceState.qualityTier==='balanced'?{grass:980,flowers:180,trees:170,rocks:95}:{grass:520,flowers:80,trees:100,rocks:50};
     let count=0;
     for(const item of scatter.grass){if(count>=maxByTier.grass)break;const pose=objectPose(item);if(pose.ahead<-35||pose.ahead>drawDistance)continue;tempPosition.set(pose.p.x,pose.p.y,pose.p.z);tempQuaternion.setFromAxisAngle(yAxis,pose.yaw);tempScale.setScalar(pose.scale);tempMatrix.compose(tempPosition,tempQuaternion,tempScale);grassMesh.setMatrixAt(count,tempMatrix);tempColor.set(track.palette.grassBottom).lerp(new THREE.Color(track.palette.grassTop),item.color);grassMesh.setColorAt(count,tempColor);count++;}grassMesh.count=count;grassMesh.instanceMatrix.needsUpdate=true;if(grassMesh.instanceColor)grassMesh.instanceColor.needsUpdate=true;
