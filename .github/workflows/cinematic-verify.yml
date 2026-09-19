@@ -7,6 +7,9 @@ on:
     paths: ['src/render/**', 'src/performance/**', 'tools/cinematic-*', '.github/workflows/cinematic-verify.yml']
 permissions:
   contents: read
+concurrency:
+  group: cinematic-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -20,7 +23,7 @@ jobs:
           mkdir -p qa-output
           git rev-parse HEAD | tee qa-output/revision.txt
           node --version | tee qa-output/node-version.txt
-          node --test tools/cinematic-quality.test.mjs tools/cinematic-rendering.test.mjs | tee qa-output/cinematic-contracts.tap
+          node --test tools/cinematic-*.test.mjs | tee qa-output/cinematic-contracts.tap
           node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
           node --check src/legacy/module-02.mjs
           node --check src/legacy/v6-complete-runtime.js
@@ -48,6 +51,7 @@ jobs:
           path: qa-output/
           retention-days: 7
       - name: Exercise actual workshop and five circuit scenarios
+        timeout-minutes: 12
         run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/browser --full-game --skip-fixtures
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
