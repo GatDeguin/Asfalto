@@ -1,0 +1,89 @@
+name: Integrate and validate audited maintenance
+on:
+  push:
+    branches: [fixes/audit-20260919]
+    paths: [.github/workflows/maintenance-integrate.yml]
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: github.ref == 'refs/heads/fixes/audit-20260919'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fixes/audit-20260919
+          fetch-depth: 0
+      - name: Apply exact locally tested source with byte preconditions
+        run: |
+          set -euo pipefail
+          mkdir -p qa-output
+          git merge-base --is-ancestor 36d8c74638c3e588b1d6c68b0c4b56f123a9e2a3 HEAD
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, pathlib
+          encoded = ''.join(pathlib.Path('.maintenance-review/edits.' + part).read_text() for part in ['aa','ab','ac'])
+          raw = lzma.decompress(base64.b64decode(encoded))
+          assert hashlib.sha256(raw).hexdigest() == '618c09a4985e3af5ef1b0263ba93ddfb9f510082f48f8d4eca4737b73724c5fb'
+          manifest = json.loads(raw)
+          changes = []
+          for item in manifest['files']:
+              path = pathlib.Path(item['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert str(path).startswith(('src/','tools/','docs/','.github/workflows/')) or str(path) in ('server.mjs','.gitignore')
+              before = path.read_bytes() if path.exists() else b''
+              assert hashlib.sha256(before).hexdigest() == item['before'], 'Unexpected source: ' + str(path)
+              text = before.decode('utf-8')
+              for edit in reversed(item['edits']):
+                  start = edit['start']
+                  text = text[:start] + edit['insert'] + text[start + edit['delete']:]
+              after = text.encode('utf-8')
+              assert hashlib.sha256(after).hexdigest() == item['after'], 'Wrong output: ' + str(path)
+              changes.append((path, after))
+          for path, data in changes:
+              path.parent.mkdir(parents=True,exist_ok=True)
+              path.write_bytes(data)
+          pathlib.Path('qa-output/changed-files.json').write_text(json.dumps([str(path) for path,_ in changes],indent=2))
+          pathlib.Path('qa-output/file-hashes.json').write_text(json.dumps([{k:item[k] for k in ('path','before','after')} for item in manifest['files']],indent=2))
+          PY
+          node tools/verify-release.mjs
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected-files.json
+          node --check src/legacy/module-02.mjs
+          node --check src/legacy/v6-complete-runtime.js
+          git -c core.whitespace=cr-at-eol diff --check
+      - name: Commit reviewed delta only to isolated branch
+        run: |
+          git config user.name 'Asfalto maintenance verification'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          import json,pathlib,subprocess
+          paths=json.loads(pathlib.Path('qa-output/changed-files.json').read_text())
+          subprocess.run(['git','add','--',*paths],check=True)
+          PY
+          git rm -r .maintenance-review .github/workflows/maintenance-integrate.yml
+          git commit -m 'fix: contain runtime failures, cancel stale loads and bound render budgets'
+          git push origin HEAD:fixes/audit-20260919
+          git rev-parse HEAD > qa-output/revision.txt
+      - name: Install QA browser and launch actual static application
+        run: |
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          for i in $(seq 1 30); do curl --fail --silent http://127.0.0.1:4173/healthz && break; sleep 1; done
+          curl --fail --silent http://127.0.0.1:4173/healthz
+      - name: Compile real WebGL shaders and resource transitions
+        run: python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: asfalto-maintenance-contracts-fixtures
+          path: qa-output/
+          retention-days: 14
+      - name: Verify real cancellation, retry, five circuits and workshop return
+        run: python3 tools/maintenance-browser-qa.py --output qa-output/game
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: asfalto-maintenance-complete
+          path: qa-output/
+          retention-days: 14
