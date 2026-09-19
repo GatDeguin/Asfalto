@@ -4,7 +4,6 @@ Software-rendered frames are not hardware FPS or a mobile performance benchmark.
 import argparse
 import json
 import pathlib
-import time
 from playwright.sync_api import sync_playwright
 
 
@@ -83,7 +82,12 @@ def main():
                 game['coldSettings'] = page.evaluate("""()=>{const s=document.querySelector('[data-advanced-graphics-quality]');s.value='cinematic';s.dispatchEvent(new Event('change',{bubbles:true}));return {selected:s.value,stored:JSON.parse(__asfaltoV7Storage.getItem('asfalto-v6-advanced-graphics-v1')).quality,owner:__asfaltoAdvancedGraphics.getSettings().quality};}""")
                 if game['coldSettings'] != {'selected': 'cinematic', 'stored': 'cinematic', 'owner': 'cinematic'}:
                     raise RuntimeError('Cold settings did not propagate through the real UI')
-                page.evaluate("void __chevyV6Complete.startDrive('free').then(value=>window.__qaStart={value}).catch(error=>window.__qaStart={error:String(error)})")
+                # Use the real menu gesture: AudioContext resume requires user
+                # activation, which a direct page.evaluate(startDrive) does not grant.
+                page.evaluate("""()=>{const game=__chevyV6Complete,original=game.startDrive;game.startDrive=(...args)=>original(...args).then(value=>{window.__qaStart={value};return value;},error=>{window.__qaStart={error:String(error)};throw error;});}""")
+                page.locator('.an-v7-quick-drive').click(timeout=60000)
+                game['userActivation'] = page.evaluate('navigator.userActivation.hasBeenActive')
+                save(out / 'full-game.json', game)
                 page.wait_for_function('window.__qaStart!==undefined', timeout=240000)
                 game['start'] = page.evaluate('__qaStart')
                 if not game['start'].get('value'):

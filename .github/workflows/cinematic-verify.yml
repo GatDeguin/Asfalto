@@ -44,6 +44,9 @@ jobs:
           curl --fail --silent http://127.0.0.1:4173/tools/cinematic-webgl.html > /dev/null
       - name: Compile real shaders and capture same-scene spatial comparisons
         run: python3 tools/cinematic-browser-qa.py --base-url http://127.0.0.1:4173 --output qa-output/fixture
+      - name: Diagnose actual vehicle render independently of the capture fixture
+        timeout-minutes: 6
+        run: python3 tools/cinematic-render-diagnosis.py --output qa-output/diagnosis
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
