@@ -1,0 +1,76 @@
+name: Integrate and verify room probe guard
+on:
+  push:
+    branches: [graphics/cinematic-ultra-20260918]
+    paths: [.github/workflows/cinematic-probe-fix.yml]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.ref == 'refs/heads/graphics/cinematic-ultra-20260918'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: graphics/cinematic-ultra-20260918
+      - name: Apply byte-checked integration to the existing reflection owner
+        run: |
+          mkdir -p qa-output
+          python3 - <<'PY'
+          import hashlib,pathlib
+          p=pathlib.Path('src/render/workshop-presentation.mjs');old=p.read_bytes()
+          assert hashlib.sha256(old).hexdigest()=='afac69719170d297d33cf1957dadf48b569f1613d9e02f2c58f241057e72836c'
+          s="import {createRoomProbeGuard} from './workshop-probe-guard.mjs';\n"+old.decode()
+          s=s.replace('  const invalidateContact=()=>contactShadow?.invalidate();',"  const probeGuard=createRoomProbeGuard(T,renderer,{onReset:()=>{probeDirty=true;}});\n  const invalidateContact=()=>contactShadow?.invalidate();")
+          s=s.replace('  const disposeOwned = () => {','  const disposeOwned = () => {\n    probeGuard.dispose();')
+          s=s.replace('    probe.update(renderer, scene);\n    generator = new T.PMREMGenerator(renderer);\n    room = generator.fromCubemap(cubeTarget.texture);', '    room = probeGuard.capture(()=>{\n      probe.update(renderer, scene);\n      generator = new T.PMREMGenerator(renderer);\n      return generator.fromCubemap(cubeTarget.texture);\n    });')
+          s=s.replace('  function refreshRoomReflection() {','  function refreshRoomReflection() {\n    if(probeGuard.disabled()){car.getWorldPosition(reflectedCarPosition);probeDirty=false;return;}')
+          s=s.replace('      camera.update(renderer,scene);const next=pmrem.fromCubemap(cube.texture);','      const next=probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);});')
+          s=s.replace('roomReflection:true,planarReflection:',"roomReflection:!!room.texture,roomProbe:probeGuard.diagnostics(),planarReflection:")
+          data=s.encode();assert hashlib.sha256(data).hexdigest()=='3a3649810ce70555576b3e0194887ebb8350ddcefca832ad500bdf3a343e4f82'
+          p.write_bytes(data)
+          PY
+          set -o pipefail
+          node --test tools/cinematic-*.test.mjs | tee qa-output/contracts.tap
+          node tools/cinematic-audit.mjs qa-output/load-graph.json > qa-output/protected.json
+          node --check src/render/workshop-presentation.mjs
+      - name: Commit only the integration and remove the write workflow
+        run: |
+          git config user.name 'Cinematic review automation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/render/workshop-presentation.mjs
+          git rm .github/workflows/cinematic-probe-fix.yml
+          git commit -m 'fix(graphics): reject invalid workshop PMREM before binding it to the vehicle'
+          git push origin HEAD:graphics/cinematic-ultra-20260918
+          git rev-parse HEAD > qa-output/revision.txt
+      - name: Real browser verification of the committed application
+        run: |
+          node server.mjs --port 4173 > qa-output/server.log 2>&1 &
+          python3 -m pip install playwright==1.57.0
+          python3 -m playwright install --with-deps chromium
+          python3 tools/cinematic-browser-qa.py --output qa-output/fixture
+          python3 tools/cinematic-render-diagnosis.py --output qa-output/workshop
+      - name: Record final guard state from real startup
+        run: |
+          python3 - <<'PY'
+          import json,pathlib
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              b=p.chromium.launch(headless=True,args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-dev-shm-usage'])
+              page=b.new_page(viewport={'width':640,'height':360},reduced_motion='reduce')
+              page.goto('http://127.0.0.1:4173/?qa=1',wait_until='domcontentloaded')
+              page.evaluate('globalThis.__asfaltoIntro?.skip?.()')
+              page.wait_for_function('globalThis.__chevyV6Complete?.homeReady',timeout=240000)
+              result=page.evaluate('({mode:__chevyV6Complete.homeReadyMode,presentation:__chevyV6Complete.workshop.presentation.diagnostics(),graphics:__chevyV6Complete.workshop.advancedGraphics.diagnostics()})')
+              pathlib.Path('qa-output/workshop-state.json').write_text(json.dumps(result,indent=2))
+              assert result['mode']=='rendered-workshop'
+              assert result['presentation']['roomProbe']['mode'] in ['local-pmrem','scene-hdri-fallback']
+              b.close()
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: cinematic-final-probe-verification
+          path: qa-output/
+          retention-days: 7
