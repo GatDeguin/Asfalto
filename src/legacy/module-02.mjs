@@ -1,5 +1,5 @@
-import {inspectProgramResidency} from '../render/program-residency-diagnostics.mjs';
-import {releaseInactiveSceneGpu} from '../render/inactive-scene-residency.mjs';
+import {inspectProgramResidency} from '../render/program-residency-diagnostics.mjs?v=0a672fc69de8b86a';
+import {releaseInactiveSceneGpu} from '../render/inactive-scene-residency.mjs?v=06561423b1a65ba7';
 import {yieldToMain} from '../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 import {inflateGzipBytes} from '../runtime/inflate.mjs?v=1d1e76c615135552';
 import {createOwnedRenderer} from '../runtime/owned-renderer.mjs?v=fc0e8ac1ca6f0f58';

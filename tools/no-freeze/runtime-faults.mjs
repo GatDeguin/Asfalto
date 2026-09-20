@@ -1,5 +1,5 @@
-import {browserOptions} from './browser-options.mjs';
-import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=f04a42ac0648481b';import {inspectFrame,assertVisibleFrame} from './assertions.mjs?v=98cba09b0d2295bb';
+import {browserOptions} from './browser-options.mjs?v=d3199b06714c1696';
+import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=085f252476a1cfbd';import {inspectFrame,assertVisibleFrame} from './assertions.mjs?v=ec817959c2efbab5';
 const root=path.resolve(import.meta.dirname,'../..'),server=await serve(root),report={};
 const browser=await chromium.launch(browserOptions());
 const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(observeBrowser);await page.addInitScript(()=>{localStorage.setItem('asfalto:nacional:v6:selected-vehicle','chevy_400_1957');});

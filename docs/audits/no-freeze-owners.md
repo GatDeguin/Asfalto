@@ -43,8 +43,8 @@ Generated with `node tools/no-freeze/inventory.mjs`.
 | `src/legacy/asfalto-v6-integration-runtime.js` | 2381: setTimeout |
 | `src/legacy/cockpit-v5-browser.js` | 115: setTimeout<br>118: setTimeout<br>123: setTimeout<br>139: setTimeout |
 | `src/legacy/cockpit-v5-preflight.js` | 20: Worker<br>30: setTimeout |
-| `src/legacy/module-02.mjs` | 735: setTimeout<br>769: setTimeout<br>1504: Worker<br>1533: setTimeout<br>4217: setTimeout<br>4373: setTimeout<br>5714: setTimeout<br>7844: requestAnimationFrame<br>7965: requestAnimationFrame<br>8006: setTimeout<br>8979: requestAnimationFrame<br>9928: MutationObserver<br>10000: requestAnimationFrame, setTimeout |
-| `src/legacy/v6-complete-runtime.js` | 179: setTimeout<br>214: setTimeout<br>568: requestAnimationFrame<br>569: requestAnimationFrame<br>571: setTimeout<br>578: setTimeout<br>620: setTimeout |
+| `src/legacy/module-02.mjs` | 737: setTimeout<br>771: setTimeout<br>1506: Worker<br>1535: setTimeout<br>4219: setTimeout<br>4375: setTimeout<br>5716: setTimeout<br>7846: requestAnimationFrame<br>7967: requestAnimationFrame<br>8008: setTimeout<br>8981: requestAnimationFrame<br>9930: MutationObserver<br>10002: requestAnimationFrame, setTimeout |
+| `src/legacy/v6-complete-runtime.js` | 179: setTimeout<br>214: setTimeout<br>572: requestAnimationFrame<br>573: requestAnimationFrame<br>575: setTimeout<br>582: setTimeout<br>624: setTimeout |
 | `src/menu/loading-presentation.js` | 60: setTimeout<br>73: setTimeout<br>104: setTimeout<br>161: setTimeout<br>162: requestAnimationFrame<br>173: setTimeout<br>182: MutationObserver<br>201: MutationObserver<br>207: MutationObserver |
 | `src/menu/menu-presentation.mjs` | 119: requestAnimationFrame<br>146: requestAnimationFrame<br>153: requestAnimationFrame<br>237: setTimeout |
 | `src/menu/menu-refinements.mjs` | 62: MutationObserver |

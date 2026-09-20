@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=8265befc1ac24281',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=7b1c4280bdcfebc6',import.meta.url),'utf8');
 const block=source.slice(source.indexOf('  let rivalVisualPromise=null;'),source.indexOf('  raceChevyPresentation=await',source.indexOf('  let rivalVisualPromise=null;')));
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 function fixture({decode,convert,present}={}){

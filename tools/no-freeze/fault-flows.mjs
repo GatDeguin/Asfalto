@@ -1,5 +1,5 @@
-import {browserOptions} from './browser-options.mjs';
-import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=f04a42ac0648481b';
+import {browserOptions} from './browser-options.mjs?v=d3199b06714c1696';
+import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=085f252476a1cfbd';
 const root=path.resolve(import.meta.dirname,'../..'),server=await serve(root),report={profiles:[],retry:null};
 const browser=await chromium.launch(browserOptions());
 async function shell(page){await page.goto(server.url+'?qa=1');await page.waitForFunction(()=>globalThis.__chevyV6Complete?.menuReady);await page.keyboard.press('Escape');await page.waitForFunction(()=>document.querySelector('#an-intro')?.hidden!==false);}

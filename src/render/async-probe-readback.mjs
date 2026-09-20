@@ -1,6 +1,6 @@
-import {withRenderTarget} from './render-target-scope.mjs';
-import {boundedOperation} from '../runtime/demand-loader.mjs';
-import {waitForAnimationFrame,waitForSignal} from '../runtime/abortable.mjs';
+import {withRenderTarget} from './render-target-scope.mjs?v=30b8f30c25afc698';
+import {boundedOperation} from '../runtime/demand-loader.mjs?v=4a2efb64f7eb24a0';
+import {waitForAnimationFrame,waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 
 /** A WebGL2 pixel-pack buffer transfers a full precision probe without making
  * JavaScript wait synchronously for six cube faces and PMREM. GPU fences have

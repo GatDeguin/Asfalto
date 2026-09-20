@@ -1,4 +1,4 @@
-import {readHalfFloatTarget} from './async-probe-readback.mjs';
+import {readHalfFloatTarget} from './async-probe-readback.mjs?v=15602b3ab72b0ac3';
 // Validate an infrequently rebuilt local reflection before binding it to materials.
 // A single NaN/Infinity can poison PMREM lighting. Null means use the existing
 // scene.environment HDRI; it never means disable the car's PBR or add fill lights.
