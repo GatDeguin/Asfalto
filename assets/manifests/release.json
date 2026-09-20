@@ -81,8 +81,8 @@
     },
     {
       "path": ".github/workflows/no-freeze.yml",
-      "bytes": 1748,
-      "sha256": "E8A7D8A61CBC4504BA39597D8DE8069148B2288BEDC9369C0AA34CC9BE75BDF0"
+      "bytes": 1749,
+      "sha256": "C979E136D4E0E9BC7F813289BCFFCB2A899C050F00AD5463069D85F6B2ECCDE6"
     },
     {
       "path": ".github/workflows/verify-v8.yml",
@@ -4821,6 +4821,6 @@
     }
   ],
   "fileCount": 949,
-  "totalBytes": 944940421,
-  "inventorySha256": "FD625AE30A9B9299F827992EF322E264CA8EDC9AA60B3556FD2CDE27FC3CEC48"
+  "totalBytes": 944940422,
+  "inventorySha256": "6E9765EF59729EC42C5BFCD8F70C3960C8159E07B7E7F7AF18384506EED46200"
 }
