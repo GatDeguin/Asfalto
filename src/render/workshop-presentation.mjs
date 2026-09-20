@@ -1,3 +1,4 @@
+import {withRenderTarget} from './render-target-scope.mjs';
 import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
@@ -58,7 +59,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   let collection=null,collectionItems=[],collectionPosters=[],collectionMemories=[],collectionLoad=null,collectionDisposed=false,room=null;
   const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(-5.8,2.2,4.7);collectionLight.castShadow=false;
   let detailPass = null, night = false, lastTime = null, probeDirty = false, contactShadow=null;
-  const probeGuard=createRoomProbeGuard(T,renderer,{onReset:()=>{probeDirty=true;}});
+  const probeGuard=createRoomProbeGuard(T,renderer,{signal:lifetime.signal,onReset:()=>{probeDirty=true;}});
   const invalidateContact=()=>contactShadow?.invalidate();
   const previousEnvironment = scene.environment;
   const previousEnvironmentIntensity = scene.environmentIntensity;
@@ -264,9 +265,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   let generator;
   try {
     car.visible = false;
-    const previousTarget=renderer.getRenderTarget();
-    try{renderer.setRenderTarget(cubeTarget);await preparePrograms(renderer,scene,probe.children[0],scene,{signal:lifetime.signal});lifetime.signal.throwIfAborted();}finally{renderer.setRenderTarget(previousTarget);}
-    room = probeGuard.capture(()=>{
+    await withRenderTarget(renderer,cubeTarget,()=>preparePrograms(renderer,scene,probe.children[0],scene,{signal:lifetime.signal}));lifetime.signal.throwIfAborted();
+    room = await probeGuard.capture(()=>{
       probe.update(renderer, scene);
       generator = new T.PMREMGenerator(renderer);
       return generator.fromCubemap(cubeTarget.texture);
@@ -289,9 +289,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     const visible=car.visible, floorVisible=reflector?.visible, detailVisible=detailPass.group.visible, contactVisible=contactShadow?.plane.visible;
     try {
       car.visible=false;if(reflector)reflector.visible=false;if(contactShadow)contactShadow.plane.visible=false;detailPass.group.visible=true;
-      const previousTarget=renderer.getRenderTarget();
-      try{renderer.setRenderTarget(cube);await preparePrograms(renderer,scene,camera.children[0],scene,{signal:lifetime.signal});lifetime.signal.throwIfAborted();}finally{renderer.setRenderTarget(previousTarget);}
-      const next=probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);});
+      await withRenderTarget(renderer,cube,()=>preparePrograms(renderer,scene,camera.children[0],scene,{signal:lifetime.signal}));lifetime.signal.throwIfAborted();
+      const next=await probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);});
       paint.forEachMaterial(m=>{m.envMap=next.texture;m.needsUpdate=true;});
       workshop.vehiclePresentation?.setEnvironment(next.texture);
       collection?.setEnvironment(next.texture);
@@ -300,7 +299,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       car.traverse(object=>{for(const m of Array.isArray(object.material)?object.material:[object.material])if(m?.envMap===room.texture){m.envMap=next.texture;m.needsUpdate=true;}});
       owned.splice(owned.indexOf(room),1);room.dispose();room=next;owned.push(next);
       car.getWorldPosition(reflectedCarPosition);probeDirty=false;
-    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();reflectionPreparing=false;}
+    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;if(detailPass)detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();reflectionPreparing=false;}
   }
 
   // Dry porous concrete uses its rough PBR response. A full-room mirror overlay
