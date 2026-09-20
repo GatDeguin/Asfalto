@@ -115,6 +115,11 @@
       "sha256": "0F24595D5BE3CD48FFE182EF0459556BE71E0760D60E06A4EF71433196CCA28F"
     },
     {
+      "path": "assets/brand/asfalto-nacional-v7.webp",
+      "bytes": 627772,
+      "sha256": "C277E0586AEA7A5CB5E8FF1142FEB650D9BBA4827E47EB04CB9EB8CE5ABD8063"
+    },
+    {
       "path": "assets/cockpit/ignition/fob.glb",
       "bytes": 1324376,
       "sha256": "0B9434DC50415A3FC876E5963FD3643A85537B21454FA1F4EE400D5946B20771"
@@ -315,14 +320,24 @@
       "sha256": "EAC2D315357A2CC8B1E6AE8E823223F840A2EBEE48B3AC27212ADDD3BEEB60F3"
     },
     {
+      "path": "assets/intro/cinematic-v7-poster.jpg",
+      "bytes": 303496,
+      "sha256": "2CEE77CA6127AEE34577D036C58DFC160E70B1CB31C530B2C1146290FDBDBC55"
+    },
+    {
+      "path": "assets/intro/cinematic-v7.mp4",
+      "bytes": 53859440,
+      "sha256": "40833FB7427CB8A240049719167788EB489D98EFF0B84796A94F8FD47626C775"
+    },
+    {
       "path": "assets/intro/cinematic.mp4",
       "bytes": 48907557,
       "sha256": "9E66A23AD4F773A5DAADC10AB1CE4415CECB164555BCF674A72E336C335BA50A"
     },
     {
       "path": "assets/intro/manifest.json",
-      "bytes": 1955,
-      "sha256": "B101DCA3BC1815C5FC622A89E8832A3945ABDC7447E46AE989DAB9EEA3865E6D"
+      "bytes": 2133,
+      "sha256": "41E0D597B65CEDBA289A2F2E3D0EFFDD0C99A81941C4C6F6D9F3800D3E6D8ABA"
     },
     {
       "path": "assets/intro/poster.jpg",
@@ -736,8 +751,8 @@
     },
     {
       "path": "assets/menu/manifest.json",
-      "bytes": 5255,
-      "sha256": "616F51E3C04A2EF833EC41AB7E3212173AB2748FB463D3DA360BD91DF24D9594"
+      "bytes": 5262,
+      "sha256": "ED69EA692A6759602EAD50B621C0B42E7B30D80EA915A46C0E8138DC9950F210"
     },
     {
       "path": "assets/menu/scenes/competencia.jpg",
@@ -851,8 +866,8 @@
     },
     {
       "path": "assets/styles/menu-presentation.css",
-      "bytes": 47139,
-      "sha256": "F652572416688CABC58EC696FE07818B2F673260242608611E9A851506118E36"
+      "bytes": 47394,
+      "sha256": "1451BDFEF4B0D02D5DA314497F89C8D36B7623C705E8C21F8309BE39ECA7FBCC"
     },
     {
       "path": "assets/styles/menu-refinements.css",
@@ -1280,6 +1295,11 @@
       "sha256": "158BFE26BDE1B3778A76820284E030178F803427D2FA7838D3100158E2EEB8CB"
     },
     {
+      "path": "docs/intro-brand-fix.md",
+      "bytes": 677,
+      "sha256": "238D68084323BE00494776D940BF281702418906ABC0F1B5893108482BD70CB0"
+    },
+    {
       "path": "docs/release-v8-stability.md",
       "bytes": 4449,
       "sha256": "2CC89D20C803445DC14CBF4630E2472E8D5DDD970BFC081660CC2AAA44AC6D66"
@@ -1287,12 +1307,12 @@
     {
       "path": "index.html",
       "bytes": 79830,
-      "sha256": "EFD23AF4A287AF468BB20402A1CFF7F241471EE3A17B8A4D02092554BF72D7BC"
+      "sha256": "C499D61A245162789C4AEC6830D06DE866A774CC9F3D09C05B8907D9EEDD000B"
     },
     {
       "path": "release-version.json",
-      "bytes": 141,
-      "sha256": "9E69CDD8E9D74206468D2E9F2EC2DDA13C4609F834D39FD864D672D0044D157E"
+      "bytes": 167,
+      "sha256": "81C9057BECEC89AB472615D551C8CD8710F44452E895A4236532F81CC4283886"
     },
     {
       "path": "server.mjs",
@@ -1605,6 +1625,11 @@
       "sha256": "46D6DBAB09CECA09217AC8B9C19E3117F752EC72A7B47CAE39B14AA8B4F2D8E5"
     },
     {
+      "path": "src/menu/intro-brand.mjs",
+      "bytes": 824,
+      "sha256": "CD94FE414B04781FF38C57BB616E99DE31AE80723633F4F2851CD60ACF0611AC"
+    },
+    {
       "path": "src/menu/intro-player.mjs",
       "bytes": 3160,
       "sha256": "B2E7080C14DD17DE49338D0DE8044F17AC372FF86E15F83B40F095902D61FCE8"
@@ -1626,8 +1651,8 @@
     },
     {
       "path": "src/menu/menu-presentation.mjs",
-      "bytes": 17732,
-      "sha256": "829F44A228AE4010056491808E6D36BD4DCFF7BE4747BB8E8C05113B844F1EF7"
+      "bytes": 17943,
+      "sha256": "6B1468508EB71F0C9EA6A61A6C47382F8FA1728CBDA899D2AEC3D4120BF6DCF6"
     },
     {
       "path": "src/menu/menu-refinement-state.mjs",
@@ -2660,7 +2685,7 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 517,
-  "totalBytes": 791869131,
-  "inventorySha256": "DBCD03D7B19ACB1771B3EE34E8AB0B3053E3F272EA42FBB70B270CDB6FF455A8"
+  "fileCount": 522,
+  "totalBytes": 846662017,
+  "inventorySha256": "6B12F63B206724A413BB023BE577A16D2E691B3FAEDF0F7F7AB4A26DA219AA01"
 }

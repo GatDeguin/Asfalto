@@ -1,3 +1,4 @@
+import { bindIntroBrand } from './intro-brand.mjs?v=a112dd1a27b4fa5e';
 import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=01507c60321e8369';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
@@ -66,6 +67,7 @@ function mount() {
   intro.innerHTML = '<video playsinline preload="none"></video><div class="an-intro-top"><span class="an-intro-kind">Asfalto Nacional · Animática</span><button type="button" class="an-intro-skip">Saltar <kbd>ESC</kbd></button></div><button type="button" class="an-intro-resume" hidden>Reproducir con sonido ▷</button><p class="an-intro-status" role="status">Preparando presentación…</p>';
   document.body.append(intro);
   const video = intro.querySelector('video');
+  bindIntroBrand({ intro, video, src: new URL('../../assets/brand/asfalto-nacional-v7.webp?v=180789eed4e70f3a', import.meta.url).href });
   const skip = intro.querySelector('.an-intro-skip');
   const resume = intro.querySelector('.an-intro-resume');
   const notice = intro.querySelector('.an-intro-status');
@@ -184,7 +186,7 @@ function mount() {
   async function getIntroManifest() {
     if (introManifest) return introManifest;
     if (!introFetch) {
-      const url = new URL('../../assets/intro/manifest.json?v=447f5621a62b982c', import.meta.url);
+      const url = new URL('../../assets/intro/manifest.json?v=17e697333a8aefc5', import.meta.url);
       introFetch = fetch(url).then(response => { if (!response.ok) throw new Error('Intro no disponible'); return response.json(); })
         .then(manifest => {
           if (!manifest.src || !['animatic','final'].includes(manifest.kind)) throw new Error('Manifiesto de intro inválido');
@@ -277,7 +279,7 @@ function mount() {
 }
 
 async function loadComponents(root) {
-  const url = new URL('../../assets/menu/manifest.json?v=21dcd571ee30ec7e', import.meta.url);
+  const url = new URL('../../assets/menu/manifest.json?v=fbd8bbb120a032fd', import.meta.url);
   try {
     const response = await fetch(url);
     if (!response.ok) return;

@@ -496,3 +496,7 @@ body.v6-reduce-motion #v6-main-menu.an-cinematic-menu * { animation:none!importa
   #v6-main-menu.an-cinematic-menu[data-an-photo=true] #v6-workshop-canvas { width:64%; }
   #v6-main-menu.an-cinematic-menu[data-an-photo=true] #v6-menu-content { right:12px;top:12px;bottom:50px;width:280px;max-height:none; }
 }
+
+/* One current logo during the opening shots; the final shot owns its logo. */
+.an-intro-brand{display:block;width:clamp(150px,22vw,320px);height:auto;object-fit:contain;filter:drop-shadow(0 3px 5px #0009)}
+.an-intro-top .an-intro-skip{margin-left:auto}

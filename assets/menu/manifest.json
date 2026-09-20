@@ -26,7 +26,7 @@
       "modelBytes": 334020,
       "bounds": {
         "min": [
-          -3.0,
+          -3,
           -0.49000000953674316,
           -0.04500000178813934
         ],
@@ -153,9 +153,9 @@
       ]
     },
     "brand": {
-      "image": "brand.png",
+      "image": "../brand/asfalto-nacional-v7.webp",
       "model": "brand.glb",
-      "description": "Solid condensed ASFALTO NACIONAL lettering and two orange diagonal bars",
+      "description": "Marca vigente: monograma AN y lettering Asfalto Nacional",
       "width": 1536,
       "height": 768,
       "triangles": 5340,
