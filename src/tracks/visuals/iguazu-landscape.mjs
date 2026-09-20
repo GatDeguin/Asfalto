@@ -1,11 +1,11 @@
-import {yieldToMain} from '../../runtime/cooperative-work.mjs';
-import {waterfallCameraProfileAsync} from './regional-waterfall-camera.mjs?v=4147e1c291a4f463';
+import {yieldToMain} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
+import {waterfallCameraProfileAsync} from './regional-waterfall-camera.mjs?v=a6f223041b3110de';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=457a8af4bf40a703';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=139a866710564502';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=87374a99c604ce32';
-import {findWaterfallImpactAsync,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=88a5c279fc1ae5d5';
+import {findWaterfallImpactAsync,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=af6a785cb4f89fac';
 
 const sourceTemplates=new WeakMap();
 const rand=n=>{const x=Math.sin(n*17.831+4.917)*43961.7;return x-Math.floor(x);};
@@ -77,7 +77,7 @@ export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,signal,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=457a8af4bf40a703'),heightAt=terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=139a866710564502'),heightAt=terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;
     const family=band<30?(rand(seed+3)>.4?'fern':'shrub'):rand(seed+4)>.8?'palmito':'tree',parts=templates.filter(t=>t.family===family),variant=Math.floor(rand(seed+8)*Math.max(1,parts.length/2)),chosen=parts.slice(variant*2,variant*2+2);if(!chosen.length)continue;

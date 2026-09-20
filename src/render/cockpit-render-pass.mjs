@@ -1,4 +1,4 @@
-import {preparePrograms} from './shader-preparation.mjs';
+import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 // The adjustable interior is a camera-space model. Its lowered floor must not
 // share depth with physical road/terrain. Keep normal depth *within* the cabin,
 // and retain the already-rendered world through windows and transparent glass.

@@ -1,4 +1,4 @@
-import {boundedOperation} from '../runtime/demand-loader.mjs';
+import {boundedOperation} from '../runtime/demand-loader.mjs?v=4a2efb64f7eb24a0';
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 /** Single host session request; a scene implementation receives and must honor AbortSignal. */
 export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{},timeoutMs=300000}={}){

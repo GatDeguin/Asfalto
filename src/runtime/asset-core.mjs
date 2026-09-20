@@ -1,4 +1,4 @@
-import {boundedOperation} from './demand-loader.mjs';
+import {boundedOperation} from './demand-loader.mjs?v=4a2efb64f7eb24a0';
 
 async function sha256Hex(bytes) {
   const digest = await globalThis.crypto.subtle.digest('SHA-256', bytes);

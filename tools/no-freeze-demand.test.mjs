@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createDemandLoader,boundedOperation} from '../src/runtime/demand-loader.mjs';
+import {createDemandLoader,boundedOperation} from '../src/runtime/demand-loader.mjs?v=4a2efb64f7eb24a0';
 test('shared consumers cancel independently and one producer resolves both',async()=>{
  let calls=0,finish;const loader=createDemandLoader(()=>{calls++;return new Promise(r=>finish=r);});const a=new AbortController();const one=loader.request({signal:a.signal}),two=loader.request();await Promise.resolve();a.abort(new DOMException('cancel','AbortError'));await assert.rejects(one,{name:'AbortError'});finish(42);assert.equal(await two,42);assert.equal(calls,1);assert.equal(await loader.request(),42);assert.equal(loader.diagnostics().consumers,0);
 });

@@ -1,4 +1,4 @@
-import {runCooperatively} from '../../runtime/cooperative-work.mjs';
+import {runCooperatively} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 // Startup-only photographic pose search. Falls geometry is the subject, never route tangent.
 function* cameraProfileSteps(T,root,{query,falls,heightAt}){
  root.updateMatrixWorld(true);

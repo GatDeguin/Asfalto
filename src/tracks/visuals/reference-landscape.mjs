@@ -1,4 +1,4 @@
-import {yieldToMain} from '../../runtime/cooperative-work.mjs';
+import {yieldToMain} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=0582cef83086d95c';
 import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
@@ -13,10 +13,10 @@ import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060
 import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=77ea30e07072decd';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
-import { closeTerrainEdgesAsync } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
+import { closeTerrainEdgesAsync } from './terrain-edge-closure.mjs?v=bbcaf888f5341bdb';
 import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=4a7b14bc2b90e2b7';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=c596a02e2ef2d05e';
-import { refineTerrainSurfaceAsync, joinTerrainTiles } from './terrain-refinement.mjs?v=0f05cedcdf5c0b9c';
+import { refineTerrainSurfaceAsync, joinTerrainTiles } from './terrain-refinement.mjs?v=de6f345de5b7537a';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs?v=7782bd35eb4862d7';
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);
 const FOREST_TRACKS = new Set(['dos_lagos', 'paso_garibaldi']);

@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs';
+import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=91d5bd33810dccbf';
 test('road distance index agrees with exhaustive segment projection including negative cells and endpoints',()=>{
  const samples=Array.from({length:600},(_,i)=>({position:[Math.sin(i*.13)*900+i*.2,Math.cos(i*.02)*35,i*4-1200],sM:i*10,widthM:8+i%3}));
  const field=routeSpatialField(samples);let seed=32;const random=()=>((seed=Math.imul(seed,1664525)+1013904223|0)>>>0)/2**32;

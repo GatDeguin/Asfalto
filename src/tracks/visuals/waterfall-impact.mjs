@@ -1,4 +1,4 @@
-import {runCooperatively} from '../../runtime/cooperative-work.mjs';
+import {runCooperatively} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 // Intersect a delivered curtain with actual horizontal basin triangles, not their bounding boxes.
 function triangles(T,mesh){
  const g=mesh.geometry,p=g?.attributes?.position,index=g?.index,rows=[];if(!p)return rows;

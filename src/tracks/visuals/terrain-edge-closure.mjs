@@ -1,4 +1,4 @@
-import {runCooperatively} from '../../runtime/cooperative-work.mjs';
+import {runCooperatively} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 // Close the open underside of authored terrain sheets, without moving their top surface.
 // Walls stay on the existing boundary in X/Z and exclude the entire drivable corridor.
 function* closeTerrainEdgesSteps(THREE, mesh, { query, floorY, roadMarginM = 20, talus = false } = {}) {

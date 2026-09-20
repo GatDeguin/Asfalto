@@ -1,4 +1,4 @@
-import {inflateGzipBytes} from './inflate.mjs';
+import {inflateGzipBytes} from './inflate.mjs?v=1d1e76c615135552';
 /** Lossless delivery for optional detailed vehicles; ordinary GLB bytes stay untouched. */
 export async function decodeVehicleTransport(bytes,signal){
  signal?.throwIfAborted();

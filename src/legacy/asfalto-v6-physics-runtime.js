@@ -307,7 +307,7 @@
       sourceMeshes,duplicateSourcePaths,lastBuiltMeshes,cacheHits,refreshIntervalSeconds:.5,retainedAcrossVisualUnload:true,disposed};}
     function dispose(){if(disposed)return;disposed=true;for(const record of records.values())record.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));records.clear();slots.clear();triangleCount=0;}
     function refresh(options){const steps=refreshSteps(options);for(;;){const next=steps.next();if(next.done)return next.value;}}
-    async function refreshAsync(options={}){const {runCooperatively}=await import('../runtime/cooperative-work.mjs');return runCooperatively(refreshSteps(options),{signal:options.signal});}
+    async function refreshAsync(options={}){const {runCooperatively}=await import('../runtime/cooperative-work.mjs?v=529f3ae5a1f59485');return runCooperatively(refreshSteps(options),{signal:options.signal});}
     return {refresh,refreshAsync,diagnostics,dispose};
   }
 

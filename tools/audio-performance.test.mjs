@@ -7,7 +7,7 @@ test('thunder reuses prepared PCM and does not synthesize during racing',()=>{co
 for(const [name,create] of [['ambient',createRaceSoundscape],['driving',createRaceDrivingAudio]])test(name+' avoids duplicate automation and inactive updates',()=>{const c=context(),audio=create({context:c});audio.update();const before=c.events;audio.update();assert.equal(c.events,before);audio.setActive(false);const stopped=c.events;audio.update({paused:true});assert.equal(c.events,stopped);audio.update();assert.ok(c.events>stopped);audio.dispose()});
 export {context};
 import {Worker} from 'node:worker_threads';
-import {prepareSoundscapeBanks} from '../src/audio/prepare-soundscape-banks.mjs?v=1f384c94ad27b37c';
+import {prepareSoundscapeBanks} from '../src/audio/prepare-soundscape-banks.mjs?v=048dd23dff5dd143';
 import {createSoundscapeBanks} from '../src/audio/soundscape-banks.mjs?v=ab85d85161d96bc7';
 import {createSoundscapeBanks as previousBanks} from './fixtures/v7-soundscape-banks.mjs?v=79eb7dea53712cf0';
 function nodeWorker(){

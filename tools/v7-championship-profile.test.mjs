@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=dcc35a15848eab73';
+import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=11260c9cb7a7e830';
 const entrant={vehicleId:'chevy',class:'Histórica',configurationHash:'config',configuration:{parts:{brakes:'original'}}};
 const enroll={type:'enroll',id:'run',championshipId:'cinco_horizontes',entrant,at:'2026-09-09T12:00:00Z'};
 const base=()=>({name:'Jugador',parts:{brakes:'original'},championship:{points:99,events:10,wins:3},sheets:[{id:'old'}]});

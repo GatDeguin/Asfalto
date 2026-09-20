@@ -1,4 +1,4 @@
-import {waitForSignal} from './abortable.mjs';
+import {waitForSignal} from './abortable.mjs?v=c91114c944607feb';
 
 /** A bounded operation owns its cancellation, including callers which ignore a signal.
  * Aborting settles the consumer immediately; the producer must check the same signal

@@ -1,5 +1,5 @@
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
-import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
+import {createTrackManager} from "../tracks/track-manager.mjs?v=33035de74320bd2e";
 
 
 
@@ -35,11 +35,11 @@ const cleanup={attempts:0,completed:0,failures:[]};
 
 function reportFailure(error,phase){const message=String(error?.message||error);if(phase==="boot"){bootStatus="failed";bootError=message;try{runtimeBoundary?.onBootError?.(error)}catch(callbackError){cleanup.failures.push(String(callbackError?.message||callbackError))}try{globalThis.dispatchEvent?.(new CustomEvent("asfalto-v6-modular-error",{detail:{phase,error:message}}))}catch{}}else{cleanup.failures.push(message);for(const cause of error?.errors||[])cleanup.failures.push(String(cause?.message||cause))}}
 const adapterLoaders={
-  dos_lagos:()=>import('../tracks/adapters/dos-lagos.mjs?v=e80bd8543c43eaa9').then(m=>m.createDosLagosAdapter),
-  aconcagua_horcones:()=>import('../tracks/adapters/aconcagua-horcones.mjs?v=710888b6a5a19751').then(m=>m.createAconcaguaHorconesAdapter),
-  cuesta_lipan:()=>import('../tracks/adapters/cuesta-lipan.mjs?v=fb44fc3a7247208f').then(m=>m.createCuestaLipanAdapter),
-  paso_garibaldi:()=>import('../tracks/adapters/paso-garibaldi.mjs?v=72433993e23de3c6').then(m=>m.createPasoGaribaldiAdapter),
-  cataratas_iguazu:()=>import('../tracks/adapters/cataratas-iguazu.mjs?v=d0d5768ad6de0819').then(m=>m.createIguazuAdapter)
+  dos_lagos:()=>import('../tracks/adapters/dos-lagos.mjs?v=9d79e9a78a4d3429').then(m=>m.createDosLagosAdapter),
+  aconcagua_horcones:()=>import('../tracks/adapters/aconcagua-horcones.mjs?v=b0de9dc7b6024b0c').then(m=>m.createAconcaguaHorconesAdapter),
+  cuesta_lipan:()=>import('../tracks/adapters/cuesta-lipan.mjs?v=fb40abff55c2c592').then(m=>m.createCuestaLipanAdapter),
+  paso_garibaldi:()=>import('../tracks/adapters/paso-garibaldi.mjs?v=1f54f392dbb550aa').then(m=>m.createPasoGaribaldiAdapter),
+  cataratas_iguazu:()=>import('../tracks/adapters/cataratas-iguazu.mjs?v=1826a1f0c1dfbf5f').then(m=>m.createIguazuAdapter)
 };
 function createManager(){return createTrackManager({registry,async createAdapter(id,entry){if(!runtimeBoundary)throw new Error('modular runtime boundary is not connected');const load=adapterLoaders[id];if(!load)throw new RangeError('no adapter factory for track: '+id);const factory=await load();lifecycleAbort.signal.throwIfAborted();return factory({...runtimeBoundary,releaseRootUrl,registryUrl,manifestUrl:entry.manifest});}});}
 async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loading";bootPromise=Promise.all([fetchJson(registryUrl,"track registry",{signal:lifecycleAbort.signal}),fetchJson(releaseManifestUrl,"release manifest",{signal:lifecycleAbort.signal})]).then(([nextRegistry,nextManifest])=>{if(shutdownRequested)throw new Error("modular host shutdown during boot");registry=deepFreeze(nextRegistry);releaseManifest=deepFreeze(nextManifest);trackManager=createManager();bootStatus="ready";return Object.freeze({registry,releaseManifest,trackManager})}).catch(error=>{reportFailure(error,"boot");rejectReady(error);throw error});bootPromise.catch(()=>{});return bootPromise}

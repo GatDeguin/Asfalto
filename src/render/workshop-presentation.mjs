@@ -1,4 +1,4 @@
-import {preparePrograms} from './shader-preparation.mjs';
+import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';

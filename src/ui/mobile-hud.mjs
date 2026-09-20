@@ -1,4 +1,4 @@
-import {getFrameScheduler} from '../runtime/frame-scheduler.mjs';
+import {getFrameScheduler} from '../runtime/frame-scheduler.mjs?v=05cd8f6febcf672e';
 /** Live phone HUD with CSS depth; deliberately creates no WebGL context or model assets. */
 function physicalSpeedKmh(){const velocity=globalThis.__cockpit?.raceWorld?.getRenderFrame?.()?.currentSnapshot?.chassis?.linearVelocity;return velocity?Math.hypot(velocity[0],velocity[2])*3.6:null;}
 export function createMobileHud({doc=document,win=window,update,readSpeedKmh=physicalSpeedKmh,now=()=>performance.now(),frames=getFrameScheduler()}={}){

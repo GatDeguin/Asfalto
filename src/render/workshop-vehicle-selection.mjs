@@ -1,4 +1,4 @@
-import {preparePrograms} from './shader-preparation.mjs';
+import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
 import {createVehiclePresentation} from './vehicle-presentation.mjs?v=6698fa8c93c2dcfc';
 import {createWorkshopInspection} from './workshop-inspection.mjs?v=f49feba020fb38ff';

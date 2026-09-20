@@ -1,7 +1,7 @@
-import {boundedOperation} from '../runtime/demand-loader.mjs';
-import {waitForAnimationFrame} from '../runtime/abortable.mjs';
-import {yieldToMain} from '../runtime/cooperative-work.mjs';
-import {auditPreparation,auditProgramOwners} from './shader-preparation-audit.mjs';
+import {boundedOperation} from '../runtime/demand-loader.mjs?v=4a2efb64f7eb24a0';
+import {waitForAnimationFrame} from '../runtime/abortable.mjs?v=c91114c944607feb';
+import {yieldToMain} from '../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
+import {auditPreparation,auditProgramOwners} from './shader-preparation-audit.mjs?v=e9677e0454b956bd';
 const emptyScenes=new WeakMap();
 const diagnosticsEnabled=new URLSearchParams(globalThis.location?.search).get('qa')==='1';
 const rectangle=()=>({isVector4:true,x:0,y:0,z:0,w:0,copy(v){this.x=v.x;this.y=v.y;this.z=v.z;this.w=v.w;return this;}});

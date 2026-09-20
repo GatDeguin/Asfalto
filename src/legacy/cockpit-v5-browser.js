@@ -123,7 +123,7 @@ class CockpitV5App{
  notify(text,kind='info',duration=1700){clearTimeout(this.messageTimer);this.coachEl.textContent=text;this.coachEl.dataset.kind=kind;this.coachEl.classList.add('show');this.live.textContent=text;this.messageTimer=setTimeout(()=>this.coachEl.classList.remove('show'),duration)}
  async _loop(){
   if(this.stopFrame)return;
-  const {getFrameScheduler}=await import(new URL('src/runtime/frame-scheduler.mjs',document.baseURI));
+  const {getFrameScheduler}=await import(new URL('src/runtime/frame-scheduler.mjs?v=05cd8f6febcf672e',document.baseURI));
   this.stopFrame=getFrameScheduler().subscribe('legacy-hud',t=>{const dt=Math.min(.1,(t-this.lastFrame)/1000);this.lastFrame=t;this._update(this.cockpit.getState(),dt,t/1000);},{hz:30,enabled:()=>!!this.cockpit&&!window.__chevyV6Complete?.initialized&&!document.body.classList.contains('v5-menu-open')});
  }
 

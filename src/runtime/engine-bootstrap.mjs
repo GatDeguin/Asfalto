@@ -1,6 +1,6 @@
-import './diagnostics.mjs';
-import {loadWorkshopBootstrap} from './workshop-bootstrap.mjs';
-import {boundedOperation} from './demand-loader.mjs';
+import './diagnostics.mjs?v=ea513f78afb7a709';
+import {loadWorkshopBootstrap} from './workshop-bootstrap.mjs?v=e2edfbd0db5a168f';
+import {boundedOperation} from './demand-loader.mjs?v=4a2efb64f7eb24a0';
 
 const scripts=new Map();
 export function loadLegacyScript(id,{signal}={}){
@@ -33,7 +33,7 @@ function start({signal}={}){
     const ok=e=>{cleanup();resolve(e.detail);},bad=e=>{cleanup();reject(e.detail);},aborted=()=>{cleanup();reject(active.reason);};
     window.addEventListener('chevy-three-ready',ok,{once:true});window.addEventListener('chevy-three-error',bad,{once:true});active.addEventListener('abort',aborted,{once:true});
     moduleStarted=true;
-    import('../legacy/module-02.mjs?v=137fa1d93f159138').catch(error=>bad({detail:error}));
+    import('../legacy/module-02.mjs?v=8265befc1ac24281').catch(error=>bad({detail:error}));
    });
    return ready;
   },{timeoutMs:90000,label:'Motor 3D'}).then(value=>{phase='ready';return value;},error=>{phase=error?.name==='AbortError'?'aborted':'failed';failure=String(error?.message||error);starting=null;if(moduleStarted){terminalError=error;terminalError.requiresReload=true;}throw error;});

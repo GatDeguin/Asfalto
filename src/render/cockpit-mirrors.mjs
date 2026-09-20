@@ -1,4 +1,4 @@
-import {preparePrograms} from './shader-preparation.mjs';
+import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=a7a3e535c754e44b';
 
 const QUALITY = Object.freeze({

@@ -1,4 +1,4 @@
-import {installMaterialHook} from './material-hook.mjs';
+import {installMaterialHook} from './material-hook.mjs?v=6b3897bdbe3f1129';
 /** One world-space wind field shared by precipitation, surface waves and vegetation. */
 export function createWeatherWind(THREE){
   const uniforms={uAnWindTime:{value:0},uAnWindVector:{value:new THREE.Vector3(1.2,0,.36)},uAnWindGust:{value:1}};

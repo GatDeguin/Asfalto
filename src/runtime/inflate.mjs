@@ -1,4 +1,4 @@
-import {boundedOperation} from './demand-loader.mjs';
+import {boundedOperation} from './demand-loader.mjs?v=4a2efb64f7eb24a0';
 /** Native streaming gzip, bounded in both expanded size and wall time. */
 export function inflateGzipBytes(bytes,{signal,timeoutMs=90000,maxBytes=180*1024*1024,createStream=value=>new Blob([value]).stream().pipeThrough(new DecompressionStream('gzip'))}={}){
  return boundedOperation(async active=>{

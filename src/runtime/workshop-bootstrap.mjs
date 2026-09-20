@@ -1,5 +1,5 @@
 import {workshopBootstrapManifest as manifest} from './workshop-bootstrap-manifest.mjs?v=6238a53a583b3bc4';
-import {boundedOperation} from './demand-loader.mjs';
+import {boundedOperation} from './demand-loader.mjs?v=4a2efb64f7eb24a0';
 
 /** A failed 598 KB bootstrap is recoverable. It must never fetch the 59 MB authoring payload. */
 export async function loadWorkshopBootstrap(_original,{read=globalThis.AsfaltoV6AssetCore.readExternalPayload,signal,timeoutMs=45000}={}){

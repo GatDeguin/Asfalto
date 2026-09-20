@@ -1,5 +1,5 @@
-import {inspectFrame,assertVisibleFrame,assertMovement,assertStability} from './assertions.mjs';
-import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {observeBrowser} from './observe.mjs';import {serve} from './serve.mjs';
+import {inspectFrame,assertVisibleFrame,assertMovement,assertStability} from './assertions.mjs?v=98cba09b0d2295bb';
+import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {observeBrowser} from './observe.mjs?v=f04a42ac0648481b';import {serve} from './serve.mjs?v=2a52c2515340ef0d';
 import {chromium} from 'playwright';
 const root=process.env.AN_ROOT||path.resolve(import.meta.dirname,'../..'),label=process.env.AN_LABEL||'chromium',mobile=process.env.AN_MOBILE==='1',rate=Number(process.env.AN_CPU||1),cycles=Number(process.env.AN_CYCLES||3),heap=Number(process.env.AN_HEAP_MB||0),out=path.resolve(process.env.AN_OUTPUT||'test-results/no-freeze',label);fs.mkdirSync(out,{recursive:true});
 const result={label,root,mobile,cpuRate:rate,heapLimitMB:heap||null,startedAt:new Date().toISOString(),errors:[],httpErrors:[],failedRequests:[],network:[],checkpoints:[],cycles:[],workerTargets:[]};let browser,page,server,cdp,browserCdp,timer;const save=()=>fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(result,null,2));const requests=new Map();

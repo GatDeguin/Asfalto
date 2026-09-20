@@ -1,4 +1,4 @@
-import {getFrameScheduler} from '../runtime/frame-scheduler.mjs';
+import {getFrameScheduler} from '../runtime/frame-scheduler.mjs?v=05cd8f6febcf672e';
 import {createLightingPresetStore} from '../game/lighting-preset-file.mjs?v=08f05a1bfa379595';
 import {lightingPresetKey,sanitizeLightingOverrides,LUT_DEFAULTS} from '../game/lighting-presets.mjs?v=746ea306bd370d04';
 import {captureLightingState,captureVehicleLightingState,mergeLightingState,applyLightingState} from '../render/lighting-preview.mjs?v=ba3ba040d167357f';

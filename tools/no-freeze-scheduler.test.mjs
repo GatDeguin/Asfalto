@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {createFrameScheduler} from '../src/runtime/frame-scheduler.mjs';
+import {createFrameScheduler} from '../src/runtime/frame-scheduler.mjs?v=05cd8f6febcf672e';
 test('three owners share one RAF, cancellation and frequency are bounded',()=>{
  let next=1,queue=new Map(),a=0,b=0;const scheduler=createFrameScheduler({request:fn=>{const id=next++;queue.set(id,fn);return id;},cancel:id=>queue.delete(id),onError:e=>{throw e;}});
  const step=t=>{const work=[...queue.values()];queue.clear();work.forEach(fn=>fn(t));};

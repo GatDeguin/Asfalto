@@ -1,4 +1,4 @@
-import {createSegmentField} from '../tracks/visuals/segment-field.mjs';
+import {createSegmentField} from '../tracks/visuals/segment-field.mjs?v=adeede582c4fff1f';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function distanceSegment(x,z,a,b){const dx=b[0]-a[0],dz=b[2]-a[2],t=clamp(((x-a[0])*dx+(z-a[2])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[2]-dz*t);}
 /** Geometric perimeter, not a painted noise mask. Quantization joins GLB split vertices. */

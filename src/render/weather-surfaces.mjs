@@ -1,7 +1,7 @@
-import {installMaterialHook} from './material-hook.mjs';
-import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=cab994669e0c13cd';
+import {installMaterialHook} from './material-hook.mjs?v=6b3897bdbe3f1129';
+import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=2087656e2aa6b3b3';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
-import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=d2912fb3388fe938';
+import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=dba2951eead82e3a';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
 const SURFACE_SHADER = `
 varying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;

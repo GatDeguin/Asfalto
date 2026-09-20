@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
-import {readExternalPayload} from '../src/runtime/asset-core.mjs';
+import {readExternalPayload} from '../src/runtime/asset-core.mjs?v=e5b7548b01dab88d';
 const body=new Uint8Array([1,2,3]),node={dataset:{externalUrl:'part.glb',bytes:'3',sha256:createHash('sha256').update(body).digest('hex').toUpperCase()}};
 test('asset verifies streamed bytes and uses content identity',async()=>{let request;const out=await readExternalPayload(node,async(url,opts)=>{request={url,opts};return new Response(body);});assert.deepEqual(out,body);assert.match(request.url,/\?v=/);assert(request.opts.signal);});
 test('oversized, truncated and mismatched assets fail without fallback',async()=>{await assert.rejects(readExternalPayload(node,async()=>new Response(new Uint8Array(4))),/length mismatch/);await assert.rejects(readExternalPayload(node,async()=>new Response(new Uint8Array(2))),/length mismatch/);await assert.rejects(readExternalPayload(node,async()=>new Response(new Uint8Array(3))),/hash mismatch/);});

@@ -16,6 +16,7 @@ export function assertVisibleFrame(frame){assert(frame.colors>8&&frame.max-frame
 export function assertMovement(cycle){const a=cycle.before.position,b=cycle.motion.position;assert(a?.length===3&&b?.length===3,'No physical chassis snapshot');const distance=Math.hypot(...b.map((v,i)=>v-a[i]));assert(distance>2,'Vehicle did not move under player input: '+distance);cycle.distanceM=distance;}
 export function assertStability(report,{maxTaskMs=2500,maxPrepareMs=240000,heapGrowthMB=35}={}){
  assert.deepEqual(report.errors,[],'Unexpected JavaScript/console errors');assert.deepEqual(report.httpErrors,[],'HTTP errors');
+ if(report.mobile)for(const c of report.checkpoints.filter(c=>c.name.startsWith('driving-end-'))){const workshop=c.audit.gl.find(g=>g.canvasId==='v6-workshop-canvas');if(workshop)for(const [kind,count]of Object.entries(workshop.resources))assert.equal(count.live,0,'Released workshop leaked '+kind);}
  const final=report.checkpoints.at(-1).audit;assert.deepEqual(final.errors,[],'Unhandled browser rejection');assert(!final.contextLosses.some(c=>!c.requested),'Unexpected WebGL context loss');
  for(const cycle of report.cycles){assertMovement(cycle);assertVisibleFrame(cycle.visual);assert(cycle.prepareMs<maxPrepareMs,'Preparation exceeded measured budget');}
  assert(Math.max(0,...final.longTasks.map(t=>t.ms))<maxTaskMs,'Main-thread freeze budget exceeded');

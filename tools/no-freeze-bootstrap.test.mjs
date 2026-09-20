@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {loadWorkshopBootstrap} from '../src/runtime/workshop-bootstrap.mjs';
+import {loadWorkshopBootstrap} from '../src/runtime/workshop-bootstrap.mjs?v=e2edfbd0db5a168f';
 
 test('bootstrap failure never requests the monolithic cockpit payload',async()=>{
  const calls=[];const original={dataset:{externalUrl:'forbidden-59MB.json'}};

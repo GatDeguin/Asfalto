@@ -1,7 +1,7 @@
-import {inflateGzipBytes} from './inflate.mjs';
-import {cockpitSourceParts} from './cockpit-source-manifest.mjs';
-import {readDeferredPayload} from './workshop-bootstrap.mjs';
-import {boundedOperation} from './demand-loader.mjs';
+import {inflateGzipBytes} from './inflate.mjs?v=1d1e76c615135552';
+import {cockpitSourceParts} from './cockpit-source-manifest.mjs?v=357ec1b3aa92c849';
+import {readDeferredPayload} from './workshop-bootstrap.mjs?v=e2edfbd0db5a168f';
+import {boundedOperation} from './demand-loader.mjs?v=4a2efb64f7eb24a0';
 /** Exact original PC GLBs, individually gzip transported. No JSON/base64/string copies. */
 export function readCockpitSourcePart(key,{signal}={}){
  const entry=cockpitSourceParts[key];if(!entry)throw new Error('Pieza original desconocida: '+key);

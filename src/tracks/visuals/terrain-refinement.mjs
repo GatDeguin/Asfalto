@@ -1,4 +1,4 @@
-import {runCooperatively} from '../../runtime/cooperative-work.mjs';
+import {runCooperatively} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 // Connected, visual-only relief. X/Z, road envelope, shore and sector borders
 // remain fixed. A hidden owner retains the untouched imported buffers for disposal.
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));

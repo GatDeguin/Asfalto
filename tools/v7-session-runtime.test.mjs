@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createSessionTransactionRunner,sessionTelemetry,sessionResultFacts} from '../src/menu/v7-session-runtime.mjs?v=4964050ed6c0f11e';
+import {createSessionTransactionRunner,sessionTelemetry,sessionResultFacts} from '../src/menu/v7-session-runtime.mjs?v=0c7302a899376493';
 const deferred=()=>{let resolve;return{promise:new Promise(r=>resolve=r),resolve:v=>resolve(v)}};
 test('canceled real async load cannot start session or retain a presentation',async()=>{let actions,ends=0;const pending=deferred();const runner=createSessionTransactionRunner({begin:a=>(actions=a,{end(){ends++},stage(){},fail(){}})});const result=runner.run(async({signal})=>{await pending.promise;return !signal.aborted;});await Promise.resolve();actions.cancel();assert.equal(ends,0);pending.resolve();assert.equal(await result,false);assert.equal(ends,1);});
 test('failed attempt remains retryable and resumes same start promise once',async()=>{let actions,failures=0,attempts=0;const runner=createSessionTransactionRunner({begin:a=>(actions=a,{end(){},stage(){},fail(){failures++}})});const result=runner.run(async()=>{if(++attempts===1)throw Error('broken asset');return true;});await new Promise(r=>setImmediate(r));assert.equal(failures,1);actions.retry();assert.equal(await result,true);assert.equal(attempts,2);});
