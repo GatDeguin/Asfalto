@@ -1,6 +1,7 @@
+import {browserOptions} from './browser-options.mjs';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=f04a42ac0648481b';import {inspectFrame,assertVisibleFrame} from './assertions.mjs?v=98cba09b0d2295bb';
 const root=path.resolve(import.meta.dirname,'../..'),server=await serve(root),report={};
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined),args:process.platform==='win32'?['--use-angle=d3d11']:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch(browserOptions());
 const page=await browser.newPage({viewport:{width:1280,height:720}}),errors=[];page.setDefaultTimeout(45000);page.on('pageerror',e=>errors.push(e.message));await page.addInitScript(observeBrowser);await page.addInitScript(()=>{localStorage.setItem('asfalto:nacional:v6:selected-vehicle','chevy_400_1957');});
 const progress=setInterval(()=>page.evaluate(()=>({recovery:globalThis.__cockpit?.raceWorld?.getContextRecoveryState?.(),status:globalThis.__cockpit?.raceWorld?.getState().status,startup:globalThis.__asfaltoV7Startup?.diagnostics(),text:document.querySelector('.an-v7-load-state')?.textContent})).then(v=>console.log('FAULT FLOW',JSON.stringify(v))).catch(e=>console.log(e.message)),20000);
 try{

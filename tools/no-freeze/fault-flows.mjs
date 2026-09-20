@@ -1,6 +1,7 @@
+import {browserOptions} from './browser-options.mjs';
 import {chromium} from 'playwright';import assert from 'node:assert/strict';import path from 'node:path';import fs from 'node:fs';import {serve} from './serve.mjs?v=2a52c2515340ef0d';import {observeBrowser} from './observe.mjs?v=f04a42ac0648481b';
 const root=path.resolve(import.meta.dirname,'../..'),server=await serve(root),report={profiles:[],retry:null};
-const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined),args:process.platform==='win32'?['--use-angle=d3d11']:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch(browserOptions());
 async function shell(page){await page.goto(server.url+'?qa=1');await page.waitForFunction(()=>globalThis.__chevyV6Complete?.menuReady);await page.keyboard.press('Escape');await page.waitForFunction(()=>document.querySelector('#an-intro')?.hidden!==false);}
 try{
  for(const entry of [{id:'new',raw:null},{id:'existing',raw:JSON.stringify({version:6,workshopTokens:345,journey:{km:8,routes:[]}})},{id:'old',raw:JSON.stringify({version:3,workshopTokens:217,unlocked:{old:true},journey:{km:2}})},{id:'corrupt',raw:'{broken'},{id:'quota',raw:JSON.stringify({workshopTokens:178}),quota:true}]){
