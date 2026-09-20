@@ -1,0 +1,51 @@
+name: Chromium runtime stability
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [perf/no-freeze-runtime]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [desktop, mobile]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - run: npm run verify:release
+      - run: node tools/check-syntax.mjs
+      - name: Drive, pause, return and repeat in the real product
+        run: npm run test:browser
+        env:
+          AN_LABEL: ci-${{ matrix.device }}
+          AN_MOBILE: ${{ matrix.device == 'mobile' && '1' || '0' }}
+          AN_HEAP_MB: ${{ matrix.device == 'mobile' && '384' || '0' }}
+          AN_CYCLES: '3'
+          AN_TRACKS: dos_lagos,dos_lagos,dos_lagos
+          AN_ENFORCE: '1'
+          AN_MAX_TASK_MS: '5000'
+          AN_MAX_PREPARE_MS: '300000'
+      - name: Profiles, quota, corrupt JSON and asset failure recovery
+        if: matrix.device == 'desktop'
+        run: node tools/no-freeze/fault-flows.mjs
+      - name: Cancellation, WebGL recovery and complete disposal
+        if: matrix.device == 'desktop'
+        run: node tools/no-freeze/runtime-faults.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chromium-${{ matrix.device }}
+          path: test-results/no-freeze/
+          retention-days: 7

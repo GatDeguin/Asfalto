@@ -1,0 +1,1 @@
+{"name":"asfalto-nacional","private":true,"type":"module","scripts":{"test":"node --test tools/*.test.mjs","test:browser":"node tools/no-freeze/run-profile.mjs","verify:release":"node tools/verify-v8-release.mjs"},"devDependencies":{"playwright":"1.62.1"}}
