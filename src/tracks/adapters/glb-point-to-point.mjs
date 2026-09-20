@@ -104,6 +104,8 @@ function disposeRoot(root,seen,walked,errors=[],isOwned=()=>true){
     for(const child of children)walk(child);
   };
   root?.traverse?.(node=>{
+    if(node?.isInstancedMesh||node?.isBatchedMesh)dispose(node,'instance','instance buffers dispose');
+    dispose(node?.shadow,'shadow','shadow target dispose');
     dispose(node?.geometry,'geometry','geometry dispose');
     for(const material of (Array.isArray(node?.material)?node.material:[node?.material])){
       dispose(material,'material','material dispose');
