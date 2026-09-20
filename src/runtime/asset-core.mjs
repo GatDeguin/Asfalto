@@ -6,7 +6,10 @@ async function sha256Hex(bytes) {
 export async function readExternalPayload(element, fetchImpl = fetch) {
   const url = element?.dataset?.externalUrl;
   if (!url) throw new TypeError('external payload URL required');
-  const response = await fetchImpl(url, { cache: 'no-cache' });
+  // Content-addressed URL permits HTTP reuse without accepting stale payloads.
+  const version=String(element.dataset.sha256||'').toLowerCase();
+  const versionedUrl=url+(url.includes('?')?'&':'?')+'v='+encodeURIComponent(version);
+  const response = await fetchImpl(versionedUrl, { cache: 'default' });
   if (!response.ok) throw new Error('payload HTTP ' + response.status + ': ' + url);
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (bytes.byteLength !== Number(element.dataset.bytes)) throw new Error('payload length mismatch: ' + url);

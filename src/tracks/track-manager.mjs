@@ -1,4 +1,3 @@
-import {waitForSignal} from '../runtime/abortable.mjs';
 import { assertTrackAdapter } from './track-contract.mjs';
 
 const SAFE_ID = /^[a-z][a-z0-9_]{0,63}$/;
@@ -87,9 +86,7 @@ export function createTrackManager(context) {
     return entry;
   }
 
-  async function select(id, {signal, timeoutMs=180000} = {}) {
-    signal?.throwIfAborted();
-    if(!Number.isFinite(timeoutMs)||timeoutMs<=0)throw new RangeError('Invalid track selection timeout');
+  async function select(id) {
     const entry = entryFor(id);
 
     if (active && activeId === id) {
@@ -101,14 +98,10 @@ export function createTrackManager(context) {
     const selectionToken = ++token;
     pending?.controller.abort();
     const controller = new AbortController();
-    const forwardAbort=()=>controller.abort(signal.reason);
-    signal?.addEventListener('abort',forwardAbort,{once:true});
-    if(signal?.aborted)forwardAbort();
-    const timeout=setTimeout(()=>controller.abort(new DOMException('La carga del circuito tardó demasiado. Podés reintentar.','TimeoutError')),timeoutMs);
     let candidate = null;
     let candidateOwned = false;
 
-    const operation = (async () => {
+    const promise = (async () => {
       try {
         candidate = context.createAdapter(id, entry);
         candidateOwned = Boolean(candidate && typeof candidate === 'object' && typeof candidate.unload === 'function');
@@ -117,17 +110,17 @@ export function createTrackManager(context) {
         const result = await candidate.validate({ id, entry, signal: controller.signal });
         const invalid = validationError(result);
         if (invalid) throw invalid;
-        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw abortError();
 
         await candidate.load({ id, entry, signal: controller.signal });
-        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw abortError();
         if (candidate.ready !== true) throw new Error('adapter ' + id + ' did not become ready');
 
         const previous = active;
         active = candidate;
         activeId = id;
         if (previous && previous !== candidate) await cleanup(previous);
-        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw abortError();
         return candidate;
       } catch (error) {
         if (candidateOwned && active !== candidate) {
@@ -139,23 +132,15 @@ export function createTrackManager(context) {
             }
           }
         }
-        if (controller.signal.aborted || selectionToken !== token) throw controller.signal.reason || abortError();
+        if (controller.signal.aborted || selectionToken !== token) throw abortError();
         throw error;
       } finally {
         if (pending?.token === selectionToken) pending = null;
       }
     })();
 
-    // The adapter owns its late cleanup above. Public cancellation never waits
-    // indefinitely for a non-cooperative transport or decoder.
-    const promise = waitForSignal(operation, controller.signal);
     pending = { token: selectionToken, controller, promise };
-    try { return await promise; }
-    finally {
-      clearTimeout(timeout);
-      signal?.removeEventListener('abort',forwardAbort);
-      if(pending?.token===selectionToken)pending=null;
-    }
+    return promise;
   }
 
   async function unload() {

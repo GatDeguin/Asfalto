@@ -1,11 +1,10 @@
-import {waitForSignal} from '../runtime/abortable.mjs';
-import {createTrackManager} from "../tracks/track-manager.mjs";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=balance-20260917";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=balance-20260917";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=balance-20260917";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=balance-20260917";
+import {createTrackManager} from "../tracks/track-manager.mjs?v=841e2ee9c739681b";
+import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=ee997bcae0b29e99";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=0b4862e1e88d8a6f";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=66dce655e2c22a4e";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=4af06244c38dbea9";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=balance-20260917";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=73a5ef4aaa3333c3";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
@@ -25,6 +24,7 @@ let bootStatus="idle";
 let bootError=null;
 let shutdownRequested=false;
 let hostInitialization=null;
+const initializationStages=[];
 const lifecycleAbort=new AbortController();
 let resolveReady;
 let rejectReady;
@@ -38,7 +38,7 @@ async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loadin
 
 export function connectModularHost(boundary){if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));if(connectPromise)return connectPromise;runtimeBoundary=Object.freeze({...boundary});connectPromise=ensureBoot().then(({registry:loadedRegistry,trackManager:manager})=>{const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;return manager.select(selectedId)}).then(adapter=>{if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");resolveReady(adapter);return adapter});connectPromise.catch(()=>{});return connectPromise}
 
-async function selectTrack(id,{signal,timeoutMs}={}){signal?.throwIfAborted();if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await waitForSignal(ensureBoot(),signal);const adapter=await manager.select(id,{signal,timeoutMs});if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
+async function selectTrack(id){if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await ensureBoot();const adapter=await manager.select(id);if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
 function beginHostInitialization(){
  if(hostInitialization)return hostInitialization.api;
  let resolveCompletion;let rejectCompletion;let settled=false;let failure=null;let ownedOperation=null;
@@ -48,7 +48,7 @@ function beginHostInitialization(){
  const api={
   get signal(){return lifecycleAbort.signal;},
   assertActive(){if(shutdownRequested||lifecycleAbort.signal.aborted)throw abortError();},
-  waitFor(value){api.assertActive();return Promise.resolve(value).then(result=>{api.assertActive();return result},error=>{if(!ownedOperation)finish(error);throw error});},
+  waitFor(value,label='initialization'){api.assertActive();const start=performance.now();return Promise.resolve(value).then(result=>{api.assertActive();return result},error=>{if(!ownedOperation)finish(error);throw error}).finally(()=>{initializationStages.push({label,ms:performance.now()-start});if(initializationStages.length>64)initializationStages.shift();});},
   own(operation){if(typeof operation!=="function")return Promise.reject(new TypeError("host initialization operation is required"));if(ownedOperation)return ownedOperation;api.assertActive();ownedOperation=Promise.resolve().then(()=>operation(api)).then(result=>{api.assertActive();finish();return result},error=>{finish(error);throw error});ownedOperation.catch(()=>{});return ownedOperation;},
   complete(){api.assertActive();finish();},
   fail(error){finish(error||abortError());},
@@ -60,10 +60,10 @@ function beginHostInitialization(){
 function runtimeCleanupDiagnostics(){try{return runtimeBoundary?.getRuntimeCleanupDiagnostics?.()||null}catch(error){cleanup.failures.push(String(error?.message||error));return null}}
 export function shutdownModularHost(){if(shutdownPromise)return shutdownPromise;shutdownRequested=true;lifecycleAbort.abort(new Error("modular host shutdown"));cleanup.attempts+=1;shutdownPromise=Promise.resolve().then(async()=>{await Promise.allSettled([bootPromise,connectPromise,hostInitialization?.promise].filter(Boolean));const results=await Promise.allSettled([Promise.resolve().then(()=>trackManager?.unload?.()),Promise.resolve().then(()=>runtimeBoundary?.disposeRuntime?.())]);const failures=results.filter(result=>result.status==="rejected").map(result=>result.reason);if(failures.length)throw new AggregateError(failures,"modular shutdown failed");cleanup.completed+=1;return Object.freeze({completed:true})}).catch(error=>{reportFailure(error,"shutdown");throw error});shutdownPromise.catch(()=>{});return shutdownPromise}
 
-function getDiagnostics(){const active=trackManager?.active;const host=hostInitialization?Object.freeze({settled:hostInitialization.settled,aborted:lifecycleAbort.signal.aborted,failure:hostInitialization.failure?String(hostInitialization.failure?.message||hostInitialization.failure):null}):null;return Object.freeze({ready:active?.ready===true,activeTrackId:active?.id||null,bootStatus,bootError,registrySchema:registry?.schema||null,releaseSchema:releaseManifest?.schema||null,track:active?.getDiagnostics?.()||null,cleanup:Object.freeze({attempts:cleanup.attempts,completed:cleanup.completed,failures:[...cleanup.failures],runtime:runtimeCleanupDiagnostics(),hostInitialization:host})})}
+function getDiagnostics(){const active=trackManager?.active;const host=hostInitialization?Object.freeze({settled:hostInitialization.settled,aborted:lifecycleAbort.signal.aborted,failure:hostInitialization.failure?String(hostInitialization.failure?.message||hostInitialization.failure):null}):null;return Object.freeze({initializationStages:initializationStages.map(s=>({...s})),ready:active?.ready===true,activeTrackId:active?.id||null,bootStatus,bootError,registrySchema:registry?.schema||null,releaseSchema:releaseManifest?.schema||null,track:active?.getDiagnostics?.()||null,cleanup:Object.freeze({attempts:cleanup.attempts,completed:cleanup.completed,failures:[...cleanup.failures],runtime:runtimeCleanupDiagnostics(),hostInitialization:host})})}
 
 const facade=Object.freeze({ready,selectTrack,get trackManager(){return trackManager},getDiagnostics,get releaseManifest(){return releaseManifest},beginHostInitialization,shutdown:shutdownModularHost});
 Object.defineProperty(globalThis,"__asfaltoV6Modular",{value:facade,enumerable:false,configurable:false,writable:false});
-globalThis.addEventListener?.("pagehide",event=>{if(event.persisted)return;const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})});
+globalThis.addEventListener?.("pagehide",()=>{const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})},{once:true});
 
 export {facade as modularFacade};

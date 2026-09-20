@@ -1,6 +1,0 @@
-/** Short interaction signature on an existing authorized context. Never starts a context. */
-export function createV7InteractionSound({context,destination=context?.destination,getVolume=()=>.35}={}){
- const voices=new Set();let last=-Infinity,disposed=false;
- function silence(){for(const v of [...voices]){try{v.osc.stop();}catch{}v.clean();}}
- return {play(kind='select'){if(disposed||context?.state!=='running'||context.currentTime-last<.09)return false;const level=Math.max(0,Math.min(1,getVolume()));if(!level)return false;last=context.currentTime;const osc=context.createOscillator(),gain=context.createGain(),now=context.currentTime;osc.type='sine';osc.frequency.setValueAtTime(kind==='warning'?420:760,now);osc.frequency.exponentialRampToValueAtTime(kind==='warning'?330:570,now+.045);gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(level*.035,now+.004);gain.gain.exponentialRampToValueAtTime(.0001,now+.065);osc.connect(gain).connect(destination);const voice={osc,clean(){osc.disconnect();gain.disconnect();voices.delete(voice);}};voices.add(voice);osc.onended=voice.clean;osc.start();osc.stop(now+.07);return true;},silence,dispose(){if(disposed)return;disposed=true;silence();},diagnostics:()=>({voices:voices.size,disposed})};
-}

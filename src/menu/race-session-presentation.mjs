@@ -1,6 +1,5 @@
-import { mountV7Experience } from './v7-experience.mjs?v=balance-20260917';
-import { createRacePauseMenu } from './race-pause-menu.mjs?v=balance-20260917';
-import { createMenuMusic } from './menu-music.mjs';
+import { createRacePauseMenu } from './race-pause-menu.mjs?v=96ef273c409c116e';
+import { createMenuMusic } from './menu-music.mjs?v=e307cb281c91f945';
 
 const body = document.body;
 const world = () => globalThis.__cockpit?.raceWorld;
@@ -10,7 +9,7 @@ let visitedRace = false, restartMenuMusic = false;
 const audio = document.createElement('audio');
 audio.dataset.asfaltoAudio = 'menu'; audio.hidden = true;
 body.append(audio);
-const music = createMenuMusic({ audio, deferUntilGesture:true, tracks:[new URL('../../assets/audio/menu-1.mp3', import.meta.url).href, new URL('../../assets/audio/menu-2.mp3', import.meta.url).href] });
+const music = createMenuMusic({ audio, tracks:[new URL('../../assets/audio/menu-1.mp3', import.meta.url).href, new URL('../../assets/audio/menu-2.mp3', import.meta.url).href] });
 const pause = createRacePauseMenu({
   document,
   onResume() { world()?.resume(); },
@@ -18,8 +17,6 @@ const pause = createRacePauseMenu({
   onSettings() { settingsFromPause = true; body.classList.remove('an-race-pause-visible'); globalThis.__cockpit?.openCockpitSettings(true); },
   onReturnToWorkshop() { game()?.openMenu('drive'); },
 });
-
-const experienceV7 = mountV7Experience();
 
 function showPause() {
   if (body.classList.contains('v6-menu-open') || body.classList.contains('an-intro-open')) return;
@@ -59,7 +56,7 @@ function onState(event) {
   game()?.setSessionPaused?.(status === 'PAUSED');
   if (status === 'PAUSED') {
     body.classList.add('an-race-paused');
-    if (!['menu','settings','mobile-inspection'].includes(reason)) showPause();
+    if (reason !== 'menu' && reason !== 'settings') showPause();
   } else closePause();
   syncAudio();
 }
@@ -89,7 +86,7 @@ globalThis.__asfaltoRacePresentation = Object.freeze({
   syncAudio,
   diagnostics() { return { pauseOpen:pause.isOpen(), music:music.diagnostics() }; },
   dispose() {
-    if (disposed) return; disposed = true; observer.disconnect(); experienceV7?.dispose(); pause.dispose(); music.dispose(); audio.remove();
+    if (disposed) return; disposed = true; observer.disconnect(); pause.dispose(); music.dispose(); audio.remove();
     window.removeEventListener('asfalto:race-state', onState); window.removeEventListener('asfalto:race-settings', onSettings); window.removeEventListener('asfalto:audio-settings', syncAudio);
     document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onGesture); document.removeEventListener('visibilitychange', onVisibility);
     body.classList.remove('an-race-paused', 'an-race-pause-visible');

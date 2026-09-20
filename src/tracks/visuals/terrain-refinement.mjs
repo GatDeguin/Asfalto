@@ -17,22 +17,9 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
   const forest=region==='dos_lagos'||region==='paso_garibaldi',maxChange=forest?60:85;
   mesh.updateWorldMatrix(true,false);const inverse=mesh.matrixWorld.clone().invert(),point=new THREE.Vector3();
   const vertices=[],triangles=[],lookup=new Map(),ids=new Uint32Array(p.count);
-  let cutResculptedVertices=0,maxCutReductionM=0;
   const makeVertex=(x,y,z,c,boundary=false)=>{
     const q=roadField(x,z),road=smooth((q.distanceM-(q.widthM||8)/2-roadMarginM)/48),shore=smooth((y-waterLevel-1)/14);
-    const sourceY=y;
-    if(region==='cuesta_lipan'&&!boundary){
-      const clear=Math.max(0,q.distanceM-(q.widthM||8)/2-10);
-      // Compress only the over-steep road cuts. A finite concave toe rises into
-      // connected spurs; sector-edge samples use the same world-space function.
-      // The road and all imported collision buffers remain untouched.
-      const spur=.5+.5*Math.sin((x*.81+z*.59)/155+Math.sin((z*.81-x*.59)/470)*1.4);
-      const cap=(q.position?.[1]||0)+clear*(.57+.23*smooth(clear/240))+(spur-.5)*Math.min(28,clear*.2);
-      const blend=smooth(clear/30)*(1-smooth((clear-700)/500));
-      y-=Math.max(0,y-cap)*blend;
-      if(sourceY-y>.01){cutResculptedVertices++;maxCutReductionM=Math.max(maxCutReductionM,sourceY-y);}
-    }
-    return{x,y,z,baseY:y,sourceY,color:c,boundary,weight:road*shore,slope:0,roadDistanceM:q.distanceM};
+    return{x,y,z,baseY:y,color:c,boundary,weight:road*shore,slope:0,roadDistanceM:q.distanceM};
   };
   for(let i=0;i<p.count;i++){
     point.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);
@@ -108,36 +95,6 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
     }
     triangles.length=0;for(const value of out)triangles.push(value);graph=topology();relax(4);
   }
-  // Source hairpin terraces need a physical smoothing radius. One-ring
-  // relaxation shrinks to centimetres/metres as a sector is tessellated and
-  // preserves the broad flat shelves followed by an abrupt height jump.
-  // Fit a local tilted plane over 60m; flat ground and a steady slope stay put.
-  // Road support and tile boundaries remain exact source anchors.
-  if(region==='cuesta_lipan'){
-    const cell=20,radius=60,grid=new Map(),next=new Float64Array(vertices.length);
-    vertices.forEach((v,i)=>{const key=Math.floor(v.x/cell)+':'+Math.floor(v.z/cell);if(!grid.has(key))grid.set(key,[]);grid.get(key).push(i);});
-    for(let pass=0;pass<3;pass++){
-      // Equal-area cell centroids keep dense source tessellation from dominating
-      // the fit and bound work independently of imported vertex density.
-      const samples=new Map();for(const [key,ids]of grid){let x=0,y=0,z=0;for(const j of ids){x+=vertices[j].x;y+=vertices[j].y;z+=vertices[j].z;}samples.set(key,{x:x/ids.length,y:y/ids.length,z:z/ids.length});}
-      for(let i=0;i<vertices.length;i++){
-        const v=vertices[i];next[i]=v.y;
-        const q=roadField(v.x,v.z),weight=smooth((q.distanceM-(q.widthM||8)/2-roadMarginM)/24)*(1-smooth((q.distanceM-350)/300));
-        if(v.boundary||weight===0)continue;
-        let sw=0,sx=0,sz=0,sxx=0,sxz=0,szz=0,sy=0,sxy=0,szy=0;
-        const cx=Math.floor(v.x/cell),cz=Math.floor(v.z/cell);
-        for(let dx=-3;dx<=3;dx++)for(let dz=-3;dz<=3;dz++){
-          const n=samples.get((cx+dx)+':'+(cz+dz));if(!n)continue;const x=n.x-v.x,z=n.z-v.z,r2=x*x+z*z;if(r2>radius*radius)continue;
-          const w=Math.exp(-r2/1800),y=n.y-v.y;sw+=w;sx+=w*x;sz+=w*z;sxx+=w*x*x;sxz+=w*x*z;szz+=w*z*z;sy+=w*y;sxy+=w*x*y;szy+=w*z*y;
-        }
-        const minor=sxx*szz-sxz*sxz,det=sw*minor-sx*(sx*szz-sxz*sz)+sz*(sx*sxz-sxx*sz);
-        if(Math.abs(det)<1e-10)continue;
-        const residual=(sy*minor-sx*(sxy*szz-sxz*szy)+sz*(sxy*sxz-sxx*szy))/det;
-        next[i]=clamp(v.y+residual*.78*weight,v.baseY-maxChange*weight,v.baseY+maxChange*weight);
-      }
-      vertices.forEach((v,i)=>{v.y=next[i];});
-    }
-  }
   // Sparse incised drainage, elongated along the downhill profile. No uniform
   // positive noise inflation: a flat terrace stays flat and the silhouette stays authored.
   const positions=[],colors=[];let maxHeightChangeM=0,protectedVertices=0;
@@ -146,9 +103,8 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
     if(borderFade)for(const j of graph.neighbors[i])if(vertices[j].boundary){borderFade=.2;break;}
     const slope=smooth((v.slope-.15)/.65),u=(v.x*.78+v.z*.62)/95,w=(v.z*.78-v.x*.62)/340;
     const channel=Math.pow(clamp(1-Math.abs(noise(u+noise(w,u)*.6,w)-.5)*8),3);
-    const regionalDetail=region==='cuesta_lipan'?.15+.85*smooth((v.roadDistanceM-250)/400):1;
-    const erosion=channel*slope*(forest?22:28)*v.weight*borderFade*regionalDetail;
-    const broadRelief=(noise(v.x/180+17,v.z/220+43)-.5)*(forest?45:70)*slope*v.weight*borderFade*regionalDetail;
+    const erosion=channel*slope*(forest?22:28)*v.weight*borderFade;
+    const broadRelief=(noise(v.x/180+17,v.z/220+43)-.5)*(forest?45:70)*slope*v.weight*borderFade;
     v.y=clamp(v.y-erosion+broadRelief,v.baseY-maxChange*v.weight,v.baseY+maxChange*v.weight);
     if(v.boundary||v.weight===0)protectedVertices++;
     maxHeightChangeM=Math.max(maxHeightChangeM,Math.abs(v.y-v.baseY));
@@ -158,7 +114,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
   if(color)geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,color.itemSize));
   geometry.computeVertexNormals();geometry.computeBoundingBox();geometry.computeBoundingSphere();mesh.geometry=geometry;
   const owner=new THREE.Mesh(source,mesh.material);owner.name='ASFALTO_TERRAIN_SOURCE_OWNER';owner.visible=false;mesh.add(owner);
-  const result=Object.freeze({sourceTriangles,triangles:triangles.length/3,vertices:vertices.length,maxHeightChangeM,protectedVertices,targetEdgeM,region,cutResculptedVertices,maxCutReductionM});
+  const result=Object.freeze({sourceTriangles,triangles:triangles.length/3,vertices:vertices.length,maxHeightChangeM,protectedVertices,targetEdgeM,region});
   mesh.userData.asfaltoTerrainRefinement=result;return result;
 }
 

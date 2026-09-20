@@ -94,19 +94,6 @@ export function createSectorStreamer(options = {}) {
     throw new TypeError('signal must be an AbortSignal');
   }
 
-  // Lipan keeps its prepared road/terrain surface while automatic render quality changes.
-  // Other adapters retain the original LOD policy unless they opt in.
-  const stableGeometry = options.stableQualityGeometry === true;
-  const updateVisualQuality = options.updateVisualQuality === undefined ? null
-    : requireFunction(options.updateVisualQuality, 'updateVisualQuality');
-  const now = options.now === undefined ? () => globalThis.performance?.now?.() ?? Date.now()
-    : requireFunction(options.now, 'now');
-  const retryDelayMs = Number(options.retryDelayMs ?? 0);
-  const retryMaxDelayMs = Number(options.retryMaxDelayMs ?? 30000);
-  if (!Number.isFinite(retryDelayMs) || retryDelayMs < 0 || !Number.isFinite(retryMaxDelayMs) || retryMaxDelayMs < retryDelayMs) {
-    throw new RangeError('invalid streaming retry delay');
-  }
-  let lastFailure = null;
   const visual = new Map();
   const collision = new Map();
   let generation = 0;
@@ -219,7 +206,7 @@ export function createSectorStreamer(options = {}) {
     const requests = [];
     for (const [id, lod] of desired) {
       const existing = visual.get(id);
-      if (existing && (existing.lod === lod || (stableGeometry && existing.lod < lod))) continue;
+      if (existing?.lod === lod) continue;
       const sector = sectorById.get(id);
       requests.push({ sector, lod, asset: sector.visual[`lod${lod}`] });
     }
@@ -238,19 +225,14 @@ export function createSectorStreamer(options = {}) {
   async function performUpdate(operation, sM, nextQuality) {
     assertCurrent(operation);
     const index = sectorIndexAt(sM);
-    const geometryQuality = stableGeometry && nextQuality === 'low' ? 'balanced' : nextQuality;
-    const desired = desiredFor(index, geometryQuality, sectors);
+    const desired = desiredFor(index, nextQuality, sectors);
     const nextCurrent = sectors[index].id;
     await transitionCollision(operation, desired.collision, nextCurrent);
     assertCurrent(operation);
     await transitionVisual(operation, desired.visual);
     assertCurrent(operation);
     currentSector = nextCurrent;
-    quality = operation.targetQuality;
-    for (const record of visual.values()) updateVisualQuality?.(record.resource, {
-      sector: record.sector, lod: record.lod, quality, currentSector: nextCurrent,
-    });
-    lastFailure = null;
+    quality = nextQuality;
     updates += 1;
     return diagnostics();
   }
@@ -259,26 +241,12 @@ export function createSectorStreamer(options = {}) {
     if (disposed) return Promise.reject(new Error('sector streamer is disposed'));
     if (!QUALITIES.has(nextQuality)) return Promise.reject(new RangeError(`unknown quality tier: ${nextQuality}`));
     if (options.signal?.aborted) return Promise.reject(abortError(options.signal.reason));
-    let index;
-    try { index = sectorIndexAt(Number(sM)); } catch (error) { return Promise.reject(error); }
-    const geometryQuality = stableGeometry && nextQuality === 'low' ? 'balanced' : nextQuality;
-    const key = `${index}:${geometryQuality}`;
-    if (active?.key === key) { active.targetQuality = nextQuality; return active.promise; }
     if (active) active.controller.abort(abortError());
-    if (lastFailure?.key === key && now() < lastFailure.retryAtMs) return lastFailure.promise;
-    const operation = { token: ++generation, key, targetQuality: nextQuality, controller: new AbortController(), promise: null };
+    const operation = { token: ++generation, controller: new AbortController(), promise: null };
     const forwardAbort = () => operation.controller.abort(abortError(options.signal?.reason));
     if (options.signal) options.signal.addEventListener('abort', forwardAbort, { once: true });
     active = operation;
     operation.promise = performUpdate(operation, Number(sM), nextQuality)
-      .catch(error => {
-        if (retryDelayMs && isCurrent(operation) && error?.name !== 'AbortError') {
-          const attempts = lastFailure?.key === key ? lastFailure.attempts + 1 : 1;
-          const delay = Math.min(retryMaxDelayMs, retryDelayMs * 2 ** Math.min(20, attempts - 1));
-          lastFailure = { key, attempts, retryAtMs: now() + delay, error, promise: operation.promise };
-        }
-        throw error;
-      })
       .finally(() => {
         if (options.signal) options.signal.removeEventListener('abort', forwardAbort);
         if (active === operation) active = null;
@@ -298,9 +266,6 @@ export function createSectorStreamer(options = {}) {
       collision: Object.freeze(collisionIds),
       currentSector,
       quality,
-      stableQualityGeometry: stableGeometry,
-      retry: lastFailure ? Object.freeze({ attempts: lastFailure.attempts, retryAtMs: lastFailure.retryAtMs,
-        remainingMs: Math.max(0, lastFailure.retryAtMs - now()), message: String(lastFailure.error?.message || lastFailure.error) }) : null,
       pending: active !== null,
       updates,
       generation,
@@ -334,7 +299,6 @@ export function createSectorStreamer(options = {}) {
       collision.clear();
       currentSector = null;
       quality = null;
-      lastFailure = null;
     })();
     return disposal;
   }

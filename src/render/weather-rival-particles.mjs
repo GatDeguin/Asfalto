@@ -1,5 +1,5 @@
-import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=balance-20260917';
-import {createVehicleEmissionState} from './weather-effects-policy.mjs';
+import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=6c9c7f34dbd96851';
+import {createVehicleEmissionState} from './weather-effects-policy.mjs?v=b4411fe6d5538dca';
 const METAL=new Set(['metal','steel','guardrail','vehicle-metal']);
 const EMPTY=Object.freeze([]);
 /** Actual rival snapshots share the original player/rival particle quota. */

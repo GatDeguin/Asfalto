@@ -35,8 +35,8 @@ if /i "%~1"=="--check-node" (
   exit /b 0
 )
 
-echo Iniciando Asfalto Nacional v7 por HTTP local...
-"%ASFALTO_NODE%" "%~dp0tools\serve-local.mjs" --open --port-start 4273 --port-end 4283
+echo Iniciando Asfalto Nacional v6 por HTTP local...
+"%ASFALTO_NODE%" "%~dp0tools\serve-local.mjs" --open --port-start 4173 --port-end 4183
 set "ASFALTO_EXIT=%ERRORLEVEL%"
 if not "%ASFALTO_EXIT%"=="0" echo El servidor no pudo iniciarse. Codigo: %ASFALTO_EXIT%
 pause

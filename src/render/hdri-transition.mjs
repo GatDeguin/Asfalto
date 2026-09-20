@@ -6,7 +6,7 @@ export function rotateHdriHalfTurn(texture){
  if(width%2||!Number.isInteger(channels))throw new TypeError('Dawn HDRI requires an even panorama width');
  const half=width*channels/2,row=new data.constructor(half);
  for(let y=0;y<height;y++){const offset=y*width*channels;row.set(data.subarray(offset,offset+half));data.copyWithin(offset,offset+half,offset+half*2);data.set(row,offset+half);}
- texture.needsUpdate=true;return texture;
+ texture.userData??={};texture.userData.asfaltoHdriHalfTurn=!texture.userData.asfaltoHdriHalfTurn;texture.needsUpdate=true;return texture;
 }
 const vertexShader='varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
 const fragmentShader='uniform sampler2D sourceA;uniform sampler2D sourceB;uniform vec2 gains;varying vec2 vUv;void main(){gl_FragColor=vec4(texture2D(sourceA,vUv).rgb*gains.x+texture2D(sourceB,vUv).rgb*gains.y,1.);}';
@@ -23,7 +23,7 @@ export function createHdriTransition(T,{scene,renderer,keyLight,loadSource,build
  const geometry=new T.PlaneGeometry(2,2),quad=new T.Mesh(geometry,material),pass=new T.Scene(),camera=new T.Camera();quad.frustumCulled=false;pass.add(quad);
  const viewport=new T.Vector4(),scissor=new T.Vector4(),horizon=new T.Color();
  let backgroundTarget=null,equirectTarget=null,environmentTarget=null,baseline=null,generation=0,prefetchRevision=0,disposed=false,active=false,elapsed=0,lastBlend=-1,lastPair='',requestedPair='',renderCount=0,lastError=null;
- function disposeRecord(record){if(!record.owned)return;record.source?.dispose();record.target?.dispose();record.source=null;record.target=null;record.environment=null;}
+ function disposeRecord(record){if(!record.owned)return;if(record.building)return;record.source?.dispose();record.target?.dispose();record.source=null;record.target=null;record.environment=null;}
  function request(knot){
   if(records.has(knot.key))return records.get(knot.key).promise;
   const token=generation,record={owned:true,source:null,target:null,environment:null,horizon:null,promise:null};records.set(knot.key,record);
@@ -35,7 +35,7 @@ export function createHdriTransition(T,{scene,renderer,keyLight,loadSource,build
    // Decoding and GPU filtering are scheduled ahead of the segment boundary,
    // outside update(). Each target is filtered once during its residency.
    await yieldTask();if(disposed||token!==generation||records.get(knot.key)!==record)return null;
-   record.target=await buildPmrem(source);record.environment=record.target.texture;
+   record.building=true;try{record.target=await buildPmrem(source);}finally{record.building=false;}record.environment=record.target.texture;
    if(disposed||token!==generation||records.get(knot.key)!==record){disposeRecord(record);return null;}
    return record;
   })().catch(error=>{disposeRecord(record);if(records.get(knot.key)===record)records.delete(knot.key);lastError=String(error?.message||error);return null;});
@@ -63,7 +63,7 @@ export function createHdriTransition(T,{scene,renderer,keyLight,loadSource,build
    if(disposed)return false;release();const token=generation,{source=scene.background,environment=scene.environment,skyId=state.from.skyId}=options;
    baseline={background:scene.background,environment:scene.environment,backgroundIntensity:scene.backgroundIntensity,environmentIntensity:scene.environmentIntensity,exposure:renderer.toneMappingExposure,keyPosition:keyLight?.position.clone(),keyColor:keyLight?.color.clone(),keyIntensity:keyLight?.intensity,keyVisible:keyLight?.visible};
    if(source?.isTexture&&environment?.isTexture&&skyId===state.from.skyId&&!state.from.rotation){const record={owned:false,source,environment,horizon:sampleSkyHorizon(T,source)};record.promise=Promise.resolve(record);records.set(state.from.key,record);}
-   await prefetch(state);if(disposed||token!==generation)return false;active=true;return !!records.get(state.from.key)?.environment&&!!records.get(state.to.key)?.environment;
+   await request(state.from);if(disposed||token!==generation)return false;await request(state.to);if(disposed||token!==generation)return false;active=true;requestedPair=state.from.key+'|'+state.to.key;void prefetch(state);return !!records.get(state.from.key)?.environment&&!!records.get(state.to.key)?.environment;
   },prefetch,release,
   update({state,dt=0,quality='high'}={}){
    if(disposed||!active||!state)return false;
@@ -72,7 +72,7 @@ export function createHdriTransition(T,{scene,renderer,keyLight,loadSource,build
    const a=records.get(state.from.key),b=records.get(state.to.key);if(!a?.environment||!b?.environment)return false;
    if(!backgroundTarget){backgroundTarget=targetFor(a.environment,'Asfalto_DayCycle_SkyCubeUV',T.CubeUVReflectionMapping);equirectTarget=targetFor(a.source,'Asfalto_DayCycle_HDRI',T.EquirectangularReflectionMapping);environmentTarget=targetFor(a.environment,'Asfalto_DayCycle_PMREM',T.CubeUVReflectionMapping);backgroundTarget.texture.userData.asfaltoSkyEquirect=equirectTarget.texture;backgroundTarget.texture.userData.asfaltoSkyHorizon=horizon;backgroundTarget.texture.userData.asfaltoSkyRevision=0;}
    scene.background=backgroundTarget.texture;scene.environment=environmentTarget.texture;scene.backgroundIntensity=1;scene.environmentIntensity=1;
-   renderer.toneMappingExposure=state.exposure;if(keyLight){keyLight.color.setRGB(...state.color);keyLight.position.fromArray(state.direction);keyLight.intensity=state.keyLightIntensity;keyLight.visible=state.keyLightIntensity>0;}
+   renderer.toneMappingExposure=state.exposure;if(keyLight){keyLight.color.setRGB(...state.color);keyLight.position.fromArray(state.direction);keyLight.intensity=state.keyLightIntensity;keyLight.visible=true;}
    elapsed+=Number.isFinite(dt)?Math.max(0,dt):0;
    if(pair===lastPair&&(state.blend===lastBlend||elapsed<(quality==='low'?.2:.1)))return true;
    const target=renderer.getRenderTarget(),face=renderer.getActiveCubeFace?.()??0,mip=renderer.getActiveMipmapLevel?.()??0,autoClear=renderer.autoClear,xr=renderer.xr?.enabled;
@@ -94,3 +94,4 @@ export function createHdriTransition(T,{scene,renderer,keyLight,loadSource,build
   dispose(){if(disposed)return;release();disposed=true;geometry.dispose();material.dispose();},
  };
 }
+

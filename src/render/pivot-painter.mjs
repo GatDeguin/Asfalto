@@ -1,4 +1,3 @@
-import {graphicsQualityFamily} from './graphics-quality-policy.mjs';
 // Pivot Painter style hierarchy inferred from connected branch/leaf components.
 // Explicit local pivots and axes drive rotations; the source meshes and physics
 // stay unchanged. These are inferred pivots, not an authored Pivot Painter bake.
@@ -46,13 +45,13 @@ function pivotGeometry(T,source,kind,{baseY=0,heightM=16}={}){
  geometry.userData.anPivotPainter={kind,components:groups.length,hierarchyLevels:3,padding,baseY:base,heightM:height};
  return geometry;
 }
-export function createPivotPainter(T,{root,quality='high',enabled=true}={}){
+export function createPivotPainter(T,{root,quality='high'}={}){
  if(!root?.traverse)throw new TypeError('Pivot Painter requires a vegetation root');
  const uniforms={anPpTime:{value:0},anPpWindSpeed:{value:2},anPpWindDirection:{value:new T.Vector3(.82,0,.57).normalize()},anPpEnabled:{value:1},anPpLeafMotion:{value:1}};
  const records=new Map(),geometryCache=new Map(),materials=new Set();let tier='high',disposed=false;
  function classify(o){
   if(!o.isMesh||o.isSkinnedMesh||!o.geometry?.attributes.position||o.geometry.attributes.asfaltoDetailedTree||o.geometry.drawRange.count===0)return null;
-  let path='';for(let p=o;p;p=p.parent){if(p.userData?.pivotPainter===false)return null;if(p===root)break;path+=' '+p.name;}
+  let path='';for(let p=o;p&&p!==root;p=p.parent)path+=' '+p.name;
   if(/grass|cesped|césped|billboard|resource.owner|source.owner|detail.template/i.test(path)||o.userData.asfaltoRealisticGrass)return null;
   const mats=materialList(o);if(mats.some(m=>!m?.isMeshStandardMaterial))return null;
   const names=path+' '+mats.map(m=>m.name).join(' ');
@@ -109,19 +108,19 @@ export function createPivotPainter(T,{root,quality='high',enabled=true}={}){
   for(const [key,g]of geometryCache)if(!used.has(g)){g.dispose();geometryCache.delete(key);}
  }
  function refresh(){
-  if(disposed||!enabled)return 0;
+  if(disposed)return 0;
   for(const r of records.values()){let attached=false;for(let p=r.object;p;p=p.parent)if(p===root){attached=true;break;}if(!attached)releaseRecord(r);}
   releaseUnusedGeometry();
   root.traverse(o=>{if(records.has(o))return;const kind=classify(o);if(kind)attach(o,kind);});return records.size;
  }
- function setQuality(value='high'){tier=graphicsQualityFamily(value)==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anPpEnabled.value=tier==='low'||!enabled?0:1;uniforms.anPpLeafMotion.value=tier==='high'?1:.55;}
+ function setQuality(value='high'){tier=value==='high'?'high':value==='low'||value==='off'?'low':'balanced';uniforms.anPpEnabled.value=tier==='low'?0:1;uniforms.anPpLeafMotion.value=tier==='high'?1:.55;}
  function update({time,windSpeed,windDirection}={}){
   if(disposed)return;if(Number.isFinite(time))uniforms.anPpTime.value=Math.max(0,time);if(Number.isFinite(windSpeed))uniforms.anPpWindSpeed.value=clamp(windSpeed,0,32);
   if(windDirection){const x=windDirection.x??windDirection[0],z=windDirection.z??windDirection[windDirection.length===2?1:2];if(Number.isFinite(x)&&Number.isFinite(z)&&Math.hypot(x,z)>1e-6)uniforms.anPpWindDirection.value.set(x,0,z).normalize();}
  }
  setQuality(quality);
  return {uniforms,refresh,update,setQuality,
-  diagnostics:()=>({permitted:enabled,enabled:!!uniforms.anPpEnabled.value,tier,hierarchyLevels:3,representation:'component-derived root / branch / leaf pivot rotations',meshes:records.size,geometries:geometryCache.size,materials:materials.size,components:[...geometryCache.values()].reduce((n,g)=>n+g.userData.anPivotPainter.components,0),time:uniforms.anPpTime.value,windSpeed:uniforms.anPpWindSpeed.value,windDirection:uniforms.anPpWindDirection.value.toArray(),shadows:'matching depth and point-light distance deformation with alpha masks',disposed}),
+  diagnostics:()=>({enabled:!!uniforms.anPpEnabled.value,tier,hierarchyLevels:3,representation:'component-derived root / branch / leaf pivot rotations',meshes:records.size,geometries:geometryCache.size,materials:materials.size,components:[...geometryCache.values()].reduce((n,g)=>n+g.userData.anPivotPainter.components,0),time:uniforms.anPpTime.value,windSpeed:uniforms.anPpWindSpeed.value,windDirection:uniforms.anPpWindDirection.value.toArray(),shadows:'matching depth and point-light distance deformation with alpha masks',disposed}),
   dispose(){if(disposed)return;disposed=true;for(const r of records.values())releaseRecord(r);releaseUnusedGeometry();uniforms.anPpEnabled.value=0;}
  };
 }

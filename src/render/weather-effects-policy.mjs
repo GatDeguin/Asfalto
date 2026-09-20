@@ -1,7 +1,6 @@
 import { metalContactEmission } from './weather-dynamics.mjs';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, Number(value) || 0));
 export const WEATHER_EFFECTS_TIERS = Object.freeze({
-  cinematic:Object.freeze({ rain:3200, snow:1600, clouds:16, mist:9, particles:560, transmission:.22 }),
   low:Object.freeze({ rain:650, snow:400, clouds:6, mist:3, particles:160, transmission:0 }),
   balanced:Object.freeze({ rain:1700, snow:950, clouds:10, mist:6, particles:320, transmission:.12 }),
   high:Object.freeze({ rain:3200, snow:1600, clouds:16, mist:9, particles:560, transmission:.22 }),
@@ -14,12 +13,12 @@ export function weatherEffectsPolicy(environment = {}, quality = 'balanced') {
   const rainy = type === 'rain' || type === 'storm';
   const intensity = rainy || snow ? clamp(environment.precipitationIntensity ?? (heavySnow ? 1 : snow ? .35 : type === 'storm' ? 1 : .65), 0, 1) : 0;
   const weather = environment.weatherId || environment.weather || (type === 'none' ? 'clear' : type);
-  const clouds = environment.weatherCycle?.clouds ?? (heavySnow ? .75 : weather === 'storm' ? .7 : weather === 'rain' || snow ? .5 : weather === 'cloudy' ? .45 : weather === 'fog' ? .24 : .07);
+  const clouds = heavySnow ? .75 : weather === 'storm' ? .7 : weather === 'rain' || snow ? .5 : weather === 'cloudy' ? .45 : weather === 'fog' ? .24 : .07;
   return { tier, snow, heavySnow, snowIntensity:snow ? intensity : 0, rainy, intensity, precipitationCount:Math.round((snow ? tier.snow : tier.rain) * intensity),
     wetness:clamp(environment.roadWetness ?? environment.wetness ?? (rainy ? .7 : 0),0,1), clouds,
-    mist:environment.weatherCycle?.mist ?? (heavySnow ? .36 : weather === 'fog' ? .42 : weather === 'storm' ? .23 : weather === 'rain' ? .1 : snow ? .12 : 0),
-    wind:environment.weatherCycle?.wind ?? (heavySnow ? 6.5 : weather === 'storm' ? 7 : weather === 'rain' ? 3.5 : snow ? 1.8 : 1.2),
-    opticalFogDensity:environment.weatherCycle?.opticalFogDensity ?? (heavySnow ? .006 : weather === 'fog' ? .0075 : weather === 'storm' ? .0028 : weather === 'rain' ? .0013 : snow ? .002 : weather === 'cloudy' ? .0007 : null),
+    mist:heavySnow ? .36 : weather === 'fog' ? .42 : weather === 'storm' ? .23 : weather === 'rain' ? .1 : snow ? .12 : 0,
+    wind:heavySnow ? 6.5 : weather === 'storm' ? 7 : weather === 'rain' ? 3.5 : snow ? 1.8 : 1.2,
+    opticalFogDensity:heavySnow ? .006 : weather === 'fog' ? .0075 : weather === 'storm' ? .0028 : weather === 'rain' ? .0013 : snow ? .002 : weather === 'cloudy' ? .0007 : null,
   };
 }
 export function createVehicleEmissionState() {

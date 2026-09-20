@@ -527,13 +527,6 @@
     return {
       get samples() { return samples; },
       get spatialIndex() { return spatialIndex; },
-      samplePhysicalRoute(progress) {
-        if(!Number.isFinite(progress))throw new TypeError('Physical route progress must be finite');
-        const length=samples[samples.length-1].s,s=track.closed?((progress%length)+length)%length:clamp(progress,0,length);
-        let lo=0,hi=samples.length-1;while(lo+1<hi){const mid=(lo+hi)>>>1;if(samples[mid].s<=s)lo=mid;else hi=mid;}
-        const point=segmentAtProgress(samples,s),evidence=authoredEvidence({s,segmentIndex:lo,point:[point.x,point.y,point.z]});
-        return freezeDeep({sM:s,position:evidence.routePosition,frame:evidence.routeFrame,widthM:evidence.routeHalfWidthM*2,referenceChart});
-      },
       applyReferenceFrame(transform, options={}) {
         physicsCore.validateReferenceTransform(transform);
         for(let index=0;index<samples.length;index++){
@@ -704,7 +697,6 @@
       return {
         surface: surface === 'road' ? 'asphalt' : surface === 'shoulder' ? 'gravel' : 'grass',
         mu: clamp(baseMu * gripMultiplier, 0.35, 1.15),
-        gripMultiplier,
         waterDepthM: aquaplaningEnabled
           ? clamp(finite(surfaceCondition.looseSurfaceDepthM, 0), 0, 0.05)
           : surfaceCondition ? 0 : rain * 0.006,
@@ -724,7 +716,7 @@
     let value = options?.chassisConfig;
     if (value === undefined) {
       try {
-        const storage = options?.storage || globalThis.__asfaltoV7Storage;
+        const storage = options?.storage || root.localStorage;
         value = JSON.parse(storage?.getItem?.('chevy-serie2-v6-profile') || 'null')?.chassis || null;
       } catch { value = null; }
     }
@@ -735,7 +727,7 @@
     if (options?.vehicleProfile === 'restomod') return 'restomod';
     if (options?.vehicleProfile === 'original') return 'original';
     try {
-      const storage = options?.storage || globalThis.__asfaltoV7Storage;
+      const storage = options?.storage || root.localStorage;
       const parsed = JSON.parse(
         storage?.getItem?.('asfalto-nacional-v6-profile') || 'null',
       );
@@ -758,10 +750,9 @@
     }
     if (typeof RAPIER.init === 'function') await RAPIER.init();
     const vehicleProfile = resolveVehicleProfile(options);
-    const baseVehicleSpec = vehicleProfile === 'restomod'
+    const vehicleSpec = vehicleProfile === 'restomod'
       ? vehicleCore.CHEVY_RESTOMOD_SPEC
       : vehicleCore.CHEVY_ORIGINAL_SPEC;
-    const vehicleSpec=root.__asfaltoBuildSelectedVehicleSpec?.(baseVehicleSpec,root.__asfaltoSelectedPlayerVehicle)||baseVehicleSpec;
     if (!vehicleSpec) {
       throw new Error('perfil fisico v6 incompleto');
     }
@@ -1166,15 +1157,6 @@
       this._rivalLastState = null;
       this._previousRivalSnapshot = null;
       this._currentRivalSnapshot = null;
-      this._physicalObservers = new Set();
-      this._vehicleMaintenance = options.vehicleMaintenance || null;
-      this._physicalSessionSequence = 0;
-      this._physicalQAMutated = false;
-      this._physicalTeleportBaseline = 0;
-      this._championshipOptions = null;
-      this._championshipLedger = null;
-      this._championshipPaused = false;
-      this._championshipNotified = null;
       this._disposed = false;
       this._disposePromise = null;
       this._rules = new this.RaceCore.RaceSimulation({
@@ -1221,51 +1203,6 @@
       this.state = this._publish(this._projection, this._snapshot);
     }
 
-    // Observers subscribe after start(). They receive only actual player physics steps.
-    subscribePhysicalSteps(observer) {
-      if (this._disposed || !observer || typeof observer.sample !== 'function') throw new TypeError('Active physical observer with sample callback required');
-      this._physicalObservers.add(observer);
-      return () => this._physicalObservers.delete(observer);
-    }
-
-    getPhysicalObservationState() {
-      return Object.freeze({sessionSequence:this._physicalSessionSequence,qa:this._physicalQAMutated,referenceChart:this._referenceChart});
-    }
-
-    getRoadTestContext() {
-      const adapter=this._physicsTrackAdapter,sequence=this._physicalSessionSequence;
-      if(this._disposed||!this._physicsSession?.spec||typeof adapter?.samplePhysicalRoute!=='function')throw new Error('Physical road-test context is not prepared');
-      const vehicleSpec=freezeDeep(JSON.parse(JSON.stringify(this._physicsSession.spec)));
-      const routeQuery=Object.freeze({sample:progress=>{
-        if(this._disposed||this._physicalSessionSequence!==sequence||this._physicsTrackAdapter!==adapter)throw new Error('Physical road-test session changed');
-        return adapter.samplePhysicalRoute(progress);
-      }});
-      return Object.freeze({...this.getPhysicalObservationState(),routeQuery,projection:freezeDeep(cloneProjection(this._projection)),snapshot:this._snapshot,vehicleSpec,displacementLiters:vehicleSpec.engine?.displacementLiters});
-    }
-
-    _invalidatePhysicalObservers(reason) {
-      const observers = [...this._physicalObservers];
-      this._physicalObservers.clear();
-      for (const observer of observers) { try { observer.invalidated?.(reason); } catch {} }
-    }
-
-    _markPhysicalQA(reason) {
-      this._physicalQAMutated = true;
-      this._invalidatePhysicalObservers(reason);
-    }
-
-    _emitPhysicalStep(statusBefore, previousTime) {
-      if ((!this._physicalObservers.size && !this._vehicleMaintenance) || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
-      const snapshot = this._snapshot;
-      const environment = this._physicsSession.environment?.({worldPosition:snapshot.chassis.position,speedMps:Math.hypot(...snapshot.chassis.linearVelocity)}) || {};
-      const frame = freezeDeep({sessionSequence:this._physicalSessionSequence,tick:Math.round(snapshot.timeSeconds*120),statusBefore,running:statusBefore==='RUNNING',snapshot,projection:cloneProjection(this._projection),environment:{...environment},qa:this._physicalQAMutated,teleports:this._playerTeleportCount-this._physicalTeleportBaseline,recoveries:this._recoveryCount,referenceChart:this._referenceChart});
-      this._vehicleMaintenance?.sample(frame);
-      for (const observer of [...this._physicalObservers]) {
-        if (!this._physicalObservers.has(observer)) continue;
-        try { observer.sample(frame); } catch { this._physicalObservers.delete(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
-      }
-    }
-
     transformReferenceFrame(transform, options={}) {
       if(this._disposed)throw new Error('RaceSimulationV6 esta descartada');
       const physicsCore=this._browserOptions.physicsCore||root.AsfaltoV6Physics;
@@ -1290,11 +1227,6 @@
       Object.assign(this,history);this._projection=projection;this._rivalLastState=rivalState;this._lastSafeFrame=safe?freezeDeep(safe):null;
       // RecoveryGuard caches only scalar separation/distances/timers, all rigid-transform invariants.
       this._referenceChart=referenceChart;this._referenceFrameSequence++;
-      if(this._physicalObservers.size){
-        const axes=[[1,0,0],[0,1,0],[0,0,1]].map(v=>transform.vector(v)),origin=transform.point([0,0,0]);
-        const event=freezeDeep({referenceChart,previousChart,matrix:[...axes[0],0,...axes[1],0,...axes[2],0,...origin,1]});
-        for(const observer of [...this._physicalObservers]){try{if(typeof observer.rebase!=='function')throw new Error('rebase handler required');observer.rebase(event);}catch{this._physicalObservers.delete(observer);try{observer.invalidated?.('observer-rebase-required');}catch{}}}
-      }
       this.state=this._publish(this._projection,this._snapshot);
       return Object.freeze({applied:true,previousChart,referenceChart,sequence:this._referenceFrameSequence,raceProgressM:this._projection.raceProgress,transform});
     }
@@ -1324,8 +1256,7 @@
     }
 
     _syncRivalActive() {
-      const active = Boolean(this._rival && this._rules.settings.mode === 'race'
-        && !this._championshipLedger?.isTerminal('player') && !this._championshipLedger?.isTerminal('falcon'));
+      const active = Boolean(this._rival && this._rules.settings.mode === 'race');
       this._rival?.setActive?.(active);
       return active;
     }
@@ -1448,8 +1379,6 @@
     }
 
     disposePhysicalStack() {
-      this._championshipLedger?.cancel();
-      this._championshipLedger = null;
       if (this._disposed) return Promise.resolve(false);
       return this._enqueueLifecycle(() => this._disposePhysicalStackNow());
     }
@@ -1465,10 +1394,6 @@
       }
       const collisionRoot = physicsBridge.getCollisionRoot();
       if (!collisionRoot) return Promise.reject(new TypeError('replaceTrack requiere collisionRoot'));
-      this._invalidatePhysicalObservers('track-changed');
-      this._championshipLedger?.cancel();
-      this._championshipLedger = null;
-      this._championshipPaused = false;
       return this._enqueueLifecycle(async () => {
         const currentSettings = {
           ...(this._rules.settings || {}),
@@ -1505,7 +1430,6 @@
 
     setChassisConfig(value) {
       const config = resolveChassisConfig({ chassisConfig: value || null });
-      if(this._physicalObservers.size&&JSON.stringify(config)!==JSON.stringify(this._chassisConfig))this._invalidatePhysicalObservers('chassis-configuration-changed');
       this._chassisConfig = config;
       this._browserOptions.chassisConfig = config;
       this._physicsSession?.setChassisConfig?.(config);
@@ -1517,7 +1441,6 @@
         throw new TypeError('perfil fisico debe ser original o restomod');
       }
       if (value === this._vehicleProfile) return false;
-      this._invalidatePhysicalObservers('vehicle-profile-changed');
       this._vehicleProfile = value;
       this._browserOptions.vehicleProfile = value;
       if (this._physicalStack) {
@@ -1527,49 +1450,8 @@
       return true;
     }
 
-    configureChampionship({ enabled = false, createLedger, onFinalClassification } = {}) {
-      if (enabled && ['RUNNING', 'COUNTDOWN', 'PAUSED'].includes(this._rules.state.status)) {
-        throw new Error('Championship must be configured before start');
-      }
-      if (enabled && typeof createLedger !== 'function') throw new TypeError('Championship ledger factory required');
-      this._championshipLedger?.cancel();
-      this._championshipLedger = null;
-      this._championshipPaused = false;
-      this._championshipNotified = null;
-      this._championshipOptions = enabled ? { createLedger, onFinalClassification } : null;
-      this.state = this._publish(this._projection, this._snapshot);
-      return this.getChampionshipClassification();
-    }
-
-    invalidateChampionship(reason) { return this._championshipLedger?.invalidate(reason) || false; }
-    getChampionshipClassification() { return this._championshipLedger?.getState() || null; }
-    getFinalClassification() { return this._championshipLedger?.getFinalClassification() || null; }
-    _championshipPending() { return Boolean(this._championshipLedger && !this.getFinalClassification()); }
-
-    _notifyChampionshipCompletion() {
-      const ledger = this._championshipLedger, result = this.getFinalClassification();
-      if (!result || this._championshipNotified === ledger) return;
-      this._championshipNotified = ledger;
-      const callback = this._championshipOptions?.onFinalClassification;
-      if (typeof callback === 'function') Promise.resolve().then(() => {
-        if (!this._disposed && this._championshipLedger === ledger && ledger.getFinalClassification() === result) callback(result);
-      }).catch(error => { this._championshipCallbackError = String(error?.message || error); });
-    }
-
-    retireChampionshipParticipant(id, status, reason) {
-      if (!this._championshipLedger) throw new Error('Championship not active');
-      const changed = this._championshipLedger.retire(id, status, reason);
-      if (changed && id === 'player') this._rules.finish(status);
-      if (changed) this._rival?.setActive?.(false);
-      this._notifyChampionshipCompletion();
-      this.state = this._publish(this._projection, this._snapshot);
-      return changed;
-    }
-
     configure(settings) {
-      const observedSettings=this._physicalObservers.size?JSON.stringify(this._rules.settings):null;
       this._rules.configure({ ...(settings || {}), rivalCount: 0 });
-      if(observedSettings!==null&&observedSettings!==JSON.stringify(this._rules.settings))this._invalidatePhysicalObservers('rules-configuration-changed');
       this._syncRivalActive();
       this.settings = this._rules.settings;
       this.state = this._publish(this._projection, this._snapshot);
@@ -1577,10 +1459,7 @@
     }
 
     selectTrack(track) {
-      this._championshipLedger?.cancel();
-      this._championshipLedger = null;
       if (!track) throw new TypeError('selectTrack requiere un circuito');
-      this._invalidatePhysicalObservers('track-changed');
       this.track = track;
       this._rules.selectTrack(track);
       this._rules.configure({ rivalCount: 0 });
@@ -1614,17 +1493,7 @@
       };
     }
 
-    start({ initialGear } = {}) {
-      const persistentDamage=this._vehicleMaintenance?.begin({vehicleSpec:this._physicsSession?.spec});
-      if (this._championshipOptions && (!this._rival || this._rules.settings.mode !== 'race')) throw new Error('Championship requires the prepared physical Falcon in race mode');
-      this._invalidatePhysicalObservers('session-restarted');
-      this._physicalSessionSequence++;
-      this._physicalQAMutated = false;
-      this._physicalTeleportBaseline = this._playerTeleportCount;
-      this._championshipLedger?.cancel();
-      this._championshipLedger = this._championshipOptions?.createLedger({track:this.track,laps:this._rules.settings.laps,checkpointPenalty:this._rules.settings.checkpointPenalty}) || null;
-      this._championshipPaused = false;
-      this._championshipNotified = null;
+    start() {
       this._recoveryGuard?.reset?.();
       this._lastSafeFrame = null;
       this._recoveryReady = false;
@@ -1665,18 +1534,14 @@
       if (typeof this._physicsSession?.reset === 'function') {
         const resetSnapshot = this._physicsSession.reset({
           frame,
-          startEngine: true,
-          initialGear,
           resetClock: true,
-          resetDamage: !persistentDamage,
-          damageState: persistentDamage,
+          resetDamage: true,
         });
         if (resetSnapshot && typeof resetSnapshot === 'object') this._snapshot = resetSnapshot;
       } else if (typeof this._physicsSession?.teleport === 'function') {
         this._teleportPlayer(frame, { x: 0, y: 0, z: 0 });
         this._snapshot = this._physicsSession.getSnapshot?.() || this._snapshot;
       }
-      this._physicalTeleportBaseline = this._playerTeleportCount;
       this._resetSnapshotHistory(this._snapshot);
       this._projection = {
         ...initialProjection(this.track),
@@ -1693,15 +1558,12 @@
     }
 
     pause() {
-      if (this._championshipPending()) this._championshipPaused = true;
       this._rules.pause();
       this.state = this._publish(this._projection, this._snapshot);
       return this.getState();
     }
 
     resume() {
-      if(this._vehicleMaintenance && !this._vehicleMaintenance.canDrive()) return this.getState();
-      this._championshipPaused = false;
       this._rules.resume();
       this._resetSnapshotHistory(this._snapshot);
       this.state = this._publish(this._projection, this._snapshot);
@@ -1778,7 +1640,6 @@
       normalOffsetM = 0,
       linearVelocityMps = [0, 0, 0],
     } = {}) {
-      if (this._championshipLedger?.isTerminal('player')) throw new Error('Finished championship participant is immutable');
       if (!Number.isFinite(raceProgressM)
           || !Number.isFinite(lateralOffsetM)
           || !Number.isFinite(normalOffsetM)
@@ -1796,8 +1657,6 @@
       if (typeof this._physicsSession?.teleport !== 'function') {
         throw new Error('QA physical teleport requires a physics session');
       }
-      this.invalidateChampionship('qa-physical-teleport');
-      this._markPhysicalQA('qa-physical-teleport');
       const respawn = resolveQaTeleport.call(adapter, raceProgressM);
       const routePosition = vector3(respawn?.position);
       const routeFrame = cloneRouteFrame(respawn?.frame);
@@ -1849,7 +1708,6 @@
     }
 
     requestRecovery(reason = 'manual', source = 'legacy') {
-      if (this._championshipLedger?.isTerminal('player')) return Object.freeze({recovered:false,event:null,snapshot:this._snapshot});
       if (this._recoveryInProgress) {
         return Object.freeze({ recovered: false, event: null, snapshot: this._snapshot });
       }
@@ -1928,7 +1786,7 @@
           yawRate: 0,
           lateralVelocity: 0,
           events,
-        }, { publish: false });
+        });
         this._syncRulesMotion(this._projection);
         this._recoveryGuard?.markRecovered?.();
         this.state = this._publish(this._projection, this._snapshot);
@@ -1980,7 +1838,7 @@
         surface: projection.surface,
         grip: projection.grip,
         slip: projection.slip,
-      }, { publish: false });
+      });
     }
 
     _applyFalseStart(input, snapshot) {
@@ -2001,56 +1859,17 @@
       this._rules.debugSet({
         penaltyTime: finite(state.penaltyTime, 0) + FALSE_START_PENALTY_SECONDS,
         events,
-      }, { publish: false });
+      });
     }
 
     _advanceFixed(input) {
-      if (!this._physicalObservers.size && !this._vehicleMaintenance) return this._advanceRulesFixed(input);
-      const statusBefore=this._rules.state.status,previousTime=this._snapshot?.timeSeconds;
-      const feedback=this._advanceRulesFixed(input);
-      this._emitPhysicalStep(statusBefore,previousTime);
-      return feedback;
-    }
-
-    _advanceRulesFixed(input) {
-      const ledger = this._championshipLedger;
-      if (!ledger || this._rules.state.status === 'COUNTDOWN') return this._advanceLegacyFixed(input);
-      const previousPlayer = this._projection;
-      const previousFalcon = this._rivalLastState?.projection;
-      const teleports = this._playerTeleportCount;
-      const playerPending = !ledger.isTerminal('player');
-      const falconPending = !ledger.isTerminal('falcon');
-      if (playerPending || falconPending) {
-        if (playerPending) this._advanceLegacyFixed(input);
-        else if (falconPending) {
-          this._physicalStack?.refreshSceneColliders?.({timeSeconds:this._rival?.physicsSession?.timeSeconds||0});
-          this._previousRivalSnapshot = this._currentRivalSnapshot;
-          this._rivalLastState = this._rival.step(FIXED_DT) || this._rival.getState?.() || this._rivalLastState;
-          this._currentRivalSnapshot = this._rivalLastState?.snapshot || this._previousRivalSnapshot;
-        }
-        ledger.advance({
-          player: playerPending ? {previous:previousPlayer,current:this._projection,discontinuity:this._playerTeleportCount!==teleports,reason:this._lastRecoveryReason||'physical-discontinuity'} : null,
-          falcon: falconPending ? {previous:previousFalcon,current:this._rivalLastState?.projection} : null,
-        }, {playerPenaltySeconds:this._rules.state.penaltyTime});
-      }
-      if (ledger.isTerminal('player') || ledger.isTerminal('falcon')) this._rival?.setActive?.(false);
-      if (ledger.isTerminal('player')) this._previousSnapshot = this._currentSnapshot;
-      if (ledger.isTerminal('falcon')) this._previousRivalSnapshot = this._currentRivalSnapshot;
-      this._notifyChampionshipCompletion();
-      this.state = this._publish(this._projection, this._snapshot);
-      this._lastFeedback = this._mergeFeedback(this._lastFeedback,this._projection,this._snapshot,false);
-      return this._lastFeedback;
-    }
-
-    _advanceLegacyFixed(input) {
       this._physicalStack?.refreshSceneColliders?.({timeSeconds:this._physicsSession.timeSeconds||0});
       const previous = this._projection;
       this._previousSnapshot = this._currentSnapshot || this._snapshot;
       const statusBefore = this._rules.state.status;
       if (this._rival
         && this._rules.settings.mode === 'race'
-        && statusBefore === 'RUNNING'
-        && !this._championshipLedger?.isTerminal('falcon')) {
+        && statusBefore === 'RUNNING') {
         this._previousRivalSnapshot = this._currentRivalSnapshot
           || this._rivalLastState?.snapshot || null;
         this._rivalLastState = this._rival.step(FIXED_DT)
@@ -2081,7 +1900,7 @@
           surface: current.surface,
           grip: current.grip,
           slip: current.slip,
-        }, { publish: false });
+        });
         const routeDelta = current.raceProgress - previous.raceProgress;
         const checkpointIndex = this._rules.state.nextCheckpointIndex;
         const checkpoint = this.track.checkpoints[checkpointIndex];
@@ -2115,7 +1934,7 @@
                 slip: current.slip,
               }
           ));
-          this._rules.debugSet({ ghostSamples }, { publish: false });
+          this._rules.debugSet({ ghostSamples });
         }
         const crossingWasProcessed = this._rules.state.events
           .slice(eventCountBefore)
@@ -2143,9 +1962,7 @@
 
       if (!projected.rejected) this._projection = current;
       this._syncRulesMotion(this._projection);
-      if (!this._championshipLedger || statusBefore !== 'RUNNING') {
-        this.state = this._publish(this._projection, this._snapshot, projected.rejected);
-      }
+      this.state = this._publish(this._projection, this._snapshot, projected.rejected);
       this._lastFeedback = this._mergeFeedback(
         ruleFeedback,
         this._projection,
@@ -2168,7 +1985,7 @@
         );
       }
       const status = this._rules.state.status;
-      if (this._championshipPaused || status === 'PAUSED' || (status === 'FINISHED' && !this._championshipPending()) || status === 'IDLE') {
+      if (status === 'PAUSED' || status === 'FINISHED' || status === 'IDLE') {
         const passive = this._rules.step(0, {
           speedMps: 0,
           steer: 0,
@@ -2198,7 +2015,7 @@
         feedback = this._advanceFixed(controls);
         this._accumulator = Math.max(0, this._accumulator - FIXED_DT);
         substeps += 1;
-        if (this._rules.state.status === 'FINISHED' && !this._championshipPending()) {
+        if (this._rules.state.status === 'FINISHED') {
           this._accumulator = 0;
           break;
         }
@@ -2223,8 +2040,6 @@
     }
 
     debugSet(partial) {
-      this.invalidateChampionship('qa-debug-state');
-      this._markPhysicalQA('qa-debug-state');
       this._rules.debugSet(partial || {});
       this.settings = this._rules.settings;
       this.state = this._publish(this._projection, this._snapshot);
@@ -2243,8 +2058,6 @@
       if (typeof Driver !== 'function') {
         throw new Error('QA physical route drive requires FalconDriverAI');
       }
-      this.invalidateChampionship('qa-autonomous-route-driver');
-      this._markPhysicalQA('qa-autonomous-route-driver');
       const maximumSteps = Number.isInteger(options.maxSteps) && options.maxSteps > 0
         ? options.maxSteps
         : Math.ceil((this.track.length * Math.max(1,this._rules.settings.laps||1) / 5 + 120) / FIXED_DT);
@@ -2530,12 +2343,6 @@
         projectionRejected: Boolean(projectionRejected),
         physicsSnapshot: snapshot || null,
       };
-      if (this._championshipLedger) {
-        const classification = this.getChampionshipClassification();
-        state.championship = Object.freeze({enabled:true,playerFinished:this._championshipLedger.isTerminal('player'),classification});
-        state.status = this._championshipPaused ? 'PAUSED' : classification.complete ? 'FINISHED' : rulesState.status === 'FINISHED' ? 'RUNNING' : rulesState.status;
-        state.finishReason = classification.complete ? 'completed' : null;
-      }
       this.settings = publicSettings;
       return cloneState(state);
     }
@@ -2560,8 +2367,6 @@
     dispose() {
       if (this._disposePromise) return this._disposePromise;
       this._disposed = true;
-      this._invalidatePhysicalObservers('session-disposed');
-      this._championshipLedger?.cancel();
       this._disposePromise = this._operationTail
         .then(() => this._disposePhysicalStackNow())
         .then(() => true);

@@ -26,7 +26,7 @@
       "modelBytes": 334020,
       "bounds": {
         "min": [
-          -3,
+          -3.0,
           -0.49000000953674316,
           -0.04500000178813934
         ],
@@ -153,12 +153,32 @@
       ]
     },
     "brand": {
-      "image": "../brand/asfalto-nacional-v7.webp",
-      "description": "Identidad Asfalto Nacional v7: emblema AN con carretera, esmalte bermellón y tipografía marfil.",
-      "width": 2172,
-      "height": 724,
-      "source": "OpenAI image generation / 2026-09-12",
-      "imageBytes": 627772
+      "image": "brand.png",
+      "model": "brand.glb",
+      "description": "Solid condensed ASFALTO NACIONAL lettering and two orange diagonal bars",
+      "width": 1536,
+      "height": 768,
+      "triangles": 5340,
+      "materials": [
+        "AN_Ivory_Enamel",
+        "AN_Orange_Enamel"
+      ],
+      "meshCount": 4,
+      "imageBytes": 1055096,
+      "modelBytes": 121480,
+      "bounds": {
+        "min": [
+          -3.507946491241455,
+          -1.545588493347168,
+          -0.04600000008940697
+        ],
+        "max": [
+          3.576361894607544,
+          1.8200000524520874,
+          0.054999999701976776
+        ]
+      },
+      "labelSafeArea": null
     }
   },
   "materials": [

@@ -1,6 +1,6 @@
-import {createLightingPresetStore} from '../game/lighting-preset-file.mjs';
+import {createLightingPresetStore} from '../game/lighting-preset-file.mjs?v=a7d4676a1bdf2ea1';
 import {lightingPresetKey,sanitizeLightingOverrides,LUT_DEFAULTS} from '../game/lighting-presets.mjs';
-import {captureLightingState,captureVehicleLightingState,mergeLightingState,applyLightingState} from '../render/lighting-preview.mjs';
+import {captureLightingState,captureVehicleLightingState,mergeLightingState,applyLightingState} from '../render/lighting-preview.mjs?v=3aceff1b42764704';
 const types={HemisphereLight:'Hemisférica',DirectionalLight:'Direccional',AmbientLight:'Ambiente',PointLight:'Puntual',SpotLight:'Proyector',RectAreaLight:'Área'};
 export function createLightingEditor({scene,renderer,getLights,getEffectiveFogState=()=>null,getVehicles=()=>({}),setLut=()=>{},document:doc=document,store=createLightingPresetStore()}={}){
  const host=doc.querySelector('#settings-panel .settings-scroll');let context=null,base=null,overrides={},lights=[],values=null,disposed=false,active=false,lutEntries=[];

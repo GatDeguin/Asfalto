@@ -1,6 +1,0 @@
-export const PROFILE_KEY='chevy-serie2-v6-profile';
-export const PROFILE_LOCK_NAME='asfalto:v7:profile-writes';
-export const profileRevision=profile=>`${profile?.storageRevision||0}:${profile?.motorsportV7?.revision||0}`;
-export function withProfileWriteLock(operation){const locks=globalThis.navigator?.locks;if(!locks?.request)throw new Error('Persistent profile lock unavailable');return locks.request(PROFILE_LOCK_NAME,{mode:'exclusive'},operation);}
-export function readPersistentProfile(storage,key=PROFILE_KEY){if(typeof storage?.getItemPersistent!=='function'||typeof storage?.setItemPersistent!=='function')throw new Error('Real persistent storage unavailable');const raw=storage.getItemPersistent(key);return raw===null?null:JSON.parse(raw);}
-export function saveOrdinaryProfile({storage,getProfile,getExpectedRevision,onCommitted,withLock=withProfileWriteLock,key=PROFILE_KEY}){return withLock(()=>{const disk=readPersistentProfile(storage,key);if(profileRevision(disk)!==getExpectedRevision())throw new Error('Otro taller actualizó el archivo. Recargá antes de guardar.');const current=getProfile(),draft={...current,storageRevision:(disk?.storageRevision||0)+1};storage.setItemPersistent(key,JSON.stringify(draft));current.storageRevision=draft.storageRevision;onCommitted(profileRevision(draft));return true;});}

@@ -1,13 +1,11 @@
-import {createGzip} from 'node:zlib';
-import {prepareV7DataDirectory} from './src/server/v7-data-directory.mjs';
 import { createReadStream } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { createCockpitLayoutEndpoint } from './src/server/cockpit-layout-store.mjs?v=balance-20260917';
-import {createLightingPresetEndpoint} from './src/server/lighting-preset-store.mjs?v=balance-20260917';
+import { createCockpitLayoutEndpoint } from './src/server/cockpit-layout-store.mjs?v=ecd40964d0318c5f';
+import {createLightingPresetEndpoint} from './src/server/lighting-preset-store.mjs?v=044a86a75102e410';
 
 const MIME_TYPES = new Map([
   ['.html', 'text/html; charset=utf-8'], ['.htm', 'text/html; charset=utf-8'],
@@ -90,19 +88,12 @@ export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitD
 
     const extension = path.extname(fileReal).toLowerCase();
     const headers = { 'content-type': MIME_TYPES.get(extension) || 'application/octet-stream', 'content-length': details.size };
-    const etag = 'W/"' + details.size.toString(16) + '-' + Math.floor(details.mtimeMs*1000).toString(16) + '"';
-    headers.etag=etag;headers['cache-control']='no-cache';headers.vary='Accept-Encoding';
-    if(String(request.headers['if-none-match']||'').split(',').map(v=>v.trim()).includes(etag)){
-      delete headers['content-length'];response.writeHead(304,headers);response.end();return;
-    }
-    const compress=request.method!=='HEAD'&&details.size>1024&&['.html','.htm','.js','.mjs','.css','.json','.svg','.gltf','.glb','.bin','.wasm'].includes(extension)&&/(?:^|,)\s*gzip\s*(?:,|$)/i.test(request.headers['accept-encoding']||'');
-    if(compress){headers['content-encoding']='gzip';delete headers['content-length'];}
-    response.writeHead(200,headers);
-    if(request.method==='HEAD'){response.end();return;}
-    const stream=createReadStream(fileReal);stream.once('error',()=>response.destroy());
-    response.once('close',()=>stream.destroy());
-    if(compress){const gzip=createGzip({level:5});gzip.once('error',()=>response.destroy());response.once('close',()=>gzip.destroy());stream.pipe(gzip).pipe(response);}
-    else stream.pipe(response);
+    if (extension === '.js' || extension === '.mjs' || extension === '.json') headers['cache-control'] = 'no-store';
+    response.writeHead(200, headers);
+    if (request.method === 'HEAD') { response.end(); return; }
+    const stream = createReadStream(fileReal);
+    stream.once('error', () => response.destroy());
+    stream.pipe(response);
   });
 
   await new Promise((resolve, reject) => {
@@ -137,26 +128,23 @@ export async function main() {
   const startAt = args.indexOf('--port-start');
   const endAt = args.indexOf('--port-end');
   const explicitPort = portAt >= 0 ? Number.parseInt(args[portAt + 1], 10) : null;
-  const firstPort = explicitPort ?? (startAt >= 0 ? Number.parseInt(args[startAt + 1], 10) : 4273);
-  const lastPort = explicitPort ?? (endAt >= 0 ? Number.parseInt(args[endAt + 1], 10) : 4283);
+  const firstPort = explicitPort ?? (startAt >= 0 ? Number.parseInt(args[startAt + 1], 10) : 4173);
+  const lastPort = explicitPort ?? (endAt >= 0 ? Number.parseInt(args[endAt + 1], 10) : 4183);
   if (!Number.isInteger(firstPort) || !Number.isInteger(lastPort)
       || firstPort < 0 || lastPort > 65535 || firstPort > lastPort) {
     throw new RangeError('Rango de puertos invalido.');
   }
   const root = path.dirname(fileURLToPath(import.meta.url));
-  const targetDirectory=path.resolve(root,'.local-data','v7');
-  await prepareV7DataDirectory({sourceDirectory:path.resolve(root,'..','Configuracion','v7'),targetDirectory});
-  const cockpitDataDirectory=await prepareV7DataDirectory({sourceDirectory:path.resolve(root,'assets','configuration'),targetDirectory});
   let instance = null;
   let lastError = null;
   for (let port = firstPort; port <= lastPort; port += 1) {
-    try { instance = await startServer({ root, port, cockpitDataDirectory }); break; }
+    try { instance = await startServer({ root, port, cockpitDataDirectory: path.resolve(root, '..', 'Configuracion') }); break; }
     catch (error) {
       lastError = error;
       if (error?.code !== 'EADDRINUSE' && error?.code !== 'EACCES') throw error;
     }
   }
-  if (!instance) throw lastError || new Error('No hay un puerto disponible entre 4273 y 4283.');
+  if (!instance) throw lastError || new Error('No hay un puerto disponible entre 4173 y 4183.');
   console.log(`Juego disponible en ${instance.url}`);
   console.log('Para cerrar el servidor y el juego, presiona Ctrl+C.');
   if (args.includes('--open')) openBrowser(instance.url);

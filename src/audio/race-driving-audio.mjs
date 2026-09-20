@@ -1,20 +1,17 @@
-import { mechanicalEvents } from './v7-audio-state.mjs';
+import {createDrivingAudioBanks} from './driving-audio-banks.mjs?v=81162803ee9cade0';
+import {createAudioTargets} from './audio-targets.mjs?v=1809a92251d864f2';
 import { drivingAudioState } from './race-driving-state.mjs';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 
 /** Physical contacts and one spatial rival. All nodes belong to the supplied context. */
-export function createRaceDrivingAudio({context,destination=context?.destination,seed=7139}={}) {
+export function createRaceDrivingAudio({context,destination=context?.destination,seed=7139,prepared=null}={}) {
   if(!context?.createGain)throw new TypeError('An authorized AudioContext is required');
-  let disposed=false,active=false,randomState=seed>>>0,lastImpact=-Infinity,lastImpactEvent=null;
+  let disposed=false,active=false,lastImpact=-Infinity,lastImpactEvent=null;
   const nodes=[],sources=[],transients=new Set(),bumpState=new Map();
   const own=node=>(nodes.push(node),node),master=own(context.createGain());master.gain.value=0;
   const compressor=own(context.createDynamicsCompressor());Object.assign(compressor.threshold,{value:-12});compressor.knee.value=14;compressor.ratio.value=3;compressor.attack.value=.004;compressor.release.value=.16;
   master.connect(compressor).connect(destination);
-  const random=()=>((randomState=(Math.imul(randomState,1664525)+1013904223)>>>0)/4294967296)*2-1;
-  function noise(seconds) {const b=context.createBuffer(2,Math.ceil(context.sampleRate*seconds),context.sampleRate);
-    for(let ch=0;ch<2;ch++){const a=b.getChannelData(ch);let pink=0;for(let i=0;i<a.length;i++){const w=random();pink=.965*pink+.035*w;a[i]=(w*.5+pink*3)*.7;}}
-    return b;}
-  const roadBuffer=noise(7.1),impactBuffer=noise(.48),channels={};
+  const [roadBuffer,impactBuffer]=prepared||createDrivingAudioBanks(context,seed),channels={};
   function layer(name,type,hz,Q,pan=0) {
     const source=own(context.createBufferSource()),filter=own(context.createBiquadFilter()),gain=own(context.createGain()),panner=own(context.createStereoPanner());
     source.buffer=roadBuffer;source.loop=true;filter.type=type;filter.frequency.value=hz;filter.Q.value=Q;gain.gain.value=0;panner.pan.value=pan;
@@ -30,11 +27,11 @@ export function createRaceDrivingAudio({context,destination=context?.destination
   rivalFilter.type='lowpass';rivalFilter.Q.value=.6;rivalGain.gain.value=0;rivalFilter.connect(rivalGain).connect(rivalPan).connect(master);
   const rivalVoices=[{order:3,level:.066},{order:6,level:.024},{order:1,level:.015}].map(({order,level})=>{
     const osc=own(context.createOscillator()),gain=own(context.createGain());osc.type=order===1?'sine':'triangle';gain.gain.value=level;osc.connect(gain).connect(rivalFilter);osc.start();sources.push(osc);return{osc,order};});
-  let lastState=null,inside=true,rivalLevel=0,previousMechanical=null;
-  const target=(param,value,tau=.04)=>param.setTargetAtTime(value,context.currentTime,tau);
+  let lastState=null,inside=true,rivalLevel=0;
+  const automation=createAudioTargets(context),target=automation.target;
   const set=(name,value,hz)=>{const c=channels[name];c.target=value;target(c.gain.gain,value);if(hz)target(c.filter.frequency,hz,.08);};
   function stopTransient(t){try{t.source.stop();}catch{}t.dispose();}
-  function setActive(value){if(disposed)return;active=!!value;if(!active){master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const c of Object.values(channels)){c.gain.gain.cancelScheduledValues(context.currentTime);c.gain.gain.setValueAtTime(0,context.currentTime);c.target=0;}brakeGain.gain.cancelScheduledValues(context.currentTime);brakeGain.gain.setValueAtTime(0,context.currentTime);rivalGain.gain.setValueAtTime(0,context.currentTime);rivalLevel=0;for(const t of [...transients])stopTransient(t);bumpState.clear();previousMechanical=null;}}
+  function setActive(value){if(disposed||active===!!value)return;active=!!value;if(!active){automation.clear();master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const c of Object.values(channels)){c.gain.gain.cancelScheduledValues(context.currentTime);c.gain.gain.setValueAtTime(0,context.currentTime);c.target=0;}brakeGain.gain.cancelScheduledValues(context.currentTime);brakeGain.gain.setValueAtTime(0,context.currentTime);rivalGain.gain.setValueAtTime(0,context.currentTime);rivalLevel=0;for(const t of [...transients])stopTransient(t);bumpState.clear();}}
   function transient({intensity=.3,pan=0,metal=false,bump=false}={}) {
     if(!active||disposed||transients.size>=8)return false;
     const now=context.currentTime,source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain(),panner=context.createStereoPanner();
@@ -49,11 +46,7 @@ export function createRaceDrivingAudio({context,destination=context?.destination
     update({snapshot={},controls={},speedMps,wetness=0,active:enabled=true,paused=false,cameraMode='cockpit',tiresGain=1,roadGain=1,brakesGain=.56,impactsGain=.78,rival=null}={}) {
       if(disposed)return;setActive(enabled&&!paused);if(!active)return;
       inside=cameraMode==='cockpit';lastState=drivingAudioState({snapshot,controls,speedMps,wetness});const speed=lastState.speedMps;
-      const prefs=globalThis.__asfaltoV7Experience?.preferences?.()||{};
-      target(master.gain,.8*clamp(prefs.roadVolume??1),.04);target(compressor.threshold,prefs.reducedRange?-25:-12,.1);target(compressor.ratio,prefs.reducedRange?5:3,.1);
-      const mechanical={rpm:snapshot.engine?.rpm,gear:snapshot.transmission?.gear??snapshot.gearbox?.gear,cranking:snapshot.engine?.cranking,running:snapshot.engine?.running};
-      for(const kind of mechanicalEvents(previousMechanical,mechanical)){if(kind==='shift')transient({intensity:.13,metal:true});if(kind==='stall'){transient({intensity:.22,bump:true});globalThis.__asfaltoV7Experience?.announce('Motor detenido');}if(kind==='ignition')transient({intensity:.12,bump:true});}
-      previousMechanical=mechanical;
+      target(master.gain,.8,.025);
       const wheels=lastState.wheels,mean=(field,side=0)=>wheels.reduce((sum,w)=>sum+(side&&Math.sign(w.pan)!==side?0:w[field]),0)/(side?2:4);
       const tireLevel=clamp(tiresGain),roadLevel=clamp(roadGain,0,1.25),perspective=inside?.58:1;
       for(const [suffix,side] of [['Left',-1],['Right',1]]){

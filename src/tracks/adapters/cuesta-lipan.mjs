@@ -1,11 +1,10 @@
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance, sourceStreamingDistance } from './closed-route-support.mjs';
 import { createGameplayBridge } from '../gameplay-bridge.mjs';
 import { createRouteQuery } from '../route-query.mjs';
-import { createSectorStreamer } from '../sector-streamer.mjs';
-import { updateSectorVisualQuality } from '../sector-visual-quality.mjs';
+import { createSectorStreamer } from '../sector-streamer.mjs?v=09edd7be1e44c3f0';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=balance-20260917';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=c4762a953cda2b57';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -377,15 +376,6 @@ export function createCuestaLipanAdapter(dependencies) {
 
       tx.streamer = createSectorStreamer({
         sectors: tx.sectors,
-        stableQualityGeometry: true,
-        updateVisualQuality(root, state) {
-          // A prepared replacement becomes visible only after the streamer
-          // disposes its predecessor; partial loads never draw a second rail.
-          root.visible = true;
-          updateSectorVisualQuality(root, state);
-        },
-        retryDelayMs: 1000,
-        retryMaxDelayMs: 30000,
         signal: tx.controller.signal,
         async loadVisual({ sector, lod, asset, signal }) {
           const url = safeUrl(asset.url, manifestBase, releaseRoot, `${sector.id} lod${lod}`);
@@ -394,9 +384,8 @@ export function createCuestaLipanAdapter(dependencies) {
           current(tx);
           if (!validRoot(root)) throw new TypeError(`${sector.id} lod${lod} root is invalid`);
           setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
-          root.visible = false;
           tx.visualRoot.add(root);
-          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange:{startM:sector.startM,endM:sector.endM}, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
+          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange:{startM:sector.startM,endM:sector.endM} });
             tx.closureRoots?.carveSourceTerrain?.(root);
           current(tx);
           await dependencies.applyVisualEnvironment(root, tx.environment, { signal });

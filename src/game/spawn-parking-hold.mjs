@@ -1,5 +1,4 @@
 export const SPAWN_PARKING_LABEL = 'Freno de estacionamiento · acelerá para salir';
-export const SPAWN_PARKING_NEUTRAL_LABEL = 'Freno de estacionamiento · engraná primera y acelerá para salir';
 
 // A spawn convenience only: the normal tyre/brake solver still supplies the holding force.
 // Once the driver requests throttle, coasting (including neutral) remains fully physical.
@@ -15,13 +14,12 @@ export function createSpawnParkingHold() {
   });
 }
 
-export function syncSpawnParkingHint(cue, visible, { manualNeutral = false } = {}) {
+export function syncSpawnParkingHint(cue, visible) {
   if (!cue) return;
-  const label = manualNeutral ? SPAWN_PARKING_NEUTRAL_LABEL : SPAWN_PARKING_LABEL;
-  const ours = cue.dataset.spawnParkingHold === 'true' && [SPAWN_PARKING_LABEL,SPAWN_PARKING_NEUTRAL_LABEL].includes(cue.textContent);
+  const ours = cue.dataset.spawnParkingHold === 'true' && cue.textContent === SPAWN_PARKING_LABEL;
   if (!ours) delete cue.dataset.spawnParkingHold;
   if (visible && (!cue.textContent || ours)) {
-    if (cue.textContent !== label) cue.textContent = label;
+    if (!ours) cue.textContent = SPAWN_PARKING_LABEL;
     cue.dataset.spawnParkingHold = 'true';
     cue.classList.add('show');
   } else if (!visible && ours) {

@@ -5,8 +5,8 @@ export const VEHICLE_CATALOG=freeze({
   ...EXPANSION_VEHICLES,
   "chevy": {
     "id": "chevy",
-    "label": "Chevy V3",
-    "selectable": false,
+    "label": "Chevy 250",
+    "selectable": true,
     "supportsDetailedEngine": true
   },
   "falcon": {
@@ -247,11 +247,11 @@ export const VEHICLE_CATALOG=freeze({
       "cgHeightM": 0.56,
       "radiusM": 0.315,
       "tireWidthM": 0.185,
-      "heightM": 1.45,
+      "heightM": 1.5732945177555087,
       "frontWeight": 0.54,
       "frontTrackM": 1.48,
       "rearTrackM": 1.47,
-      "sourceRoof": 0.33959659934043884,
+      "sourceRoof": 0.3330348011512452,
       "sourceFrontX": -0.5740175990636309,
       "sourceRearX": 0.5638383946913661,
       "sourceWheelY": -0.15268300699999993,

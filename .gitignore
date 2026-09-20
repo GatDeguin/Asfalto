@@ -2,6 +2,3 @@
 Thumbs.db
 *.log
 node_modules/
-
-.local-data/
-qa-output/

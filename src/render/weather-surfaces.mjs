@@ -1,12 +1,8 @@
-import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=balance-20260917';
-import {resolveWaterOptics} from './weather-water-optics.mjs';
-import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs';
+import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=3c16c3171e0770ef';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
 const SURFACE_SHADER = `
 varying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;
 uniform float uAnFxTime,uAnFxWetness,uAnFxRain,uAnFxWind,uAnFxSnow,uAnFxSnowDetail;
-uniform vec3 uAnWaterShallow,uAnWaterDeep;uniform float uAnWaterAbsorption;
-uniform sampler2D uAnWaterReflection;uniform mat4 uAnWaterReflectMatrix;uniform float uAnWaterReflectReady;
 uniform sampler2D uAnCanopyField;uniform vec4 uAnCanopyBounds,uAnWheelPaths[24];uniform float uAnCanopyEnabled,uAnWheelPathStrengths[24];uniform int uAnWheelPathCount;
 float anRoadWetness(vec3 p){float wet=uAnFxWetness;vec2 uv=(p.xz-uAnCanopyBounds.xy)/uAnCanopyBounds.zw;
 if(uAnCanopyEnabled>.5&&all(greaterThanEqual(uv,vec2(0.)))&&all(lessThanEqual(uv,vec2(1.)))){float edge=smoothstep(0.,.07,uv.x)*smoothstep(0.,.07,uv.y)*(1.-smoothstep(.93,1.,uv.x))*(1.-smoothstep(.93,1.,uv.y));wet*=1.-texture2D(uAnCanopyField,uv).r*edge*.35;}
@@ -21,9 +17,7 @@ float anRainHeight(vec2 p){vec2 cell=floor(p*2.3),q=fract(p*2.3)-.5;float phase=
 float anWaterHeight(vec2 p){float t=uAnFxTime;vec2 d=normalize(uAnWindVector.xz+vec2(.001));vec2 transverse=vec2(-d.y,d.x);vec2 advected=p-uAnWaterFlow*t;vec2 q=vec2(dot(advected,d),dot(advected,transverse));
 float range=length(vAnFxWorldPosition-cameraPosition),longLod=1.-smoothstep(500.,1800.,range),midLod=1.-smoothstep(60.,250.,range),shortLod=1.-smoothstep(25.,100.,range),microLod=1.-smoothstep(15.,60.,range);
 float broadPhase=anSurfaceNoise(p*.004)*6.28318,localPhase=anSurfaceNoise(p*.018-d*t*.015)*3.;
-return (sin(q.x*.23+q.y*.08-t*.68+broadPhase)*.019
-+sin(q.x*.13-q.y*.29-t*.51+broadPhase*1.31)*.013
-+sin(q.x*.41+q.y*.19-t*.77+localPhase)*.006)*longLod
+return sin(q.x*.23+q.y*.08-t*.68+broadPhase)*.028*longLod
 +sin(q.x*.85+q.y*.37-t*.9+broadPhase*1.7+localPhase)*.016*midLod
 +sin(q.x*1.9-q.y*.72-t*1.4+localPhase*1.3)*.007*shortLod
 +sin(q.x*4.7+q.y*2.1-t*2.+localPhase)*.002*microLod+anRainHeight(p)*uAnFxRain*shortLod;}
@@ -58,8 +52,8 @@ vec3 anDx=dFdx(-vViewPosition),anDy=dFdy(-vViewPosition);vec3 anR1=cross(anDy,no
 normal=normalize(max(abs(anDet),1e-8)*normal-sign(anDet)*(dFdx(anHeight)*anR1+dFdy(anHeight)*anR2));
 ${ground?'roughnessFactor=mix(roughnessFactor,max(.4,roughnessFactor*.84),anWorldWetness*.75);':''}
 ${water?`vec2 anWaterUV=(vAnFxSurface.xz-uAnWaterBounds.xy)/uAnWaterBounds.zw;vec2 anDepthShore=texture2D(uAnWaterField,anWaterUV).rg;
-float anAbsorption=1.-exp(-anDepthShore.x*uAnWaterAbsorption);
-diffuseColor.rgb=mix(uAnWaterShallow,uAnWaterDeep,anAbsorption);
+float anAbsorption=1.-exp(-anDepthShore.x*.16);
+diffuseColor.rgb=mix(diffuseColor.rgb*vec3(1.12,1.17,1.08),diffuseColor.rgb*vec3(.45,.67,.75),anAbsorption);
 float anContactFoam=(1.-smoothstep(.1,uAnWaterShoreWidth,anDepthShore.y))*smoothstep(.003,.04,anHeight)*(.3+.7*uAnFxRain);
 diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.65,.7,.67),min(.24,anContactFoam*.24));
 `:`float anSnow=0.,anSnowDrift=.5,anSnowGrain=.5;
@@ -100,21 +94,6 @@ diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.74,.79,.82),uAnFxMe
 float anPuddle=smoothstep(.001,.018,vAnFxHydrology.x)*(1.-smoothstep(.02,.12,vAnFxHydrology.y))*anWorldWetness;
 roughnessFactor=mix(roughnessFactor,.22,anWorldWetness*.34+anPuddle*.62);
 roughnessFactor=mix(roughnessFactor,.6,uAnFxCompactedSnow*.5);`);
-    if(water)shader.fragmentShader=shader.fragmentShader.replace('#include <opaque_fragment>',`
-// Radiance capture stays linear; the normal and dielectric Fresnel come from
-// this water surface. Beyond its footprint the physical HDRI remains active.
-if(uAnWaterReflectReady>.5){
- vec4 anReflectionProject=uAnWaterReflectMatrix*vec4(vAnFxWorldPosition,1.);
- vec2 anReflectionUv=anReflectionProject.xy/max(.0001,anReflectionProject.w);
- vec3 anWaterNormalWorld=inverseTransformDirection(normal,viewMatrix);
- anReflectionUv+=anWaterNormalWorld.xz*.009;
- float anInside=step(.0001,anReflectionProject.w)*smoothstep(0.,.025,anReflectionUv.x)*smoothstep(0.,.025,anReflectionUv.y)*(1.-smoothstep(.975,1.,anReflectionUv.x))*(1.-smoothstep(.975,1.,anReflectionUv.y));
- vec2 anBlur=vec2(.0017,.003)*roughnessFactor;
- vec3 anReflection=(texture2D(uAnWaterReflection,anReflectionUv).rgb*.5+texture2D(uAnWaterReflection,anReflectionUv+anBlur).rgb*.25+texture2D(uAnWaterReflection,anReflectionUv-anBlur).rgb*.25);
- float anFresnel=.0204+.9796*pow(1.-clamp(dot(normal,geometryViewDir),0.,1.),5.);
- outgoingLight+=anInside*(anReflection*anFresnel-reflectedLight.indirectSpecular);
-}
-#include <opaque_fragment>`);
     if(water&&transmissionChunk)shader.fragmentShader=shader.fragmentShader.replace('#include <transmission_fragment>',transmissionChunk.replace('material.thickness = thickness;',`material.thickness = clamp(anDepthShore.x,.025,8.) / max(.0001,length(modelMatrix[1].xyz));`));
     shader.fragmentShader=shader.fragmentShader.replace('#include <fog_fragment>',`
 #ifdef USE_FOG
@@ -140,7 +119,7 @@ anFogColor=linearToOutputTexel(vec4(anSkyColor,1.)).rgb;
 gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 #endif`);
   };
-  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
+  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v10-snow-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
   material.needsUpdate=true;
   return()=>{material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
 }
@@ -149,11 +128,10 @@ gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
   const uniforms={uAnFxTime:{value:0},uAnFxWetness:{value:0},uAnFxRain:{value:0},uAnFxWind:{value:0},uAnFxSnow:{value:0},uAnFxSnowDetail:{value:1},uAnFxCompactedSnow:{value:0},uAnFxMelt:{value:0},uAnFxSnowLine:{value:0},uAnFxValleyFloor:{value:0},uAnFxMist:{value:0},uAnWindVector:{value:new THREE.Vector3(1,0,.3)},uAnWaterField:{value:null},uAnWaterBounds:{value:new THREE.Vector4()},uAnWaterFlow:{value:new THREE.Vector2()},uAnWaterShoreWidth:{value:1.5},uAnWaterMaxDepth:{value:18},uAnFxSky:{value:null},uAnFxSkyEnabled:{value:0},uAnFxSkyIntensity:{value:1},uAnFxSkyRotation:{value:new THREE.Matrix3()}};
   Object.assign(uniforms,{uAnCanopyField:{value:null},uAnCanopyBounds:{value:new THREE.Vector4(0,0,1,1)},uAnCanopyEnabled:{value:0},uAnWheelPaths:{value:Array.from({length:24},()=>new THREE.Vector4())},uAnWheelPathStrengths:{value:new Float32Array(24)},uAnWheelPathCount:{value:0}},roadWetness?.uniforms||{});
-  let reflection=null,reflectionEntries=[];
   let originals=[],owned=[],unpatch=[],hydrology=[],roadRestores=[],root=null,children=[],wetCount=0,fogCount=0;
   const ownedSources=new Map();
   const audioWater={kind:'lake',distanceM:Infinity,flowMps:0,source:'mesh-shore-distance'};const audioPosition=new THREE.Vector3(Infinity,Infinity,Infinity);
-  function clear(){reflection?.bind([]);reflectionEntries=[];audioPosition.set(Infinity,Infinity,Infinity);for(const restore of unpatch)restore();unpatch=[];for(const restore of roadRestores)restore();roadRestores=[];for(const field of hydrology)field.dispose();hydrology=[];for(const entry of originals)if(entry.mesh.material===entry.assigned)entry.mesh.material=entry.original;for(const material of owned)material.dispose();originals=[];owned=[];ownedSources.clear();root=null;children=[];wetCount=fogCount=0;uniforms.uAnFxSky.value=null;uniforms.uAnFxSkyEnabled.value=0;}
+  function clear(){audioPosition.set(Infinity,Infinity,Infinity);for(const restore of unpatch)restore();unpatch=[];for(const restore of roadRestores)restore();roadRestores=[];for(const field of hydrology)field.dispose();hydrology=[];for(const entry of originals)if(entry.mesh.material===entry.assigned)entry.mesh.material=entry.original;for(const material of owned)material.dispose();originals=[];owned=[];ownedSources.clear();root=null;children=[];wetCount=fogCount=0;uniforms.uAnFxSky.value=null;uniforms.uAnFxSkyEnabled.value=0;}
   function setTrack({visualRoot,materialBindings=[]}={}) {
     if(visualRoot===root)return;
     clear();root=visualRoot;if(!root)return;children=[...root.children];
@@ -169,22 +147,19 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
         if(!isWater)return material;
         changed=true;
         const river=/RIVER/.test(material.name)||['river','drain'].includes(mesh.userData.asfaltoWater?.kind);
-        const optics=resolveWaterOptics(mesh.userData.asfaltoWater,river);
-        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:'#ffffff',roughness:optics.roughness,metalness:0,ior:1.333,transmission:.12,thickness:river?.65:2.8,attenuationColor:optics.deepColor,attenuationDistance:optics.attenuationDistanceM,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
+        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:river?'#658378':'#4f7b7b',roughness:river?.3:.2,metalness:0,ior:1.333,transmission:.12,thickness:river?.65:2.8,attenuationColor:river?'#5b715d':'#37655f',attenuationDistance:river?3:15,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
         // Authored silhouettes remain unchanged. Metric waves replace baked flat blue
         // maps; refraction uses Three's physical transmission pass, reflection its HDRI.
-        water.userData={...material.userData,asfaltoWaterEffects:true,v7WaterOptics:optics};
+        water.userData={...material.userData,asfaltoWaterEffects:true};
         const field=createWaterHydrology(THREE,mesh);hydrology.push(field);const metadata=field.metadata,direction=metadata.flowDirection||{x:1,z:0};
-        water.attenuationDistance=optics.attenuationDistanceM;
-        water.depthWrite=true;water.toneMapped=true;const waterUniforms={uAnWaterReflection:{value:null},uAnWaterReflectMatrix:{value:new THREE.Matrix4()},uAnWaterReflectReady:{value:0}};reflectionEntries.push({mesh,uniforms:waterUniforms});patchSurface(water,{...uniforms,...waterUniforms,uAnWaterShallow:{value:new THREE.Color(optics.shallowColor)},uAnWaterDeep:{value:new THREE.Color(optics.deepColor)},uAnWaterAbsorption:{value:optics.absorptionPerMeter},uAnWaterField:{value:field.texture},uAnWaterBounds:{value:field.bounds},uAnWaterFlow:{value:new THREE.Vector2(direction.x??direction[0]??1,direction.z??direction[2]??0).normalize().multiplyScalar(Number(metadata.flowSpeedMps)||(river?.7:0))},uAnWaterShoreWidth:{value:Math.max(.15,Number(metadata.shoreWidthM)||1.5)},uAnWaterMaxDepth:{value:field.diagnostics.maxDepthM}},'water',THREE.ShaderChunk.transmission_fragment);
+        water.attenuationDistance=Number(metadata.attenuationDistanceM)||(river?3:15);
+        water.depthWrite=true;water.toneMapped=true;patchSurface(water,{...uniforms,uAnWaterField:{value:field.texture},uAnWaterBounds:{value:field.bounds},uAnWaterFlow:{value:new THREE.Vector2(direction.x??direction[0]??1,direction.z??direction[2]??0).normalize().multiplyScalar(Number(metadata.flowSpeedMps)||(river?.7:0))},uAnWaterShoreWidth:{value:Math.max(.15,Number(metadata.shoreWidthM)||1.5)},uAnWaterMaxDepth:{value:field.diagnostics.maxDepthM}},'water',THREE.ShaderChunk.transmission_fragment);
         owned.push(water);ownedSources.set(water,material);return water;
       });
       if(changed){const original=mesh.material;mesh.material=Array.isArray(original)?assigned:assigned[0];originals.push({mesh,original,assigned:mesh.material});}
     });
-    reflection?.bind(reflectionEntries);
   }
   return{setTrack,
-    renderReflections(options){if(!reflectionEntries.length)return false;if(!reflection){reflection=createWaterSceneReflection(THREE);reflection.bind(reflectionEntries);}else if(reflection.diagnostics().waterMeshes!==reflectionEntries.length)reflection.bind(reflectionEntries);return reflection.capture(options);},
     waterAudioAt(position){if(!position){audioWater.distanceM=Infinity;return audioWater;}if(audioPosition.distanceToSquared(position)<.25)return audioWater;audioPosition.copy(position);audioWater.distanceM=Infinity;for(const field of hydrology){const b=field.bounds,broad=Math.hypot(Math.max(b.x-position.x,0,position.x-b.x-b.z),Math.max(b.y-position.z,0,position.z-b.y-b.w));if(broad>audioWater.distanceM)continue;const distance=field.distanceToWater(position);if(distance<audioWater.distanceM){audioWater.distanceM=distance;audioWater.kind=field.metadata.kind||'lake';audioWater.flowMps=Number(field.metadata.flowSpeedMps)||(audioWater.kind==='river'?.7:0);}}return audioWater;},
     refresh({materialBindings,getMaterialBindings}={}){
       if(!root||root.children.length===children.length&&children.every((child,index)=>root.children[index]===child))return false;
@@ -193,8 +168,8 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
       const visualRoot=root,bindings=(getMaterialBindings?.()||materialBindings||[]).map(binding=>({...binding,material:ownedSources.get(binding.material)||binding.material}));
       clear();setTrack({visualRoot,materialBindings:bindings});return true;
     },
-    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);for(const material of owned){const transmission=policy.tier.transmission;if((material.transmission===0)!==(transmission===0))material.needsUpdate=true;material.transmission=transmission;material.roughness=Math.min(.7,material.userData.v7WaterOptics.roughness+policy.wind*.013);}},
-    diagnostics:()=>({waterMaterials:owned.length,wetSurfaceShaders:wetCount,fogSurfaceShaders:fogCount+owned.length,waterMeshes:originals.length,hydrology:hydrology.map(field=>field.diagnostics),roadDrainage:roadRestores.length,snowCover:uniforms.uAnFxSnow.value,snowDetail:uniforms.uAnFxSnowDetail.value,snowAppearance:'slope-and-wind-powder-with-grain',optics:owned.map(material=>({...material.userData.v7WaterOptics})),waveDirections:3,reflection:reflection?.diagnostics()||{model:'physical-env',frames:0,ownedTargets:0},refraction:owned.some(material=>material.transmission>0)?'physical-transmission':'tier-disabled'}),
-    dispose(){clear();reflection?.dispose();reflection=null;},
+    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);for(const material of owned){const transmission=policy.tier.transmission;if((material.transmission===0)!==(transmission===0))material.needsUpdate=true;material.transmission=transmission;material.roughness=.19+policy.wind*.013;}},
+    diagnostics:()=>({waterMaterials:owned.length,wetSurfaceShaders:wetCount,fogSurfaceShaders:fogCount+owned.length,waterMeshes:originals.length,hydrology:hydrology.map(field=>field.diagnostics),roadDrainage:roadRestores.length,snowCover:uniforms.uAnFxSnow.value,snowDetail:uniforms.uAnFxSnowDetail.value,snowAppearance:'slope-and-wind-powder-with-grain',reflection:'physical-env',refraction:owned.some(material=>material.transmission>0)?'physical-transmission':'tier-disabled'}),
+    dispose:clear,
   };
 }

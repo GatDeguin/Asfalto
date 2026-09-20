@@ -7,7 +7,7 @@ const ATTRIBUTE='anAdvancedCurvature';
 const PROVENANCE='asfaltoAdvancedMaterialProvenance',PATCH_MARKER='#define AN_ADVANCED_SURFACE_PATCHED 1';
 const PHYSICAL_FEATURES=['clearcoat','anisotropy','sheen'];
 const clamp=(v,min=0,max=1)=>Math.max(min,Math.min(max,Number.isFinite(v)?v:0));
-const tierValue=tier=>tier==='cinematic'||tier==='high'||tier==='ultra'?1:tier==='balanced'||tier==='medium'?.65:0;
+const tierValue=tier=>tier==='high'||tier==='ultra'?1:tier==='balanced'||tier==='medium'?.65:0;
 const SURFACES=Object.freeze({
   paint:{coat:.78,frequency:75,detail:.0002,roughness:.035,wear:.10},
   varnish:{coat:.52,frequency:44,detail:.0005,roughness:.04,wear:.06},
@@ -17,9 +17,6 @@ const SURFACES=Object.freeze({
   wax:{scatter:.16,frequency:60,detail:.0001,roughness:.02,wear:.015},
   'thin-plastic':{scatter:.20,frequency:90,detail:.00015,roughness:.045,wear:.035},
   mineral:{frequency:34,detail:.0012,roughness:.12,wear:.10},
-  asphalt:{frequency:6,detail:.00022,roughness:.065,wear:.012},
-  rubber:{frequency:8,detail:.0001,roughness:.04,wear:0},
-  vinyl:{frequency:10,detail:.00012,roughness:.045,wear:0},
 });
 
 export function classifyAdvancedSurface(material,object=null,scope='world') {
@@ -33,13 +30,10 @@ export function classifyAdvancedSurface(material,object=null,scope='world') {
   if(leaf)return 'foliage';
   if(/wax|cera(?:_|\b)/.test(name))return 'wax';
   if(/thin.?plastic|plastic.?thin|plastico.?fino|translucent.?plastic|milk.?plastic/.test(name))return 'thin-plastic';
-  if(/fabric|cloth|textile|canvas|lona|upholster|tapizado|tela|seat.?cover/.test(name))return 'fabric';
+  if(/fabric|cloth|textile|upholster|tapizado|tela|seat.?cover/.test(name))return 'fabric';
   if(/paint|pintura|stripeatlas|car.?body|body.?coat/.test(name))return 'paint';
   if(/varnish|barniz|lacquer|lacado|polished.?wood/.test(name))return 'varnish';
   if(/brush|cepill|steel|alumin|inox|machined|brake.?rotor|brake.?disc/.test(name))return 'brushed-metal';
-  if(/rubber|neumatic|neumático|tire.?rubber|caucho/.test(name))return 'rubber';
-  if(/vinyl|vinilo|dashboard.?plastic|interior.?plastic/.test(name))return 'vinyl';
-  if(/asphalt|asfalto|tarmac/.test(name))return 'asphalt';
   if(/rock|stone|mineral|asphalt|concrete|pavement|boulder|terrain|rubble|piedra|hormigon/.test(name))return 'mineral';
   return null;
 }
@@ -78,12 +72,6 @@ function promote(T,entry) {
 function setEntryQuality(entry) {
   const quality=Math.max(0,...[...entry.owners.values()].map(owner=>tierValue(owner.quality))),surface=SURFACES[entry.role];
   entry.uniforms.anAMQuality.value=quality;
-  const cinematic=[...entry.owners.values()].some(owner=>owner.quality==='cinematic');
-  entry.uniforms.anAMCinematic.value=cinematic?1:0;
-  entry.uniforms.anAMFrequency.value=cinematic?(entry.role==='paint'?32:entry.role==='mineral'?12:surface.frequency):surface.frequency;
-  entry.uniforms.anAMWear.value=cinematic?(entry.role==='paint'?0:Math.min(surface.wear,.025)):surface.wear;
-  entry.uniforms.anAMNormalStrength.value=cinematic&&entry.role==='paint'?.00008:surface.detail;
-  entry.uniforms.anAMRoughnessStrength.value=cinematic&&entry.role==='paint'?.022:surface.roughness;
   if(entry.material.isMeshPhysicalMaterial) {
     write(entry,'clearcoat',Math.max(entry.native.clearcoat,(surface.coat||0)*quality));
     write(entry,'anisotropy',Math.max(entry.native.anisotropy,(surface.anisotropy||0)*quality));
@@ -113,7 +101,7 @@ function createEntry(T,material,role) {
   if(material.isMeshPhysicalMaterial&&surface.sheen){write(entry,'sheenColor',new T.Color('#b7a794'));write(entry,'sheenRoughness',.72);}
   write(entry,'defaultAttributeValues',{...material.defaultAttributeValues,uv:material.defaultAttributeValues?.uv||[0,0],[ATTRIBUTE]:[0]});
   const detail=acquireTexture(T);
-  entry.uniforms={anAMDetail:{value:detail},anAMQuality:{value:1},anAMCinematic:{value:0},anAMFrequency:{value:surface.frequency},anAMNormalStrength:{value:surface.detail},anAMRoughnessStrength:{value:surface.roughness},anAMWear:{value:surface.wear},anAMScatter:{value:surface.scatter||0},
+  entry.uniforms={anAMDetail:{value:detail},anAMQuality:{value:1},anAMFrequency:{value:surface.frequency},anAMNormalStrength:{value:surface.detail},anAMRoughnessStrength:{value:surface.roughness},anAMWear:{value:surface.wear},anAMScatter:{value:surface.scatter||0},
     anAMSunDirection:{value:new T.Vector3(.4,.8,.2).normalize()},anAMSunColor:{value:new T.Color('#fff4df')},anAMSunIntensity:{value:1},anAMSunVisibility:{value:1},anAMTime:{value:0}};
   entry.compile=function(shader,renderer) {
     entry.priorCompile?.call(this,shader,renderer);if(!entry.active||this!==entry.material)return;
@@ -127,18 +115,12 @@ function createEntry(T,material,role) {
     shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\n'+VERTEX_DECLARATIONS);
     shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>','#include <project_vertex>\n'+VERTEX_VALUES);
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n'+FRAGMENT_DECLARATIONS);
-    // The shared Chevy atlas declares its pigment mask in the map block.
-    // Sample after that block, never tint the source before paint isolation.
-    const chevyMask=entry.role==='paint'&&shader.fragmentShader.includes('float chevyPaintMask');
-    const pigmentMask=chevyMask?'chevyPaintMask':entry.role==='paint'&&shader.fragmentShader.includes('float vehiclePigment')?'vehiclePigment':null;
-    const detail=DETAIL_SAMPLE.replace('AN_AM_SURFACE_MASK',pigmentMask?'mix(1.,'+pigmentMask+',anAMCinematic)':'1.');
-    const roughness='roughnessFactor=mix(roughnessFactor,clamp(roughnessFactor+(anAMSample.b-.5)*anAMRoughnessStrength*anAMLocalQuality+anAMConvex*anAMWear*.16*anAMLocalQuality,.045,1.),step(.00001,anAMLocalQuality));';
-    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',detail+'\n#include <roughnessmap_fragment>'+(chevyMask?'':'\n'+roughness));
-    if(chevyMask)shader.fragmentShader=shader.fragmentShader.replace('roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);','roughnessFactor = mix(roughnessFactor, .28, chevyPaintMask);\n'+roughness);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\n'+DETAIL_SAMPLE);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+(anAMSample.b-.5)*anAMRoughnessStrength*anAMQuality+anAMConvex*anAMWear*.16*anAMQuality,.045,1.);');
     shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n'+DETAIL_NORMAL);
     shader.fragmentShader=shader.fragmentShader.replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n'+THIN_SCATTERING);
   };
-  entry.key=function(){return (entry.priorKey?.call(this)||'')+(entry.active&&this===entry.material?'|advanced-materials-v2-metric-filtered:'+role:'');};
+  entry.key=function(){return (entry.priorKey?.call(this)||'')+(entry.active&&this===entry.material?'|advanced-materials-v1:'+role:'');};
   material.onBeforeCompile=entry.compile;material.customProgramCacheKey=entry.key;material.needsUpdate=true;
   materialOwners.set(material,entry);return entry;
 }
@@ -210,23 +192,17 @@ export function createAdvancedMaterials(T,{root,scope='world',quality='high'}={}
   }
   function diagnostics(){const roles={};for(const entry of materials.values())roles[entry.role]=(roles[entry.role]||0)+1;return {scope,quality:owner.quality,disposed,materials:materials.size,roles,geometries:geometries.size,curvatureGeometries:[...geometries.values()].filter(value=>!value.reason).length,skippedGeometry,processedVertices,refreshes,
     compileCount:[...materials.values()].reduce((sum,entry)=>sum+entry.compileCount,0),incompatibleShaders:[...materials.values()].reduce((sum,entry)=>sum+entry.incompatibleShaders,0),ownedTextures:materials.size?1:0,
-    materialIdentityPreserved:true,detailFilter:owner.quality==='cinematic'?'metric footprint + authored mipmaps':'authored mipmaps',scatteringModel:'thin-surface single-scattering approximation',curvatureModel:'signed seam-welded one-ring convexity',physicalDeltaM:0};}
+    materialIdentityPreserved:true,scatteringModel:'thin-surface single-scattering approximation',curvatureModel:'signed seam-welded one-ring convexity',physicalDeltaM:0};}
   function dispose(){if(disposed)return false;disposed=true;for(const entry of materials.values())releaseMaterial(entry,owner);for(const geometry of geometries.keys())releaseGeometry(geometry,owner);materials.clear();geometries.clear();return true;}
   refresh();return {refresh,setQuality,update,diagnostics,dispose};
 }
 
 const VERTEX_DECLARATIONS=PATCH_MARKER+`
 attribute float anAdvancedCurvature;
-uniform float anAMCinematic;
 varying float vAnAMCurvature;
 varying vec3 vAnAMLocalPosition,vAnAMLocalNormal,vAnAMBrushDirection;`;
 const VERTEX_VALUES=`vAnAMCurvature=anAdvancedCurvature;
-mat4 anAMMetricMatrix=modelMatrix;
-#ifdef USE_INSTANCING
-anAMMetricMatrix=modelMatrix*instanceMatrix;
-#endif
-vec3 anAMMetricScale=vec3(length(anAMMetricMatrix[0].xyz),length(anAMMetricMatrix[1].xyz),length(anAMMetricMatrix[2].xyz));
-vAnAMLocalPosition=transformed*mix(vec3(1.),anAMMetricScale,anAMCinematic);
+vAnAMLocalPosition=transformed;
 vAnAMLocalNormal=objectNormal;
 vec3 anAMBrushLocal=vec3(1.,0.,0.);
 #ifdef USE_INSTANCING
@@ -235,16 +211,11 @@ anAMBrushLocal=mat3(instanceMatrix)*anAMBrushLocal;
 vAnAMBrushDirection=mat3(modelViewMatrix)*anAMBrushLocal;`;
 const FRAGMENT_DECLARATIONS=PATCH_MARKER+`
 uniform sampler2D anAMDetail;
-uniform float anAMQuality,anAMCinematic,anAMFrequency,anAMNormalStrength,anAMRoughnessStrength,anAMWear,anAMScatter,anAMSunIntensity,anAMSunVisibility,anAMTime;
+uniform float anAMQuality,anAMFrequency,anAMNormalStrength,anAMRoughnessStrength,anAMWear,anAMScatter,anAMSunIntensity,anAMSunVisibility,anAMTime;
 uniform vec3 anAMSunDirection,anAMSunColor;
 varying float vAnAMCurvature;
 varying vec3 vAnAMLocalPosition,vAnAMLocalNormal,vAnAMBrushDirection;`;
-const DETAIL_SAMPLE=`float anAMSurfaceMask=AN_AM_SURFACE_MASK;
-// Texels per pixel, not frame history: stable during motion and camera cuts.
-float anAMFootprint=max(length(dFdx(vAnAMLocalPosition)),length(dFdy(vAnAMLocalPosition)))*anAMFrequency*64.;
-float anAMDetailWeight=mix(1.,1.-smoothstep(1.,4.,anAMFootprint),anAMCinematic);
-float anAMLocalQuality=anAMQuality*anAMDetailWeight*anAMSurfaceMask;
-vec4 anAMSample=vec4(.5);
+const DETAIL_SAMPLE=`vec4 anAMSample=vec4(.5);
 if(anAMQuality>.01){
   vec3 anAMWeights=pow(abs(vAnAMLocalNormal),vec3(4.));anAMWeights/=max(dot(anAMWeights,vec3(1.)),.00001);
   anAMSample=texture2D(anAMDetail,vAnAMLocalPosition.yz*anAMFrequency)*anAMWeights.x
@@ -252,10 +223,10 @@ if(anAMQuality>.01){
     +texture2D(anAMDetail,vAnAMLocalPosition.xy*anAMFrequency)*anAMWeights.z;
 }
 float anAMConvex=smoothstep(.025,.24,max(vAnAMCurvature,0.))*(.35+.65*anAMSample.b);
-diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.34,.32,.28),anAMConvex*anAMWear*anAMLocalQuality);`;
+diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.34,.32,.28),anAMConvex*anAMWear*anAMQuality);`;
 const DETAIL_NORMAL=`if(anAMQuality>.01){
   // Screen derivatives compose micro-height with the authored/POM/weather normal.
-  float anAMHeight=(anAMSample.a-.5)*anAMNormalStrength*anAMLocalQuality;
+  float anAMHeight=(anAMSample.a-.5)*anAMNormalStrength*anAMQuality;
   vec3 anAMDpx=dFdx(-vViewPosition),anAMDpy=dFdy(-vViewPosition);
   vec3 anAMR1=cross(anAMDpy,normal),anAMR2=cross(normal,anAMDpx);
   float anAMDet=dot(anAMDpx,anAMR1);

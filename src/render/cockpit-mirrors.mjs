@@ -1,7 +1,6 @@
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs';
 
 const QUALITY = Object.freeze({
-  cinematic: { center: [512, 144, 24], left: [256, 192, 18] },
   high: { center: [512, 144, 24], left: [256, 192, 18] },
   balanced: { center: [384, 108, 15], left: [192, 144, 12] },
   low: { center: [256, 72, 8], left: [128, 96, 6] },
@@ -124,15 +123,15 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   }
   setQuality(quality);
 
-  function update({ renderer, scene, carPose, cameraPoses = null, cockpitVisible = true, enabled = true, quality: nextQuality = currentQuality, nowMs = globalThis.performance?.now?.() || Date.now(), force = false, captureSchedule = null } = {}) {
+  function update({ renderer, scene, carPose, cameraPoses=null, cockpitVisible = true, enabled = true, quality: nextQuality = currentQuality, nowMs = globalThis.performance?.now?.() || Date.now(), force = false } = {}) {
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
     if (!renderer || !scene || !cockpitVisible || !enabled || renderer.getContext?.().isContextLost?.()) return 0;
-    setQuality(nextQuality);
-    const due = ['center', 'left'].filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
-    if (!due.length) return 0;
-    const poses = (typeof cameraPoses === 'function' ? cameraPoses() : cameraPoses) || mirrorCameraPoses(THREE, carPose);
+    const poses = cameraPoses||mirrorCameraPoses(THREE, carPose);
     if (!poses) return 0;
+    setQuality(nextQuality);
+    const due = ['center', 'left'].filter(id => force || nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]);
+    if (!due.length) return 0;
     const previousTarget = renderer.getRenderTarget(), previousCubeFace = renderer.getActiveCubeFace?.() || 0, previousMipmap = renderer.getActiveMipmapLevel?.() || 0;
     const previousScissorTest = renderer.getScissorTest(), previousAlpha = renderer.getClearAlpha(), previousAutoClear = renderer.autoClear;
     const previousShadowAuto = renderer.shadowMap?.autoUpdate, previousShadowDirty = renderer.shadowMap?.needsUpdate, previousXR = renderer.xr?.enabled;
@@ -150,7 +149,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       for (const id of due) {
         const feed = feeds[id], pose = poses[id];
         feed.camera.position.fromArray(pose.position); feed.camera.up.fromArray(pose.up); feed.camera.lookAt(...pose.look); feed.camera.updateMatrixWorld(true);
-        renderer.setRenderTarget(feed.target); renderer.setScissorTest(false);
+        renderer.setRenderTarget(feed.target); renderer.setViewport(0, 0, feed.target.width, feed.target.height); renderer.setScissorTest(false);
         renderer.clear(true, true, true); renderer.render(scene, feed.camera);
         feed.lastRenderMs = nowMs; feed.frames++; rendered++;
       }

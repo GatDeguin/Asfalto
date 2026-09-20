@@ -24,5 +24,5 @@ export function createSoundscapeBanks(context,seed=6147,initialState=seed>>>0){
   function waterBank(){const buffer=noise(14.3,.8,'water'),river=buffer.getChannelData(0),fall=buffer.getChannelData(1);let low=0,sub=0;
     for(let i=0;i<fall.length;i++){const t=i/context.sampleRate,white=random();low=.975*low+.025*white;sub=.9985*sub+.0015*white;fall[i]=(.27*white+low*3.6+sub*8)*(.4+.15*variation(t*.4,870));river[i]*=.95;}return buffer;}
 
- return {noise,build(){const buffers=[noise(8,.35),noise(11.7,.45,'roof'),forestBank(),waterBank()];return {buffers,randomState};}};
+ return {noise,build(){const buffers=[noise(8,.35),noise(11.7,.45,'roof'),forestBank(),waterBank(),noise(4.6,.84),noise(4.6,.84),noise(4.6,.84)];return {buffers,randomState};}};
 }

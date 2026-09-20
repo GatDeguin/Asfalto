@@ -1,7 +1,7 @@
 import { effectsQuad, effectsRandom } from './weather-layers.mjs';
 import { wheelWeatherEmission } from './weather-dynamics.mjs';
-import { getVehicleEngineMount } from './vehicle-engine-mount.mjs?v=balance-20260917';
-import { getVehicleDefinition } from './vehicle-catalog.mjs?v=balance-20260917';
+import { getVehicleEngineMount } from './vehicle-engine-mount.mjs?v=fbe114131d37007c';
+import { getVehicleDefinition } from './vehicle-catalog.mjs?v=79da6f20496c6a50';
 
 /** Fixed reusable pool: spray, soil dust, tire/engine smoke, contact sparks and exhaust fire. */
 export function createVehicleWeatherParticles(THREE,parent,{light=true}={}) {

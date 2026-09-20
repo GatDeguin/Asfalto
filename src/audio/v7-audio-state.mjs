@@ -1,9 +1,0 @@
-const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,Number.isFinite(v)?v:0));
-/** Gain targets for the existing Chevy250 worklet; no second combustion source. */
-export function engineMix({rpm=0,load=0,throttle=0,cameraMode='cockpit',reducedRange=false}={}){
- const rev=clamp(rpm/5600),power=clamp(load),retention=clamp(-load)*(1-clamp(throttle)),inside=cameraMode==='cockpit',running=rpm>30;
- return {firingHz:Math.max(0,rpm)/20,retention,engineLevel:running?(inside?.89:.96):0,exhaustLevel:(.52+power*.35+retention*.11)*(inside?.69:1),intakeLevel:(.22+Math.pow(clamp(throttle),.7)*.48+rev*.12)*(inside?.76:1),mechanicalLevel:(.28+rev*.14+retention*.16)*(inside?1:.66),popsLevel:.06+retention*.09,stereoWidth:inside?.35:.62,compressor:{threshold:reducedRange?-25:-12,ratio:reducedRange?5:2.5,knee:reducedRange?22:14}};
-}
-/** No timer invents an event: transitions must originate in the mechanical snapshot. */
-export function mechanicalEvents(previous,current={}){if(!previous)return[];const out=[];if(previous.gear!==undefined&&current.gear!==undefined&&previous.gear!==current.gear)out.push('shift');if(!previous.cranking&&current.cranking)out.push('starter');if(previous.rpm>400&&current.rpm<200&&current.running===false)out.push('stall');if(previous.rpm<400&&current.rpm>=650&&current.running!==false)out.push('ignition');return out;}
-export function regionalAcoustics({trackId='',forest=null,night=false,rainIntensity=0}={}){const proximity=clamp(forest?.proximity),quiet=1-clamp(rainIntensity)*.76;const region={dos_lagos:{birds:.038,insects:.003,leaf:.014},paso_garibaldi:{birds:.024,insects:0,leaf:.023},cataratas_iguazu:{birds:.07,insects:night?.045:.024,leaf:.019}}[trackId]||{birds:0,insects:0,leaf:0};return{proximity,birds:region.birds*proximity*quiet*(night?.1:1),insects:region.insects*proximity*quiet,leaf:region.leaf*proximity};}

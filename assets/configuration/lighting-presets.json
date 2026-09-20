@@ -1,4 +1,250 @@
 {
   "version": 1,
-  "presets": {}
+  "presets": {
+    "cataratas_iguazu|night|clear": {
+      "context": {
+        "trackId": "cataratas_iguazu",
+        "skyId": "night",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T03:47:38.039Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2,
+          "temperature": 0
+        },
+        "hdri": {
+          "backgroundIntensity": 0.024,
+          "environmentIntensity": 0.02,
+          "exposure": 1.158,
+          "rotation": [
+            43,
+            14,
+            -55
+          ],
+          "environmentRotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "fog": {
+          "density": 0.00003
+        }
+      }
+    },
+    "aconcagua_horcones|night|clear": {
+      "context": {
+        "trackId": "aconcagua_horcones",
+        "skyId": "night",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T03:23:00.601Z",
+      "values": {
+        "hdri": {
+          "rotation": [
+            0,
+            106,
+            64
+          ],
+          "exposure": 2,
+          "backgroundBlurriness": 0,
+          "environmentIntensity": 0.02,
+          "environmentRotation": [
+            0,
+            0,
+            0
+          ],
+          "backgroundIntensity": 0.024
+        },
+        "lights": {
+          "hemi": {
+            "enabled": true
+          }
+        },
+        "fog": {
+          "density": 0.00005
+        },
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2,
+          "contrast": 1
+        }
+      }
+    },
+    "aconcagua_horcones|golden-hour|clear": {
+      "context": {
+        "trackId": "aconcagua_horcones",
+        "skyId": "golden-hour",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T02:49:29.695Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.25
+        }
+      }
+    },
+    "dos_lagos|night|clear": {
+      "context": {
+        "trackId": "dos_lagos",
+        "skyId": "night",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T03:16:14.123Z",
+      "values": {
+        "hdri": {
+          "backgroundIntensity": 0.024,
+          "environmentIntensity": 0.02,
+          "exposure": 2,
+          "rotation": [
+            74,
+            91,
+            -15
+          ]
+        },
+        "fog": {
+          "density": 0.00007
+        },
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "cuesta_lipan|night|clear": {
+      "context": {
+        "trackId": "cuesta_lipan",
+        "skyId": "night",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T03:27:33.139Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        },
+        "hdri": {
+          "backgroundIntensity": 0.024,
+          "environmentIntensity": 0.02,
+          "exposure": 2,
+          "rotation": [
+            74,
+            15,
+            47
+          ]
+        }
+      }
+    },
+    "paso_garibaldi|night|clear": {
+      "context": {
+        "trackId": "paso_garibaldi",
+        "skyId": "night",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-07T03:34:59.989Z",
+      "values": {
+        "hdri": {
+          "backgroundIntensity": 0.026,
+          "environmentIntensity": 0.02,
+          "exposure": 2,
+          "rotation": [
+            161,
+            106,
+            64
+          ]
+        },
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.26
+        }
+      }
+    },
+    "dos_lagos|clear|rain": {
+      "context": {
+        "trackId": "dos_lagos",
+        "skyId": "clear",
+        "weather": "rain"
+      },
+      "updatedAt": "2026-09-08T03:27:00.281Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "dos_lagos|clear|clear": {
+      "context": {
+        "trackId": "dos_lagos",
+        "skyId": "clear",
+        "weather": "clear"
+      },
+      "updatedAt": "2026-09-08T03:30:37.328Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "dos_lagos|clear|cloudy": {
+      "context": {
+        "trackId": "dos_lagos",
+        "skyId": "clear",
+        "weather": "cloudy"
+      },
+      "updatedAt": "2026-09-08T03:31:45.062Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "dos_lagos|sunset|storm": {
+      "context": {
+        "trackId": "dos_lagos",
+        "skyId": "sunset",
+        "weather": "storm"
+      },
+      "updatedAt": "2026-09-08T03:43:45.958Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "paso_garibaldi|golden-hour|light-snow": {
+      "context": {
+        "trackId": "paso_garibaldi",
+        "skyId": "golden-hour",
+        "weather": "light-snow"
+      },
+      "updatedAt": "2026-09-08T03:49:12.867Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    },
+    "cuesta_lipan|golden-hour|light-snow": {
+      "context": {
+        "trackId": "cuesta_lipan",
+        "skyId": "golden-hour",
+        "weather": "light-snow"
+      },
+      "updatedAt": "2026-09-08T03:53:52.296Z",
+      "values": {
+        "lut": {
+          "lutId": "canon-log2-cingamut-rec709-wdr-2f2e0b11",
+          "intensity": 0.2
+        }
+      }
+    }
+  }
 }

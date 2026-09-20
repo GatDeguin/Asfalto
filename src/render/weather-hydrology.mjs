@@ -41,7 +41,7 @@ export function createWaterHydrology(THREE,mesh){
   }
   const texture=new THREE.DataTexture(data,resolution,resolution,THREE.RGBAFormat,THREE.FloatType);texture.name='AN_GeometricWaterDepthShore';texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.needsUpdate=true;
   return{texture,distanceToWater:createWaterDistance(boundary,(bounds.min.y+bounds.max.y)*.5),bounds:new THREE.Vector4(bounds.min.x,bounds.min.z,Math.max(.001,size.x),Math.max(.001,size.z)),metadata,
-    diagnostics:{segments:segments.length,depthSource:depthSamples.length?(metadata.depthSource||'authored-depth-samples'):'geometric-shore-wedge',maxDepthM:maxDepth},dispose(){texture.dispose();}};
+    diagnostics:{segments:segments.length,depthSource:depthSamples.length?'authored-depth-samples':'geometric-shore-wedge',maxDepthM:maxDepth},dispose(){texture.dispose();}};
 }
 /** Vertex drainage from neighbouring measured road heights; flat roads retain only a film. */
 export function installRoadHydrology(THREE,mesh){

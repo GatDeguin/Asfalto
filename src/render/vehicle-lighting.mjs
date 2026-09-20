@@ -25,7 +25,7 @@ function texture(T,kind){
  }
  const map=new T.DataTexture(data,n,n,T.RGBAFormat);map.minFilter=map.magFilter=T.LinearFilter;map.needsUpdate=true;return map;
 }
-export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=[],lampAnchor=[-.9452,.006,.267]}={}){
+export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=[],lampAnchor=[-.963,.006,.267]}={}){
  let mode='off',beamMode='low',nightAmount=0,disposed=false,active=true,brake=0,lastQuality='balanced',calibration={...VEHICLE_LIGHT_CALIBRATION_DEFAULTS};const headlampColors=new Map(headlamps.map(m=>[m,m.emissive?.clone()]));const filament={candela:0,lens:0,tail:0};const beams=[],halos=[],maps=[];
  const origin=new T.Vector3(),forward=new T.Vector3(),up=new T.Vector3(),toCamera=new T.Vector3(),target=new T.Vector3(),aimForward=new T.Vector3(),aimRight=new T.Vector3();
  let rig=null;
@@ -41,7 +41,8 @@ export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=
   const gain=active?1:0,beamGain=gain*(calibration.enabled?calibration.intensityScale:0);
   const c=MODES[beamMode];for(const m of headlamps){m.emissiveIntensity=beamGain*filament.lens*(1+nightAmount*.45);if(m.emissive){if(calibration.color)m.emissive.set(calibration.color);else if(headlampColors.get(m))m.emissive.copy(headlampColors.get(m));}}
   for(const m of brakes)m.emissiveIntensity=gain*(filament.tail*(1+nightAmount*.3)+brake*(1.15+nightAmount*.30));
-  for(const [i,light]of beams.entries()){light.visible=beamGain>0&&filament.candela>.05;light.intensity=beamGain*filament.candela;light.color.set(calibration.color||0xffedcc);light.distance=c.rangeM*calibration.distanceScale;light.angle=calibration.angleDeg===null?c.angle:calibration.angleDeg*Math.PI/180;light.penumbra=calibration.penumbra??(beamMode==='high'?.65:.38);light.decay=calibration.decay;light.map=beamMode==='high'?light.userData.highMap:light.userData.lowMap;light.castShadow=light.visible&&lastQuality!=='eco'&&(calibration.castShadow??i===0);light.shadow.camera.far=Math.max(1,light.distance);halos[i].visible=beamGain>0&&filament.lens>.002;}
+  // Keep shader light/shadow counts stable across beam modes; dark beams retain their maps without rendering them.
+  for(const [i,light]of beams.entries()){light.visible=active&&calibration.enabled;light.intensity=beamGain*filament.candela;light.color.set(calibration.color||0xffedcc);light.distance=c.rangeM*calibration.distanceScale;light.angle=calibration.angleDeg===null?c.angle:calibration.angleDeg*Math.PI/180;light.penumbra=calibration.penumbra??(beamMode==='high'?.65:.38);light.decay=calibration.decay;light.map=beamMode==='high'?light.userData.highMap:light.userData.lowMap;light.castShadow=light.visible&&lastQuality!=='eco'&&(calibration.castShadow??i===0);const shadowActive=light.castShadow&&light.intensity>0;if(shadowActive&&!light.shadow.autoUpdate)light.shadow.needsUpdate=true;if(!shadowActive)light.shadow.needsUpdate=false;light.shadow.autoUpdate=shadowActive;light.shadow.camera.far=Math.max(1,light.distance);halos[i].visible=beamGain>0&&filament.lens>.002;}
  }
  const api={
   getLights:()=>beams.slice(),
@@ -64,7 +65,7 @@ export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=
    }
    rig.updateMatrixWorld(true);return true;
   },
-  diagnostics:()=>({mode,active,nightAmount,filament:{...filament},filamentOnTauS:.08,filamentOffTauS:.12,projectorsActive:!!rig&&!disposed,beamCount:beams.length,visibleBeams:beams.filter(l=>l.visible).length,...MODES[mode],candela:MODES[mode].candela*(active&&calibration.enabled?calibration.intensityScale:0),rangeM:MODES[mode].rangeM*calibration.distanceScale,angle:calibration.angleDeg===null?MODES[mode].angle:calibration.angleDeg*Math.PI/180,calibration:{...calibration},origins:beams.map(l=>l.position.toArray()),targets:beams.map(l=>l.target.position.toArray()),hiddenExteriorStillLit:root.visible===false&&beams.some(l=>l.visible),disposed}),
-  dispose(){if(disposed)return false;disposed=true;for(const l of beams){l.shadow.map?.dispose();l.dispose?.();}for(const h of halos)h.material.dispose();maps.forEach(t=>t.dispose());rig?.removeFromParent();return true;}
+  diagnostics:()=>({mode,active,nightAmount,filament:{...filament},filamentOnTauS:.08,filamentOffTauS:.12,projectorsActive:!!rig&&!disposed,beamCount:beams.length,visibleBeams:beams.filter(l=>l.visible&&l.intensity>0).length,...MODES[mode],candela:MODES[mode].candela*(active&&calibration.enabled?calibration.intensityScale:0),rangeM:MODES[mode].rangeM*calibration.distanceScale,angle:calibration.angleDeg===null?MODES[mode].angle:calibration.angleDeg*Math.PI/180,calibration:{...calibration},origins:beams.map(l=>l.position.toArray()),targets:beams.map(l=>l.target.position.toArray()),hiddenExteriorStillLit:root.visible===false&&beams.some(l=>l.visible&&l.intensity>0),disposed}),
+  dispose(){if(disposed)return false;active=false;apply();disposed=true;for(const l of beams){l.shadow.map?.dispose();l.dispose?.();}for(const h of halos)h.material.dispose();maps.forEach(t=>t.dispose());rig?.removeFromParent();return true;}
  };apply();return api;
 }

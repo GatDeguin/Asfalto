@@ -17,7 +17,7 @@ export function windshieldBladeEndpoints(layout,index,phase){
 }
 export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={}){
  if(!cabinMount?.add)throw new TypeError('cabinMount is required');
- const fit=windshieldLayout(options),root=new THREE.Group();root.name='AN_WindshieldWeather';cabinMount.add(root);
+ const fit=windshieldLayout(options),detailScale=Math.min(1,fit.widthM/1.54),root=new THREE.Group();root.name='AN_WindshieldWeather';cabinMount.add(root);
  const geometry=new THREE.PlaneGeometry(fit.widthM,fit.heightM,fit.curveDepthM?24:1,fit.curveDepthM?6:1),position=geometry.attributes.position,surface=new Float32Array(position.count*2);
  for(let i=0;i<position.count;i++){
   const fraction=(position.getY(i)+fit.heightM*.5)/fit.heightM,x=position.getX(i)*fit.widthAt(fraction),y=fraction*fit.surfaceHeight;
@@ -40,12 +40,12 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
  const bladeCenter=(fit.innerRadius+fit.outerRadius)*.5,bladeLength=fit.outerRadius-fit.innerRadius;
  for(let i=0;i<fit.pivots.length;i++){
   const [x,y]=fit.pivots[i],pivot=new THREE.Group();pivot.name='AN_WiperPivot_'+i;pivot.position.fromArray(fit.point(x,y));pivot.rotation.x=fit.rakeRad;
-  const arm=new THREE.Mesh(new THREE.BoxGeometry(.006,bladeCenter,.006),wiperMaterial);arm.name='AN_WiperArm_'+i;arm.position.set(0,bladeCenter*.5,-.009);pivot.add(arm);
-  const blade=new THREE.Mesh(new THREE.BoxGeometry(.007,bladeLength,.004),wiperMaterial);blade.name='AN_WiperBlade_'+i;blade.position.set(0,bladeCenter,fit.bladeOffsetM);pivot.add(blade);
+  const arm=new THREE.Mesh(new THREE.BoxGeometry(.006*detailScale,bladeCenter,.006*detailScale),wiperMaterial);arm.name='AN_WiperArm_'+i;arm.position.set(0,bladeCenter*.5,-.009);pivot.add(arm);
+  const blade=new THREE.Mesh(new THREE.BoxGeometry(.007*detailScale,bladeLength,.004*detailScale),wiperMaterial);blade.name='AN_WiperBlade_'+i;blade.position.set(0,bladeCenter,fit.bladeOffsetM);pivot.add(blade);
   root.add(pivot);wipers.push(pivot);blades.push(blade);
   if(fit.curveDepthM){
    for(const [part,near,far] of [[arm,0,bladeCenter],[blade,fit.innerRadius,fit.outerRadius]]){
-    part.geometry.dispose();part.geometry=new THREE.BoxGeometry(part===arm?.006:.007,1,.004,1,12,1);part.position.set(0,0,0);part.rotation.set(0,0,0);root.add(part);
+    part.geometry.dispose();part.geometry=new THREE.BoxGeometry((part===arm?.006:.007)*detailScale,1,.004*detailScale,1,12,1);part.position.set(0,0,0);part.rotation.set(0,0,0);root.add(part);
     curvedParts.push({part,index:i,near,far,original:part.geometry.attributes.position.array.slice()});
    }
   }

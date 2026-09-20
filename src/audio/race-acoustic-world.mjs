@@ -13,9 +13,9 @@ export function createRaceAcousticWorld(T){
         for(let i=0;i+2<n;i+=3){const vertices=[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(pos,index?index.getX(i+j):i+j).applyMatrix4(mesh.matrixWorld));const triangle=new T.Triangle(...vertices);if(triangle.getArea()<.00001)continue;const bounds=new T.Box3().setFromPoints(vertices);triangles.push({triangle,bounds});box.union(bounds);}
         if(triangles.length)falls.push({name:mesh.name,triangles,box,metadata:data,bottom:new T.Vector3().fromArray(data.impactCenter||data.bottomCenter||[box.getCenter(new T.Vector3()).x,box.min.y,box.getCenter(new T.Vector3()).z])});
       }
-      if(!['dos_lagos','paso_garibaldi','cataratas_iguazu'].includes(trackId))return;
+      if(trackId!=='cataratas_iguazu')return;
       const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
-      if(!materials.some(m=>/(leaf|palm|fern|foliage|canopy|needles)/i.test(m?.name||'')))return;
+      if(!materials.some(m=>/MAT_(leaf|palm|fern)/.test(m?.name||'')))return;
       mesh.geometry.computeBoundingBox();const center=mesh.geometry.boundingBox.getCenter(new T.Vector3());
       const count=mesh.isInstancedMesh?mesh.userData.asfaltoIguazuInstances?.maximum??mesh.count:1;
       for(let i=0;i<count;i++){matrix.copy(mesh.matrixWorld);if(mesh.isInstancedMesh){mesh.getMatrixAt(i,instance);matrix.multiply(instance);}p.copy(center).applyMatrix4(matrix);const key=[Math.floor(p.x/24),Math.floor(p.y/24),Math.floor(p.z/24)].join(',');if(!canopy.has(key))canopy.set(key,p.clone());}
@@ -29,7 +29,7 @@ export function createRaceAcousticWorld(T){
       if(level>bestLevel){bestLevel=level;selected={kind:'waterfall',name:field.name,distanceM:distance,impactDistanceM:impactDistance,impactPosition:field.bottom.toArray(),heightM:field.metadata.heightM,flowMps:field.metadata.speedMps,scale,pan:pan(bestPoint,position,rotation),position:bestPoint.toArray(),source:'world-mesh-triangle-distance'};}
     }
     let forestDistance=Infinity,forestPoint=null;for(const point of forest){const d=point.distanceToSquared(position);if(d<forestDistance){forestDistance=d;forestPoint=point;}}
-    result={waterfall:selected,forest:forestPoint?{biome:trackId==='cataratas_iguazu'?'subtropical_forest':trackId==='paso_garibaldi'?'austral_forest':'andean_forest',distanceM:Math.sqrt(forestDistance),proximity:Math.exp(-Math.sqrt(forestDistance)/90),pan:pan(forestPoint,position,rotation),position:forestPoint.toArray(),source:'sampled-real-canopy-positions'}:null};return result;
+    result={waterfall:selected,forest:forestPoint?{biome:'subtropical_forest',distanceM:Math.sqrt(forestDistance),proximity:Math.exp(-Math.sqrt(forestDistance)/90),pan:pan(forestPoint,position,rotation),position:forestPoint.toArray(),source:'sampled-real-canopy-positions'}:null};return result;
   }
   return{bind,sample,diagnostics:()=>({trackId,waterfallEmitters:falls.length,waterfallTriangles:falls.reduce((n,f)=>n+f.triangles.length,0),canopyEmitters:forest.length,samples,distanceModel:'world-triangle-3d'}),dispose:clear};
 }

@@ -1,13 +1,11 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=balance-20260917';
 import {engineGLTFLoaderClass} from './engine-gltf-loader-factory.mjs';
 import {createEngineMechanism} from './engine-mechanism.mjs';
 import {cycleState} from './engine-chevy-math.mjs';
-import {resolveWorkshopEngineMount} from './vehicle-engine-mount.mjs?v=balance-20260917';
+import {resolveWorkshopEngineMount} from './vehicle-engine-mount.mjs?v=fbe114131d37007c';
 const normalized=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
 const textureKeys=['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap','bumpMap'];
 export function createWorkshopEngine(T,workshop){
- if(getVehicleDefinition(workshop.vehicleId)?.supportsDetailedEngine===false)return null;
  const menu=document.getElementById('v6-main-menu'),page=menu.querySelector('[data-workshop-page="mechanics"]'),listeners=[],abort=new AbortController();let model=null,mechanism=null,pending=null,disposed=false,hood=0,selected=null,technical=false,cut=false,cutAxis='x',cutOffset=0,hidden=new Set(),env=null,partButtons=[],lastUi=0,loadFailed=false,autoRotate=false;const previousClipping=workshop.renderer.localClippingEnabled;
  const owned={geometries:new Set(),materials:new Set(),textures:new Set(),images:new Set()},baseEmissive=new Map(),meshOwners=new WeakMap(),mount=new T.Group(),plane=new T.Plane(),bounds=new T.Box3(),point=new T.Vector3(),q=new T.Quaternion();mount.name='Motor_Chevy_250_Interactive';mount.visible=false;workshop.car.add(mount);
  const vehicleId=workshop.vehicleId||workshop.vehiclePresentation.diagnostics().vehicle||'chevy';let mountFit=null;

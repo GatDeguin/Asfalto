@@ -1,9 +1,8 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=balance-20260917';
+import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=01507c60321e8369';
 import { initialMenuState, reduceMenu } from './menu-state.mjs';
 import { createIntroSession } from './intro-player.mjs';
-import { mountMenuSections } from './menu-sections.mjs?v=balance-20260917';
-import { mountMenuRefinements } from './menu-refinements.mjs';
-import { mountWorkshopService } from './workshop-service.mjs';
+import { mountMenuSections } from './menu-sections.mjs?v=faa65cae5d9af65a';
+import { mountMenuRefinements } from './menu-refinements.mjs?v=0ff8b8ff8bdf60de';
 import { fitMenuCar } from './menu-refinement-state.mjs';
 
 const ICONS = {
@@ -20,6 +19,11 @@ function mount() {
   const game = globalThis.__chevyV6Complete;
   const root = document.querySelector('#v6-main-menu');
   if (!game || !root || globalThis.__asfaltoMenuPresentation) return;
+  const routePrefetch=createRoutePrefetch();
+  const prefetchSelection=event=>{if(event?.target?.matches?.('#v6-drive-route,#v6-comp-track'))void routePrefetch.selection(event.target.value);};
+  root.addEventListener('change',prefetchSelection);
+  window.addEventListener('pagehide',()=>routePrefetch.dispose(),{once:true});
+  globalThis.__asfaltoRoutePrefetch=routePrefetch;
   const content = root.querySelector('#v6-menu-content');
   const brand = root.querySelector('.v6-brand');
   const nav = [...root.querySelectorAll('.v6-nav-btn')];
@@ -36,7 +40,7 @@ function mount() {
 
   root.classList.add('an-cinematic-menu');
   root.setAttribute('aria-label', 'Menú principal de Asfalto Nacional');
-  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption" data-selected-vehicle-label>Vehículo seleccionado</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
+  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption">Chevy Serie 2 <span>·</span> 1973</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
   nav.forEach(button => {
     const label = document.createElement('span'); label.textContent = button.textContent;
     button.innerHTML = svg(button.dataset.v6Panel); button.append(label);
@@ -44,25 +48,14 @@ function mount() {
   });
   const homePlate = document.createElement('aside');
   homePlate.className = 'an-vehicle-plate'; homePlate.setAttribute('aria-label', 'Vehículo seleccionado');
-  homePlate.innerHTML = '<div class="an-plate-engine"><strong data-selected-vehicle-label>Vehículo seleccionado</strong><span>Listo para tu próxima salida</span></div><p>Cada ruta, una historia.<br>Prepará el auto y salí a conducir.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg></b>';
+  homePlate.innerHTML = '<div class="an-plate-engine"><strong>Chevrolet 250</strong><span>Seis en línea</span><small>Tracción trasera</small></div><p>El gran turismo argentino.<br>Potencia elástica, andar sólido y presencia en cada ruta.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg>1973</b>';
   root.append(homePlate);
-  const vehicleLabels = bindSelectedVehicleLabels({ root, getVehicleId: () => game.workshop?.vehicleId });
   const footer = document.createElement('footer'); footer.className = 'an-menu-footer';
   footer.innerHTML = '<p class="an-controls-hint"><kbd>↵</kbd> Seleccionar <kbd>ESC</kbd> Volver</p><button type="button" class="an-replay">Ver animática <span aria-hidden="true">▷</span></button>';
   root.append(footer);
-  const balance = document.createElement('output');
-  balance.className = 'an-token-balance';
-  balance.setAttribute('aria-live', 'polite');
-  balance.setAttribute('aria-atomic', 'true');
-  balance.textContent = new Intl.NumberFormat('es-AR').format(game.profile().workshopTokens ?? 0) + ' fichas';
-  balance.setAttribute('aria-label', 'Fichas disponibles');
-  footer.querySelector('.an-controls-hint').replaceWith(balance);
   const replay = footer.querySelector('button');
-  const quickDrive=document.createElement('button');quickDrive.type='button';quickDrive.className='an-v7-quick-drive';quickDrive.textContent='Salir a la ruta →';quickDrive.setAttribute('aria-label','Conducir con la ruta y el vehículo seleccionados');footer.append(quickDrive);
-  quickDrive.addEventListener('click',async()=>{if(quickDrive.disabled)return;quickDrive.disabled=true;quickDrive.textContent='Preparando la salida…';try{await game.startDrive(game.profile().selectedDrive||'free');}catch(error){globalThis.__asfaltoV7Experience?.announce('No se pudo preparar la salida. Podés reintentar.');console.error('Salida rápida',error);}finally{quickDrive.disabled=false;quickDrive.textContent='Salir a la ruta →';}});
   const back = document.createElement('button'); back.type = 'button'; back.className = 'an-panel-back';
-  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver</span>';
-  back.setAttribute('aria-label', 'Volver al menú');
+  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver al menú</span>';
   content.prepend(back);
   for (const heading of content.querySelectorAll('.v6-panel h2')) heading.tabIndex = -1;
   for (const panel of root.querySelectorAll('.v6-panel')) {
@@ -71,7 +64,6 @@ function mount() {
   const intro = document.createElement('section'); intro.id = 'an-intro'; intro.hidden = true;
   intro.setAttribute('role', 'dialog'); intro.setAttribute('aria-modal', 'true'); intro.setAttribute('aria-label', 'Presentación de Asfalto Nacional');
   intro.innerHTML = '<video playsinline preload="none"></video><div class="an-intro-top"><span class="an-intro-kind">Asfalto Nacional · Animática</span><button type="button" class="an-intro-skip">Saltar <kbd>ESC</kbd></button></div><button type="button" class="an-intro-resume" hidden>Reproducir con sonido ▷</button><p class="an-intro-status" role="status">Preparando presentación…</p>';
-  const introBrand=new Image();introBrand.src=new URL('../../assets/brand/asfalto-nacional-v7.webp',import.meta.url).href;introBrand.alt='Asfalto Nacional';introBrand.className='an-intro-brand';intro.querySelector('.an-intro-top').prepend(introBrand);
   document.body.append(intro);
   const video = intro.querySelector('video');
   const skip = intro.querySelector('.an-intro-skip');
@@ -85,10 +77,8 @@ function mount() {
     } else nav.find(button => button.dataset.v6Panel === panel)?.click();
   } });
 
-  const service = mountWorkshopService({root,game});
   const refinements = mountMenuRefinements({root,game});
   function sync() {
-    vehicleLabels.refresh();
     root.dataset.anView = state.view;
     root.dataset.anPanel = state.panel;
     const section = state.view === 'section';
@@ -100,10 +90,7 @@ function mount() {
     root.dataset.anInspection=String(section&&state.panel==='workshop'&&!!root.querySelector('[data-workshop-tab=chassis][aria-selected=true],[data-workshop-tab=mechanics][aria-selected=true],[data-workshop-tab=condition][aria-selected=true],[data-workshop-tab=tuning][aria-selected=true]')); 
     root.dataset.anAppearance = String(section && state.panel === 'workshop' && !!root.querySelector('[data-workshop-tab="appearance"][aria-selected="true"]'));
     refinements.refresh();
-    service.refresh();
-    const backDescription = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
-    back.setAttribute('aria-label', backDescription);
-    back.querySelector('.an-back-label').textContent = 'Volver';
+    back.querySelector('.an-back-label').textContent = photo ? 'Volver al taller' : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
     content.hidden = !section;
     content.inert = !section;
     homePlate.hidden = section && !modes;
@@ -115,7 +102,6 @@ function mount() {
   function onBack() {
     if (!intro.hidden) { closeIntro('skip'); return; }
     if (root.dataset.anPhoto === 'true') {
-      if(game.workshop.collectionInspectionReturn&&game.closeCollectionInspection?.())return;
       root.querySelector('[data-workshop-tab="appearance"]').click();
       root.querySelector('[data-workshop-tab="photo"]').focus({ preventScroll: true });
       return;
@@ -130,7 +116,6 @@ function mount() {
     }
   }
   function onPanel(panel) {
-    if(panel==='workshop')root.querySelector('[data-workshop-tab=condition]')?.click();
     sectionStep = 'modes';
     sections?.refresh();
     if (panel === 'tests') sections?.ensureTestSelected();
@@ -152,18 +137,15 @@ function mount() {
   }
   function frameWorkshop(workshop, instant=false) {
     if (!workshop?.camera || !workshop.car) return;
-    if(workshop.collectionFocusActive){workshop.camera.clearViewOffset();return;}
     const camera=workshop.camera, rect=workshop.canvas.getBoundingClientRect();
     const appearance=root.dataset.anAppearance==='true', modes=root.dataset.anStep==='modes' && state.view==='section';
     if(state.view!=='home' && !appearance && !modes){camera.clearViewOffset();return;}
     camera.fov=rect.width/rect.height<1.5?54:46;
     const reservedLeftPx=appearance ? content.getBoundingClientRect().right-rect.left+Math.max(24,rect.width*.02) : undefined;
-    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)?-.9:-.82,pitch:.13,reservedLeftPx});
-    // Keep the PC overview in the clear aisle before the foreground posts.
-    if(!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)){pose.radius=Math.min(pose.radius,8.75);pose.target=[0,1.05,0];}
+    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:-.82,pitch:.13,reservedLeftPx});
     camera.setViewOffset(rect.width,rect.height,...pose.offset,rect.width,rect.height);
     workshop.hotspots.general=pose;
-    const reduced=(document.body.classList.contains('v6-reduce-motion') || document.body.classList.contains('an-v7-reduce-motion')) || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced=document.body.classList.contains('v6-reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
     workshop.focus('general',instant||reduced);
   }
   function configureWorkshop(workshop) {
@@ -202,7 +184,7 @@ function mount() {
   async function getIntroManifest() {
     if (introManifest) return introManifest;
     if (!introFetch) {
-      const url = new URL('../../assets/intro/manifest.json', import.meta.url);
+      const url = new URL('../../assets/intro/manifest.json?v=447f5621a62b982c', import.meta.url);
       introFetch = fetch(url).then(response => { if (!response.ok) throw new Error('Intro no disponible'); return response.json(); })
         .then(manifest => {
           if (!manifest.src || !['animatic','final'].includes(manifest.kind)) throw new Error('Manifiesto de intro inválido');
@@ -214,7 +196,6 @@ function mount() {
     return introFetch;
   }
   async function playIntro({ automatic = false } = {}) {
-    if (automatic && (globalThis.__asfaltoV7Experience?.preferences?.().reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     if (state.view === 'closed' || !intro.hidden || document.hidden) return;
     const request = ++introRequest;
     focusBeforeIntro = document.activeElement;
@@ -236,7 +217,8 @@ function mount() {
       clearTimeout(loadTimer);
       video.poster = manifest.poster;
       video.volume = .7;
-      intro.querySelector('.an-intro-kind').textContent = manifest.finalVideoAvailable ? 'Asfalto Nacional' : 'Asfalto Nacional · Animática';
+      intro.querySelector('.an-intro-kind').textContent = manifest.finalVideoAvailable ? '' : 'Asfalto Nacional · Animática';
+      intro.querySelector('.an-intro-kind').hidden = !!manifest.finalVideoAvailable;
       session = createIntroSession({ video, automatic, onFinish: reason => closeIntro(reason), onBlocked: ({ muted }) => {
         resume.textContent = muted ? 'Activar sonido' : 'Reproducir con sonido ▷';
         resume.hidden = false; notice.hidden = true; resume.focus();
@@ -282,7 +264,7 @@ function mount() {
     else void session?.resume();
   });
 
-  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; }, dispose() { vehicleLabels.dispose(); sections?.dispose(); refinements.dispose(); service.dispose(); } };
+  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; } };
   globalThis.__asfaltoMenuPresentation = api;
   configureWorkshop(game.workshop);
   window.addEventListener('resize', () => { if (state.view === 'home') configureWorkshop(game.workshop); });
@@ -295,7 +277,7 @@ function mount() {
 }
 
 async function loadComponents(root) {
-  const url = new URL('../../assets/menu/manifest.json', import.meta.url);
+  const url = new URL('../../assets/menu/manifest.json?v=21dcd571ee30ec7e', import.meta.url);
   try {
     const response = await fetch(url);
     if (!response.ok) return;
