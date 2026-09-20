@@ -3,13 +3,14 @@ import {waitForSignal} from './abortable.mjs';
 /** A bounded operation owns its cancellation, including callers which ignore a signal.
  * Aborting settles the consumer immediately; the producer must check the same signal
  * before publishing resources. No retry is implicit. */
-export async function boundedOperation(run,{signal,timeoutMs=60000,label='Carga'}={}){
+export async function boundedOperation(run,{signal,timeoutMs=60000,label='Carga',onLateValue}={}){
  signal?.throwIfAborted();
  const controller=new AbortController();
  const abort=()=>controller.abort(signal.reason);
  signal?.addEventListener('abort',abort,{once:true});
  const timer=setTimeout(()=>controller.abort(new DOMException(label+' excedió el tiempo de espera','TimeoutError')),timeoutMs);
- try{return await waitForSignal(Promise.resolve().then(()=>{controller.signal.throwIfAborted();return run(controller.signal);}),controller.signal);}
+ const producer=Promise.resolve().then(()=>{controller.signal.throwIfAborted();return run(controller.signal);}).then(value=>{if(controller.signal.aborted){onLateValue?.(value);throw controller.signal.reason;}return value;});
+ try{return await waitForSignal(producer,controller.signal);}
  finally{clearTimeout(timer);signal?.removeEventListener('abort',abort);}
 }
 
@@ -21,7 +22,7 @@ export function createDemandLoader(load,{timeoutMs=60000,label='Carga'}={}){
   signal?.throwIfAborted();if(state==='ready')return Promise.resolve(value);
   if(!operation){
    const epoch=++generation,controller=new AbortController();state='loading';error=null;
-   const promise=boundedOperation(s=>load({signal:s}),{signal:controller.signal,timeoutMs,label}).then(result=>{
+   const promise=boundedOperation(s=>load({signal:s}),{signal:controller.signal,timeoutMs,label,onLateValue:result=>result?.dispose?.()}).then(result=>{
     if(epoch!==generation||controller.signal.aborted){result?.dispose?.();throw controller.signal.reason||new DOMException('Carga obsoleta','AbortError');}
     value=result;state='ready';return result;
    },reason=>{if(epoch===generation){state=reason?.name==='AbortError'?'aborted':'failed';error=String(reason?.message||reason);}throw reason;}).finally(()=>{if(operation?.epoch===epoch)operation=null;});

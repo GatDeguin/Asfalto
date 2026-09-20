@@ -10,3 +10,17 @@ test('timeout and synchronous exceptions do not leave consumers pending',async()
  const loader=createDemandLoader(()=>new Promise(()=>{}),{timeoutMs:5});await assert.rejects(loader.request(),{name:'TimeoutError'});assert.equal(loader.diagnostics().state,'failed');assert.equal(loader.diagnostics().consumers,0);
  await assert.rejects(boundedOperation(()=>{throw new Error('decode');}),/decode/);
 });
+
+test('a late owned result is disposed once after timeout, then retry succeeds',async()=>{
+ let finish,disposed=0,calls=0;
+ const loader=createDemandLoader(()=>++calls===1?new Promise(r=>finish=r):Promise.resolve(42),{timeoutMs:5});
+ await assert.rejects(loader.request(),{name:'TimeoutError'});
+ finish({dispose(){disposed++;}});await new Promise(setImmediate);
+ assert.equal(disposed,1);assert.equal(await loader.request(),42);loader.dispose();assert.equal(disposed,1);
+});
+test('a late owned result is disposed once after the last consumer aborts',async()=>{
+ let finish,disposed=0;const c=new AbortController();
+ const loader=createDemandLoader(()=>new Promise(r=>finish=r));const pending=loader.request({signal:c.signal});await Promise.resolve();
+ c.abort();await assert.rejects(pending);finish({dispose(){disposed++;}});await new Promise(setImmediate);
+ loader.dispose();assert.equal(disposed,1);
+});
