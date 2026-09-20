@@ -1,3 +1,4 @@
+import {preparePrograms} from './shader-preparation.mjs';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';
@@ -48,6 +49,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const T = workshop.T;
   const { scene, renderer, workshopRoot: root, car } = workshop;
   const owned = [], originals = [];
+  const lifetime=new AbortController();
   const vertexColors = {meshes:0,vertices:0,triangles:0};
   configureSurfaceRelief(T);
   let reflector = null;
@@ -62,6 +64,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const previousEnvironmentIntensity = scene.environmentIntensity;
   const previousEnvironmentRotation = scene.environmentRotation?.clone();
   const disposeOwned = () => {
+    lifetime.abort(new DOMException('Taller cerrado','AbortError'));
     probeGuard.dispose();
     globalThis.window?.removeEventListener?.('chevy:vehicle-config',invalidateContact);contactShadow?.dispose();contactShadow=null;
     collectionDisposed=true;collection?.dispose();collection=null;collectionLight.removeFromParent();collectionLight.dispose?.();
@@ -261,6 +264,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   let generator;
   try {
     car.visible = false;
+    const previousTarget=renderer.getRenderTarget();
+    try{renderer.setRenderTarget(cubeTarget);await preparePrograms(renderer,scene,probe.children[0],scene,{signal:lifetime.signal});lifetime.signal.throwIfAborted();}finally{renderer.setRenderTarget(previousTarget);}
     room = probeGuard.capture(()=>{
       probe.update(renderer, scene);
       generator = new T.PMREMGenerator(renderer);
@@ -275,13 +280,17 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   paint.forEachMaterial(m => {m.envMap = room.texture; m.needsUpdate = true;});
   collection?.setEnvironment(room.texture);
   const reflectedCarPosition=new T.Vector3();car.getWorldPosition(reflectedCarPosition);
-  function refreshRoomReflection() {
-    if(probeGuard.disabled()){car.getWorldPosition(reflectedCarPosition);probeDirty=false;return;}
+  let reflectionPreparing=false;
+  async function refreshRoomReflection() {
+    if(reflectionPreparing)return;reflectionPreparing=true;
+    if(probeGuard.disabled()){car.getWorldPosition(reflectedCarPosition);probeDirty=false;reflectionPreparing=false;return;}
     const cube=new T.WebGLCubeRenderTarget(256,{type:T.HalfFloatType}),camera=new T.CubeCamera(.1,45,cube),pmrem=new T.PMREMGenerator(renderer);
     car.getWorldPosition(camera.position);camera.position.y+=1.15;scene.add(camera);
     const visible=car.visible, floorVisible=reflector?.visible, detailVisible=detailPass.group.visible, contactVisible=contactShadow?.plane.visible;
     try {
       car.visible=false;if(reflector)reflector.visible=false;if(contactShadow)contactShadow.plane.visible=false;detailPass.group.visible=true;
+      const previousTarget=renderer.getRenderTarget();
+      try{renderer.setRenderTarget(cube);await preparePrograms(renderer,scene,camera.children[0],scene,{signal:lifetime.signal});lifetime.signal.throwIfAborted();}finally{renderer.setRenderTarget(previousTarget);}
       const next=probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);});
       paint.forEachMaterial(m=>{m.envMap=next.texture;m.needsUpdate=true;});
       workshop.vehiclePresentation?.setEnvironment(next.texture);
@@ -291,7 +300,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       car.traverse(object=>{for(const m of Array.isArray(object.material)?object.material:[object.material])if(m?.envMap===room.texture){m.envMap=next.texture;m.needsUpdate=true;}});
       owned.splice(owned.indexOf(room),1);room.dispose();room=next;owned.push(next);
       car.getWorldPosition(reflectedCarPosition);probeDirty=false;
-    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();}
+    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();reflectionPreparing=false;}
   }
 
   // Dry porous concrete uses its rough PBR response. A full-room mirror overlay
@@ -299,7 +308,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   contactShadow=createWorkshopContactShadow(T,{renderer,scene,car,floorY:floorBounds.isEmpty()?.18:floorBounds.max.y,getRevision:()=>workshop.vehiclePresentation?.root.uuid||'initial'});
   globalThis.window?.addEventListener?.('chevy:vehicle-config',invalidateContact);
   const presentation = {
-    configure,prepareCollection,
+    configure,prepareCollection,isPreparing:()=>reflectionPreparing,
     setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);workshop.cameraConstraint?.refresh();probeDirty=true;return architecture.diagnostics();},
     invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
     setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
@@ -316,7 +325,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       detailPass.update(dt,{reducedMotion:globalThis.document?.body?.classList.contains('v6-reduce-motion')||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
       staticBatches.update(workshop.camera);
       contactShadow.update();
-      if(workshop.camera&&!workshop.drag&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))refreshRoomReflection();
+      if(workshop.camera&&!workshop.drag&&!reflectionPreparing&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))void refreshRoomReflection().catch(error=>{probeDirty=false;if(!lifetime.signal.aborted)console.error('No se pudo actualizar el reflejo del taller',error);});
     },
     diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:!!room.texture,roomProbe:probeGuard.diagnostics(),planarReflection:!!reflector,textures:textureTasks.size,
       surfaceRelief:{...surfaceReliefDiagnostics(),materials:[...materials.values()].filter(m=>m.asfaltoHeightTexture).length,heightMaps:new Set([...materials.values()].map(m=>m.asfaltoHeightTexture).filter(Boolean)).size},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},

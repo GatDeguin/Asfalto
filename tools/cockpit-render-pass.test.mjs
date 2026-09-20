@@ -94,7 +94,7 @@ function compileFixture(){
   compiled.push({meshes,lights,extraLights,targetScene,background:targetScene.background,environment:targetScene.environment,cameraMask:camera.layers.mask,autoClear:f.renderer.autoClear,shadowAutoUpdate:f.renderer.shadowMap.autoUpdate});
   const gate=deferred();pending.push(gate);return gate.promise;
  };
- const pass=createCockpitRenderPass({...f,overlays:[f.guide]});
+ const pass=createCockpitRenderPass({...f,overlays:[f.guide],compilePrograms:(renderer,...args)=>renderer.compileAsync(...args)});
  return {...f,own,hidden,offLayer,pending,compiled,pass};
 }
 function assertRestored(f,background){

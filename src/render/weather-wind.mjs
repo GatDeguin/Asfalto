@@ -1,11 +1,11 @@
+import {installMaterialHook} from './material-hook.mjs';
 /** One world-space wind field shared by precipitation, surface waves and vegetation. */
 export function createWeatherWind(THREE){
   const uniforms={uAnWindTime:{value:0},uAnWindVector:{value:new THREE.Vector3(1.2,0,.36)},uAnWindGust:{value:1}};
   const restores=new Map(),target=new THREE.Vector3();let initialized=false;
   function bind(root){root?.traverse(mesh=>{if(!mesh.isMesh)return;for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
     const config=material?.userData?.asfaltoWind;if(!config||restores.has(material))continue;
-    const compile=material.onBeforeCompile,key=material.customProgramCacheKey;
-    material.onBeforeCompile=function(shader,renderer){compile?.call(this,shader,renderer);Object.assign(shader.uniforms,uniforms);
+    const patch=function(shader,renderer){Object.assign(shader.uniforms,uniforms);
       shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
 uniform float uAnWindTime,uAnWindGust;uniform vec3 uAnWindVector;`);
       shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
@@ -21,8 +21,7 @@ vec3 anWorldBend=uAnWindVector*${Math.max(0,Number(config.maxBendM)||0).toFixed(
 vec3 anLocalBend=vec3(dot(anWorldBend,modelMatrix[0].xyz),dot(anWorldBend,modelMatrix[1].xyz),dot(anWorldBend,modelMatrix[2].xyz))/vec3(dot(modelMatrix[0].xyz,modelMatrix[0].xyz),dot(modelMatrix[1].xyz,modelMatrix[1].xyz),dot(modelMatrix[2].xyz,modelMatrix[2].xyz));
 transformed+=anLocalBend/max(1.,sqrt(anTreeScale));`);
     };
-    material.customProgramCacheKey=function(){return(key?.call(this)||'')+'|an-common-wind-v1-'+[config.heightM,config.maxBendM,config.baseY||0].join('-');};material.needsUpdate=true;
-    restores.set(material,()=>{material.onBeforeCompile=compile;material.customProgramCacheKey=key;material.needsUpdate=true;});
+    restores.set(material,installMaterialHook(material,'weather-wind',{compile:patch,key:()=> '|an-common-wind-v1-'+[config.heightM,config.maxBendM,config.baseY||0].join('-')}));
   }});}
   return{uniforms,bind,
     update({dt,time,environment={},speed=1.2}){if(!(dt>0))return;

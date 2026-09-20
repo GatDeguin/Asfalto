@@ -1,3 +1,4 @@
+import {installMaterialHook} from './material-hook.mjs';
 import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=cab994669e0c13cd';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
 import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=d2912fb3388fe938';
@@ -28,11 +29,9 @@ return (sin(q.x*.23+q.y*.08-t*.68+broadPhase)*.019
 +sin(q.x*1.9-q.y*.72-t*1.4+localPhase*1.3)*.007*shortLod
 +sin(q.x*4.7+q.y*2.1-t*2.+localPhase)*.002*microLod+anRainHeight(p)*uAnFxRain*shortLod;}
 `;
-function patchSurface(material, uniforms, kind, transmissionChunk) {
+export function patchSurface(material, uniforms, kind, transmissionChunk) {
   const water=kind==='water',ground=kind==='ground',fogOnly=kind==='fog';
-  const compile=material.onBeforeCompile,cache=material.customProgramCacheKey;
-  material.onBeforeCompile=function(shader,renderer){
-    compile?.call(this,shader,renderer);
+  const patch=function(shader,renderer){
     // Depth/distance passes inherit this hook through vegetation wrappers but
     // do not calculate transformedNormal. Preserve the upstream alpha/wind
     // hooks while leaving lit surface weather out of those shadow shaders.
@@ -140,9 +139,7 @@ anFogColor=linearToOutputTexel(vec4(anSkyColor,1.)).rgb;
 gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 #endif`);
   };
-  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
-  material.needsUpdate=true;
-  return()=>{material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
+  return installMaterialHook(material,'weather-surface',{compile:patch,key:()=> '|an-fx-surface-v12-bank-reflection-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none')});
 }
 
 /** Owns only replacement water materials and shader hooks, never source maps/geometry. */
