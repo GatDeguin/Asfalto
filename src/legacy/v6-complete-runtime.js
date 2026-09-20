@@ -311,13 +311,17 @@ async function prepareExistingGame(options){
 }
 async function configureExistingGameReady({track,weather,skyId=profile.lastSky||'clear',mode,laps,difficulty},transaction){
  const check=()=>{if(!transaction.isCurrent())throw new DOMException('Carga cancelada','AbortError');};check();transaction.stage('Esperando al cockpit…');
+ const selectedTrack=normalizeTrack(track);
+ // Publish only the current intent before the cold host reads its initial route.
+ // A canceled request never restores this field over its successor.
+ reflectValue(['#race-circuit','#race-track','#track-select','#circuit-select'],selectedTrack);
  if(['light-snow','heavy-snow'].includes(weather)&&!['cuesta_lipan','paso_garibaldi'].includes(track)){toast('La nieve está disponible en Garibaldi y Lipán. Elegí otro clima para esta ruta.','warn');return false}
  const cockpit=await transaction.wait(waitForExistingGameReady(180000,{signal:transaction.signal,onStage:transaction.stage}));check();if(!cockpit)throw new Error('El cockpit no está listo. Podés reintentar.');
  transaction.stage('Preparando exterior del auto seleccionado…');
  const selection=await workshop.ensureRaceVehicleSelection();await selection.ensureApplied(cockpit,{signal:transaction.signal});check();
  transaction.stage('Auto seleccionado listo; preparando circuito…');
- const previousTrack=persistedTrack(cockpit.raceGetState?.()?.track?.id||profile.lastRoute);let selectedTrack;
- try{selectedTrack=normalizeTrack(track);transaction.stage('Cargando terreno, asfalto y entorno…');await cockpit.raceSelectCircuit(selectedTrack,{skyId,weather,signal:transaction.signal});check();}catch(error){if(transaction.signal.aborted)throw error;reflectValue(['#race-circuit','#race-track','#track-select','#circuit-select'],previousTrack);for(const selector of ['#v6-drive-route','#v6-comp-track'])reflectValue([selector],previousTrack);toast(`No se pudo cargar el circuito. ${String(error?.message||error)}`,'warn');return false}
+ const previousTrack=persistedTrack(cockpit.raceGetState?.()?.track?.id||profile.lastRoute);
+ try{transaction.stage('Cargando terreno, asfalto y entorno…');await cockpit.raceSelectCircuit(selectedTrack,{skyId,weather,signal:transaction.signal});check();}catch(error){if(transaction.signal.aborted)throw error;reflectValue(['#race-circuit','#race-track','#track-select','#circuit-select'],previousTrack);for(const selector of ['#v6-drive-route','#v6-comp-track'])reflectValue([selector],previousTrack);toast(`No se pudo cargar el circuito. ${String(error?.message||error)}`,'warn');return false}
  reflectValue(['#race-circuit','#race-track','#track-select','#circuit-select'],selectedTrack);
  // raceSelectCircuit commits the selected sky/weather in the same scene transaction.
  check();transaction.stage('Confirmando controles y sesión…');
