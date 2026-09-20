@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createEventOwner} from '../src/runtime/event-owner.mjs';
+test('session disposal removes handlers and releases its registry',()=>{const target=new EventTarget(),owner=createEventOwner();let calls=0;owner.listen(target,'tick',()=>calls++);target.dispatchEvent(new Event('tick'));owner.dispose();owner.dispose();target.dispatchEvent(new Event('tick'));assert.equal(calls,1);assert.deepEqual(owner.diagnostics(),{disposed:true,listeners:0});assert.throws(()=>owner.listen(target,'x',()=>{}),/disposed/);});
