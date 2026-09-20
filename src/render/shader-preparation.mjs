@@ -3,6 +3,7 @@ import {waitForAnimationFrame} from '../runtime/abortable.mjs';
 import {yieldToMain} from '../runtime/cooperative-work.mjs';
 import {auditPreparation,auditProgramOwners} from './shader-preparation-audit.mjs';
 const emptyScenes=new WeakMap();
+const diagnosticsEnabled=new URLSearchParams(globalThis.location?.search).get('qa')==='1';
 const rectangle=()=>({isVector4:true,x:0,y:0,z:0,w:0,copy(v){this.x=v.x;this.y=v.y;this.z=v.z;this.w=v.w;return this;}});
 
 function rendererState(renderer){return {viewport:renderer.getViewport?.(rectangle()),scissor:renderer.getScissor?.(rectangle()),scissorTest:renderer.getScissorTest?.(),target:renderer.getRenderTarget(),face:renderer.getActiveCubeFace?.()||0,mip:renderer.getActiveMipmapLevel?.()||0,tone:renderer.toneMapping,output:renderer.outputColorSpace,clip:renderer.clippingPlanes,localClip:renderer.localClippingEnabled,shadows:renderer.shadowMap.enabled,shadowType:renderer.shadowMap.type,shadowAuto:renderer.shadowMap.autoUpdate,shadowDirty:renderer.shadowMap.needsUpdate,auto:renderer.autoClear,info:renderer.info.autoReset};}
@@ -27,7 +28,7 @@ export function preparePrograms(renderer,scene,camera,targetScene=scene,{signal,
  const visit=node=>{if(!(node.isMesh||node.isPoints||node.isLine||node.isSprite)||!node.material)return;objects.push(node);resources.add(node.geometry);revisions.push({node,geometry:node.geometry,material:node.material,materials:Array.isArray(node.material)?node.material.slice():[node.material]});for(const m of Array.isArray(node.material)?node.material:[node.material]){resources.add(m);if(m.transmission>0)transmission=true;}};
  if(scene.isScene)scene.traverseVisible(node=>{if(node.layers.test(camera.layers))visit(node);});else scene.traverse(visit);
  let empty=emptyScenes.get(renderer);if(!empty){empty=new targetScene.constructor();emptyScenes.set(renderer,empty);}
- const invalidate=()=>{invalidated=true;};
+ const invalidate=event=>{invalidated=true;if(diagnosticsEnabled)globalThis.__asfaltoInvalidatedPreparation={type:event.target?.type||event.target?.constructor?.name,name:event.target?.name||'',at:performance.now()};};
  for(const resource of resources)resource?.addEventListener('dispose',invalidate);
  return boundedOperation(async active=>{
   const validate=()=>{active.throwIfAborted();if(invalidated||renderer.gpuOwnerDiagnostics?.().disposed)throw new DOMException('La escena cambió durante la preparación','AbortError');};

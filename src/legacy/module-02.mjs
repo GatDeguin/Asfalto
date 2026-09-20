@@ -1,3 +1,5 @@
+import {yieldToMain} from '../runtime/cooperative-work.mjs';
+import {inflateGzipBytes} from '../runtime/inflate.mjs';
 import {createOwnedRenderer} from '../runtime/owned-renderer.mjs';
 import {createContextRecovery} from '../runtime/context-recovery.mjs';
 import {disposeAll} from '../runtime/dispose-all.mjs';
@@ -1538,8 +1540,7 @@ async function gunzipBase64(base64) {
     }
   }
   const compressed = base64ToBytes(base64);
-  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  return inflateGzipBytes(compressed,{timeoutMs:45000});
 }
 
 async function gunzipBase64ToText(base64) {
@@ -8157,7 +8158,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
   }
 
   contextRecovery=createContextRecovery({pause:()=>pause({reason:'context-lost'}),
-    prepare:async()=>{visualWarmupCache.invalidate();await globalThis.__cockpit.prepareRendering();},
+    // Browser-dispatched listeners can checkpoint microtasks between callbacks.
+    // Let all compositor restoration listeners finish before capturing their targets.
+    prepare:async()=>{await yieldToMain();visualWarmupCache.invalidate();await globalThis.__cockpit.prepareRendering();},
     onState({state,error}){contextLost=state!=='ready';ui.live.textContent=state==='ready'?'Contexto gráfico restaurado. Podés reanudar.':state==='failed'?'No se pudo restaurar la imagen: '+error+'. Reanudar vuelve a intentarlo.':'La carrera está pausada mientras se recupera el contexto gráfico.';showMessage(ui.live.textContent,{duration:state==='ready'?1600:0,kind:state==='ready'?'success':'danger'});},
   });
   function onContextLost(event) {event.preventDefault();contextRecovery.lost();}
