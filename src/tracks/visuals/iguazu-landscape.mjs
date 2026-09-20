@@ -1,5 +1,5 @@
 import {yieldToMain} from '../../runtime/cooperative-work.mjs';
-import {waterfallCameraProfile} from './regional-waterfall-camera.mjs?v=4147e1c291a4f463';
+import {waterfallCameraProfileAsync} from './regional-waterfall-camera.mjs?v=4147e1c291a4f463';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
 import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=457a8af4bf40a703';
@@ -68,7 +68,7 @@ export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.
   const fernOwner=new T.Group();fernOwner.name='ASFALTO_FERN_RESOURCE_OWNER';fernOwner.visible=false;
   for(const geometry of new Set([...fernForms,...replacedFernSources]))fernOwner.add(new T.Mesh(geometry,fernMaterial));root.add(fernOwner);
   const points=[{key:'portal-verde',sM:120},{key:'selva',sM:4850}].map(p=>{const q=query.sample(p.sM);return{...p,position:q.position.map((v,i)=>v-q.frame.tangent[i]*10+(i===1?4:0)),target:q.position.map((v,i)=>v+q.frame.tangent[i]*80+(i===1?1.8:0)),fov:58};});
-  points.push(waterfallCameraProfile(T,root,{query,falls,heightAt:groundAt}));
+  points.push(await waterfallCameraProfileAsync(T,root,{query,falls,heightAt:groundAt,signal}));
   root.userData.asfaltoRegionalCameras={id:'cataratas_iguazu',views:points};root.userData.asfaltoWeather={snowLineM:1500,valleyFloorM:15};root.userData.asfaltoIguazu={sourceVegetationParts:vegetationParts,instancedBatches:batches,templateParts:templates.length,sourceGeometryPreserved:true,fernReplacements};
   root.userData.asfaltoIguazu.surfaces=await prepareIguazuSurfaces(root,{THREE:T,signal});
   root.userData.asfaltoRegionalReview=regionalReviewPlan({id:'cataratas_iguazu',query,lengthM:query.lengthM});

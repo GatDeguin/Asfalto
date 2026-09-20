@@ -10,3 +10,6 @@ test('cooperative terrain skirts preserve the complete visual mesh',async()=>{co
 
 import {findWaterfallImpact,findWaterfallImpactAsync} from '../src/tracks/visuals/waterfall-impact.mjs';
 test('cooperative waterfall contacts preserve exact basin intersections',async()=>{const fall=new THREE.Mesh(new THREE.PlaneGeometry(15,30,10,10));fall.position.y=10;fall.updateMatrixWorld();const river=new THREE.Mesh(new THREE.PlaneGeometry(80,80,10,10));river.rotation.x=-Math.PI/2;river.name='basin';river.updateMatrixWorld();const result=findWaterfallImpact(THREE,fall,[river]);assert(result.impactSpanM>0);assert.deepEqual(await findWaterfallImpactAsync(THREE,fall,[river]),result);});
+
+import {waterfallCameraProfile,waterfallCameraProfileAsync} from '../src/tracks/visuals/regional-waterfall-camera.mjs';
+test('yielding camera sightline search preserves the exact authored photographic pose',async()=>{const root=new THREE.Group(),falls=[];for(let i=0;i<8;i++){const m=new THREE.Mesh(new THREE.PlaneGeometry(35,80),new THREE.MeshBasicMaterial());m.name='Fall_'+i;m.position.set(0,40,i*30);falls.push(m);root.add(m);}const query={project:p=>({sM:p[2]}),sample:s=>({position:[450,0,s],frame:{left:[1,0,0]}})},options={query,falls,heightAt:()=>0};assert.deepEqual(await waterfallCameraProfileAsync(THREE,root,options),waterfallCameraProfile(THREE,root,options));});
