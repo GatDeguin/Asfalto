@@ -1,3 +1,4 @@
+import {runCooperatively} from '../../runtime/cooperative-work.mjs';
 // Connected, visual-only relief. X/Z, road envelope, shore and sector borders
 // remain fixed. A hidden owner retains the untouched imported buffers for disposal.
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
@@ -9,7 +10,7 @@ function noise(x,z){
   return(h(ix,iz)*(1-u)+h(ix+1,iz)*u)*(1-v)+(h(ix,iz+1)*(1-u)+h(ix+1,iz+1)*u)*v;
 }
 
-export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,region='dos_lagos',maxTriangles=280000,targetEdgeM=32,nearEdgeM=targetEdgeM,roadMarginM=20}={}){
+function* refineTerrainSteps(THREE,mesh,{roadField,waterLevel=-Infinity,region='dos_lagos',maxTriangles=280000,targetEdgeM=32,nearEdgeM=targetEdgeM,roadMarginM=20}={}){
   if(!mesh?.isMesh||/^COLLISION_/i.test(mesh.name)||!mesh.geometry?.attributes?.position||!roadField)return null;
   if(mesh.userData.asfaltoTerrainRefinement)return mesh.userData.asfaltoTerrainRefinement;
   const source=mesh.geometry,p=source.attributes.position,index=source.index,color=source.attributes.color;
@@ -34,7 +35,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
     }
     return{x,y,z,baseY:y,sourceY,color:c,boundary,weight:road*shore,slope:0,roadDistanceM:q.distanceM};
   };
-  for(let i=0;i<p.count;i++){
+  for(let i=0;i<p.count;i++){if((i&255)===0)yield;
     point.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);
     const key=[point.x,point.y,point.z].map(v=>Math.round(v*1000)).join(':');
     if(!lookup.has(key)){
@@ -43,27 +44,27 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
     }
     ids[i]=lookup.get(key);
   }
-  for(let i=0;i<(index?.count||p.count);i+=3){
+  for(let i=0;i<(index?.count||p.count);i+=3){if(i%768===0)yield;
     const a=ids[index?index.getX(i):i],b=ids[index?index.getX(i+1):i+1],c=ids[index?index.getX(i+2):i+2];
     if(a!==b&&b!==c&&a!==c)triangles.push(a,b,c);
   }
-  function topology(){
+  function* topology(){
     const edges=new Map(),neighbors=vertices.map(()=>new Set());
-    for(let i=0;i<triangles.length;i+=3)for(let j=0;j<3;j++){
+    for(let i=0;i<triangles.length;i+=3)for(let j=0;j<3;j++){if(i%768===0&&j===0)yield;
       const a=triangles[i+j],b=triangles[i+(j+1)%3],key=edgeKey(a,b);
       if(edges.has(key))edges.get(key).count++;else edges.set(key,{a,b,count:1});
       neighbors[a].add(b);neighbors[b].add(a);
     }
     return{edges,neighbors};
   }
-  let graph=topology();
+  let graph=yield* topology();
   for(const e of graph.edges.values())if(e.count===1){vertices[e.a].boundary=true;vertices[e.b].boundary=true;}
   // A weighted local plane estimate removes the angular height residual while
   // leaving a tilted planar slope unchanged, unlike averaging raw heights.
-  function relax(iterations){
+  function* relax(iterations){
     const next=new Float64Array(vertices.length);
     for(let pass=0;pass<iterations;pass++){
-      for(let i=0;i<vertices.length;i++){
+      for(let i=0;i<vertices.length;i++){if((i&255)===0)yield;
         const v=vertices[i];next[i]=v.y;if(v.boundary||v.weight===0)continue;
         let sw=0,sx=0,sz=0,sxx=0,sxz=0,szz=0,sy=0,sxy=0,szy=0,min=Infinity,max=-Infinity;
         for(const j of graph.neighbors[i]){
@@ -81,7 +82,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
       for(let i=0;i<vertices.length;i++)vertices[i].y=next[i];
     }
   }
-  relax(12);
+  yield* relax(12);
   for(let pass=0;pass<4;pass++){
     const capacity=Math.floor((maxTriangles-triangles.length/3)/2);if(capacity<=0)break;
     const candidates=[];
@@ -94,7 +95,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
       m.baseY=(a.baseY+b.baseY)/2;midpoints.set(key,vertices.length);vertices.push(m);
     }
     const out=[];
-    for(let i=0;i<triangles.length;i+=3){
+    for(let i=0;i<triangles.length;i+=3){if(i%768===0)yield;
       const a=triangles[i],b=triangles[i+1],c=triangles[i+2],ab=midpoints.get(edgeKey(a,b)),bc=midpoints.get(edgeKey(b,c)),ca=midpoints.get(edgeKey(c,a));
       const mask=(ab!==undefined?1:0)|(bc!==undefined?2:0)|(ca!==undefined?4:0);
       if(mask===0)out.push(a,b,c);
@@ -106,7 +107,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
       else if(mask===5)out.push(a,ab,ca,ab,b,c,ab,c,ca);
       else out.push(a,ab,ca,ab,b,bc,ca,bc,c,ab,bc,ca);
     }
-    triangles.length=0;for(const value of out)triangles.push(value);graph=topology();relax(4);
+    triangles.length=0;for(const value of out)triangles.push(value);graph=yield* topology();yield* relax(4);
   }
   // Source hairpin terraces need a physical smoothing radius. One-ring
   // relaxation shrinks to centimetres/metres as a sector is tessellated and
@@ -120,7 +121,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
       // Equal-area cell centroids keep dense source tessellation from dominating
       // the fit and bound work independently of imported vertex density.
       const samples=new Map();for(const [key,ids]of grid){let x=0,y=0,z=0;for(const j of ids){x+=vertices[j].x;y+=vertices[j].y;z+=vertices[j].z;}samples.set(key,{x:x/ids.length,y:y/ids.length,z:z/ids.length});}
-      for(let i=0;i<vertices.length;i++){
+      for(let i=0;i<vertices.length;i++){if((i&255)===0)yield;
         const v=vertices[i];next[i]=v.y;
         const q=roadField(v.x,v.z),weight=smooth((q.distanceM-(q.widthM||8)/2-roadMarginM)/24)*(1-smooth((q.distanceM-350)/300));
         if(v.boundary||weight===0)continue;
@@ -141,7 +142,7 @@ export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,
   // Sparse incised drainage, elongated along the downhill profile. No uniform
   // positive noise inflation: a flat terrace stays flat and the silhouette stays authored.
   const positions=[],colors=[];let maxHeightChangeM=0,protectedVertices=0;
-  for(let i=0;i<vertices.length;i++){
+  for(let i=0;i<vertices.length;i++){if((i&255)===0)yield;
     const v=vertices[i];let borderFade=v.boundary?0:1;
     if(borderFade)for(const j of graph.neighbors[i])if(vertices[j].boundary){borderFade=.2;break;}
     const slope=smooth((v.slope-.15)/.65),u=(v.x*.78+v.z*.62)/95,w=(v.z*.78-v.x*.62)/340;
@@ -178,3 +179,6 @@ export function joinTerrainTiles(THREE,root,meshes){
   if(colorSize)geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,colorSize));
   geometry.computeVertexNormals();const joined=new THREE.Mesh(geometry,meshes[0].material);joined.name='ASFALTO_CONTINUOUS_TERRAIN';joined.receiveShadow=true;root.add(joined);return joined;
 }
+
+export function refineTerrainSurface(...args){const steps=refineTerrainSteps(...args);let next;do{next=steps.next();}while(!next.done);return next.value;}
+export function refineTerrainSurfaceAsync(THREE,mesh,options={}){return runCooperatively(refineTerrainSteps(THREE,mesh,options),{signal:options.signal});}

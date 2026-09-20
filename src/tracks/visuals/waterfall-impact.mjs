@@ -1,3 +1,4 @@
+import {runCooperatively} from '../../runtime/cooperative-work.mjs';
 // Intersect a delivered curtain with actual horizontal basin triangles, not their bounding boxes.
 function triangles(T,mesh){
  const g=mesh.geometry,p=g?.attributes?.position,index=g?.index,rows=[];if(!p)return rows;
@@ -12,12 +13,14 @@ function clipSegment(a,b,t){
  }
  return [a.map((v,i)=>v+(b[i]-v)*lo),a.map((v,i)=>v+(b[i]-v)*hi)];
 }
-export function findWaterfallImpact(T,fall,riverMeshes){
+function* waterfallImpactSteps(T,fall,riverMeshes){
+ let work=0;
  const fallTriangles=triangles(T,fall),sum=[0,0,0],sources=new Set(),segments=[],receivers=new Map();let length=0;
  for(const river of riverMeshes)for(const water of triangles(T,river)){
   const waterY=(water[0][1]+water[1][1]+water[2][1])/3;if(water.some(p=>Math.abs(p[1]-waterY)>.01))continue;
   const xmin=Math.min(...water.map(p=>p[0])),xmax=Math.max(...water.map(p=>p[0])),zmin=Math.min(...water.map(p=>p[2])),zmax=Math.max(...water.map(p=>p[2]));
   for(const triangle of fallTriangles){
+   if(++work%128===0)yield;
    if(triangle.every(p=>p[1]>waterY)||triangle.every(p=>p[1]<waterY)||triangle.every(p=>p[0]<xmin)||triangle.every(p=>p[0]>xmax)||triangle.every(p=>p[2]<zmin)||triangle.every(p=>p[2]>zmax))continue;
    const crossings=[];for(let i=0;i<3;i++){const a=triangle[i],b=triangle[(i+1)%3],dy=b[1]-a[1];if(Math.abs(dy)<1e-9)continue;const f=(waterY-a[1])/dy;if(f>=0&&f<=1){const p=a.map((v,k)=>v+(b[k]-v)*f);if(!crossings.some(q=>Math.hypot(...q.map((v,k)=>v-p[k]))<1e-6))crossings.push(p);}}
    if(crossings.length!==2)continue;const clipped=clipSegment(...crossings,water);if(!clipped)continue;const [a,b]=clipped,l=Math.hypot(a[0]-b[0],a[2]-b[2]);if(l<1e-5)continue;
@@ -26,6 +29,9 @@ export function findWaterfallImpact(T,fall,riverMeshes){
  }
  return length>0?{impactCenter:sum.map(v=>v/length),impactSpanM:length,impactSegments:segments,impactReceiverTriangles:[...receivers.values()],impactSource:[...sources],impactMethod:'curtain_basin_triangle_intersection'}:null;
 }
+
+export function findWaterfallImpact(...args){const steps=waterfallImpactSteps(...args);for(;;){const next=steps.next();if(next.done)return next.value;}}
+export function findWaterfallImpactAsync(T,fall,rivers,{signal}={}){return runCooperatively(waterfallImpactSteps(T,fall,rivers),{signal});}
 
 /** Sculpt the delivered front in world metres. No extra transparent layers.
  * Both the upstream lip and real basin intersection stay fixed. Source buffers

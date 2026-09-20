@@ -1,6 +1,7 @@
+import {runCooperatively} from '../../runtime/cooperative-work.mjs';
 // Close the open underside of authored terrain sheets, without moving their top surface.
 // Walls stay on the existing boundary in X/Z and exclude the entire drivable corridor.
-export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20, talus = false } = {}) {
+function* closeTerrainEdgesSteps(THREE, mesh, { query, floorY, roadMarginM = 20, talus = false } = {}) {
   if (!mesh?.isMesh || /^COLLISION_/.test(mesh.name) || !query?.project || !Number.isFinite(floorY)) return null;
   if (mesh.userData.asfaltoEdgeClosure) return mesh.userData.asfaltoEdgeClosure;
   const source = mesh.geometry, p = source?.attributes?.position;
@@ -8,6 +9,7 @@ export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20
   mesh.updateWorldMatrix(true, false);
   const canonical = new Map(), ids = new Uint32Array(p.count), representative = [];
   for (let i = 0; i < p.count; i++) {
+    if(i%512===0)yield;
     const key = [p.getX(i), p.getY(i), p.getZ(i)].map(value => Math.round(value * 1000)).join(':');
     if (!canonical.has(key)) { canonical.set(key, canonical.size); representative.push(i); }
     ids[i] = canonical.get(key);
@@ -21,6 +23,7 @@ export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20
     else edges.set(key, { a: representative[a], b: representative[b], opposite: representative[opposite], count: 1 });
   };
   for (let i = 0; i < count; i += 3) {
+    if(i%1536===0)yield;
     const a = ids[index ? index.getX(i) : i], b = ids[index ? index.getX(i + 1) : i + 1], c = ids[index ? index.getX(i + 2) : i + 2];
     edge(a, b, c); edge(b, c, a); edge(c, a, b);
   }
@@ -69,6 +72,7 @@ export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20
     return wallVertices.get(key);
   };
   for (const value of edges.values()) {
+    yield;
     if (value.count !== 1) continue;
     boundaryEdges++;
     a.fromBufferAttribute(p, value.a).applyMatrix4(mesh.matrixWorld);
@@ -88,6 +92,7 @@ export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20
       const dirA = directions.get(ids[value.a]) || [0, 0], dirB = directions.get(ids[value.b]) || [0, 0];
       const strips = [];
       for (let col = 0; col <= cols; col++) {
+        if(col%8===0)yield;
         const f = col / cols, top = a.clone().lerp(b, f);
         const toe = profile(top, [dirA[0] * (1-f) + dirB[0] * f, dirA[1] * (1-f) + dirB[1] * f]);
         const strip = [];
@@ -131,3 +136,6 @@ export function closeTerrainEdges(THREE, mesh, { query, floorY, roadMarginM = 20
   mesh.userData.asfaltoEdgeClosure = result;
   return result;
 }
+
+export function closeTerrainEdges(...args){const steps=closeTerrainEdgesSteps(...args);for(;;){const next=steps.next();if(next.done)return next.value;}}
+export function closeTerrainEdgesAsync(THREE,mesh,options={}){return runCooperatively(closeTerrainEdgesSteps(THREE,mesh,options),{signal:options.signal});}
