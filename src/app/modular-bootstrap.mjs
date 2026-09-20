@@ -1,11 +1,11 @@
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=e80bd8543c43eaa9";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=710888b6a5a19751";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=fb44fc3a7247208f";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=72433993e23de3c6";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=d0d5768ad6de0819";
+
+
+
+
+
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
@@ -34,7 +34,14 @@ ready.catch(()=>{});
 const cleanup={attempts:0,completed:0,failures:[]};
 
 function reportFailure(error,phase){const message=String(error?.message||error);if(phase==="boot"){bootStatus="failed";bootError=message;try{runtimeBoundary?.onBootError?.(error)}catch(callbackError){cleanup.failures.push(String(callbackError?.message||callbackError))}try{globalThis.dispatchEvent?.(new CustomEvent("asfalto-v6-modular-error",{detail:{phase,error:message}}))}catch{}}else{cleanup.failures.push(message);for(const cause of error?.errors||[])cleanup.failures.push(String(cause?.message||cause))}}
-function createManager(){return createTrackManager({registry,createAdapter(id,entry){if(!runtimeBoundary)throw new Error("modular runtime boundary is not connected");const factory=id==="dos_lagos"?createDosLagosAdapter:id==="aconcagua_horcones"?createAconcaguaHorconesAdapter:id==="cuesta_lipan"?createCuestaLipanAdapter:id==="paso_garibaldi"?createPasoGaribaldiAdapter:id==="cataratas_iguazu"?createIguazuAdapter:null;if(!factory)throw new RangeError("no adapter factory for track: "+id);return factory({...runtimeBoundary,releaseRootUrl,registryUrl,manifestUrl:entry.manifest})}})}
+const adapterLoaders={
+  dos_lagos:()=>import('../tracks/adapters/dos-lagos.mjs?v=e80bd8543c43eaa9').then(m=>m.createDosLagosAdapter),
+  aconcagua_horcones:()=>import('../tracks/adapters/aconcagua-horcones.mjs?v=710888b6a5a19751').then(m=>m.createAconcaguaHorconesAdapter),
+  cuesta_lipan:()=>import('../tracks/adapters/cuesta-lipan.mjs?v=fb44fc3a7247208f').then(m=>m.createCuestaLipanAdapter),
+  paso_garibaldi:()=>import('../tracks/adapters/paso-garibaldi.mjs?v=72433993e23de3c6').then(m=>m.createPasoGaribaldiAdapter),
+  cataratas_iguazu:()=>import('../tracks/adapters/cataratas-iguazu.mjs?v=d0d5768ad6de0819').then(m=>m.createIguazuAdapter)
+};
+function createManager(){return createTrackManager({registry,async createAdapter(id,entry){if(!runtimeBoundary)throw new Error('modular runtime boundary is not connected');const load=adapterLoaders[id];if(!load)throw new RangeError('no adapter factory for track: '+id);const factory=await load();lifecycleAbort.signal.throwIfAborted();return factory({...runtimeBoundary,releaseRootUrl,registryUrl,manifestUrl:entry.manifest});}});}
 async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loading";bootPromise=Promise.all([fetchJson(registryUrl,"track registry",{signal:lifecycleAbort.signal}),fetchJson(releaseManifestUrl,"release manifest",{signal:lifecycleAbort.signal})]).then(([nextRegistry,nextManifest])=>{if(shutdownRequested)throw new Error("modular host shutdown during boot");registry=deepFreeze(nextRegistry);releaseManifest=deepFreeze(nextManifest);trackManager=createManager();bootStatus="ready";return Object.freeze({registry,releaseManifest,trackManager})}).catch(error=>{reportFailure(error,"boot");rejectReady(error);throw error});bootPromise.catch(()=>{});return bootPromise}
 
 export function connectModularHost(boundary){if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));if(connectPromise)return connectPromise;runtimeBoundary=Object.freeze({...boundary});connectPromise=ensureBoot().then(({registry:loadedRegistry,trackManager:manager})=>{const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;return manager.select(selectedId)}).then(adapter=>{if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");resolveReady(adapter);return adapter});connectPromise.catch(()=>{});return connectPromise}

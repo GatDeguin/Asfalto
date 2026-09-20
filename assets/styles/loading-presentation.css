@@ -57,3 +57,8 @@ body.an-loading-open #workshop-editor-toggle,body.an-loading-open #workshop-edit
 }
 @media(prefers-reduced-motion:reduce){.an-cinema-loading,.an-cinema-film video{transition:none!important}}
 body.v6-reduce-motion .an-cinema-loading,body.v6-reduce-motion .an-cinema-film video{transition:none!important}
+
+/* Recovery must remain operable above the technical menu, including touch. */
+#v6-main-menu.an-cinematic-menu #v6-workshop-stage.an-load-failed{z-index:110;pointer-events:none}
+#v6-main-menu.an-cinematic-menu #v6-workshop-stage.an-load-failed #v6-workshop-loading{pointer-events:auto;background:#151a1c;border:1px solid #b49b76;border-radius:12px;padding:20px;font-size:14px}
+#v6-workshop-stage.an-load-failed button{min-height:44px;padding:8px 20px;cursor:pointer}

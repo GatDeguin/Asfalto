@@ -189,7 +189,7 @@
     return update;
   }
   function completeBoot({menuReady=false,workshopReady=false,technicalFallback=false}={}) {
-    if(!menuReady||(!workshopReady&&!technicalFallback))return false;
+    if(!menuReady)return false; // The shell is usable before any 3D scene is requested.
     const element=document.getElementById('loading');if(element){element.hidden=true;element.classList.add('hidden');element.setAttribute('aria-busy','false');}
     for(const surface of [...surfaces])if(surface.kind==='boot')surface.dispose();
     reconcile();return true;

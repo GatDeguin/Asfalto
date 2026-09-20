@@ -32,3 +32,5 @@ test('preparation rejects cancellation without creating nodes or keeping worker 
  const promise=prepareSoundscapeBanks(c,{signal:controller.signal,createWorker:()=>({postMessage(){},terminate(){terminated++}})});controller.abort();await assert.rejects(promise,{name:'AbortError'});assert.equal(terminated,1);assert.equal(c.allocations,0);
 });
 test('forest wind sends only its final mixed target on repeated telemetry',()=>{const c=context(),audio=createRaceSoundscape({context:c}),state={trackId:'cataratas_iguazu',forest:{proximity:1},windMps:5};audio.update(state);const before=c.events;audio.update(state);assert.equal(c.events,before);audio.dispose()});
+
+test('a stalled soundscape worker times out and terminates without an audio graph',async()=>{let terminated=0;await assert.rejects(prepareSoundscapeBanks({},{timeoutMs:5,createWorker:()=>({postMessage(){},terminate(){terminated++;}})}),{name:'TimeoutError'});assert.equal(terminated,1);});
