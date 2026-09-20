@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createPhysicalRoadTestValidator} from '../src/game/physical-road-tests.mjs?v=9ff50f2b5edd041b';
 import {getEarnedDisplayItems} from '../src/menu/v7-earned-collection.mjs?v=d14e43cdb1271985';
 const sessionModule=await import('../src/menu/v7-roadtest-session.mjs?v=4450177759448c35').catch(()=>({}));
-const profileModule=await import('../src/menu/v7-roadtest-profile.mjs?v=02c72436a82c9342').catch(()=>({}));
+const profileModule=await import('../src/menu/v7-roadtest-profile.mjs?v=9d8202ef5e8ea7fd').catch(()=>({}));
 const receiptModule=await import('../src/menu/v7-roadtest-receipts.mjs?v=b2a818b5bf186307').catch(()=>({}));
 const identity={testId:'vmax',sessionId:'session-1',configurationHash:'a'.repeat(64),trackId:'dos_lagos',vehicleId:'chevy',class:'Histórica',sessionSequence:7};
 function frame(tick,{speed=50,running=true,...extra}={}){return{tick,sessionSequence:7,running,snapshot:{fixedHz:120,chassis:{position:[speed*tick/120,0,0],rotation:[0,0,0,1],linearVelocity:[speed,0,0],acceleration:[0,0,0]},wheels:Array.from({length:4},()=>({contact:true})),controls:{throttle:1,brake:0,steer:0},gearbox:{gear:4},clutch:{engagement:1},brakes:{wheelBrakeTorquesNm:[0,0,0,0]},engine:{rpm:2600,torqueNm:80}},projection:{raceProgress:speed*tick/120,lateral:0,speedAlongRouteMps:speed,routeHalfWidthM:5,valid:true,continuous:true},environment:{wetness:0,gripMultiplier:1},qa:false,teleports:0,recoveries:0,referenceChart:0,...extra};}

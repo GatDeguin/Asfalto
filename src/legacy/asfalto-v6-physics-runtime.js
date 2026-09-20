@@ -250,7 +250,7 @@
     const records=new Map(),slots=new Map(),nodeBindings=new WeakMap();
     let disposed=false,lastRefresh=-Infinity,refreshes=0,builds=0,triangleCount=0,buildTimeMs=0,nextSlot=0;
     let sourceMeshes=0,duplicateSourcePaths=0,lastBuiltMeshes=0,cacheHits=0;
-    function refresh({timeSeconds=0,force=false}={}) {
+    function* refreshSteps({timeSeconds=0,force=false}={}) {
       if(disposed||(!force&&timeSeconds>=lastRefresh&&timeSeconds-lastRefresh<.5))return false;
       lastRefresh=timeSeconds;refreshes++;lastBuiltMeshes=0;
       const root=getRoot?.();if(!root?.traverse)return false;
@@ -268,6 +268,7 @@
       });
       sourceMeshes=entries.length;duplicateSourcePaths=entries.length-paths.size;
       for(const entry of entries){
+        yield;
         const {node,role,path}=entry;let binding=entry.binding;
         if(!binding){
           const candidates=slots.get(path)||[],key=candidates.find(key=>!present.has(key))??++nextSlot;
@@ -284,9 +285,9 @@
         if(previous?.signature===signature){cacheHits++;continue;}
         let triangles;try{triangles=collectCollisionTriangles({}, {traverse:visit=>visit(node)});}
         catch(error){if(/no contiene triangulos/.test(String(error?.message)))continue;throw error;}
-        const colliders=[];
-        try{for(const world of worlds)colliders.push(createRapierTrackCollider(RAPIER,world,triangles,{material:role==='ground'?'soil':'stone'}));}
-        catch(error){colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));throw error;}
+        const colliders=[];let built=false;
+        try{for(const world of worlds){colliders.push(createRapierTrackCollider(RAPIER,world,triangles,{material:role==='ground'?'soil':'stone'}));yield;}built=true;}
+        finally{if(!built)colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));}
         records.set(key,{signature,binding,path,role,colliders,triangles:triangles.triangleCount,chartScoped:/_CHART_-?\d+/i.test(path)});
         triangleCount+=triangles.triangleCount-(previous?.triangles||0);builds++;lastBuiltMeshes++;changed=true;
         if(previous)previous.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));
@@ -305,7 +306,9 @@
     function diagnostics(){return {meshes:records.size,colliders:records.size*worlds.length,triangleCount,builds,refreshes,buildTimeMs,
       sourceMeshes,duplicateSourcePaths,lastBuiltMeshes,cacheHits,refreshIntervalSeconds:.5,retainedAcrossVisualUnload:true,disposed};}
     function dispose(){if(disposed)return;disposed=true;for(const record of records.values())record.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));records.clear();slots.clear();triangleCount=0;}
-    return {refresh,diagnostics,dispose};
+    function refresh(options){const steps=refreshSteps(options);for(;;){const next=steps.next();if(next.done)return next.value;}}
+    async function refreshAsync(options={}){const {runCooperatively}=await import('../runtime/cooperative-work.mjs?v=529f3ae5a1f59485');return runCooperatively(refreshSteps(options),{signal:options.signal});}
+    return {refresh,refreshAsync,diagnostics,dispose};
   }
 
   function createVehicleBody(RAPIER, world, spec, spawn) {

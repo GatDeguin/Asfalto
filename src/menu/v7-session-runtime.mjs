@@ -1,6 +1,7 @@
+import {boundedOperation} from '../runtime/demand-loader.mjs?v=4a2efb64f7eb24a0';
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 /** Single host session request; a scene implementation receives and must honor AbortSignal. */
-export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{}}={}){
+export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{},timeoutMs=300000}={}){
  let current=null,epoch=0;
  function cancel(reason='cancel'){if(!current)return;const request=current;request.userCanceled=reason==='cancel';try{request.presentation?.canceling?.();}finally{request.controller.abort();request.decide?.('cancel');}}
  async function run(load,metadata={}){
@@ -10,7 +11,7 @@ export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{}}=
   request.presentation=presentation;const signal=request.controller.signal;
   let abortListener;const canceled=new Promise(resolve=>{abortListener=()=>resolve({canceled:true});if(signal.aborted)abortListener();else signal.addEventListener('abort',abortListener,{once:true});});
   try{while(isCurrent()){
-   try{const operation=Promise.resolve().then(()=>isCurrent()?load({signal,isCurrent,wait:promise=>waitForSignal(promise,signal),stage:(...args)=>{if(isCurrent())presentation.stage?.(...args);}}):false);const outcome=await Promise.race([operation.then(value=>({value})),canceled]);
+   try{const operation=boundedOperation(active=>isCurrent()?load({signal:active,isCurrent:()=>isCurrent()&&!active.aborted,wait:promise=>waitForSignal(promise,active),stage:(...args)=>{if(isCurrent()&&!active.aborted)presentation.stage?.(...args);}}):false,{signal,timeoutMs,label:'Preparación de la sesión'});const outcome=await Promise.race([operation.then(value=>({value})),canceled]);
     if(outcome.canceled||!isCurrent()){operation.catch(()=>{});return false;}
     if(outcome.value!==true)throw new Error('No se pudo preparar la sesión.');
     success=true;return true;

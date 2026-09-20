@@ -856,7 +856,8 @@
     physicsCore.createRapierTrackCollider(RAPIER, suspensionWorld, routeTriangles, {material:'asphalt'});
     if(boundaryTriangles)physicsCore.createRapierTrackCollider(RAPIER,suspensionWorld,boundaryTriangles,{material:authoredContactMaterial});
     sceneCollisionLayer=physicsCore.createSceneCollisionLayer?.(RAPIER,[playerWorld,rivalWorld,suspensionWorld],visualCollisionRoot)||null;
-    sceneCollisionLayer?.refresh({force:true});
+    if(sceneCollisionLayer?.refreshAsync)await sceneCollisionLayer.refreshAsync({force:true,signal:options.signal});else sceneCollisionLayer?.refresh({force:true});
+    options.signal?.throwIfAborted();
     const trackAdapter = createBrowserTrackAdapter(
       physicsCore,
       options.track,

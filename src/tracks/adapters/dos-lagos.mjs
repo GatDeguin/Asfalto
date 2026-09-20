@@ -3,7 +3,7 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=457a8af4bf40a703';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=139a866710564502';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({
@@ -394,7 +394,7 @@ function findNamed(root, name) {
 function resourceInventory(roots, owns) {
   const geometry = new Set();
   const material = new Set();
-  const texture = new Set();
+  const texture = new Set(), instance = new Set(), shadow = new Set();
   const addMaterial = (value) => {
     if (!value || typeof value !== 'object') return;
     material.add(value);
@@ -404,13 +404,15 @@ function resourceInventory(roots, owns) {
     }
   };
   for (const root of roots) root?.traverse?.((node) => {
+    if (node?.shadow?.dispose) shadow.add(node.shadow);
     if (!node?.isMesh) return;
+    if(node.isInstancedMesh||node.isBatchedMesh)instance.add(node);
     if (node.geometry && typeof node.geometry === 'object') geometry.add(node.geometry);
     if (Array.isArray(node.material)) for (const value of node.material) addMaterial(value);
     else addMaterial(node.material);
   });
   const filter = (set, kind) => new Set([...set].filter((resource) => owns(resource, kind)));
-  return { geometry: filter(geometry,'geometry'), material: filter(material,'material'), texture: filter(texture,'texture') };
+  return { instance: filter(instance,'instance'), shadow: filter(shadow,'shadow'), geometry: filter(geometry,'geometry'), material: filter(material,'material'), texture: filter(texture,'texture') };
 }
 
 function publicSpawn(sample, position, grid, lengthM=10250) {
@@ -498,7 +500,7 @@ export function createDosLagosAdapter(dependencies) {
   let lodObjects = new Map();
   let environment = 'clear';
 
-  const emptyCounts = () => ({ geometry: 0, material: 0, texture: 0 });
+  const emptyCounts = () => ({ geometry: 0, material: 0, texture: 0, instance: 0, shadow: 0 });
   const emptyLoadedBytes = () => ({ manifest: 0, route: 0, visual: 0, collision: 0, total: 0 });
   let lastStats = {
     resourceCounts: emptyCounts(),
@@ -507,8 +509,8 @@ export function createDosLagosAdapter(dependencies) {
     loadedBytes: emptyLoadedBytes(),
   };
   const cumulative = {
-    created: { visualRoots: 0, collisionRoots: 0, collisionProbes: 0, physicsBridges: 0, geometry: 0, material: 0, texture: 0 },
-    disposed: { visualRoots: 0, collisionRoots: 0, collisionProbes: 0, physicsBridges: 0, geometry: 0, material: 0, texture: 0 },
+    created: { visualRoots: 0, collisionRoots: 0, collisionProbes: 0, physicsBridges: 0, geometry: 0, material: 0, texture: 0, instance: 0, shadow: 0 },
+    disposed: { visualRoots: 0, collisionRoots: 0, collisionProbes: 0, physicsBridges: 0, geometry: 0, material: 0, texture: 0, instance: 0, shadow: 0 },
   };
 
   function createTransaction(token, controller) {
@@ -520,8 +522,8 @@ export function createDosLagosAdapter(dependencies) {
       cleanupReported: false,
       cleanupErrors: [],
       awaitingHook: null,
-      counted: { geometry: new Set(), material: new Set(), texture: new Set() },
-      resources: { geometry: new Set(), material: new Set(), texture: new Set() },
+      counted: { geometry: new Set(), material: new Set(), texture: new Set(), instance: new Set(), shadow: new Set() },
+      resources: { geometry: new Set(), material: new Set(), texture: new Set(), instance: new Set(), shadow: new Set() },
       resourceCounts: emptyCounts(),
       disposalCounts: { ...emptyCounts(), physics: 0 },
       installCounts: { visual: 0, collision: 0, physics: 0 },
@@ -579,7 +581,7 @@ export function createDosLagosAdapter(dependencies) {
 
   function updateInventory(transaction, roots) {
     const next = resourceInventory(roots, owns);
-    for (const kind of ['geometry', 'material', 'texture']) {
+    for (const kind of ['instance', 'shadow', 'geometry', 'material', 'texture']) {
       for (const resource of next[kind]) {
         if (!transaction.counted[kind].has(resource)) {
           transaction.counted[kind].add(resource);
@@ -589,6 +591,7 @@ export function createDosLagosAdapter(dependencies) {
     }
     transaction.resources = next;
     transaction.resourceCounts = {
+      instance: next.instance.size, shadow: next.shadow.size,
       geometry: next.geometry.size,
       material: next.material.size,
       texture: next.texture.size,
@@ -749,7 +752,7 @@ export function createDosLagosAdapter(dependencies) {
             recordCleanupError(errors, 'visual detach', error);
           }
         }
-        for (const kind of ['geometry', 'material', 'texture']) {
+        for (const kind of ['instance', 'shadow', 'geometry', 'material', 'texture']) {
           for (const resource of [...transaction.resources[kind]]) {
             transaction.resources[kind].delete(resource);
             try {
@@ -789,7 +792,7 @@ export function createDosLagosAdapter(dependencies) {
         transaction.gameplay = null;
         transaction.normalizedRoute = null;transaction.closure=null;
         transaction.sourceRoute = null;
-        for (const kind of ['geometry', 'material', 'texture']) {
+        for (const kind of ['instance', 'shadow', 'geometry', 'material', 'texture']) {
           transaction.counted[kind].clear();
           transaction.resources[kind].clear();
         }

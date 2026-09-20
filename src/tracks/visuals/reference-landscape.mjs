@@ -1,3 +1,4 @@
+import {yieldToMain} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=0582cef83086d95c';
 import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
@@ -12,10 +13,10 @@ import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060
 import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=77ea30e07072decd';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
-import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
+import { closeTerrainEdgesAsync } from './terrain-edge-closure.mjs?v=bbcaf888f5341bdb';
 import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=4a7b14bc2b90e2b7';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=c596a02e2ef2d05e';
-import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs?v=0f05cedcdf5c0b9c';
+import { refineTerrainSurfaceAsync, joinTerrainTiles } from './terrain-refinement.mjs?v=de6f345de5b7537a';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs?v=7782bd35eb4862d7';
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);
 const FOREST_TRACKS = new Set(['dos_lagos', 'paso_garibaldi']);
@@ -181,7 +182,7 @@ float roughnessFactor = roughness;
   material.customProgramCacheKey = () => 'asfalto-landscape-v7-aspect-melt-' + metres + '-' + snowLine + '-' + Boolean(secondaryMaps)+'-'+(material.userData.asfaltoRegion||'backdrop')+'-'+mountainSnow;
 }
 
-export function improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField }) {
+export async function improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField, signal }) {
   configureSurfaceRelief(THREE);
   root.updateMatrixWorld?.(true);
   let changed = 0;
@@ -263,7 +264,7 @@ export function improveAuthoredSurfaces(root, { THREE, id, textures, query, leng
     // connected terrain sheet, never rocks, shrubs, collision or road meshes.
     if (mesh.userData.asfaltoReturnLandscape || !/(TERRAIN|Terrain)/.test(mesh.name + ' ' + mesh.parent?.name)) continue;
     const vista = /VISTA/.test(mesh.name), transition = /TRANSITION/.test(mesh.name);
-    refineTerrainSurface(THREE, mesh, { roadField, waterLevel, region: id, roadMarginM: 8,
+    await refineTerrainSurfaceAsync(THREE, mesh, { signal, roadField, waterLevel, region: id, roadMarginM: 8,
       maxTriangles: id === 'dos_lagos' ? 330000 : vista ? 65000 : transition ? 125000 : id === 'aconcagua_horcones' ? 260000 : 180000,
       targetEdgeM: vista ? 130 : transition ? 70 : 48, nearEdgeM: vista ? 90 : transition ? 35 : 14 });
     metricUV(THREE, mesh, mesh.material.userData.asfaltoSurfaceMetres || 8);
@@ -272,7 +273,7 @@ export function improveAuthoredSurfaces(root, { THREE, id, textures, query, leng
   if (query?.project && Number.isFinite(lengthM)) {
     let floorY = Infinity;
     for (let s = 0; s <= lengthM; s += Math.max(1, lengthM / 100)) floorY = Math.min(floorY, query.sample(s).position[1] - 250);
-    for (const mesh of terrainSheets) closeTerrainEdges(THREE, mesh, { query, floorY, talus: true });
+    for (const mesh of terrainSheets) await closeTerrainEdgesAsync(THREE, mesh, { query, floorY, talus: true, signal });
   }
   applySurfaceVertexColors(THREE,root,{id});
   return changed;
@@ -549,7 +550,8 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   if(textures.horconesDEM)keeper.add(new THREE.Mesh(textures.horconesDEM.geometry,keeper.material));
   root.add(keeper);
   const roadField = query && Number.isFinite(lengthM) ? visualRoadField(query, lengthM) : null;
-  const changed = sceneryOnly ? 0 : improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField });
+  const changed = sceneryOnly ? 0 : await improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField, signal });
+  await yieldToMain();signal?.throwIfAborted();
   let details = sceneryOnly ? {} : improveRegionalRoadMaterials(THREE,root,{query,id});
   let treePlacements = [];
   const heightAt = !sceneryOnly ? terrainHeightSampler(THREE, root) : null;
@@ -566,21 +568,27 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
       details.shoulderTransition=addTerrainShoulderTransition(THREE,root,{query,lengthM,heightAt,material,embankment:id==='cuesta_lipan'});
     }
   }
+  await yieldToMain();signal?.throwIfAborted();
   textures.demHeightAt=heightAt;
   if (scenery && query && Number.isFinite(lengthM)) {
     details = { ...details, ...addMountainBackdrop(THREE, root, id, query, lengthM, textures) };
+    await yieldToMain();signal?.throwIfAborted();
     if (FOREST_TRACKS.has(id)) {
       const { placements, ...forestDetails } = addForest(THREE, root, id, query, lengthM, textures.forest, heightAt, roadField);
       treePlacements = placements; details = { ...details, ...forestDetails };
     }
   }
+  await yieldToMain();signal?.throwIfAborted();
   if (templates && query && Number.isFinite(lengthM)) details = { ...details,
     ...addRoadsideDetails(THREE, root, { id, query, lengthM, heightAt, templates, textures, treePlacements, detailRange }) };
   else if (templates) for (const geometry of new Set(templates.values())) geometry.dispose();
+  await yieldToMain();signal?.throwIfAborted();
   if(templates && heightAt && query)details={...details,...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange,barrierSource:id==='cuesta_lipan'?barrierSource:null}),...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
   else if(scenery&&query)root.userData.asfaltoRegionalCameras=regionalCameraProfiles({id,query,lengthM});
+  await yieldToMain();signal?.throwIfAborted();
   if(scenery&&heightAt&&query)details={...details,...refineRegionalShoreline(THREE,root,{id,query,heightAt,textures})};
   if(query){const ys=Array.from({length:41},(_,i)=>query.sample(lengthM*i/40).position[1]),minY=Math.min(...ys),maxY=Math.max(...ys);root.userData.asfaltoWeather={snowLineM:minY+(maxY-minY)*.62,valleyFloorM:minY};}
+  await yieldToMain();signal?.throwIfAborted();
   const vertexColors=applySurfaceVertexColors(THREE,root,{id});
   const reliefSet=new Set();
   root.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material]))if(m?.userData.asfaltoRelief)reliefSet.add(m);});
@@ -598,8 +606,11 @@ export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,
   const keeper=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());keeper.name='ASFALTO_RETURN_SCENERY_RESOURCE_OWNER';keeper.visible=false;
   owned.forEach((texture,i)=>keeper.material['asfaltoOwnedTexture'+i]=texture);for(const[name,geometry]of templates){const owner=new THREE.Mesh(geometry,keeper.material);owner.name='Return detail template '+name;keeper.add(owner);}root.add(keeper);
   const heightAt=terrainHeightSampler(THREE,root),roadField=visualRoadField(query,lengthM);let placements=[],stats={};
+  await yieldToMain();signal?.throwIfAborted();
   if(FOREST_TRACKS.has(id)){const forest=addForest(THREE,root,id,query,lengthM,textures.forest,heightAt,roadField,detailRange);placements=forest.placements;stats=forest;}
+  await yieldToMain();signal?.throwIfAborted();
   stats={...stats,...addRoadsideDetails(THREE,root,{id,query,lengthM,heightAt,templates,textures,treePlacements:placements,detailRange}),...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
+  await yieldToMain();signal?.throwIfAborted();
   stats.vertexColors=applySurfaceVertexColors(THREE,root,{id});
   delete stats.placements;root.userData.asfaltoReturnScenery={...stats,detailRange};return stats;
 }
@@ -610,6 +621,6 @@ export async function prepareIguazuSurfaces(root,{THREE,signal}={}){
   const keeper=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());
   keeper.name='ASFALTO_IGUAZU_SURFACE_RESOURCE_OWNER';keeper.visible=false;
   owned.forEach((texture,i)=>keeper.material['asfaltoOwnedTexture'+i]=texture);root.add(keeper);
-  const materialCount=improveAuthoredSurfaces(root,{THREE,id:'cataratas_iguazu',textures});
+  const materialCount=await improveAuthoredSurfaces(root,{THREE,id:'cataratas_iguazu',textures});
   return {materialCount,textureCount:owned.length};
 }

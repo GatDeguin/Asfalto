@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=94cfe8a9d3150ce6';
+import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=e3b76ad9a1cc8e4d';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -94,7 +94,7 @@ function compileFixture(){
   compiled.push({meshes,lights,extraLights,targetScene,background:targetScene.background,environment:targetScene.environment,cameraMask:camera.layers.mask,autoClear:f.renderer.autoClear,shadowAutoUpdate:f.renderer.shadowMap.autoUpdate});
   const gate=deferred();pending.push(gate);return gate.promise;
  };
- const pass=createCockpitRenderPass({...f,overlays:[f.guide]});
+ const pass=createCockpitRenderPass({...f,overlays:[f.guide],compilePrograms:(renderer,...args)=>renderer.compileAsync(...args)});
  return {...f,own,hidden,offLayer,pending,compiled,pass};
 }
 function assertRestored(f,background){

@@ -1,6 +1,6 @@
 import {createRun,beginStage,cancelStage,acceptStage,resumeRun} from './v7-championship-state.mjs?v=54514a098688545f';
 import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=d14e43cdb1271985';
-import {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock,profileRevision} from '../runtime/profile-persistence.mjs?v=34c8f093c015eb86';
+import {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock,profileRevision} from '../runtime/profile-persistence.mjs?v=213f9a534191da55';
 export {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock};
 const clone=x=>structuredClone(x),revision=p=>p?.motorsportV7?.revision||0;
 function extension(profile){const old=profile.motorsportV7;if(old&&old.schema!=='asfalto-motorsport/v1')throw new Error('Unsupported motorsport profile');return old||{schema:'asfalto-motorsport/v1',revision:0,activeRunId:null,runs:{},awards:{},memories:{}};}

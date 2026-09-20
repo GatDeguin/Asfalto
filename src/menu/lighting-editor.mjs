@@ -1,9 +1,10 @@
+import {getFrameScheduler} from '../runtime/frame-scheduler.mjs?v=05cd8f6febcf672e';
 import {createLightingPresetStore} from '../game/lighting-preset-file.mjs?v=08f05a1bfa379595';
 import {lightingPresetKey,sanitizeLightingOverrides,LUT_DEFAULTS} from '../game/lighting-presets.mjs?v=746ea306bd370d04';
 import {captureLightingState,captureVehicleLightingState,mergeLightingState,applyLightingState} from '../render/lighting-preview.mjs?v=ba3ba040d167357f';
 const types={HemisphereLight:'Hemisférica',DirectionalLight:'Direccional',AmbientLight:'Ambiente',PointLight:'Puntual',SpotLight:'Proyector',RectAreaLight:'Área'};
 export function createLightingEditor({scene,renderer,getLights,getEffectiveFogState=()=>null,getVehicles=()=>({}),setLut=()=>{},document:doc=document,store=createLightingPresetStore()}={}){
- const host=doc.querySelector('#settings-panel .settings-scroll');let context=null,base=null,overrides={},lights=[],values=null,disposed=false,active=false,lutEntries=[];
+ const host=doc.querySelector('#settings-panel .settings-scroll');let context=null,base=null,overrides={},lights=[],values=null,disposed=false,active=false,lutEntries=[],uiDirty=true;
  const section=doc.createElement('section');section.className='settings-section an-lighting-editor';section.id='lighting-settings-section';
  section.innerHTML='<details data-lighting-section><summary>Iluminación</summary><p class="an-lighting-context">Preparando el ambiente de la carrera…</p><p class="editor-tip">Cada circuito, HDRI y clima conserva sus propios ajustes. Los cambios se ven al instante y se guardan automáticamente.</p><div data-lighting-fields></div><div class="an-lighting-actions"><button type="button" data-lighting-save>Guardar ahora</button><button type="button" data-lighting-reset>Restaurar iluminación</button></div></details><details data-lut-section><summary>LUTs y color</summary><p class="editor-tip">El color se aplica a la escena y al cockpit. Se guarda junto a la iluminación de esta combinación.</p><div data-lut-fields></div><button type="button" data-lut-reset>Restaurar color</button></details><p data-lighting-status role="status" aria-live="polite">Cargando ajustes…</p>';
  const composition=host.querySelector('#editor-settings-section');composition?composition.before(section):host.append(section);
@@ -34,7 +35,7 @@ export function createLightingEditor({scene,renderer,getLights,getEffectiveFogSt
  function group(parent,label){const el=doc.createElement('details');el.className='an-lighting-group';const summary=doc.createElement('summary');summary.textContent=label;el.append(summary);parent.append(el);return el;}
  function numeric(parent,path,label,min,max,step=.01){return field(parent,path,label,{min,max,step,slider:path[0]==='hdri'});}
  function vector(parent,path,label,min,max,step){for(let i=0;i<3;i++)numeric(parent,[...path,i],label+' '+['X','Y','Z'][i],min,max,step);}
- function build(){for(const remove of listeners.splice(0))remove();refs.clear();vehicleStatus.clear();fieldHost.replaceChildren();lutHost.replaceChildren();
+ function build(){if(!section.querySelector('[data-lighting-section]').open&&!section.querySelector('[data-lut-section]').open){uiDirty=true;return;}uiDirty=false;for(const remove of listeners.splice(0))remove();refs.clear();vehicleStatus.clear();fieldHost.replaceChildren();lutHost.replaceChildren();
   const h=group(fieldHost,'HDRI y exposición');h.open=true;
   numeric(h,['hdri','backgroundIntensity'],'Brillo del fondo HDRI',0,20,.001);numeric(h,['hdri','environmentIntensity'],'Luz ambiental del HDRI',0,20,.00001);numeric(h,['hdri','exposure'],'Exposición',.001,16,.001);numeric(h,['hdri','backgroundBlurriness'],'Desenfoque del HDRI',0,1,.01);
   vector(h,['hdri','rotation'],'Rotación del fondo',-180,180,1);vector(h,['hdri','environmentRotation'],'Rotación de la luz HDRI',-180,180,1);
@@ -76,9 +77,11 @@ export function createLightingEditor({scene,renderer,getLights,getEffectiveFogSt
  const onHide=()=>{if(doc.hidden)void store.flush();};doc.addEventListener('visibilitychange',onHide);
  const lightingDetails=section.querySelector('[data-lighting-section]');
  const refreshVisibleVehicles=()=>{if(!disposed&&active&&!doc.hidden&&lightingDetails.open&&section.getClientRects().length)syncVehicleInputs();};
- lightingDetails.addEventListener('toggle',refreshVisibleVehicles);
- const vehicleRefresh=doc.defaultView.setInterval(refreshVisibleVehicles,250);
+ const lutDetails=section.querySelector('[data-lut-section]');
+ const onToggle=()=>{if(uiDirty&&base)build();refreshVisibleVehicles();getFrameScheduler().wake();};
+ lightingDetails.addEventListener('toggle',onToggle);lutDetails.addEventListener('toggle',onToggle);
+ const stopVehicleRefresh=getFrameScheduler().subscribe('lighting-editor',refreshVisibleVehicles,{hz:4,enabled:()=>!disposed&&active&&lightingDetails.open&&section.getClientRects().length>0});
  void store.load().then(()=>{if(context&&active){overrides=store.get(context);apply();syncInputs();}});
- void fetch(new URL('../../assets/luts/manifest.json',import.meta.url)).then(r=>{if(!r.ok)throw Error('LUTs no disponibles');return r.json();}).then(data=>{lutEntries=data.luts||[];if(base)build();}).catch(()=>{});
- return {beforePreset,setContext,reapply(){if(base){active=true;apply();syncInputs();}},applyVehicles,diagnostics:()=>({context,active,overrides:structuredClone(overrides),values:structuredClone(values),vehicles:structuredClone(vehicleValues),store:store.diagnostics(),lutCount:lutEntries.length}),flush:store.flush,dispose(){if(disposed)return;void store.flush();beforePreset();disposed=true;doc.defaultView.clearInterval(vehicleRefresh);lightingDetails.removeEventListener('toggle',refreshVisibleVehicles);unsubscribe();store.dispose();for(const remove of listeners)remove();doc.removeEventListener('visibilitychange',onHide);section.remove();}};
+ void fetch(new URL('../../assets/luts/manifest.json',import.meta.url)).then(r=>{if(!r.ok)throw Error('LUTs no disponibles');return r.json();}).then(data=>{lutEntries=data.luts||[];if(base)build();}).catch(error=>{status.textContent='No se pudo cargar el catálogo de LUT: '+error.message;});
+ return {beforePreset,setContext,reapply(){if(base){active=true;apply();syncInputs();}},applyVehicles,diagnostics:()=>({context,active,overrides:structuredClone(overrides),values:structuredClone(values),vehicles:structuredClone(vehicleValues),store:store.diagnostics(),lutCount:lutEntries.length}),flush:store.flush,dispose(){if(disposed)return;void store.flush();beforePreset();disposed=true;stopVehicleRefresh();lightingDetails.removeEventListener('toggle',onToggle);lutDetails.removeEventListener('toggle',onToggle);unsubscribe();store.dispose();for(const remove of listeners)remove();doc.removeEventListener('visibilitychange',onHide);section.remove();}};
 }

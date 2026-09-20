@@ -1,21 +1,9 @@
-import { terrainHeightSampler } from './reference-landscape.mjs?v=457a8af4bf40a703';
+import {createSegmentField} from './segment-field.mjs?v=adeede582c4fff1f';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=139a866710564502';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
 const terrainNode=o=>o.isMesh&&!o.userData?.asfaltoReplacedTerrain&&!/^(COLLISION_|ASFALTO_TERRAIN_SOURCE_OWNER|RETURN_)/.test(o.name||'')&&(/ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION/.test(o.name||'')||/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(o.material?.name||''));
-export function routeSpatialField(samples,cellM=300){
-  const grid=new Map(),segments=[];
-  for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i],record={a,b};segments.push(record);
-    for(let x=Math.floor(Math.min(a.position[0],b.position[0])/cellM);x<=Math.floor(Math.max(a.position[0],b.position[0])/cellM);x++)
-      for(let z=Math.floor(Math.min(a.position[2],b.position[2])/cellM);z<=Math.floor(Math.max(a.position[2],b.position[2])/cellM);z++){const key=x+':'+z;if(!grid.has(key))grid.set(key,[]);grid.get(key).push(record);}
-  }
-  return (x,z,maxDistance=1500)=>{
-    const cx=Math.floor(x/cellM),cz=Math.floor(z/cellM),radius=Math.ceil(maxDistance/cellM);let best=null,bestD=maxDistance*maxDistance;
-    for(let dx=-radius;dx<=radius;dx++)for(let dz=-radius;dz<=radius;dz++)for(const {a,b} of grid.get((cx+dx)+':'+(cz+dz))||[]){
-      const vx=b.position[0]-a.position[0],vz=b.position[2]-a.position[2],u=clamp(((x-a.position[0])*vx+(z-a.position[2])*vz)/(vx*vx+vz*vz||1),0,1),px=a.position[0]+vx*u,pz=a.position[2]+vz*u,d=(x-px)**2+(z-pz)**2;
-      if(d<bestD){bestD=d;best={distance:Math.sqrt(d),height:a.position[1]+(b.position[1]-a.position[1])*u,sM:a.sM+(b.sM-a.sM)*u,widthM:a.widthM+(b.widthM-a.widthM)*u};}
-    }return best;
-  };
-}
+export function routeSpatialField(samples){return createSegmentField(samples);}
 // A geometric valley with a maximum 1:4 transverse slope; authored road surfaces
 // and the complete original driving envelope remain unchanged.
 export function carveReturnValley(THREE,root,returnField,sourceField){

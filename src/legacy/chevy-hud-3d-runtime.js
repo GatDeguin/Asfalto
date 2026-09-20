@@ -178,20 +178,29 @@ function scissorFor(rect,pixelRatio,canvasHeight){
   const width=Math.max(0,right-left),height=Math.max(0,bottom-top);
   return {x:Math.round(left*pixelRatio),y:Math.round((innerHeight-bottom)*pixelRatio),width:Math.round(width*pixelRatio),height:Math.round(height*pixelRatio)};
 }
+function releaseHudModel(model){
+ const resources=new Set(model.resources||[]);(model.root||model.scene)?.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const m of Array.isArray(node.material)?node.material:[node.material])if(m)resources.add(m);});
+ const errors=[];for(const r of resources){try{r.dispose?.();r.close?.();}catch(error){errors.push(error);}}
+ model.nodeMap?.clear();if(errors.length)throw new AggregateError(errors,'HUD resource cleanup');
+}
 class SharedHudRenderer{
-  constructor(T){
-    this.T=T;this.canvas=elements.canvas;this.pixelRatio=1;this.lastRender=0;this.running=true;
-    this.renderer=new T.WebGLRenderer({canvas:this.canvas,alpha:true,antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false});
+  constructor(T,createOwnedRenderer){
+    this.owner=new AbortController();this.T=T;this.canvas=elements.canvas;this.pixelRatio=1;this.lastRender=0;this.running=true;
+    this.renderer=createOwnedRenderer(T,{canvas:this.canvas,alpha:true,antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:false});
     this.renderer.autoClear=false;this.renderer.setClearColor(0x000000,0);this.renderer.toneMapping=T.ACESFilmicToneMapping??0;this.renderer.toneMappingExposure=1.12;
     if('outputColorSpace'in this.renderer)this.renderer.outputColorSpace=T.SRGBColorSpace;
-    this.canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();this.running=false;markRenderFailure(new Error('Se perdió el contexto WebGL del HUD'))});
-    this.canvas.addEventListener('webglcontextrestored',()=>location.reload());
+    this.canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();this.running=false;markRenderFailure(new Error('Se perdió el contexto WebGL del HUD'))},{signal:this.owner.signal});
+    this.canvas.addEventListener('webglcontextrestored',()=>{this.running=true;globalThis.__asfaltoFrames?.wake();},{signal:this.owner.signal});
+    window.addEventListener('pagehide',event=>{if(!event.persisted)this.dispose();},{signal:this.owner.signal});
+    window.addEventListener('asfalto:runtime-dispose',()=>this.dispose(),{signal:this.owner.signal});
   }
   async initialize(){
     for(const [key,asset] of Object.entries(ASSETS)){
       const host=document.getElementById(asset.host);
+      let model=null;
       try{
-        const model=await buildModel(this.T,await decodeBase64Asset(asset.script));
+        const bytes=await decodeBase64Asset(asset.script);if(this.disposed)return;
+        model=await buildModel(this.T,bytes);if(this.disposed){releaseHudModel(model);model=null;return;}
         const missing=asset.required.filter(name=>!model.nodeMap.has(name));if(missing.length)throw new Error(`${key}: nodos faltantes ${missing.join(', ')}`);
         const scene=new this.T.Scene(),root=new this.T.Group();root.add(model.root);scene.add(root);
         scene.add(new this.T.HemisphereLight(0xf2f2ed,0x090604,2.15));
@@ -202,18 +211,27 @@ class SharedHudRenderer{
         const entry={key,host,scene,root,camera,size,nodeMap:model.nodeMap,resources:model.resources};
         if(key==='navigation'){entry.needle=model.nodeMap.get('CompassNeedle');entry.needleBase=entry.needle.rotation.z}
         if(key==='telemetry')prepareRpmSegments(entry);
-        entries.push(entry);host.dataset.renderState='ready';
-      }catch(error){host.dataset.renderState='error';markRenderFailure(error)}
+        entries.push(entry);model=null;host.dataset.renderState='ready';
+      }catch(error){if(model)releaseHudModel(model);if(this.disposed)return;host.dataset.renderState='error';markRenderFailure(error)}
     }
+    if(this.disposed)return;
     publicState.renderer.ready=entries.length===4;
     this.render(performance.now(),true);
-    requestAnimationFrame(time=>this.loop(time));
+    if(this.disposed)return;
+    const {getFrameScheduler}=await import(new URL('src/runtime/frame-scheduler.mjs?v=05cd8f6febcf672e',document.baseURI));
+    if(this.disposed)return;
+    this.stopFrame=getFrameScheduler().subscribe('hud',time=>{updateHudState(time);this.render(time);},{hz:30,enabled:()=>this.running&&document.body.classList.contains('v6-driving')&&!document.body.classList.contains('an-race-paused')});
+  }
+  dispose(){
+    if(this.disposed)return;this.disposed=true;this.running=false;this.stopFrame?.();this.owner.abort();
+    const resources=new Set();for(const entry of entries){for(const resource of entry.resources)resources.add(resource);entry.root.traverse(node=>{if(node.geometry)resources.add(node.geometry);for(const material of Array.isArray(node.material)?node.material:[node.material])if(material)resources.add(material);});entry.scene.clear();entry.nodeMap.clear();}
+    for(const resource of resources){resource.dispose?.();resource.close?.();}entries.length=0;this.renderer.dispose();publicState.renderer.ready=false;
   }
   resize(){
     const ratio=Math.min(devicePixelRatio||1,innerWidth<700?1.15:1.5),width=Math.max(2,Math.round(innerWidth*ratio)),height=Math.max(2,Math.round(innerHeight*ratio));
     if(this.canvas.width!==width||this.canvas.height!==height){this.pixelRatio=ratio;this.renderer.setPixelRatio(1);this.renderer.setSize(width,height,false)}
   }
-  loop(time){if(!this.running)return;if(time-this.lastRender>=33){this.lastRender=time;updateHudState(time);this.render(time)}requestAnimationFrame(next=>this.loop(next))}
+
   render(_time,force=false){
     this.resize();this.renderer.setScissorTest(false);this.renderer.clear(true,true,true);
     if(!document.body.classList.contains('v6-driving')&&!force)return;
@@ -325,7 +343,7 @@ function updateHudState(time){
   const full=getCockpitState(),race=full?.race||{};publicState.objective=objectiveText();publicState.timerMs=deriveTimer(race);publicState.navigation=deriveNavigation(race,publicState.objective);publicState.telemetry=deriveTelemetry(full,race,time);updateDom();applyModelState();
 }
 async function boot(){
-  try{const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);({vehicleHudTelemetry}=await import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=e1759c101dc759b7',document.baseURI)));await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));if(detectDeviceProfile().phone){const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=014893cbf9329bf0',document.baseURI));renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));return;}const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());api.ready=true;publicState.renderer.ready=entries.length===4;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));console.info('[Chevy HUD 3D] cuatro módulos cargados en un canvas compartido',api.getDiagnostics())}
+  try{const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);({vehicleHudTelemetry}=await import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=e1759c101dc759b7',document.baseURI)));await new Promise((resolve,reject)=>{if(window.__cockpit?.ready)return resolve();const done=()=>{cleanup();resolve();},fail=e=>{cleanup();reject(e.detail);},cleanup=()=>{window.removeEventListener('chevy-v6-runtime-ready',done);window.removeEventListener('chevy-three-error',fail);};window.addEventListener('chevy-v6-runtime-ready',done,{once:true});window.addEventListener('chevy-three-error',fail,{once:true});});const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));if(detectDeviceProfile().phone){const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=ac74f301658624b9',document.baseURI));renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));return;}const T=await waitForThree();const {createOwnedRenderer}=await import(new URL('src/runtime/owned-renderer.mjs?v=fc0e8ac1ca6f0f58',document.baseURI));renderer=new SharedHudRenderer(T,createOwnedRenderer);await renderer.initialize();if(renderer.disposed)return;updateHudState(performance.now());api.ready=true;publicState.renderer.ready=entries.length===4;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));console.info('[Chevy HUD 3D] cuatro módulos cargados en un canvas compartido',api.getDiagnostics())}
   catch(error){markRenderFailure(error);for(const host of document.querySelectorAll('.chevy-hud-host'))host.dataset.renderState='error';api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-error',{detail:{message:error?.message||String(error)}}))}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

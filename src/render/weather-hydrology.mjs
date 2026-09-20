@@ -1,3 +1,4 @@
+import {createSegmentField} from '../tracks/visuals/segment-field.mjs?v=adeede582c4fff1f';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 function distanceSegment(x,z,a,b){const dx=b[0]-a[0],dz=b[2]-a[2],t=clamp(((x-a[0])*dx+(z-a[2])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[2]-dz*t);}
 /** Geometric perimeter, not a painted noise mask. Quantization joins GLB split vertices. */
@@ -31,9 +32,10 @@ export function createWaterHydrology(THREE,mesh){
   // Explicitly a conservative shore wedge when no authored depth field exists.
   // The field remains in metres; it is not an assertion of surveyed bathymetry.
   const depthSamples=metadata.depthSamples||[],step=Math.max(1,Math.ceil(segments.length/2048));
+  const shoreField=createSegmentField([],{pairs:segments.filter((_,i)=>i%step===0).map(({a,b})=>({a:{position:a},b:{position:b}}))});
   for(let y=0;y<resolution;y++)for(let x=0;x<resolution;x++){
     const wx=bounds.min.x+size.x*x/(resolution-1),wz=bounds.min.z+size.z*y/(resolution-1);let shore=Infinity;
-    for(let e=0;e<segments.length;e+=step)shore=Math.min(shore,distanceSegment(wx,wz,segments[e].a,segments[e].b));
+    shore=shoreField(wx,wz,Infinity)?.distance??Infinity;
     if(!Number.isFinite(shore))shore=maxDepth/.22;
     let depth=clamp(shore*.22+.06,0,maxDepth);
     if(depthSamples.length){let numerator=0,denominator=0;for(const s of depthSamples){const d=Math.hypot(wx-s[0],wz-s[2]),weight=1/Math.max(.2,d*d);numerator+=Math.max(0,s[3])*weight;denominator+=weight;}depth=numerator/denominator;}
@@ -57,5 +59,5 @@ export function installRoadHydrology(THREE,mesh){
     const bowl=pairs?Math.max(0,curvature/pairs):0;values[i*2]=clamp(bowl,0,.035);values[i*2+1]=clamp((max-min)/(cell*2),0,1);
   }
   geometry.setAttribute('anFxHydrology',new THREE.BufferAttribute(values,2));
-  return()=>{if(geometry.getAttribute('anFxHydrology')?.array!==values)return;if(previous)geometry.setAttribute('anFxHydrology',previous);else geometry.deleteAttribute('anFxHydrology');};
+  return()=>{if(geometry.getAttribute('anFxHydrology')?.array!==values)return;geometry.dispose();if(previous)geometry.setAttribute('anFxHydrology',previous);else geometry.deleteAttribute('anFxHydrology');};
 }

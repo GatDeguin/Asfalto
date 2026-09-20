@@ -68,7 +68,7 @@ export function createTrackManager(context) {
   if (typeof context.createAdapter !== 'function') throw new TypeError('createAdapter must be a function');
 
   const byId = new Map(registry.tracks.map((entry) => [entry.id, entry]));
-  const cleaned = new WeakSet();
+  const cleaned = new WeakSet(), cleaning = new WeakMap(), incomplete = new Set();
   let active = null;
   let activeId = null;
   let pending = null;
@@ -76,8 +76,10 @@ export function createTrackManager(context) {
 
   async function cleanup(adapter) {
     if (!adapter || typeof adapter !== 'object' || cleaned.has(adapter)) return;
-    cleaned.add(adapter);
-    await adapter.unload();
+    if(cleaning.has(adapter))return cleaning.get(adapter);
+    incomplete.add(adapter);
+    const promise=Promise.resolve().then(()=>adapter.unload()).then(()=>{cleaned.add(adapter);incomplete.delete(adapter);}).finally(()=>cleaning.delete(adapter));
+    cleaning.set(adapter,promise);return promise;
   }
 
   function entryFor(id) {
@@ -110,9 +112,10 @@ export function createTrackManager(context) {
 
     const operation = (async () => {
       try {
-        candidate = context.createAdapter(id, entry);
+        candidate = await context.createAdapter(id, entry);
         candidateOwned = Boolean(candidate && typeof candidate === 'object' && typeof candidate.unload === 'function');
         assertTrackAdapter(candidate);
+        if(controller.signal.aborted||selectionToken!==token)throw controller.signal.reason||abortError();
 
         const result = await candidate.validate({ id, entry, signal: controller.signal });
         const invalid = validationError(result);
@@ -167,16 +170,11 @@ export function createTrackManager(context) {
     active = null;
     activeId = null;
 
-    let failure = null;
-    if (previous) {
-      try {
-        await cleanup(previous);
-      } catch (error) {
-        failure = error;
-      }
-    }
+    const targets=new Set(incomplete);if(previous)targets.add(previous);
+    const results=await Promise.allSettled([...targets].map(cleanup));
     if (selection) await Promise.allSettled([selection.promise]);
-    if (failure) throw failure;
+    const failures=results.filter(r=>r.status==='rejected').map(r=>r.reason);
+    if(failures.length)throw new AggregateError(failures,'No se pudieron liberar los circuitos');
   }
 
   const manager = {};

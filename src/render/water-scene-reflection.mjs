@@ -1,3 +1,4 @@
+import {preparePrograms} from './shader-preparation.mjs?v=528cb164c75c6707';
 import {AUXILIARY_CAPTURE_RATES} from './auxiliary-capture-schedule.mjs?v=f03a5f52446e9baf';
 // One nearby water plane captures the actual bank/terrain. It supplements the
 // physical HDR environment; out-of-capture pixels keep that continuous fallback.
@@ -14,16 +15,17 @@ export function createWaterSceneReflection(T){
  const previousViewport=new T.Vector4(),previousScissor=new T.Vector4(),previousColor=new T.Color();
  function reset(){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;lastMs=-Infinity;activeHeight=null;}
  function bind(next=[]){reset();entries=next.map(e=>{bounds.setFromObject(e.mesh);return {...e,bounds:bounds.clone(),height:(bounds.min.y+bounds.max.y)*.5};});reset();}
- function capture({renderer,scene,camera,quality='balanced',nowMs=0,excludeRoots=[],prepareRender,captureSchedule=null}={}){
+ function capture({renderer,scene,camera,quality='balanced',nowMs=0,excludeRoots=[],prepareRender,captureSchedule=null,prepareOnly=false,signal}={}){
   if(disposed||rendering||!entries.length||!renderer||!scene||!camera)return false;
   camera.getWorldPosition(position);vp.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);frustum.setFromProjectionMatrix(vp);
   let chosen=null,best=Infinity;for(const e of entries){if(position.y<=e.height+.08||!frustum.intersectsBox(e.bounds))continue;const d=e.bounds.distanceToPoint(position);if(d<best&&d<1200){best=d;chosen=e;}}
+  if(prepareOnly&&!chosen)chosen=entries[0];
   if(!chosen){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;return false;}
   const tier=TIERS[quality]?quality:'balanced',[width,height,hz]=TIERS[tier];
   if(!target){target=new T.WebGLRenderTarget(width,height,{type:T.HalfFloatType,depthBuffer:true,stencilBuffer:false,samples:0});target.texture.name='V7_Water_Real_Bank_Reflection';target.texture.colorSpace=T.LinearSRGBColorSpace;target.texture.generateMipmaps=false;}
   if(currentTier!==tier){target.setSize(width,height);currentTier=tier;lastMs=-Infinity;}
   const levelChanged=activeHeight===null||Math.abs(activeHeight-chosen.height)>.08;
-  if(captureSchedule?!captureSchedule.take('water'):(!levelChanged&&nowMs>=lastMs&&nowMs-lastMs<1000/hz)){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=Math.abs(e.height-activeHeight)<.08?1:0;return false;}
+  if(!prepareOnly&&(captureSchedule?!captureSchedule.take('water'):(!levelChanged&&nowMs>=lastMs&&nowMs-lastMs<1000/hz))){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=Math.abs(e.height-activeHeight)<.08?1:0;return false;}
   const pose=reflectedWaterPose(T,camera,chosen.height);virtualCamera.position.fromArray(pose.position);virtualCamera.up.fromArray(pose.up);virtualCamera.lookAt(...pose.target);virtualCamera.near=camera.near;virtualCamera.far=camera.far;virtualCamera.projectionMatrix.copy(camera.projectionMatrix);virtualCamera.projectionMatrixInverse.copy(camera.projectionMatrixInverse);virtualCamera.layers.mask=camera.layers.mask;virtualCamera.updateMatrixWorld(true);
   matrix.copy(bias).multiply(virtualCamera.projectionMatrix).multiply(virtualCamera.matrixWorldInverse);plane.constant=-chosen.height+.035;
   const hidden=new Map();for(const e of entries)hidden.set(e.mesh,e.mesh.visible);for(const o of excludeRoots.filter(Boolean))hidden.set(o,o.visible);
@@ -31,7 +33,7 @@ export function createWaterSceneReflection(T){
   rendering=true;try{
    for(const o of hidden.keys())o.visible=false;
    if(renderer.shadowMap){renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=false;}if(renderer.xr)renderer.xr.enabled=false;
-   restoreFog=prepareRender?.({linearOutput:true});renderer.toneMapping=T.NoToneMapping;renderer.clippingPlanes=[plane];renderer.autoClear=false;renderer.setRenderTarget(target);renderer.setScissorTest(false);renderer.clear(true,true,true);renderer.render(scene,virtualCamera);
+   restoreFog=prepareRender?.({linearOutput:true});renderer.toneMapping=T.NoToneMapping;renderer.clippingPlanes=[plane];renderer.autoClear=false;renderer.setRenderTarget(target);renderer.setScissorTest(false);if(prepareOnly)return preparePrograms(renderer,scene,virtualCamera,scene,{signal});renderer.clear(true,true,true);renderer.render(scene,virtualCamera);
    activeHeight=chosen.height;lastMs=nowMs;frames++;
    for(const e of entries){e.uniforms.uAnWaterReflection.value=target.texture;e.uniforms.uAnWaterReflectMatrix.value.copy(matrix);e.uniforms.uAnWaterReflectReady.value=Math.abs(e.height-activeHeight)<.08?1:0;}return true;
   }catch(error){errors++;reset();throw error;}finally{

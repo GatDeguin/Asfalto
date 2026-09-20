@@ -154,7 +154,7 @@ function releaseMaterial(entry,owner) {
 }
 function releaseGeometry(geometry,owner) {
   const entry=geometryOwners.get(geometry);if(!entry)return;entry.owners.delete(owner);if(entry.owners.size)return;
-  if(geometry.getAttribute(ATTRIBUTE)===entry.attribute){if(entry.previous)geometry.setAttribute(ATTRIBUTE,entry.previous);else geometry.deleteAttribute(ATTRIBUTE);}
+  if(geometry.getAttribute(ATTRIBUTE)===entry.attribute){geometry.dispose();if(entry.previous)geometry.setAttribute(ATTRIBUTE,entry.previous);else geometry.deleteAttribute(ATTRIBUTE);}
   geometryOwners.delete(geometry);releaseSurfaceCurvatureCache(geometry);
 }
 
@@ -179,6 +179,7 @@ export function createAdvancedMaterials(T,{root,scope='world',quality='high'}={}
         const signature=geometrySignature(geometry);
         if(!sameSignature(signature,entry.signature)&&geometry.getAttribute(ATTRIBUTE)===entry.attribute){
           const result=computeSurfaceCurvature(T,geometry,{maxVertices:Math.min(80000,budget)});
+          geometry.dispose();
           if(result.attribute){geometry.setAttribute(ATTRIBUTE,result.attribute);budget-=result.attribute.count;processedVertices+=result.attribute.count;}
           else{geometry.deleteAttribute(ATTRIBUTE);skippedGeometry++;}
           entry.attribute=result.attribute;entry.signature=signature;entry.diagnostics=result.diagnostics;

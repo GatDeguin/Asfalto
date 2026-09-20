@@ -1,5 +1,6 @@
+import {runCooperatively} from '../../runtime/cooperative-work.mjs?v=529f3ae5a1f59485';
 // Startup-only photographic pose search. Falls geometry is the subject, never route tangent.
-export function waterfallCameraProfile(T,root,{query,falls,heightAt}){
+function* cameraProfileSteps(T,root,{query,falls,heightAt}){
  root.updateMatrixWorld(true);
  const primary=falls.filter(m=>!m.name.startsWith('SIDEFALL')).map(mesh=>({mesh,box:new T.Box3().setFromObject(mesh)})).sort((a,b)=>a.box.min.z-b.box.min.z),chosen=primary.slice(Math.max(0,Math.floor(primary.length/2)-3),Math.floor(primary.length/2)+3);
  if(!chosen.length)throw Error('No waterfall bounds available for cataratas camera');
@@ -8,14 +9,17 @@ export function waterfallCameraProfile(T,root,{query,falls,heightAt}){
  const blockers=[];root.traverse(m=>{if(!m.isMesh)return;for(let n=m;n;n=n.parent)if(!n.visible||/COLLISION|SOURCE_OWNER|RESOURCE_OWNER/.test(n.name))return;const materials=Array.isArray(m.material)?m.material:[m.material];if(materials.some(mat=>mat.transparent||/water|river|foam|mist|leaf|fern|palm|bark/i.test(mat.name)))return;if(/terrain|basalt|cliff|rock|road|shoulder/i.test(m.name+' '+materials.map(v=>v.name).join(' ')))blockers.push(m);});
  const ray=new T.Raycaster(),camera=new T.PerspectiveCamera(31.417,16/9,1,10000),candidate=[];
  for(let s=station-800;s<=station+800;s+=100)for(const lateral of [0,-80,80,-200,200,-400,400])for(const elevation of [4,18,45]){
-  const q=query.sample(s),position=new T.Vector3(...q.position).addScaledVector(new T.Vector3(...q.frame.left),lateral),ground=lateral===0?q.position[1]:heightAt(position.x,position.z);if(!Number.isFinite(ground))continue;position.y=ground+elevation;const distance=position.distanceTo(center);if(distance<220||distance>1500)continue;camera.position.copy(position);camera.lookAt(center);camera.updateMatrixWorld(true);let framed=0,visible=0;
-  for(const target of targets){const ndc=target.clone().project(camera);if(Math.abs(ndc.x)>.9||Math.abs(ndc.y)>.9||ndc.z>1||ndc.z< -1)continue;framed++;}
+  yield;const q=query.sample(s),position=new T.Vector3(...q.position).addScaledVector(new T.Vector3(...q.frame.left),lateral),ground=lateral===0?q.position[1]:heightAt(position.x,position.z);if(!Number.isFinite(ground))continue;position.y=ground+elevation;const distance=position.distanceTo(center);if(distance<220||distance>1500)continue;camera.position.copy(position);camera.lookAt(center);camera.updateMatrixWorld(true);let framed=0,visible=0;
+  for(const target of targets){yield;const ndc=target.clone().project(camera);if(Math.abs(ndc.x)>.9||Math.abs(ndc.y)>.9||ndc.z>1||ndc.z< -1)continue;framed++;}
   candidate.push({position:position.toArray(),target:center.toArray(),sM:query.project(position.toArray()).sM,lateralM:lateral,heightAboveGroundM:elevation,framedTargets:framed,visibleTargets:visible,targetCount:targets.length,distanceM:distance,score:framed*100-distance*.025-elevation*.12});
  }
  candidate.sort((a,b)=>b.score-a.score);
  // Frustum scoring is cheap; only promising supported poses need triangle rays.
- const finalists=[4,18,45].flatMap(h=>candidate.filter(c=>c.heightAboveGroundM===h).slice(0,32));for(const c of finalists){const position=new T.Vector3(...c.position);camera.position.copy(position);camera.lookAt(center);camera.updateMatrixWorld(true);let visible=0;for(const target of targets){const ndc=target.clone().project(camera);if(Math.abs(ndc.x)>.9||Math.abs(ndc.y)>.9||ndc.z>1||ndc.z< -1)continue;const delta=target.clone().sub(position);ray.set(position,delta.clone().normalize());ray.far=delta.length()-2;if(!ray.intersectObjects(blockers,false).length)visible++;}c.visibleTargets=visible;c.score=visible*100+c.framedTargets*5-c.distanceM*.025-c.heightAboveGroundM*.12;}finalists.sort((a,b)=>b.score-a.score);
+ const finalists=[4,18,45].flatMap(h=>candidate.filter(c=>c.heightAboveGroundM===h).slice(0,32));for(const c of finalists){const position=new T.Vector3(...c.position);camera.position.copy(position);camera.lookAt(center);camera.updateMatrixWorld(true);let visible=0;for(const target of targets){yield;const ndc=target.clone().project(camera);if(Math.abs(ndc.x)>.9||Math.abs(ndc.y)>.9||ndc.z>1||ndc.z< -1)continue;const delta=target.clone().sub(position);ray.set(position,delta.clone().normalize());ray.far=delta.length()-2;if(!ray.intersectObjects(blockers,false).length)visible++;}c.visibleTargets=visible;c.score=visible*100+c.framedTargets*5-c.distanceM*.025-c.heightAboveGroundM*.12;}finalists.sort((a,b)=>b.score-a.score);
  if(!finalists.length)throw Error('No supported waterfall camera location');const best=finalists[0];delete best.score;
  return {key:'cataratas',...best,fov:31.417,lensMm:35,cameraMode:best.heightAboveGroundM>18?'regional-aerial':'regional-overlook',targetFallNames:chosen.map(f=>f.mesh.name),subjectBounds:{min:bounds.min.toArray(),max:bounds.max.toArray()},impactTargets:targets.filter((_,i)=>i%3===2).map(v=>v.toArray()),derivation:'actual main waterfall curtain bounds and contact impacts; supported-ground candidates; opaque terrain/rock ray checks',status:'awaiting GPU review',occlusionLimit:'alpha foliage and future return scenery require GPU confirmation'};
 }
 
+
+export function waterfallCameraProfile(...args){const steps=cameraProfileSteps(...args);for(;;){const result=steps.next();if(result.done)return result.value;}}
+export function waterfallCameraProfileAsync(T,root,options){return runCooperatively(cameraProfileSteps(T,root,options),{signal:options.signal});}

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=827f6afdcb5bb32a';
 import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=fbad3331a323c852';
-import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=94cfe8a9d3150ce6';
+import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=e3b76ad9a1cc8e4d';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 function fixture(){
  let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');
@@ -20,7 +20,7 @@ for(const graded of [false,true])test(`prepare capture contexts match actual ren
  f.grade.render(()=>{f.post.render(()=>{expectedWorld=f.r.getRenderTarget();expectedFog=f.scene.fog;});expectedInterior=f.r.getRenderTarget();});f.r.draws=f.r.clears=0;
  const cockpit=new T.Group(),dash=new T.Mesh();cockpit.add(dash);f.scene.add(cockpit);const pending=[],captured=[];
  f.r.compileAsync=()=>{captured.push({target:f.r.getRenderTarget(),fog:f.scene.fog});const gate=deferred();pending.push(gate);return gate.promise;};
- const pass=createCockpitRenderPass({...f,renderer:f.r,cockpit,prepareWorld:compile=>f.grade.prepare(()=>f.post.prepare(compile)),prepareInterior:compile=>f.grade.prepare(compile)});
+ const pass=createCockpitRenderPass({...f,compilePrograms:(renderer,...args)=>renderer.compileAsync(...args),renderer:f.r,cockpit,prepareWorld:compile=>f.grade.prepare(()=>f.post.prepare(compile)),prepareInterior:compile=>f.grade.prepare(compile)});
  const p=pass.prepare();assert.equal(captured.length,1);assert.equal(captured[0].target,expectedWorld);assert.equal(captured[0].fog,expectedFog);assert.equal(f.r.getRenderTarget(),null);assert.equal(f.scene.fog,f.fog);assert.equal(f.r.autoClear,false);
  pending[0].resolve();await Promise.resolve();assert.equal(captured.length,2);assert.equal(captured[1].target,expectedInterior);assert.equal(captured[1].fog,f.fog);assert.equal(f.r.getRenderTarget(),null);assert.equal(f.scene.fog,f.fog);pending[1].resolve();await p;
  assert.equal(f.r.draws,0);assert.equal(f.r.clears,0);f.post.dispose();f.grade.dispose();

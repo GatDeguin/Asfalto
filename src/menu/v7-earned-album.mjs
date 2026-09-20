@@ -1,6 +1,6 @@
 import {createRacePhotoCapture} from './v7-race-photo-capture.mjs?v=e53b375e7d992823';
 import {createEarnedPhotoStore,earnedPhotoMetadata,PHOTO_LIMIT} from './v7-earned-photo-store.mjs?v=c1280b20ec2a5c95';
-import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=dcc35a15848eab73';
+import {createChampionshipProfileStore} from './v7-championship-profile.mjs?v=11260c9cb7a7e830';
 import {resumeRun} from './v7-championship-state.mjs?v=54514a098688545f';
 import {createMemoryPosterLease} from './v7-memory-posters.mjs?v=9247a089038e5e4e';
 export function createEarnedAlbum(host){

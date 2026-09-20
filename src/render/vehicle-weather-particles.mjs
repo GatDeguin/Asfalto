@@ -4,14 +4,14 @@ import { getVehicleEngineMount } from './vehicle-engine-mount.mjs?v=0e10204a874b
 import { getVehicleDefinition } from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
 
 /** Fixed reusable pool: spray, soil dust, tire/engine smoke, contact sparks and exhaust fire. */
-export function createVehicleWeatherParticles(THREE,parent,{light=true}={}) {
+export function createVehicleWeatherParticles(THREE,parent,{light=true,lightParent=parent}={}) {
   const capacity=560,random=effectsRandom(20260906),pool=Array.from({length:capacity},()=>({life:0,x:0,y:0,z:0,vx:0,vy:0,vz:0,size:0,age:0,kind:0,seed:0}));
   let cursor=0,limit=320,previousHeading=null,alive=0,disposed=false,lastVehicleId=null;
   const engineLocal=new THREE.Vector3(1.55,.4,0);
   const position=new THREE.Vector3(),sourceVelocity=new THREE.Vector3(),orientation=new THREE.Quaternion();
   const defaultTires=[new THREE.Vector3(),new THREE.Vector3()],defaultExhaust=new THREE.Vector3(),defaultEngine=new THREE.Vector3(),contactPosition=new THREE.Vector3();
   const wheelBudgets=new Map(),windVector=new THREE.Vector3(),carInverse=new THREE.Matrix4(),carScale=new THREE.Vector3(1,1,1);
-  const fireLight=new THREE.PointLight('#ff9839',0,3.2,2);fireLight.name='AN_BoundedFireLight';fireLight.castShadow=false;if(light)parent.add(fireLight);let lightEnergy=0;
+  const fireLight=new THREE.PointLight('#ff9839',0,3.2,2);fireLight.name='AN_BoundedFireLight';fireLight.castShadow=false;if(light)lightParent.add(fireLight);let lightEnergy=0;
   function batch(additive) {
     const geometry=effectsQuad(THREE,capacity),positions=new Float32Array(capacity*3),velocities=new Float32Array(capacity*3),data=new Float32Array(capacity*4);
     geometry.setAttribute('aPosition',new THREE.InstancedBufferAttribute(positions,3).setUsage(THREE.DynamicDrawUsage));
@@ -115,13 +115,13 @@ if(alpha<.005)discard;gl_FragColor=vec4(color,alpha);
       lightEnergy*=Math.exp(-dt*12);
       if(emission.fire>0){emit(4,exhaust,Math.ceil(2+emission.fire*9),emission.fire);emit(2,exhaust,1,.3,.75);lightEnergy=Math.max(lightEnergy,emission.fire*7);fireLight.position.copy(exhaust);}
       if(emission.engineFire){lightEnergy=1.8*emission.engineFire;fireLight.position.copy(hood);}
-      fireLight.intensity=Math.min(2,lightEnergy);fireLight.visible=lightEnergy>.002;
+      fireLight.intensity=Math.min(2,lightEnergy);fireLight.visible=true;
       if(emission.sparks>0){const contact=vehicle.metalContact;if(Array.isArray(contact?.point))position.fromArray(contact.point);else position.copy(contact?.point||vehicle.impactPosition||origin);position.y=Math.max(groundY+.02,position.y);emit(3,position,Math.ceil((8+emission.sparks*28)*tierFactor),emission.sparks,1,contact?.relativeVelocity);}
       alpha.count=0;glow.count=0;alive=0;
       for(let i=0;i<limit;i++){const p=pool[i];if(p.life<=0)continue;const target=p.kind>=3?glow:alpha,n=target.count++,a=n*3,b=n*4;target.positions[a]=p.x;target.positions[a+1]=p.y;target.positions[a+2]=p.z;target.velocities[a]=p.vx;target.velocities[a+1]=p.vy;target.velocities[a+2]=p.vz;target.data[b]=p.age/p.life;target.data[b+1]=p.kind;target.data[b+2]=p.size;target.data[b+3]=p.seed;alive++;}
       for(const target of batches){target.geometry.instanceCount=target.count;target.mesh.visible=target.count>0;if(target.count)for(const key of attributeNames)target.geometry.attributes[key].needsUpdate=true;}
     },
-    reset(){for(const p of pool)p.life=0;wheelBudgets.clear();lightEnergy=fireLight.intensity=0;fireLight.visible=false;previousHeading=null;cursor=0;alive=0;alpha.count=glow.count=0;sprayBudget=dustBudget=smokeBudget=engineBudget=engineFlameBudget=0;alpha.mesh.visible=glow.mesh.visible=false;alpha.geometry.instanceCount=glow.geometry.instanceCount=0;},
+    reset(){for(const p of pool)p.life=0;wheelBudgets.clear();lightEnergy=fireLight.intensity=0;fireLight.visible=true;previousHeading=null;cursor=0;alive=0;alpha.count=glow.count=0;sprayBudget=dustBudget=smokeBudget=engineBudget=engineFlameBudget=0;alpha.mesh.visible=glow.mesh.visible=false;alpha.geometry.instanceCount=glow.geometry.instanceCount=0;},
     getAliveCount:()=>alive,
     diagnostics:()=>({alive,capacity,limit,alpha:alpha.count,additive:glow.count,wheelSources:wheelBudgets.size,localLightIntensity:fireLight.intensity,wind:windVector.toArray()}),
     dispose(){if(disposed)return;disposed=true;fireLight.removeFromParent();for(const target of batches){target.mesh.removeFromParent();target.geometry.dispose();target.mesh.material.dispose();}},
