@@ -1,9 +1,9 @@
-import { createGameplayBridge as createCanonicalGameplayBridge } from '../gameplay-bridge.mjs';
-import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs';
-import { createRouteQuery } from '../route-query.mjs';
-import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs';
-import { collectMaterialBindings } from '../../environment/material-bindings.mjs';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=c4762a953cda2b57';
+import { createGameplayBridge as createCanonicalGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
+import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
+import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
+import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
+import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=457a8af4bf40a703';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({

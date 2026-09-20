@@ -1,7 +1,8 @@
-import { summarizeRoadTestRecords } from './roadtest-records.mjs';
-import { testPresentationState } from './menu-refinement-state.mjs';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
+import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=680bf8ce08be7252';
+import { testPresentationState } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
 
-const scene = name => new URL(`../../assets/menu/game-captures/${name}.jpg`, import.meta.url).href;
+const scene = name => new URL(`../../assets/menu/game-captures/${name === 'competencia' ? 'viaje-v7.webp' : `${name}.jpg`}`, import.meta.url).href;
 const TEST_ORDER = ['accel100', 'm500', 'm1000', 'brake100', 'vmax', 'recovery', 'accel160', 'slalom', 'turn', 'wet', 'speedo', 'consumption'];
 const TEST_KIND = { accel100:'Aceleración', accel160:'Aceleración', m500:'Aceleración', m1000:'Aceleración', brake100:'Frenado', vmax:'Velocidad', recovery:'En cuarta', slalom:'Precisión', turn:'Maniobra', wet:'Adherencia', speedo:'Instrumental', consumption:'Consumo' };
 const recordLabel = result => {
@@ -14,7 +15,7 @@ const recordLabel = result => {
 };
 
 // Reparent the original controls so their listeners and the V6 event contract survive.
-export function mountMenuSections({ root, game, svg, selectMode }) {
+export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents = globalThis }) {
   const content = root.querySelector('#v6-menu-content');
   const drive = root.querySelector('#v6-drive-panel');
   const tests = root.querySelector('#v6-roadtest-panel');
@@ -34,7 +35,7 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
   modes.setAttribute('aria-label', 'Elegí tu modo');
   modes.innerHTML = '<header class="an-mode-heading"><h2 tabindex="-1">Elegí tu modo</h2><p>Tres formas de vivir la pasión por el asfalto.</p></header><div class="an-mode-grid"></div>';
   const modeDefinitions = [
-    { id:'drive', title:'Conducción', image:'conduccion', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:'4 rutas', last:'Libre · Viaje · Práctica' },
+    { id:'drive', title:'Conducción', image:'conduccion', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:`${root.querySelector('#v6-drive-route')?.options.length || 5} rutas`, last:'Libre · Viaje · Práctica' },
     { id:'tests', title:'Pruebas', image:'instrumental', copy:'Poné a prueba al auto y superá tus marcas.', first:'2–8 min por prueba', second:'12 pruebas', last:'Aceleración · Frenado · Precisión' },
     { id:'competition', title:'Competencia', image:'competencia', copy:'Compartí la ruta con rivales y contra el reloj.', first:'Según el evento', second:'7 formatos', last:'Club · Contrarreloj · Resistencia' },
   ];
@@ -60,8 +61,10 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
   const layout = document.createElement('div'); layout.className = 'an-roadtest-layout';
   tests.append(layout); layout.append(testCards);
   const detail = document.createElement('section'); detail.className = 'an-test-detail'; detail.setAttribute('aria-label', 'Detalle de la prueba');
-  detail.innerHTML = '<header class="an-test-vehicle"><div><strong>Chevrolet 250</strong><span>Seis en línea · Tracción trasera</span></div><b>1973</b></header><figure class="an-test-preview"><img alt="Chevy en el juego, vista del cockpit" decoding="async"><figcaption>Captura del juego</figcaption></figure><div class="an-test-info"><section class="an-test-objective"><span class="an-detail-label">Objetivo</span><h3 id="an-test-title"></h3><p id="an-test-objective"></p></section><section class="an-test-record"><span class="an-detail-label">Mejor marca</span><strong id="an-test-record">Sin marca</strong><span id="an-test-attempts"></span></section><section><span class="an-detail-label">Condiciones</span><p id="an-test-conditions"></p></section><section><span class="an-detail-label">Progreso</span><p id="an-test-progress"></p></section></div>';
+  detail.innerHTML = '<header class="an-test-vehicle"><div><strong data-selected-vehicle-label>Vehículo seleccionado</strong><span>Auto seleccionado para esta prueba</span></div></header><figure class="an-test-preview"><img alt="Vista del cockpit capturada en el juego" decoding="async"><figcaption>Captura del juego</figcaption></figure><div class="an-test-info"><section class="an-test-objective"><span class="an-detail-label">Objetivo</span><h3 id="an-test-title"></h3><p id="an-test-objective"></p></section><section class="an-test-record"><span class="an-detail-label">Mejor marca</span><strong id="an-test-record">Sin marca</strong><span id="an-test-attempts"></span></section><section><span class="an-detail-label">Condiciones</span><p id="an-test-conditions"></p></section><section><span class="an-detail-label">Progreso</span><p id="an-test-progress"></p></section></div>';
   detail.querySelector('img').src = scene('pruebas');
+  const vehicleLabels = bindSelectedVehicleLabels({ root: detail, events: vehicleEvents, getVehicleId: () => game.workshop?.vehicleId });
+  let disposed = false;
   const protocol = document.createElement('details'); protocol.className = 'an-test-protocol';
   protocol.innerHTML = '<summary>Preparación y validez de la prueba</summary>';
   protocol.append(root.querySelector('#v6-test-protocol'));
@@ -94,6 +97,8 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
     }
   }
   function refresh() {
+    if (disposed) return;
+    vehicleLabels.refresh();
     decorateTests(); decorateCompetitions();
     const profile = game.profile();
     const currentClass = vehicleClass(profile);
@@ -127,7 +132,8 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
     for (const card of driveCards.children) card.setAttribute('aria-selected', String(card.dataset.driveMode === profile.selectedDrive));
   }
   // Delegation survives renderAll() replacing the legacy card nodes on imports/results.
-  root.addEventListener('click', event => { if (event.target.closest('[data-test-id],[data-comp-id],[data-drive-mode]')) refresh(); });
+  function onChoice(event) { if (event.target.closest('[data-test-id],[data-comp-id],[data-drive-mode]')) refresh(); }
+  root.addEventListener('click', onChoice);
   root.addEventListener('change', refresh);
   const observer = new MutationObserver(refresh);
   observer.observe(testCards, { childList:true }); observer.observe(competitions, { childList:true });
@@ -140,6 +146,6 @@ export function mountMenuSections({ root, game, svg, selectMode }) {
       if (!testCards.querySelector('[aria-selected="true"]:not(.v6-locked)')) (testCards.querySelector('[data-test-id="accel100"]:not(.v6-locked)') || testCards.querySelector('.v6-card:not(.v6-locked)'))?.click();
       refresh();
     },
-    dispose() { observer.disconnect(); },
+    dispose() { if (disposed) return; disposed = true; vehicleLabels.dispose(); observer.disconnect(); root.removeEventListener('click', onChoice); root.removeEventListener('change', refresh); },
   };
 }

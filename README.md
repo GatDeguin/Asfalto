@@ -2,6 +2,8 @@
 
 Juego: https://gatdeguin.github.io/Asfalto/
 
+Recuperación funcional de v7 sobre v8: [alcance y validación](docs/v8-v7-recovery.md).
+
 Correcciones de estabilidad y mediciones: [informe v8](docs/release-v8-stability.md).
 
 ## Integración de vehículos y cockpits — 19/09/2026
@@ -15,7 +17,7 @@ Verificación y límites: informe `../Reports/Asfalto_Nacional_v8/cockpit-integr
 El manual siguiente corresponde a la base recibida y conserva sus instrucciones originales.
 
 
-Juego completo con cinco circuitos, taller, cockpit, audio y efectos. El ciclo día/noche dura 12 minutos.
+Juego completo con cinco circuitos, taller, cockpit, audio y efectos. El ciclo día/noche ofrece 6 o 12 minutos, o un horario fijo.
 
 La primera carga descarga modelos, música y texturas de alta resolución. Los cambios de taller, cockpit e iluminación se conservan en el navegador de cada jugador; no se escriben archivos en el servidor. La calibración inicial de cabina y los 12 presets de iluminación se incluyen en assets/configuration.
 
@@ -45,7 +47,7 @@ Activar el sonido durante la reproducción conserva la intro completa. Cambiar d
 
 La entrega tiene 40 segundos a 1080p/24 fps, ampliados desde clips de 720p. La mezcla final de la canción y el MP4 se realizaron con FFmpeg; el proyecto de REAPER queda actualizado para edición. Las imágenes interpretan los vehículos y paisajes y no son capturas exactas del juego. El taller y el menú alternan `Menu 1.mp3` y `Menu 2.mp3`. Al regresar de una carrera, la canción actual empieza desde cero; al cambiar de sección del menú conserva la reproducción. Motor y radio se silencian al volver al menú o pausar.
 
-La película está en `assets/intro/cinematic.mp4`; la animática anterior se conserva en `assets/intro/animatic.mp4`. El proyecto editable de REAPER, el guion, los storyboards y los cinco componentes modelados en Blender están en `../Produccion/Intro_Menu_2026-09-05/`. Los controles del menú usan renders PNG de esos componentes; sus GLB y el archivo `.blend` se conservan para reutilización.
+La película está en `assets/intro/cinematic-v7.mp4`; la animática anterior se conserva en `assets/intro/animatic.mp4`. El proyecto editable de REAPER, el guion, los storyboards y los cinco componentes modelados en Blender están en `../Produccion/Intro_Menu_2026-09-05/`. Los controles del menú usan renders PNG de esos componentes; sus GLB y el archivo `.blend` se conservan para reutilización.
 
 - Pedales: teclado (`W`/flecha arriba para acelerar, `S`/flecha abajo para frenar) o controles táctiles.
 - Volante: teclado, arrastre directo con mouse sobre el volante o gesto táctil.

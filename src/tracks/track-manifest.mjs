@@ -1,4 +1,4 @@
-import { validateTrackManifest } from './track-contract.mjs';
+import { validateTrackManifest } from './track-contract.mjs?v=7d88fa8e85b8ea4d';
 
 const PRESETS = Object.freeze(['clear', 'overcast', 'golden-hour', 'sunset', 'moonrise', 'night']);
 

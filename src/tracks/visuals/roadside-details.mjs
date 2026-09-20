@@ -1,10 +1,10 @@
-import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs?v=cd94870ee4671a7f';
-import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=bc7d914418f1a25b';
-import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=aae23240eaf5f4b9';
+import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs?v=dc7a4421c4479e97';
+import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=87374a99c604ce32';
+import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
 // Blender-authored, local-metre meshes. All instances are visual and have no collision role.
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);
 
-export async function loadRoadsideTemplates(THREE, signal) {
+export async function loadRoadsideTemplates(THREE, signal, id="dos_lagos") {
   const response = await fetch(new URL('roadside-details.glb', ASSETS), { signal });
   if (!response.ok) throw new Error('Roadside model HTTP ' + response.status);
   const bytes = new Uint8Array(await response.arrayBuffer());
@@ -44,7 +44,7 @@ export async function loadRoadsideTemplates(THREE, signal) {
       if (!geometries.has('tree-'+variant+'-'+part)) geometries.set('tree-'+variant+'-'+part, geometries.get('tree-0-'+part));
     if (signal?.aborted) throw signal.reason || new Error('Roadside model aborted');
     const retired=new Set();for(const[name,geometry]of geometries)if(name.startsWith('tree-'))retired.add(geometry);
-    for(const[name,geometry]of createRegionalTreeTemplates(THREE))geometries.set(name,geometry);
+    for(const[name,geometry]of createRegionalTreeTemplates(THREE,{id}))geometries.set(name,geometry);
     for(const geometry of retired)geometry.dispose();
     return geometries;
   } catch (error) { for (const geometry of new Set(geometries.values())) geometry?.dispose(); throw error; }
@@ -135,7 +135,7 @@ export function addRoadsideDetails(THREE, root, { id, query, lengthM, heightAt, 
   const grassMaterial = new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, roughness: 1, color: forest ? '#788151' : '#a99c71', envMapIntensity: .25 });
   const bark = new THREE.MeshStandardMaterial({ map: textures.detailBark || null, roughness: 1, color: '#b3aa94', envMapIntensity: .22 });
   const crownMap=forest?textures.detailLeaf:null;
-  const leaf = new THREE.MeshStandardMaterial({ map: crownMap, roughness: .94, side: THREE.DoubleSide, color: id === 'paso_garibaldi' ? '#aebcae' : '#c2c9b2', envMapIntensity: .2 });
+  const leaf = new THREE.MeshStandardMaterial({ name:'ASFALTO_'+id+'_leaf', map: crownMap, roughness: .94, side: THREE.DoubleSide, color: id === 'paso_garibaldi' ? '#aebcae' : '#c2c9b2', envMapIntensity: .2 });
   leaf.vertexColors=true; leaf.side=THREE.DoubleSide;applyPhotographicLeafCutout(leaf);
   applyCrownDistanceTransition(leaf);applyCrownDistanceTransition(bark);
   leaf.userData.asfaltoSnow=true;

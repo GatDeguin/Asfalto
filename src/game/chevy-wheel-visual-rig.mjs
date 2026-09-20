@@ -1,4 +1,4 @@
-import { CHEVY_V3_WHEEL_PARTITION } from './chevy-v3-wheel-partition-data.mjs';
+import { CHEVY_V3_WHEEL_PARTITION } from './chevy-v3-wheel-partition-data.mjs?v=2c28b8f3c37d245b';
 
 // The shipped V3 is a single quantized mesh, with fragmented tire/body topology.
 // Surface ownership is compiled from that exact GLB's positions, UV atlas and

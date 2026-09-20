@@ -16,3 +16,4 @@ jobs:
       - run: node tools/verify-v8-release.mjs
       - run: node --check src/legacy/module-02.mjs
       - run: node --check src/legacy/v6-complete-runtime.js
+      - run: node --test tools/*.test.mjs

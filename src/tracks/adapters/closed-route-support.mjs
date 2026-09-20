@@ -1,4 +1,4 @@
-import { wrapRouteDistance } from '../route-distances.mjs';
+import { wrapRouteDistance } from '../route-distances.mjs?v=66a33fddb083fb2b';
 
 export function prepareOptionalClosedRoute(dependencies, sourceRoute, id) {
   if (dependencies.prepareClosedRoute === undefined) return null;

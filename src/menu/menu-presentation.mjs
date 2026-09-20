@@ -1,10 +1,12 @@
-import { bindIntroBrand } from './intro-brand.mjs?v=a112dd1a27b4fa5e';
-import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=01507c60321e8369';
-import { initialMenuState, reduceMenu } from './menu-state.mjs';
-import { createIntroSession } from './intro-player.mjs';
-import { mountMenuSections } from './menu-sections.mjs?v=faa65cae5d9af65a';
-import { mountMenuRefinements } from './menu-refinements.mjs?v=0ff8b8ff8bdf60de';
-import { fitMenuCar } from './menu-refinement-state.mjs';
+import { bindIntroBrand } from './intro-brand.mjs?v=5e76abd6e80e002a';
+import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=f36bc97c0e56dd91';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
+import { initialMenuState, reduceMenu } from './menu-state.mjs?v=56c7046fc4b119fb';
+import { createIntroSession } from './intro-player.mjs?v=bf81b1e13c8d583d';
+import { mountMenuSections } from './menu-sections.mjs?v=7d9a87466cab5f31';
+import { mountMenuRefinements } from './menu-refinements.mjs?v=cd7f60f1ad4905b3';
+import { mountWorkshopService } from './workshop-service.mjs?v=5703aaf5208743b2';
+import { fitMenuCar } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
 
 const ICONS = {
   drive: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M3 10h6m6 0h6m-9 4v7"/>',
@@ -35,13 +37,13 @@ function mount() {
   let introFetch = null;
   let focusBeforeIntro = null;
   let wasWorkshopActive = false;
-  let introBackground = [];
+  let releaseIntroBackground = ()=>{};
   let sectionStep = 'modes';
   let sections = null;
 
   root.classList.add('an-cinematic-menu');
   root.setAttribute('aria-label', 'Menú principal de Asfalto Nacional');
-  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption">Chevy Serie 2 <span>·</span> 1973</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
+  brand.innerHTML = '<div class="an-brand-bars" aria-hidden="true"><i></i><i></i></div><div><h1>Asfalto<br>Nacional</h1><p class="an-brand-caption" data-selected-vehicle-label>Vehículo seleccionado</p></div><p class="an-brand-tagline">La recta te llama. La curva te mide.</p>';
   nav.forEach(button => {
     const label = document.createElement('span'); label.textContent = button.textContent;
     button.innerHTML = svg(button.dataset.v6Panel); button.append(label);
@@ -49,14 +51,25 @@ function mount() {
   });
   const homePlate = document.createElement('aside');
   homePlate.className = 'an-vehicle-plate'; homePlate.setAttribute('aria-label', 'Vehículo seleccionado');
-  homePlate.innerHTML = '<div class="an-plate-engine"><strong>Chevrolet 250</strong><span>Seis en línea</span><small>Tracción trasera</small></div><p>El gran turismo argentino.<br>Potencia elástica, andar sólido y presencia en cada ruta.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg>1973</b>';
+  homePlate.innerHTML = '<div class="an-plate-engine"><strong data-selected-vehicle-label>Vehículo seleccionado</strong><span>Listo para tu próxima salida</span></div><p>Cada ruta, una historia.<br>Prepará el auto y salí a conducir.</p><b><svg viewBox="0 0 90 34" aria-hidden="true"><path d="M32 4h26v8h23l-5 12H58v7H32v-7H9l5-12h18z" fill="none" stroke="currentColor" stroke-width="3"/></svg></b>';
   root.append(homePlate);
+  const vehicleLabels = bindSelectedVehicleLabels({ root, getVehicleId: () => game.workshop?.vehicleId });
   const footer = document.createElement('footer'); footer.className = 'an-menu-footer';
   footer.innerHTML = '<p class="an-controls-hint"><kbd>↵</kbd> Seleccionar <kbd>ESC</kbd> Volver</p><button type="button" class="an-replay">Ver animática <span aria-hidden="true">▷</span></button>';
   root.append(footer);
+  const balance = document.createElement('output');
+  balance.className = 'an-token-balance';
+  balance.setAttribute('aria-live', 'polite');
+  balance.setAttribute('aria-atomic', 'true');
+  balance.textContent = new Intl.NumberFormat('es-AR').format(game.profile().workshopTokens ?? 0) + ' fichas';
+  balance.setAttribute('aria-label', 'Fichas disponibles');
+  footer.querySelector('.an-controls-hint').replaceWith(balance);
   const replay = footer.querySelector('button');
+  const quickDrive=document.createElement('button');quickDrive.type='button';quickDrive.className='an-v7-quick-drive';quickDrive.textContent='Salir a la ruta →';quickDrive.setAttribute('aria-label','Conducir con la ruta y el vehículo seleccionados');footer.append(quickDrive);
+  quickDrive.addEventListener('click',async()=>{if(quickDrive.disabled)return;quickDrive.disabled=true;quickDrive.textContent='Preparando la salida…';try{await game.startDrive(game.profile().selectedDrive||'free');}catch(error){globalThis.__asfaltoV7Experience?.announce('No se pudo preparar la salida. Podés reintentar.');console.error('Salida rápida',error);}finally{quickDrive.disabled=false;quickDrive.textContent='Salir a la ruta →';}});
   const back = document.createElement('button'); back.type = 'button'; back.className = 'an-panel-back';
-  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver al menú</span>';
+  back.innerHTML = '<span aria-hidden="true">←</span><span class="an-back-label">Volver</span>';
+  back.setAttribute('aria-label', 'Volver al menú');
   content.prepend(back);
   for (const heading of content.querySelectorAll('.v6-panel h2')) heading.tabIndex = -1;
   for (const panel of root.querySelectorAll('.v6-panel')) {
@@ -79,8 +92,10 @@ function mount() {
     } else nav.find(button => button.dataset.v6Panel === panel)?.click();
   } });
 
+  const service = mountWorkshopService({root,game});
   const refinements = mountMenuRefinements({root,game});
   function sync() {
+    vehicleLabels.refresh();
     root.dataset.anView = state.view;
     root.dataset.anPanel = state.panel;
     const section = state.view === 'section';
@@ -92,7 +107,10 @@ function mount() {
     root.dataset.anInspection=String(section&&state.panel==='workshop'&&!!root.querySelector('[data-workshop-tab=chassis][aria-selected=true],[data-workshop-tab=mechanics][aria-selected=true],[data-workshop-tab=condition][aria-selected=true],[data-workshop-tab=tuning][aria-selected=true]')); 
     root.dataset.anAppearance = String(section && state.panel === 'workshop' && !!root.querySelector('[data-workshop-tab="appearance"][aria-selected="true"]'));
     refinements.refresh();
-    back.querySelector('.an-back-label').textContent = photo ? 'Volver al taller' : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
+    service.refresh();
+    const backDescription = photo ? (game.workshop.collectionInspectionReturn?'Volver a Colección':'Volver al taller') : section && state.panel === 'drive' && !modes ? 'Volver a modos' : 'Volver al menú';
+    back.setAttribute('aria-label', backDescription);
+    back.querySelector('.an-back-label').textContent = 'Volver';
     content.hidden = !section;
     content.inert = !section;
     homePlate.hidden = section && !modes;
@@ -104,6 +122,7 @@ function mount() {
   function onBack() {
     if (!intro.hidden) { closeIntro('skip'); return; }
     if (root.dataset.anPhoto === 'true') {
+      if(game.workshop.collectionInspectionReturn&&game.closeCollectionInspection?.())return;
       root.querySelector('[data-workshop-tab="appearance"]').click();
       root.querySelector('[data-workshop-tab="photo"]').focus({ preventScroll: true });
       return;
@@ -118,6 +137,7 @@ function mount() {
     }
   }
   function onPanel(panel) {
+    if(panel==='workshop')root.querySelector('[data-workshop-tab=condition]')?.click();
     sectionStep = 'modes';
     sections?.refresh();
     if (panel === 'tests') sections?.ensureTestSelected();
@@ -139,15 +159,18 @@ function mount() {
   }
   function frameWorkshop(workshop, instant=false) {
     if (!workshop?.camera || !workshop.car) return;
+    if(workshop.collectionFocusActive){workshop.camera.clearViewOffset();return;}
     const camera=workshop.camera, rect=workshop.canvas.getBoundingClientRect();
     const appearance=root.dataset.anAppearance==='true', modes=root.dataset.anStep==='modes' && state.view==='section';
     if(state.view!=='home' && !appearance && !modes){camera.clearViewOffset();return;}
     camera.fov=rect.width/rect.height<1.5?54:46;
     const reservedLeftPx=appearance ? content.getBoundingClientRect().right-rect.left+Math.max(24,rect.width*.02) : undefined;
-    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:-.82,pitch:.13,reservedLeftPx});
+    const pose=fitMenuCar(workshop.T,workshop.car,camera,{width:rect.width,height:rect.height,view:appearance?'appearance':modes?'modes':'home',yaw:!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)?-.9:-.82,pitch:.13,reservedLeftPx});
+    // Keep the PC overview in the clear aisle before the foreground posts.
+    if(!workshop.deviceProfile?.phone&&['belair_1957','pickup_3100'].includes(workshop.vehicleId)){pose.radius=Math.min(pose.radius,8.75);pose.target=[0,1.05,0];}
     camera.setViewOffset(rect.width,rect.height,...pose.offset,rect.width,rect.height);
     workshop.hotspots.general=pose;
-    const reduced=document.body.classList.contains('v6-reduce-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced=(document.body.classList.contains('v6-reduce-motion') || document.body.classList.contains('an-v7-reduce-motion')) || matchMedia('(prefers-reduced-motion: reduce)').matches;
     workshop.focus('general',instant||reduced);
   }
   function configureWorkshop(workshop) {
@@ -174,8 +197,7 @@ function mount() {
     if (intro.hidden) return;
     intro.hidden = true;
     document.body.classList.remove('an-intro-open');
-    for (const [element, inert] of introBackground) element.inert = inert;
-    introBackground = [];
+    releaseIntroBackground();releaseIntroBackground=()=>{};
     if (document.body.classList.contains('v6-menu-open')) {
       game.workshop.setActive(wasWorkshopActive);
       game.setMenuAudioActive?.(true);
@@ -198,12 +220,12 @@ function mount() {
     return introFetch;
   }
   async function playIntro({ automatic = false } = {}) {
+    if (automatic && (globalThis.__asfaltoV7Experience?.preferences?.().reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     if (state.view === 'closed' || !intro.hidden || document.hidden) return;
     const request = ++introRequest;
     focusBeforeIntro = document.activeElement;
     wasWorkshopActive = game.workshop.active;
-    introBackground = [...document.body.children].filter(element => element !== intro && element instanceof HTMLElement).map(element => [element, element.inert]);
-    for (const [element] of introBackground) element.inert = true;
+    releaseIntroBackground=globalThis.__asfaltoModalInert.acquire([...document.body.children].filter(element=>element!==intro&&element instanceof HTMLElement));
     game.workshop.setActive(false);
     game.setMenuAudioActive?.(false);
     intro.hidden = false;
@@ -266,7 +288,7 @@ function mount() {
     else void session?.resume();
   });
 
-  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; } };
+  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; }, dispose() { vehicleLabels.dispose(); sections?.dispose(); refinements.dispose(); service.dispose(); } };
   globalThis.__asfaltoMenuPresentation = api;
   configureWorkshop(game.workshop);
   window.addEventListener('resize', () => { if (state.view === 'home') configureWorkshop(game.workshop); });

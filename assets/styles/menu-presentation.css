@@ -500,3 +500,10 @@ body.v6-reduce-motion #v6-main-menu.an-cinematic-menu * { animation:none!importa
 /* One current logo during the opening shots; the final shot owns its logo. */
 .an-intro-brand{display:block;width:clamp(150px,22vw,320px);height:auto;object-fit:contain;filter:drop-shadow(0 3px 5px #0009)}
 .an-intro-top .an-intro-skip{margin-left:auto}
+/* Available currency stays visible alongside the menu actions. */
+#v6-main-menu .an-token-balance { display:block;flex:0 0 auto;white-space:nowrap;color:#f5d9a0;background:linear-gradient(#292820,#171914);border:1px solid #aa895d77;border-radius:7px;padding:9px 13px;box-shadow:inset 0 1px #ffffff12,0 2px 6px #0005;font:600 15px/1.2 Arial,sans-serif;font-variant-numeric:tabular-nums; }
+@media(max-width:600px){#v6-main-menu .an-token-balance{font-size:12px;padding:8px}.an-menu-footer{gap:8px}.an-menu-footer .an-replay{font-size:11px!important}}
+
+@media(max-width:600px){#v6-main-menu.an-cinematic-menu .an-menu-footer .an-v7-quick-drive{margin-inline-end:0}#v6-main-menu.an-cinematic-menu .an-menu-footer .an-replay{font-size:11px!important;padding-inline:4px}}
+
+#v6-main-menu.an-cinematic-menu[data-an-view=section] .an-token-balance{margin-left:clamp(105px,14vw,200px)}

@@ -1,4 +1,4 @@
-import { detectDeviceProfile } from '../performance/mobile-device-profile.mjs';
+import { detectDeviceProfile } from '../performance/mobile-device-profile.mjs?v=f090574cb3e87b2d';
 
 const ZERO = Object.freeze({ active:false, throttle:0, brake:0, clutch:0, handbrake:0 });
 const HOLDS = new Set(['throttle','brake','clutch','handbrake']);

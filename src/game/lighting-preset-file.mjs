@@ -1,8 +1,8 @@
-import {staticSeedUrl} from './hosting-mode.mjs';
-import {lightingPresetKey,validateLightingEntry,sanitizeLightingOverrides} from './lighting-presets.mjs';
+import {staticSeedUrl} from './hosting-mode.mjs?v=bcd45c5c9364a26f';
+import {lightingPresetKey,validateLightingEntry,sanitizeLightingOverrides} from './lighting-presets.mjs?v=746ea306bd370d04';
 export const LIGHTING_STORAGE_KEY='asfalto:nacional:v6:lighting-presets';
 export function createLightingPresetStore({storage,fetcher=globalThis.fetch?.bind(globalThis),delay=400,staticPresetUrl=staticSeedUrl('lighting-presets.json')}={}){
- if(storage===undefined){try{storage=globalThis.localStorage;}catch{storage=null;}}
+ if(storage===undefined){try{storage=globalThis.__asfaltoV7Storage;}catch{storage=null;}}
  const entries=new Map(),dirty=new Map(),listeners=new Set();let enabled=false,loaded=false,disposed=false,timer=null,pending=null,lastTime=0,path=null,state='loading',error=null;
  const notify=()=>{for(const fn of listeners)fn(diagnostics());};
  function diagnostics(){return {state,error,path,enabled,loaded,pending:dirty.size,presets:entries.size};}

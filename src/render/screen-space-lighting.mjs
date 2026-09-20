@@ -1,8 +1,11 @@
-import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=ef65ac852f9d069d';
+import {supportedHdrSamples} from './render-target-capabilities.mjs?v=9ae9aca93c7ad99b';
+import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=e2765b113440f785';
 const policies=Object.freeze({
- high:Object.freeze({enabled:true,maxWidth:768,scale:.5,aoSamples:24,giRays:6,giSteps:12,dfao:true,volume:true}),
- balanced:Object.freeze({enabled:true,maxWidth:576,scale:.5,aoSamples:12,giRays:3,giSteps:8,dfao:true,volume:true}),
- low:Object.freeze({enabled:true,maxWidth:384,scale:.4,aoSamples:6,giRays:0,giSteps:0,dfao:false,volume:false}),
+ cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.625,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
+ high:Object.freeze({enabled:true,maxWidth:768,maxPixels:589824,scale:.5,aoSamples:24,giRays:6,giSteps:12,dfao:true,volume:true}),
+ balanced:Object.freeze({enabled:true,maxWidth:576,maxPixels:331776,scale:.5,aoSamples:12,giRays:3,giSteps:8,dfao:true,volume:true}),
+ low:Object.freeze({enabled:true,maxWidth:384,maxPixels:147456,scale:.4,aoSamples:6,giRays:0,giSteps:0,dfao:false,volume:false}),
  off:Object.freeze({enabled:false,maxWidth:1,scale:1,aoSamples:0,giRays:0,giSteps:0,dfao:false,volume:false})
 });
 export const screenLightingPolicy=tier=>policies[tier]||policies.balanced;
@@ -14,9 +17,9 @@ const compositeGLSL="uniform sampler2D anSceneColor,anLighting;\nuniform vec2 an
 const compositeMain="\nvoid main(){\n vec4 color=texture2D(anSceneColor,vUv);float depth=anReadDepth(vUv);vec3 p=anViewPosition(vUv);\n vec4 lighting=vec4(0.);float weight=0.;\n for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){\n  vec2 uv=clamp(vUv+vec2(float(x),float(y))/anLightingResolution,vec2(.001),vec2(.999));\n  float delta=abs(anViewPosition(uv).z-p.z),w=exp(-delta/max(.06,-p.z*.004))*((x==0&&y==0)?2.:1.);\n  lighting+=texture2D(anLighting,uv)*w;weight+=w;\n }\n lighting/=max(weight,.0001);vec3 result=color.rgb;\n if(depth<.999999){result*=lighting.a;result+=lighting.rgb*min(color.rgb+.06,vec3(1.));}\n result=anApplyAtmosphere(result,p,vUv);\n gl_FragColor=vec4(max(result,vec3(0.)),color.a);\n gl_FragDepth=depth;\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}";
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
-export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced'}={}){
+export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,onStage=null}={}){
  let disposed=false,rendering=false,frames=0,targets=null,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
- const size=new T.Vector2(),viewport=new T.Vector4(),scissor=new T.Vector4(),clearColor=new T.Color();
+ const size=new T.Vector2(),currentViewport=new T.Vector4(),viewport=new T.Vector4(),scissor=new T.Vector4(),clearColor=new T.Color();
  const definitions=gtaoShaderDefinitions(T),noise=definitions.generateMagicSquareNoise(5);
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));geometry.setAttribute('uv',new T.Float32BufferAttribute([0,0,2,0,0,2],2));
  const uniforms={anSceneDepth:{value:null},anSceneColor:{value:null},anGtao:{value:null},anLighting:{value:null},anResolution:{value:new T.Vector2()},anLightingResolution:{value:new T.Vector2()},anProjection:{value:camera.projectionMatrix},anProjectionInverse:{value:camera.projectionMatrixInverse},anCameraWorld:{value:camera.matrixWorld},anNear:{value:camera.near},anFar:{value:camera.far},anLogDepth:{value:!!renderer.capabilities.logarithmicDepthBuffer},anGiRays:{value:policy.giRays},anGiSteps:{value:policy.giSteps},anAoStrength:{value:.38},anGiStrength:{value:.28},anUseDfa:{value:0},...(atmosphere?.uniforms||{}),...(distanceField?.uniforms||{})};
@@ -33,19 +36,16 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  function volumeEnabled(){return !!(atmosphere&&features.volumetrics&&policy.volume&&atmosphere.uniforms?.anAtmoEnabled?.value!==0);}
  function hasIndirect(){return !!(features.gtao&&policy.aoSamples>0||features.ssgi&&policy.giRays>0||distanceField&&features.dfao&&policy.dfao);}
  function hasEffects(){return hasIndirect()||volumeEnabled();}
- function releaseTargets(){if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;}
- function captureSamples(){
-  if((renderer.capabilities.maxSamples??0)<2)return 0;
-  const gl=renderer.getContext();
-  if(typeof gl.getInternalformatParameter==='function'){
-   const color=Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER,gl.RGBA16F,gl.SAMPLES)||[]),depth=Array.from(gl.getInternalformatParameter(gl.RENDERBUFFER,gl.DEPTH_COMPONENT24,gl.SAMPLES)||[]);
-   if(!color.some(count=>count>=2&&depth.includes(count)))return 0;
-  }
-  return 2;
- }
+ function releaseTargets(){if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;allocationBudget=null;}
+ function requestedCaptureSamples(){return Math.min(renderSampleLimit(quality,phone),samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples);}
+ function captureSamples(){return supportedHdrSamples(renderer,requestedCaptureSamples());}
+ let targetSamples=captureSamples();
+ const contextRestored=()=>{releaseTargets();targetSamples=captureSamples();};
+ renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
+ let allocationBudget=null;
  function ensureTargets(){
-  const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);const width=Math.max(2,Math.floor(size.x)),height=Math.max(2,Math.floor(size.y)),scale=Math.min(policy.scale,policy.maxWidth/width),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
-  if(!targets){const params={type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false};const color=new T.WebGLRenderTarget(width,height,{...params,depthBuffer:true,samples:captureSamples()});color.depthTexture=new T.DepthTexture(width,height,T.UnsignedIntType);color.texture.name='ASFALTO_INDIRECT_SOURCE';color.texture.colorSpace=T.LinearSRGBColorSpace;targets={color,ao:new T.WebGLRenderTarget(ew,eh,params),lighting:new T.WebGLRenderTarget(ew,eh,params)};}
+  const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples});const width=allocationBudget.width,height=allocationBudget.height,scale=Math.min(policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height))),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
+  if(!targets){const params={type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false};const color=new T.WebGLRenderTarget(width,height,{...params,depthBuffer:true,samples:targetSamples});color.depthTexture=new T.DepthTexture(width,height,T.UnsignedIntType);color.texture.name='ASFALTO_INDIRECT_SOURCE';color.texture.colorSpace=T.LinearSRGBColorSpace;targets={color,ao:new T.WebGLRenderTarget(ew,eh,params),lighting:new T.WebGLRenderTarget(ew,eh,params)};}
   if(targets.color.width!==width||targets.color.height!==height)targets.color.setSize(width,height);
   for(const t of [targets.ao,targets.lighting])if(t.width!==ew||t.height!==eh)t.setSize(ew,eh);
   uniforms.anSceneDepth.value=targets.color.depthTexture;uniforms.anSceneColor.value=targets.color.texture;uniforms.anGtao.value=targets.ao.texture;uniforms.anLighting.value=targets.lighting.texture;uniforms.anResolution.value.set(width,height);uniforms.anLightingResolution.value.set(ew,eh);
@@ -53,7 +53,7 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  }
  return{
   setFeatures(value){features={...features,...value};uniforms.anAoStrength.value=features.gtao?.38:0;uniforms.anGiStrength.value=features.ssgi?.28:0;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;if(!hasEffects())releaseTargets();},
-  setQuality(tier){const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
+  setQuality(tier){quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;releaseTargets();}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
   prepare(compile){
    if(typeof compile!=='function')throw new TypeError('Screen lighting compile callback is required');
    if(disposed||!policy.enabled||!hasEffects()||renderer.getContext().isContextLost())return compile();
@@ -72,21 +72,21 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    if(disposed||!policy.enabled||!hasEffects()||renderer.getContext().isContextLost()){if(!disposed&&(!policy.enabled||!hasEffects()))releaseTargets();draw();return;}
    if(rendering)throw Error('Screen lighting cannot render recursively');rendering=true;
    const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()||0,oldMip=renderer.getActiveMipmapLevel?.()||0,oldAutoClear=renderer.autoClear,oldInfo=renderer.info.autoReset,oldScissor=renderer.getScissorTest(),oldAlpha=renderer.getClearAlpha();
-   renderer.getViewport(viewport);renderer.getScissor(scissor);renderer.getClearColor(clearColor);const oldFog=scene.fog;
+   renderer.getViewport(viewport);renderer.getCurrentViewport?.(currentViewport);renderer.getScissor(scissor);renderer.getClearColor(clearColor);const oldFog=scene.fog;
    try{
-    ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
+    onStage?.('Primer cuadro: buffers de iluminación');ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
     gtaoUniforms.cameraNear.value=camera.near;gtaoUniforms.cameraFar.value=camera.far;gtaoUniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);gtaoUniforms.cameraProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);gtaoUniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
     uniforms.anUseDfa.value=distanceField&&features.dfao&&policy.dfao?1:0;
     renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
     if(volumeEnabled())scene.fog=null;
-    draw();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
-    renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
-    renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
-    renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
+    onStage?.('Primer cuadro: captura del mundo');draw();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
+    onStage?.('Primer cuadro: oclusión GTAO');renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
+    onStage?.('Primer cuadro: iluminación indirecta');renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
+    onStage?.('Primer cuadro: composición del mundo');renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
    }catch(error){lastError=error.message;throw error;}
-   finally{scene.fog=oldFog;renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;rendering=false;}
+   finally{scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
   },
-  diagnostics:()=>({enabled:policy.enabled,policy,frames,targets:targets?3:0,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
-  dispose(){if(disposed)return;disposed=true;releaseTargets();noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
+  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],spatialOnly:true,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
+  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
  };
 }

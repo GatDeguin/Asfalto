@@ -1,6 +1,6 @@
 const cache=new WeakMap();
 /** PCM synthesis runs off the render thread. Successful banks live with their AudioContext. */
-export function prepareSoundscapeBanks(context,{seed=6147,signal,createWorker=()=>new Worker(new URL('./soundscape-banks-worker.mjs?v=352a26a95ed63493',import.meta.url),{type:'module'})}={}){
+export function prepareSoundscapeBanks(context,{seed=6147,signal,createWorker=()=>new Worker(new URL('./soundscape-banks-worker.mjs?v=17dd7930d2372e0b',import.meta.url),{type:'module'})}={}){
  if(signal?.aborted)return Promise.reject(signal.reason||new DOMException('Aborted','AbortError'));
  let entries=cache.get(context);if(!entries){entries=new Map();cache.set(context,entries);}
  if(entries.has(seed))return Promise.resolve(entries.get(seed));

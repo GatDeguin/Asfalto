@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-const source=readFileSync(new URL('../src/render/vehicle-presentation.mjs?v=f6f84bf33ac89608',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/render/vehicle-presentation.mjs?v=6698fa8c93c2dcfc',import.meta.url),'utf8');
 const block=source.slice(source.indexOf('  for(const m of materials) {'),source.indexOf('  replacedMaterials.forEach'));
 const apply=new Function('materials','vehicle','uniforms','T','definition','brakes','headlamps',block);
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));

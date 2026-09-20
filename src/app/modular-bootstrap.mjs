@@ -1,10 +1,11 @@
-import {createTrackManager} from "../tracks/track-manager.mjs?v=841e2ee9c739681b";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=ee997bcae0b29e99";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=0b4862e1e88d8a6f";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=66dce655e2c22a4e";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=4af06244c38dbea9";
+import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
+import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
+import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=e80bd8543c43eaa9";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=710888b6a5a19751";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=fb44fc3a7247208f";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=72433993e23de3c6";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=73a5ef4aaa3333c3";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=d0d5768ad6de0819";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
@@ -38,7 +39,7 @@ async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loadin
 
 export function connectModularHost(boundary){if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));if(connectPromise)return connectPromise;runtimeBoundary=Object.freeze({...boundary});connectPromise=ensureBoot().then(({registry:loadedRegistry,trackManager:manager})=>{const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;return manager.select(selectedId)}).then(adapter=>{if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");resolveReady(adapter);return adapter});connectPromise.catch(()=>{});return connectPromise}
 
-async function selectTrack(id){if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await ensureBoot();const adapter=await manager.select(id);if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
+async function selectTrack(id,{signal,timeoutMs}={}){signal?.throwIfAborted();if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await waitForSignal(ensureBoot(),signal);const adapter=await manager.select(id,{signal,timeoutMs});if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
 function beginHostInitialization(){
  if(hostInitialization)return hostInitialization.api;
  let resolveCompletion;let rejectCompletion;let settled=false;let failure=null;let ownedOperation=null;
@@ -64,6 +65,6 @@ function getDiagnostics(){const active=trackManager?.active;const host=hostIniti
 
 const facade=Object.freeze({ready,selectTrack,get trackManager(){return trackManager},getDiagnostics,get releaseManifest(){return releaseManifest},beginHostInitialization,shutdown:shutdownModularHost});
 Object.defineProperty(globalThis,"__asfaltoV6Modular",{value:facade,enumerable:false,configurable:false,writable:false});
-globalThis.addEventListener?.("pagehide",()=>{const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})},{once:true});
+globalThis.addEventListener?.("pagehide",event=>{if(event.persisted)return;const shared=shutdownModularHost();shared.catch(error=>{reportFailure(error,"pagehide")})});
 
 export {facade as modularFacade};

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import * as THREE from '../../Web/vendor/three.module.js';
+import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=94cfe8a9d3150ce6';
 
 function fixture() {

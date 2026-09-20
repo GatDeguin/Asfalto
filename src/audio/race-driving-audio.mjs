@@ -1,6 +1,7 @@
 import {createDrivingAudioBanks} from './driving-audio-banks.mjs?v=81162803ee9cade0';
-import {createAudioTargets} from './audio-targets.mjs?v=1809a92251d864f2';
-import { drivingAudioState } from './race-driving-state.mjs';
+import {createAudioTargets} from './audio-targets.mjs?v=d16a18410f46456b';
+import { mechanicalEvents } from './v7-audio-state.mjs?v=eecccc1986f61671';
+import { drivingAudioState } from './race-driving-state.mjs?v=84ddd7aeddea355c';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 
 /** Physical contacts and one spatial rival. All nodes belong to the supplied context. */
@@ -27,11 +28,11 @@ export function createRaceDrivingAudio({context,destination=context?.destination
   rivalFilter.type='lowpass';rivalFilter.Q.value=.6;rivalGain.gain.value=0;rivalFilter.connect(rivalGain).connect(rivalPan).connect(master);
   const rivalVoices=[{order:3,level:.066},{order:6,level:.024},{order:1,level:.015}].map(({order,level})=>{
     const osc=own(context.createOscillator()),gain=own(context.createGain());osc.type=order===1?'sine':'triangle';gain.gain.value=level;osc.connect(gain).connect(rivalFilter);osc.start();sources.push(osc);return{osc,order};});
-  let lastState=null,inside=true,rivalLevel=0;
+  let lastState=null,inside=true,rivalLevel=0,previousMechanical=null;
   const automation=createAudioTargets(context),target=automation.target;
   const set=(name,value,hz)=>{const c=channels[name];c.target=value;target(c.gain.gain,value);if(hz)target(c.filter.frequency,hz,.08);};
   function stopTransient(t){try{t.source.stop();}catch{}t.dispose();}
-  function setActive(value){if(disposed||active===!!value)return;active=!!value;if(!active){automation.clear();master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const c of Object.values(channels)){c.gain.gain.cancelScheduledValues(context.currentTime);c.gain.gain.setValueAtTime(0,context.currentTime);c.target=0;}brakeGain.gain.cancelScheduledValues(context.currentTime);brakeGain.gain.setValueAtTime(0,context.currentTime);rivalGain.gain.setValueAtTime(0,context.currentTime);rivalLevel=0;for(const t of [...transients])stopTransient(t);bumpState.clear();}}
+  function setActive(value){if(disposed||active===!!value)return;active=!!value;if(!active){automation.clear();master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const c of Object.values(channels)){c.gain.gain.cancelScheduledValues(context.currentTime);c.gain.gain.setValueAtTime(0,context.currentTime);c.target=0;}brakeGain.gain.cancelScheduledValues(context.currentTime);brakeGain.gain.setValueAtTime(0,context.currentTime);rivalGain.gain.setValueAtTime(0,context.currentTime);rivalLevel=0;for(const t of [...transients])stopTransient(t);bumpState.clear();previousMechanical=null;}}
   function transient({intensity=.3,pan=0,metal=false,bump=false}={}) {
     if(!active||disposed||transients.size>=8)return false;
     const now=context.currentTime,source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain(),panner=context.createStereoPanner();
@@ -46,7 +47,11 @@ export function createRaceDrivingAudio({context,destination=context?.destination
     update({snapshot={},controls={},speedMps,wetness=0,active:enabled=true,paused=false,cameraMode='cockpit',tiresGain=1,roadGain=1,brakesGain=.56,impactsGain=.78,rival=null}={}) {
       if(disposed)return;setActive(enabled&&!paused);if(!active)return;
       inside=cameraMode==='cockpit';lastState=drivingAudioState({snapshot,controls,speedMps,wetness});const speed=lastState.speedMps;
-      target(master.gain,.8,.025);
+      const prefs=globalThis.__asfaltoV7Experience?.preferences?.()||{};
+      target(master.gain,.8*clamp(prefs.roadVolume??1),.04);target(compressor.threshold,prefs.reducedRange?-25:-12,.1);target(compressor.ratio,prefs.reducedRange?5:3,.1);
+      const mechanical={rpm:snapshot.engine?.rpm,gear:snapshot.transmission?.gear??snapshot.gearbox?.gear,cranking:snapshot.engine?.cranking,running:snapshot.engine?.running};
+      for(const kind of mechanicalEvents(previousMechanical,mechanical)){if(kind==='shift')transient({intensity:.13,metal:true});if(kind==='stall'){transient({intensity:.22,bump:true});globalThis.__asfaltoV7Experience?.announce('Motor detenido');}if(kind==='ignition')transient({intensity:.12,bump:true});}
+      previousMechanical=mechanical;
       const wheels=lastState.wheels,mean=(field,side=0)=>wheels.reduce((sum,w)=>sum+(side&&Math.sign(w.pan)!==side?0:w[field]),0)/(side?2:4);
       const tireLevel=clamp(tiresGain),roadLevel=clamp(roadGain,0,1.25),perspective=inside?.58:1;
       for(const [suffix,side] of [['Left',-1],['Right',1]]){

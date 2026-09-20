@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPmremCache} from '../src/render/pmrem-cache.mjs?v=01039df439330321';
-import {createHdriTransition,rotateHdriHalfTurn} from '../src/render/hdri-transition.mjs?v=c834f23996830a5c';
-import * as T from '../../Web/vendor/three.module.js';
+import {createPmremCache} from '../src/render/pmrem-cache.mjs?v=c042c9baa6b51abe';
+import {createHdriTransition,rotateHdriHalfTurn} from '../src/render/hdri-transition.mjs?v=04b4461330c3a53f';
+import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 const target=()=>({texture:{},width:768,height:1024,disposals:0,dispose(){this.disposals++;}});
 test('deduplicates concurrent builds, keeps dimensions and ref counts; idle LRU never evicts active leases',async()=>{

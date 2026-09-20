@@ -1,4 +1,4 @@
-import {sampleSkyHorizon} from './sky-matched-fog.mjs';
+import {sampleSkyHorizon} from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 
 /** Rotate an independently owned decoded panorama by exactly half a turn. */
 export function rotateHdriHalfTurn(texture){

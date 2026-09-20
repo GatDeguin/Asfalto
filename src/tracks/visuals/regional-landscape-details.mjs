@@ -1,7 +1,8 @@
-import {addRetainingTalus} from './regional-talus.mjs';
+import {addRetainingTalus} from './regional-talus.mjs?v=0e75b680f0881e21';
+import {addSectorCollisionGuardrails} from './sector-collision-guardrails.mjs?v=3cffdc3870c766a7';
 // Regional details follow the read-only route and terrain. All additions are visual.
-import { applyPhotographicLeafCutout } from './regional-forest.mjs?v=aae23240eaf5f4b9';
-import { instanceDetailTiles } from './roadside-details.mjs?v=cd22f591a61bb6a4';
+import { applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
+import { instanceDetailTiles } from './roadside-details.mjs?v=4a7b14bc2b90e2b7';
 const FOREST=new Set(['dos_lagos','paso_garibaldi']);
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const rand=n=>{const v=Math.sin(n*127.17+19.73)*43758.5453;return v-Math.floor(v);};
@@ -92,7 +93,8 @@ function signTexture(THREE,id,type,turn=-1){
   const map=new THREE.CanvasTexture(canvas);map.colorSpace=THREE.SRGBColorSpace;return map;
 }
 
-function addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,detailRange}){
+function addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,detailRange,barrierSource}){
+  const collisionGuardrails=id==='cuesta_lipan'&&barrierSource?addSectorCollisionGuardrails(THREE,root,{...barrierSource,query,heightAt}):null;
   const posts=[],rails=[],terminal=[],signPosts=[],signBoards=[],wall=[],retainingWalls=[],wetPatches=[],dryPatches=[],watercourses=[];
   const p=[],idx=[],uv=[];let guardLengthM=0;
   // Coalesce overlapping exposure intervals so rails and posts never double up.
@@ -102,12 +104,12 @@ function addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,
       const projected=query.project?.(base);if(projected&&(projected.distanceXZ<projected.widthM/2+1.8||Math.abs(projected.sM-s)>24)){last=null;continue;}
       // Posts use the shoulder elevation where the cut lies below road grade.
       base[1]=Number.isFinite(y)&&Math.abs(y-base[1])<.6?y:base[1];
-      posts.push({position:[base[0],base[1]+.45,base[2]],scale:[.10,1.16,.15],rotation:Math.atan2(q.frame.tangent[0],q.frame.tangent[2])});
+      if(!collisionGuardrails)posts.push({position:[base[0],base[1]+.45,base[2]],scale:[.10,1.16,.15],rotation:Math.atan2(q.frame.tangent[0],q.frame.tangent[2])});
       const toe=yAt(q,off+f.side*2.8),toeY=heightAt(toe[0],toe[2]),wallHeight=base[1]-toeY;
       if(id!=='dos_lagos'&&Number.isFinite(toeY)&&wallHeight>.75&&wallHeight<8)retainingWalls.push({position:[base[0]+q.frame.left[0]*f.side*.45,base[1]-Math.min(3.5,wallHeight)/2,base[2]+q.frame.left[2]*f.side*.45],scale:[.62,Math.min(3.5,wallHeight),4.08],rotation:Math.atan2(q.frame.tangent[0],q.frame.tangent[2])});
       const top=base.map((v,i)=>v+(i===1?.84:0));
-      if(last){const mid=top.map((v,i)=>(v+last[i])/2),distance=Math.hypot(...top.map((v,i)=>v-last[i]));rails.push({position:mid,scale:[.09,.28,distance+.035],rotation:Math.atan2(top[0]-last[0],top[2]-last[2]),pitch:-Math.atan2(top[1]-last[1],Math.hypot(top[0]-last[0],top[2]-last[2]))});guardLengthM+=distance;}
-      if(s===first||s+4>end)terminal.push({position:[top[0],top[1]-.18,top[2]],scale:[.15,.43,1.2],rotation:Math.atan2(q.frame.tangent[0],q.frame.tangent[2])});
+      if(last&&!collisionGuardrails){const mid=top.map((v,i)=>(v+last[i])/2),distance=Math.hypot(...top.map((v,i)=>v-last[i]));rails.push({position:mid,scale:[.09,.28,distance+.035],rotation:Math.atan2(top[0]-last[0],top[2]-last[2]),pitch:-Math.atan2(top[1]-last[1],Math.hypot(top[0]-last[0],top[2]-last[2]))});guardLengthM+=distance;}
+      if(!collisionGuardrails&&(s===first||s+4>end))terminal.push({position:[top[0],top[1]-.18,top[2]],scale:[.15,.43,1.2],rotation:Math.atan2(q.frame.tangent[0],q.frame.tangent[2])});
       last=top;
     }
   }
@@ -136,10 +138,10 @@ function addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,
   // Keep shared source geometry/material reachable even when a streamed tile has no feature.
   const owner=new THREE.Mesh(box,metal);owner.visible=false;owner.name='ASFALTO_INFRASTRUCTURE_OWNER';owner.add(new THREE.Mesh(new THREE.BufferGeometry(),stone));group.add(owner);
   root.userData.asfaltoDrainageChannels=watercourses;
-  return {guardrailMetres:Math.round(guardLengthM),guardrailPosts:posts.length,guardrailTerminals:terminal.length,curveApproachSigns:signBoards.length,drainageChannels:watercourses.length,culverts:wall.length,retainingWallSections:retainingWalls.length};
+  return {...(collisionGuardrails?{collisionGuardrails:{sectorId:collisionGuardrails.sectorId,segments:collisionGuardrails.segments,runs:collisionGuardrails.runs.length,posts:collisionGuardrails.posts.length,source:collisionGuardrails.source}}:{}),guardrailMetres:Math.round(collisionGuardrails?.metres??guardLengthM),guardrailPosts:collisionGuardrails?.posts.length??posts.length,guardrailTerminals:collisionGuardrails?collisionGuardrails.runs.length*2:terminal.length,curveApproachSigns:signBoards.length,drainageChannels:watercourses.length,culverts:wall.length,retainingWallSections:retainingWalls.length};
 }
 
-export function addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery=true,detailRange=null}){
+export function addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery=true,detailRange=null,barrierSource=null}){
   if(!heightAt||!query)return {};
   const features=planRegionalFeatures({id,query,lengthM,heightAt,bounds:heightAt.bounds,detailRange}),forest=FOREST.has(id);
   const group=new THREE.Group();group.name='ASFALTO_REGIONAL_LANDSCAPE_DETAILS';root.updateMatrixWorld(true);group.matrix.copy(root.matrixWorld).invert();group.matrixAutoUpdate=false;
@@ -170,7 +172,7 @@ export function addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightA
     instanceDetailTiles(THREE,group,geometry,material,dry,{name:'sheltered-xeric-shrubs',distanceM:240});const keeper=new THREE.Mesh(geometry,material);keeper.visible=false;group.add(keeper);
   }
   const owner=new THREE.Mesh(logGeometry,bark);owner.visible=false;owner.add(new THREE.Mesh(new THREE.BufferGeometry(),rock));group.add(owner);
-  const infrastructure=addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,detailRange});
+  const infrastructure=addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,detailRange,barrierSource});
   const retainingTalus=id==='aconcagua_horcones'?addRetainingTalus(THREE,group,{query,lengthM,heightAt,material:rock}):[];root.userData.asfaltoRetainingTalus=retainingTalus;
   let overlookFurniture=0;
   if(id==='dos_lagos'){let deck;root.traverse(mesh=>{if(mesh.isMesh&&/PROP_Mirador_Deck/.test(mesh.name+' '+mesh.parent?.name))deck=mesh;});

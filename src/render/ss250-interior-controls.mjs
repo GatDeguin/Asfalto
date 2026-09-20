@@ -1,7 +1,7 @@
 /** Authored SS250 animation bindings. Caller supplies actual vehicle telemetry.
  * Pedal travels are provisional visual ranges, not certified linkage dimensions.
  */
-import {createSS250SpeedPointer} from './ss250-speed-pointer.mjs?v=balance-20260917';
+import {createSS250SpeedPointer} from './ss250-speed-pointer.mjs?v=4e39523a343530ae';
 const unit=v=>Number.isFinite(v)?Math.max(0,Math.min(1,v)):0;
 export const SS250_AUX_SCALES=Object.freeze({rpm:Object.freeze({node:'SS250_rpm_Pivot',min:0,max:6000}),temperatureC:Object.freeze({node:'SS250_water_Pivot',min:40,max:120})});
 export function createSS250InteriorControls(T,root){

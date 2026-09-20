@@ -1,5 +1,5 @@
-import {createChassisMechanism,tireRadius,tireWidth} from './chassis-mechanism.mjs';
-import {sanitizeChassisConfig} from '../game/chassis-configuration.mjs';
+import {createChassisMechanism,tireRadius,tireWidth} from './chassis-mechanism.mjs?v=7552609a0f52f6b8';
+import {sanitizeChassisConfig} from '../game/chassis-configuration.mjs?v=cb4421d5b87d806c';
 const IDS=['frontLeft','frontRight','rearLeft','rearRight'];
 const visibleKinds=new Set(['tire','rim','rotor','caliper','pad','drum','shoe','bearing','hub']);
 const materialList=o=>Array.isArray(o.material)?o.material:[o.material];

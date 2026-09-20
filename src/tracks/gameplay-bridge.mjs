@@ -1,4 +1,4 @@
-import { wrapRouteDistance, signedRouteDistance } from './route-distances.mjs';
+import { wrapRouteDistance, signedRouteDistance } from './route-distances.mjs?v=66a33fddb083fb2b';
 const DYNAMICS = /(?:vehicle|tyre|tire|suspension|engine|brake|mass|aero|assist)/i;
 const freeze = value => { if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value; Object.values(value).forEach(freeze); return Object.freeze(value); };
 const finite = (value, name) => { if (!Number.isFinite(value)) throw new TypeError(name + ' must be finite'); return value; };

@@ -1,4 +1,4 @@
-import {collectRayGeometry} from './ray-geometry.mjs';
+import {collectRayGeometry} from './ray-geometry.mjs?v=d2ec3723f8cda231';
 export const RAY_TRACING_PRESETS=Object.freeze({off:null,balanced:Object.freeze({rays:2,radius:16,distance:1.25,triangles:8000,strength:.55}),high:Object.freeze({rays:4,radius:24,distance:2,triangles:24000,strength:.62})});
 export const RAY_TRACING_STORAGE_KEY='asfalto:nacional:v6:ray-tracing';
 const fragment=String.raw`
@@ -59,7 +59,7 @@ vec4 anRtPosition=vec4(transformed,1.0);
 #endif
 anRtWorldPosition=(modelMatrix*anRtPosition).xyz;
 `;
-export function createRayTracedOcclusion({THREE:T,renderer,scene,camera,excludeRoots=()=>[],excludeOccluders=()=>[],mode='off',workerFactory=()=>new Worker(new URL('./ray-bvh-worker.mjs',import.meta.url),{type:'module'})}={}) {
+export function createRayTracedOcclusion({THREE:T,renderer,scene,camera,excludeRoots=()=>[],excludeOccluders=()=>[],mode='off',workerFactory=()=>new Worker(new URL('./ray-bvh-worker.mjs?v=cac3c9c2092433b4',import.meta.url),{type:'module'})}={}) {
  const supported=Boolean(renderer?.capabilities?.isWebGL2&&renderer.capabilities.maxTextures>=12),patches=new Map(),eye=new T.Vector3(),lastCenter=new T.Vector3(Infinity,Infinity,Infinity);
  const uniforms={anRtNodes:{value:null},anRtTriangles:{value:null},anRtNodeSize:{value:new T.Vector2(1,1)},anRtTriangleSize:{value:new T.Vector2(1,1)},anRtOrigin:{value:new T.Vector3()},anRtEye:{value:eye},anRtEnabled:{value:0},anRtCount:{value:0},anRtRadius:{value:28},anRtDistance:{value:1.8},anRtRays:{value:2},anRtStrength:{value:.62}};
  let requested='off',status='off',worker=null,job=0,abort=null,pending=false,disposed=false,key=null,lastBuild=0,buildMs=0,collectMs=0,triangleCount=0,budgetReached=false,rebuilds=0,textureBytes=0,error=null,restoreMode='off',lastActive=0;

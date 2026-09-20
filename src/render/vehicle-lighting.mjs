@@ -25,7 +25,7 @@ function texture(T,kind){
  }
  const map=new T.DataTexture(data,n,n,T.RGBAFormat);map.minFilter=map.magFilter=T.LinearFilter;map.needsUpdate=true;return map;
 }
-export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=[],lampAnchor=[-.963,.006,.267]}={}){
+export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=[],lampAnchor=[-.9452,.006,.267]}={}){
  let mode='off',beamMode='low',nightAmount=0,disposed=false,active=true,brake=0,lastQuality='balanced',calibration={...VEHICLE_LIGHT_CALIBRATION_DEFAULTS};const headlampColors=new Map(headlamps.map(m=>[m,m.emissive?.clone()]));const filament={candela:0,lens:0,tail:0};const beams=[],halos=[],maps=[];
  const origin=new T.Vector3(),forward=new T.Vector3(),up=new T.Vector3(),toCamera=new T.Vector3(),target=new T.Vector3(),aimForward=new T.Vector3(),aimRight=new T.Vector3();
  let rig=null;

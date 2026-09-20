@@ -1,4 +1,4 @@
-import {buildSeamStrip} from './seam-route.mjs';
+import {buildSeamStrip} from './seam-route.mjs?v=8abfd37c48603aa1';
 /** Current original-length road plus only a short previous tail and next prefix. No return corridor. */
 function canonicalPayload(seam,fromM,toM,{stepM,shoulderM}){
  const pieces=[];for(let from=fromM;from<toM;){const prefix=from<seam.prefixM,to=Math.min(toM,from+1000,prefix?seam.prefixM:Infinity);pieces.push(buildSeamStrip(seam,{fromM:from,toM:to,stepM:prefix?Math.min(1,stepM):stepM,shoulderM}));from=to;}

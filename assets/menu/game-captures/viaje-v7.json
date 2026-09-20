@@ -1,0 +1,20 @@
+{
+  "file": "viaje-v7.webp",
+  "source": "actual-v7-renderer-browser-capture",
+  "sourceFile": "Reports/Asfalto_Nacional_v7/builder-vehicle-qa-sep12/10-chevy-lipan-viaje-final.png",
+  "sourceSha256": "bd6198f02b5b27272dab1893f0dd7bfed2d2db620f1f0a22f17a131ceed60fe1",
+  "sourceModifiedAt": "2026-09-12T21:06:49.939Z",
+  "sourceDimensions": [
+    1920,
+    1080
+  ],
+  "conversion": "Proportional resize to1280px and WebP encoding only; no compositing or semantic image edits",
+  "quality": 82,
+  "bytes": 84970,
+  "sha256": "a1aa49f9c632cb1e8487dc962b5f510605f7e23c213063c82d75836adebad06c",
+  "contactEvidence": "Reports/Asfalto_Nacional_v7/builder-vehicle-qa-sep12/contact-proof.json",
+  "contactNote": "Vehicle owner measured tire vertices against physical contact planes; see independent diagnostics. Vehicle pose was not moved for this image.",
+  "trackId": "cuesta_lipan",
+  "skyId": "clear",
+  "weather": "clear"
+}

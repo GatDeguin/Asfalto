@@ -3,6 +3,8 @@
   'use strict';
 
   const FIXED_DT = 1 / 120;
+  // Session starts share a monotonic identifier even when a track replaces its physics session.
+  let nextIgnitionSequence = 0;
   const TELEPORT_TOKENS = new WeakSet();
 
   function finite(value, fallback) {
@@ -330,30 +332,38 @@
       ? { x: (measuredHull.minX + measuredHull.maxX) / 2, y: -.02,
           z: (measuredHull.minZ + measuredHull.maxZ) / 2 }
       : { x: -.03, y: -.02, z: 0 };
-    const lowerMass = spec.massKg * .72;
+    const lowerMass = spec.massKg * .72, upperMass = spec.massKg * .28;
+    const upperHalf = { x: spec.dimensionsM.length * .21, y: spec.dimensionsM.height * .16, z: spec.dimensionsM.width * .34 };
+    const upperCenter = { x: -.22, y: spec.dimensionsM.height * .25, z: 0 };
+    // Chassis origin is the declared centre of gravity: axle offsets and
+    // cgHeightM are expressed relative to it. Recenter the two-box mass model
+    // without moving collision skins or changing its inertia about its COM.
+    // These inertias remain a geometric approximation, not factory measurements.
+    const massOrigin = { x: -.03 * .72 + upperCenter.x * .28,
+      y: -.02 * .72 + upperCenter.y * .28, z: 0 };
     const lower = RAPIER.ColliderDesc.cuboid(
       measuredHull ? (measuredHull.maxX - measuredHull.minX) / 2 : legacyHalf.x,
       legacyHalf.y,
       measuredHull ? (measuredHull.maxZ - measuredHull.minZ) / 2 : legacyHalf.z,
     )
       .setTranslation(lowerCenter.x, lowerCenter.y, lowerCenter.z)
-      // Changing the collision skin must not silently change handling. Preserve
-      // the original box's mass, mass center and inertia tensor exactly.
+      // Shape and inertial model are independent; preserve the box inertia.
       .setMassProperties(lowerMass,
-        { x: -.03 - lowerCenter.x, y: 0, z: -lowerCenter.z },
+        { x: -.03 - lowerCenter.x - massOrigin.x, y: -massOrigin.y, z: -lowerCenter.z },
         { x: lowerMass / 3 * (legacyHalf.y ** 2 + legacyHalf.z ** 2),
           y: lowerMass / 3 * (legacyHalf.x ** 2 + legacyHalf.z ** 2),
           z: lowerMass / 3 * (legacyHalf.x ** 2 + legacyHalf.y ** 2) },
         { x: 0, y: 0, z: 0, w: 1 })
       .setFriction(0.04)
       .setRestitution(0.04);
-    const upper = RAPIER.ColliderDesc.cuboid(
-      spec.dimensionsM.length * 0.21,
-      spec.dimensionsM.height * 0.16,
-      spec.dimensionsM.width * 0.34,
-    )
-      .setTranslation(-0.22, spec.dimensionsM.height * 0.25, 0)
-      .setMass(spec.massKg * 0.28)
+    const upper = RAPIER.ColliderDesc.cuboid(upperHalf.x, upperHalf.y, upperHalf.z)
+      .setTranslation(upperCenter.x, upperCenter.y, upperCenter.z)
+      .setMassProperties(upperMass,
+        { x: -massOrigin.x, y: -massOrigin.y, z: 0 },
+        { x: upperMass / 3 * (upperHalf.y ** 2 + upperHalf.z ** 2),
+          y: upperMass / 3 * (upperHalf.x ** 2 + upperHalf.z ** 2),
+          z: upperMass / 3 * (upperHalf.x ** 2 + upperHalf.y ** 2) },
+        { x: 0, y: 0, z: 0, w: 1 })
       .setFriction(0.04)
       .setRestitution(0.04);
     const colliders = Object.freeze([
@@ -648,8 +658,23 @@
       this.impacts = [];
       this.staticImpactTimes = new Map();
       this.timeSeconds = 0;
+      this.ignitionSequence = 0;
+      this.ignitionStartedAtS = 0;
+      this.ignitionState = 'ready';
       this.disposed = false;
       this.lastSnapshot = null;
+    }
+
+    _engineStatus() {
+      const engine = this.damage?.engine || {};
+      const condition = clamp(finite(engine.condition, 1), 0, 1);
+      const powerFactor = clamp(finite(engine.powerFactor, 1), 0, 1);
+      const fire = engine.fire === true;
+      return {
+        ignition: { state: this.ignitionState, sequence: this.ignitionSequence, startedAtS: this.ignitionStartedAtS },
+        condition, powerFactor, fire,
+        fault: fire ? 'fire' : condition < 1 || powerFactor < 1 ? 'damaged' : 'none',
+      };
     }
 
     setChassisConfig(value) {
@@ -1052,6 +1077,7 @@
       const preImpactAngularVelocity = fromRapierVector(this.body.angvel());
       this.world.step(this.impactEvents || undefined);
       this.timeSeconds += FIXED_DT;
+      if (this.ignitionState === 'starting') this.ignitionState = 'running';
       const hadStaticImpact = this._captureStaticImpacts(velocity, preImpactAngularVelocity);
       const translation = this.body.translation();
       this.damage = this.core.applyMechanicalWear(this.damage, {
@@ -1098,6 +1124,7 @@
             : 0,
         },
         engine: {
+          ...this._engineStatus(),
           rpm: this.powertrainState.engineRpm,
           temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
           load: controls.throttle,
@@ -1211,6 +1238,7 @@
       if (this.lastSnapshot) {
         this.lastSnapshot = this.core.finiteSnapshot({
           ...this.lastSnapshot,
+          engine: { ...this.lastSnapshot.engine, ...this._engineStatus() },
           impact: impulseNs > 0,
           impacts: this.impacts.slice(),
           damage: this.damage,
@@ -1226,11 +1254,13 @@
       const state = this.core.createVehicleState(this.spec);
       this.wheels = state.wheels.map(wheel => ({ ...wheel }));
       this.previousCompression.fill(NaN);
+      const initialGear = Number.isInteger(options?.initialGear) && options.initialGear >= -1 && options.initialGear <= this.spec.gearbox.forward.length ? options.initialGear : 1;
+      const initialClutchEngagement = initialGear === 0 ? 0 : 1;
       this.powertrainState = {
         engineRpm: this.spec.engine.idleRpm,
-        gear: 1,
-        requestedGear: 1,
-        clutchEngagement: 1,
+        gear: initialGear,
+        requestedGear: initialGear,
+        clutchEngagement: initialClutchEngagement,
         clutchSlipRadps: 0,
         temperatureC: 20,
       };
@@ -1240,8 +1270,15 @@
         rearTemperatureC: 20,
       };
       this.absModulation = [1, 1, 1, 1];
-      if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
+      if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
+      else if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
+      else if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
       if (options?.resetClock !== false) this.timeSeconds = 0;
+      if (options?.startEngine === true) {
+        this.ignitionSequence = ++nextIgnitionSequence;
+        this.ignitionStartedAtS = this.timeSeconds;
+        this.ignitionState = 'starting';
+      }
       this.impacts = [];
       const translation = this.body.translation();
       const rotation = this.body.rotation();
@@ -1265,13 +1302,14 @@
         })),
         steering: { frontAligningTorqueNm: 0, frontContactRatio: 0 },
         engine: {
+          ...this._engineStatus(),
           rpm: this.powertrainState.engineRpm,
           temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
           load: 0,
           torqueNm: 0,
         },
-        gearbox: { gear: 1, requestedGear: 1 },
-        clutch: { engagement: 1, slipRadps: 0 },
+        gearbox: { gear: initialGear, requestedGear: initialGear },
+        clutch: { engagement: initialClutchEngagement, slipRadps: 0 },
         brakes: {
           frontTemperatureC: 20,
           rearTemperatureC: 20,
@@ -1279,7 +1317,7 @@
           frontFade: 0,
           rearFade: 0,
         },
-        controls: { throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0, clutchEngagement: 1, requestedGear: 1 },
+        controls: { throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0, clutchEngagement: initialClutchEngagement, requestedGear: initialGear },
         impact: false,
         impacts: [],
         damage: this.damage,
@@ -1341,7 +1379,7 @@
         fixedHz: 120,
         timeSeconds: this.timeSeconds,
         wheels: this.wheels.map(wheel => ({ ...wheel })),
-        engine: { rpm: this.powertrainState.engineRpm },
+        engine: { ...this._engineStatus(), rpm: this.powertrainState.engineRpm },
         gearbox: {
           gear: this.powertrainState.gear,
           requestedGear: this.powertrainState.requestedGear,

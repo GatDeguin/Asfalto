@@ -1,6 +1,6 @@
-import {createChassisMechanism,rimNames,tireNames,brakeNames,wheelNames} from './chassis-mechanism.mjs';
-import {DEFAULT_CHASSIS_CONFIG,sanitizeChassisConfig,chassisConfigFromProfile} from '../game/chassis-configuration.mjs';
-import {ackermann} from '../game/chassis-lab-physics.mjs';
+import {createChassisMechanism,rimNames,tireNames,brakeNames,wheelNames} from './chassis-mechanism.mjs?v=7552609a0f52f6b8';
+import {DEFAULT_CHASSIS_CONFIG,sanitizeChassisConfig,chassisConfigFromProfile} from '../game/chassis-configuration.mjs?v=cb4421d5b87d806c';
+import {ackermann} from '../game/chassis-lab-physics.mjs?v=9626fb121a066f25';
 const IDS=['frontLeft','frontRight','rearLeft','rearRight'];
 const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const options=names=>names.map((name,i)=>'<option value="'+i+'">'+name+'</option>').join('');

@@ -1,5 +1,5 @@
-import {createChassisGeometry,TAU} from './chassis-lab-geometry.mjs';
-import {ackermann,kits,clamp} from '../game/chassis-lab-physics.mjs';
+import {createChassisGeometry,TAU} from './chassis-lab-geometry.mjs?v=751cfc1dc8821b3f';
+import {ackermann,kits,clamp} from '../game/chassis-lab-physics.mjs?v=9626fb121a066f25';
 
 export const rimNames=['Acero clásico','Aleación · 5 radios · 16″','Multirradio · 17″','Rally forjada · 18″'];
 export const tireNames=['Radial clásico','Deportivo de calle','Semislick de pista','Turismo / lluvia'];

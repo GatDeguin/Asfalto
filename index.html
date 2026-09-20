@@ -1,7 +1,9 @@
 <!doctype html>
 <html lang="es">
 <head>
+<script src="./src/runtime/phone-load-diagnostics.js?v=aadc5eb8b60db4d9"></script>
 <meta name="asfalto-persistence" content="browser">
+<script src="./src/runtime/versioned-storage.js?v=51824c85cd5afb1d"></script>
 <script type="module" src="./src/runtime/asset-core.mjs?v=d795faf208f60d96"></script>
 <meta name="asfalto-v6-source-sha256" content="A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA">
 <meta name="description" content="Asfalto Nacional v8 · Realismo clásico argentino · rutas nacionales">
@@ -17,17 +19,18 @@
 <!-- COCKPIT_V4_SECOND_GEN_HEAD_END -->
 
 <meta name="cockpit-v5-build" content="5.0.0-unified-racing">
-<script id="cockpit-v5-preflight" src="./src/legacy/cockpit-v5-preflight.js"></script>
+<script id="cockpit-v5-preflight" src="./src/legacy/cockpit-v5-preflight.js?v=62daf53eddcf7832"></script>
 <link id="cockpit-v5-style" rel="stylesheet" href="./assets/styles/cockpit-v5-style.css">
 
 <link id="v6-complete-style" rel="stylesheet" href="./assets/styles/v6-complete-style.css">
-<link rel="stylesheet" href="./assets/styles/menu-presentation.css?v=9d72781b7c3a5bbb">
+<link rel="stylesheet" href="./assets/styles/menu-presentation.css?v=6fb0fe8230974d8f">
 <link rel="stylesheet" href="./assets/styles/race-pause-menu.css">
 <link rel="stylesheet" href="./assets/styles/lighting-editor.css">
-<link rel="stylesheet" href="./assets/styles/loading-presentation.css?v=6821af0e47a69acc">
-<script src="./src/menu/loading-presentation.js?v=cd39c3527a9b69e9"></script>
-<script type="module" src="./src/menu/race-session-presentation.mjs?v=8f471e463224768f"></script>
-<script type="module" src="./src/menu/menu-presentation.mjs?v=119775b7e74552b7"></script>
+<link rel="stylesheet" href="./assets/styles/loading-presentation.css?v=66580bfcb8b66f45">
+<script src="./src/runtime/modal-inert.js?v=130a2433cdd96837"></script>
+<script src="./src/menu/loading-presentation.js?v=432ae23aae963f3e"></script>
+<script type="module" src="./src/menu/race-session-presentation.mjs?v=c7045b0cc3a8f343"></script>
+<script type="module" src="./src/menu/menu-presentation.mjs?v=9999baa3bfbde984"></script>
 
 <meta name="chevy-hud-3d-build" content="1.0.0">
 <link id="chevy-hud-3d-style" rel="stylesheet" href="./assets/styles/chevy-hud-3d-style.css">
@@ -41,9 +44,9 @@
 <link id="asfalto-v4-1-hud-adjustments" rel="stylesheet" href="./assets/styles/asfalto-v4-1-hud-adjustments.css">
 <script id="asfalto-v5-track-manifest" type="application/json">{"version":6,"defaultCircuit":"dos_lagos","circuits":[{"id":"dos_lagos","name":"Dos Lagos","status":"ready"},{"id":"aconcagua_horcones","name":"Aconcagua · Horcones","status":"ready"},{"id":"cuesta_lipan","name":"Cuesta de Lipán","status":"ready"},{"id":"paso_garibaldi","name":"Paso Garibaldi","status":"ready"}]}</script>
 <script  id="asfalto-v5-dos-lagos-route" type="application/octet-stream" data-filename="dos_lagos_route.json" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-route/dos_lagos_route.json" data-bytes="533187" data-sha256="27ACE7AAE436122021C7D43CAAFFA1AD28FAB841FDE8D680C605DABF5E91699B"></script>
-<script id="asfalto-v5-track-runtime" src="./src/legacy/asfalto-v5-track-runtime.js"></script>
-<script id="asfalto-v5-environment-runtime" src="./src/legacy/asfalto-v5-environment-runtime.js"></script>
-<script id="asfalto-v5-glb-runtime" src="./src/legacy/asfalto-v5-glb-runtime.js?v=d790ad70b778b1ee"></script>
+<script id="asfalto-v5-track-runtime" src="./src/legacy/asfalto-v5-track-runtime.js?v=de32f36935abdfd0"></script>
+<script id="asfalto-v5-environment-runtime" src="./src/legacy/asfalto-v5-environment-runtime.js?v=044ac3c9c31b43b8"></script>
+<script id="asfalto-v5-glb-runtime" src="./src/legacy/asfalto-v5-glb-runtime.js?v=2688948f055da1dc"></script>
 <script  id="asfalto-v5-dos-lagos-visual" type="application/octet-stream" data-filename="dos_lagos_scene_hyperreal_blender_pass_v3.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-visual/dos_lagos_scene_hyperreal_blender_pass_v3.glb" data-bytes="24238072" data-sha256="69E76B196F6735B02B7464FCAB3F9B1EA1248A974D09677B818B77CDA5F475F4"></script>
 <script  id="asfalto-v5-dos-lagos-collision" type="application/octet-stream" data-filename="dos_lagos_collision.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-dos-lagos-collision/dos_lagos_collision.glb" data-bytes="522300" data-sha256="591E79A9A299A1EB21BC05EC37985CECA924DE3F79D0DBC6B19FE651C84CC2F1"></script>
 <script  id="asfalto-v5-hdri-clear" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="clear" data-source="Cielos/runtime/clear.av3hdri" data-width="1024" data-height="512" data-filename="clear.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-clear/clear.av3hdri" data-bytes="3145744" data-sha256="4FAE12BD002076D36C1390BCF9B07F5251BB699AE60147D20BA28B2F4F61DD94"></script>
@@ -52,20 +55,22 @@
 <script  id="asfalto-v5-hdri-sunset" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="sunset" data-source="Cielos/runtime/sunset.av3hdri" data-width="1024" data-height="512" data-filename="sunset.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-sunset/sunset.av3hdri" data-bytes="3145744" data-sha256="9B83B12E2E0AB7E6F9933E920B49BA0DE8F662829AEC562D9E7B974AFF6D253A"></script>
 <script  id="asfalto-v5-hdri-moonrise" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="moonrise" data-source="Cielos/runtime/moonrise.av3hdri" data-width="1024" data-height="512" data-filename="moonrise.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-moonrise/moonrise.av3hdri" data-bytes="3145744" data-sha256="DE48E823ED893A8999622AC8E5873337EDA7114237E650B739C9CE47F178CD3B"></script>
 <script  id="asfalto-v5-hdri-night" type="application/octet-stream" class="asfalto-v3-hdri-payload asfalto-v5-hdri-payload" data-id="night" data-source="Cielos/runtime/night.av3hdri" data-width="1024" data-height="512" data-filename="night.av3hdri" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v5-hdri-night/night.av3hdri" data-bytes="3145744" data-sha256="B7DA232FB2F34C595F2C2519DEF9A03537850123E33C93B25F1066935869A94E"></script>
-<script id="asfalto-v6-manifest" type="application/json">{"version":6,"name":"Asfalto Nacional v6","baseVersion":5,"defaultCircuit":"dos_lagos","defaultProfile":"original","physics":{"engine":"Rapier 3D deterministic","fixedHz":120,"preset":"realismo-clasico-argentino"},"profiles":{"original":{"label":"Chevy Serie 2 Original","forwardGears":4,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}},"restomod":{"label":"Chevy Serie 2 Restomod","forwardGears":5,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}}},"rivals":[{"id":"falcon","count":1}],"sourceLocks":{"v5":"A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA","manual":"7F6C10A1692440DBA5566A0637DB26003B196463B4F698BA511E397F76F9410E","falcon":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"}}</script>
-<script id="asfalto-v6-rapier" src="./src/legacy/asfalto-v6-rapier.js"></script>
+<script id="asfalto-v6-manifest" type="application/json">{"version":6,"name":"Asfalto Nacional v7","baseVersion":5,"defaultCircuit":"dos_lagos","defaultProfile":"original","physics":{"engine":"Rapier 3D deterministic","fixedHz":120,"preset":"realismo-clasico-argentino"},"profiles":{"original":{"label":"Chevy Serie 2 Original","forwardGears":4,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}},"restomod":{"label":"Chevy Serie 2 Restomod","forwardGears":5,"assists":{"steering":false,"abs":false,"tcs":false,"stability":false}}},"rivals":[{"id":"falcon","count":1}],"sourceLocks":{"v5":"A3FF0C506D15C07A743202E2795C908C9535B2761ABE5CFB5B07F0ADA3DAC3BA","manual":"7F6C10A1692440DBA5566A0637DB26003B196463B4F698BA511E397F76F9410E","falcon":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"}}</script>
+<script id="asfalto-v6-rapier" src="./src/legacy/asfalto-v6-rapier.js?v=dad447f02dd4bc92"></script>
 <script  id="asfalto-v6-falcon" type="application/octet-stream" data-role="single-physical-rival" data-filename="Falcon.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-falcon/Falcon.glb" data-bytes="28216660" data-sha256="51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006"></script>
 <script id="asfalto-v6-falcon-rig" type="application/json">{"version":1,"source":{"sha256":"51B39A317D4FE5DDE9591C04007F6BD12864FD00E964A86C7F1BC923B86E8006","byteLength":28216660,"gltfVersion":"2.0","generator":"gltfpack 1.2","positionCount":674391,"indexCount":3329274},"axes":{"front":"+X","up":"+Y","side":"+Z"},"authoredBounds":{"minimum":[-0.950797021,-0.300976992,-0.381623],"maximum":[0.948652143899,0.29994133929899996,0.379988521957],"dimensions":[1.899449164899,0.600918331299,0.761611521957]},"targetDimensionsM":{"length":4.65,"width":1.78,"height":1.42},"uniformScale":2.4480781512503684,"bones":[{"name":"body","index":0,"center":[0,0,0]},{"name":"frontLeft","index":1,"center":[0.62,-0.18,0.31]},{"name":"frontRight","index":2,"center":[0.62,-0.18,-0.31]},{"name":"rearLeft","index":3,"center":[-0.58,-0.18,0.31]},{"name":"rearRight","index":4,"center":[-0.58,-0.18,-0.31]}],"wheels":{"frontLeft":{"center":[0.62,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11898,"bounds":{"minimum":[0.46019585800999996,-0.300629171241,0.23506320570699996],"maximum":[0.7713794970619999,-0.022024743281999992,0.37222052500599995]}},"frontRight":{"center":[0.62,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11677,"bounds":{"minimum":[0.4612393202870001,-0.300049469976,-0.373970943302],"maximum":[0.7714954373149999,-0.021445042016999982,-0.235074520208]}},"rearLeft":{"center":[-0.58,-0.18,0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":11838,"bounds":{"minimum":[-0.7379307164919999,-0.300976992,0.23506320570699996],"maximum":[-0.421761646561,-0.020169699234000027,0.37894505968]}},"rearRight":{"center":[-0.58,-0.18,-0.31],"radius":0.16,"halfWidth":0.075,"vertexCount":12131,"bounds":{"minimum":[-0.738858238516,-0.300745111494,-0.38046359746999997],"maximum":[-0.42118194529599995,-0.020285639487000018,-0.235074520208]}}},"assignment":{"bodyVertexCount":626847,"overlapCount":0,"totalVertexCount":674391}}</script>
-<script id="asfalto-v6-vehicle-model" src="./src/legacy/asfalto-v6-vehicle-model.js"></script>
-<script id="asfalto-v6-physics-runtime" src="./src/legacy/asfalto-v6-physics-runtime.js?v=43d7ed2b4d840086"></script>
-<script id="asfalto-v6-input-runtime" src="./src/legacy/asfalto-v6-input-runtime.js?v=01e6a3a59c687848"></script>
+<script id="asfalto-v6-vehicle-model" src="./src/legacy/asfalto-v6-vehicle-model.js?v=74ce4c39a4c52b36"></script>
+<script id="asfalto-v6-physics-runtime" src="./src/legacy/asfalto-v6-physics-runtime.js?v=383801daa2e34b7b"></script>
+<script id="asfalto-v6-input-runtime" src="./src/legacy/asfalto-v6-input-runtime.js?v=9d34d71a31aeb061"></script>
 <script id="asfalto-v6-falcon-runtime" src="./src/legacy/asfalto-v6-falcon-runtime.js"></script>
-<script id="asfalto-v6-feedback-runtime" src="./src/legacy/asfalto-v6-feedback-runtime.js"></script>
-<script id="asfalto-v6-recovery-guard" src="./src/legacy/asfalto-v6-recovery-guard.js"></script>
-<script id="asfalto-v6-integration-runtime" src="./src/legacy/asfalto-v6-integration-runtime.js?v=a180fb6dbe9703cd"></script>
-<link rel="stylesheet" href="./assets/styles/menu-refinements.css?v=5d2c6af3b3a67500">
+<script id="asfalto-v6-feedback-runtime" src="./src/legacy/asfalto-v6-feedback-runtime.js?v=682d440aa1c42f3f"></script>
+<script id="asfalto-v6-recovery-guard" src="./src/legacy/asfalto-v6-recovery-guard.js?v=c95ce79b3765570a"></script>
+<script id="asfalto-v6-integration-runtime" src="./src/legacy/asfalto-v6-integration-runtime.js?v=8e927036d3f9486e"></script>
+<link rel="stylesheet" href="./assets/styles/menu-refinements.css?v=f810b2cae0d23c02">
 <link rel="stylesheet" href="assets/styles/workshop-chassis.css">
+<link rel="stylesheet" href="assets/styles/brand-identity.css?v=9189f0f235257aa2">
 <link rel="stylesheet" href="./assets/styles/mobile-driving-controls.css">
+<link rel="stylesheet" href="./assets/styles/mobile-menu.css?v=d2e0a7a93dd5646f">
 </head>
 <body>
 <main id="app">
@@ -276,7 +281,7 @@
     <section class="race-panel-section">
       <h2>Prueba y entorno</h2>
       <label class="race-setting-row"><span>Cielo / momento</span><select id="race-environment-preset" aria-label="Cielo y momento del día" aria-describedby="race-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select></label>
-      <label class="race-setting-row"><span>Paso del tiempo</span><select id="race-day-cycle" data-race-day-cycle aria-label="Ciclo día y noche"><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select></label>
+      <label class="race-setting-row"><span>Paso del tiempo</span><select id="race-day-cycle" data-race-day-cycle aria-label="Ciclo día y noche"><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select></label>
       <label class="race-setting-row"><span>Clima</span><select id="race-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
       <small id="race-sky-note">Cielo inicial. El ciclo dura 12 min de carrera, se detiene en pausa y conserva el clima elegido.</small>
       <label class="race-setting-row" hidden><span>Momento compatible</span><select id="race-time-of-day"><option value="day">Día</option><option value="afternoon">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option><option value="dawn">Tarde dorada · guardado anterior</option></select></label>
@@ -356,13 +361,13 @@
 <script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
 <script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
 <script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
-<script type="module" src="./src/legacy/module-02.mjs?v=144a6369345e62c8"></script>
+<script type="module" src="./src/legacy/module-02.mjs?v=137fa1d93f159138"></script>
 
 
 
 <script id="cockpit-v5-manifest" type="application/json">{"name":"Cockpit Chevy Racing POV V5 Unificado","version":"5.0.0","generated":"2026-08-18","architecture":{"simulations":1,"renderer":"Three.js embebido","simulationOwner":"RaceSimulation integrada en raceWorld","ui":"DOM V5 accesible","fixedStepSeconds":0.016666666666666666},"delivery":{"selfContained":true,"externalDependencies":0,"format":"single-html"},"improvements":["simulación única compartida por física, IA, cronometraje, HUD y controles","hub de carrera V5 con cuatro circuitos y cinco modos","práctica abierta sin final artificial por vueltas","Speed Trap con zona, intentos y récord propio","práctica de sectores reiniciable por parcial elegido","checkpoints específicos por circuito","dificultad conectada con velocidad, habilidad, agresividad y reacción de IA","IA con anticipación de curva, clima, superficie y maniobras laterales","fantasma muestreado a 25 Hz con orientación y deriva","búsqueda binaria e interpolación de fantasma por tiempo y distancia","delta temporal calculado en la misma posición del trazado","recuperación que invalida la vuelta y aplica penalización","trompos completos mediante ángulo envuelto","temperatura y desgaste de neumáticos opcionales","detección de cortes por tiempo y distancia fuera de pista","estado de carrera clonado sin serialización JSON por frame","récords V5 versionados por configuración relevante","almacenamiento con cuota, exportación e importación","ingeniero de carrera con prioridades y control de spam","gobernador de rendimiento con histéresis","HUD de competición escalable con cuatro perfiles","minimapa, banderas, tablero digital y telemetría de pedales","retrovisor auxiliar adaptable y marco de cockpit opcional","controles táctiles analógicos para volante y pedales","modales accesibles con foco atrapado e inert del fondo","paleta accesible para daltonismo y foco visible","breakpoints para escritorio, teléfono, 320 px y horizontal bajo","preflight V5 de WebGL, memoria, codecs, caché y LOD","decodificación Base64 fragmentada y descompresión en worker transferible","liberación temprana de payloads comprimidos para reducir picos de memoria","imágenes de fondo y retrovisor convertidas a WebP preservando transparencia","un único AudioContext y bus maestro compartido por motor y ambiente de carrera","calibración giroscópica compatible con centro cero y filtrado por tiempo real del sensor","retrovisor 3D configurable y limitado a 30/22/15 Hz según presupuesto gráfico","parser GLB multimesh y clasificación semántica del recurso del RAR","eliminación de la segunda simulación y de la interfaz V4 duplicada","API pública con raceWorld y trazado para diagnóstico","entrega sin dependencias HTTP externas"],"verification":{"logicTests":19,"buildTests":5,"javascriptSyntaxChecks":3,"responsiveViewports":["1440x900","390x844","844x390","320x568","1440x900-garage"],"webglRuntime":"requires a browser-provided WebGL context"}}</script>
-<script id="cockpit-v5-core" src="./src/legacy/cockpit-v5-core.js"></script>
-<script id="cockpit-v5-browser" src="./src/legacy/cockpit-v5-browser.js?v=8a14101fb78c6219"></script>
+<script id="cockpit-v5-core" src="./src/legacy/cockpit-v5-core.js?v=728afea824b788ae"></script>
+<script id="cockpit-v5-browser" src="./src/legacy/cockpit-v5-browser.js?v=5eb23ac031e31833"></script>
 
 
 
@@ -371,8 +376,8 @@
 
 
 <script  id="chevy-v3-payload" type="application/octet-stream" data-filename="Chevy v3.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-v3-payload/Chevy v3.glb" data-bytes="11504756" data-sha256="DD1B33E5743EB33288952E16AAC9C45894EA153E27A5DFDD8F5BE3772C6B127C"></script>
-<script id="asfalto-v3-camera-state" src="./src/legacy/asfalto-v3-camera-state.js"></script>
-<script id="asfalto-v3-workshop-editor-state" src="./src/legacy/asfalto-v3-workshop-editor-state.js"></script>
+<script id="asfalto-v3-camera-state" src="./src/legacy/asfalto-v3-camera-state.js?v=e561effeb1cbd71e"></script>
+<script id="asfalto-v3-workshop-editor-state" src="./src/legacy/asfalto-v3-workshop-editor-state.js?v=7fe684d23132332f"></script>
 <script  id="v6-workshop-payload" type="application/octet-stream" data-encoding="external-url" data-external-url="./assets/extracted/v6-workshop-payload/v6-workshop-payload.bin" data-bytes="8740856" data-sha256="AB0F0A69EDA0CAF58682CD602D04AFD1D3C72FABF95093EA7BE4B32EFD5998A7"></script>
 
 <div id="v6-game-shell" aria-live="off">
@@ -388,6 +393,7 @@
         <button type="button" data-workshop-camera="wheel">Rueda</button>
         <button type="button" data-workshop-camera="interior">Interior</button>
         <button type="button" data-workshop-camera="bench">Banco</button>
+        <button type="button" data-workshop-camera="collection" aria-pressed="false">Colección</button>
       </div>
       <div class="v6-ambient-status">Motor apagado · metal enfriándose · fluorescente distante</div>
     </div>
@@ -428,7 +434,7 @@
           <div class="v6-tech-row"><span>Condición</span><strong id="v6-drive-condition">Lista para salir</strong><small id="v6-drive-condition-detail">Aceite, frenos y neumáticos verificados</small></div>
           <div class="v6-tech-row"><span>Ruta / clima</span><strong><select id="v6-drive-route" aria-label="Ruta"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></strong><select id="v6-drive-weather" aria-label="Clima"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></div>
           <div class="v6-tech-row"><label for="v6-drive-sky">Cielo / momento</label><select id="v6-drive-sky" aria-describedby="v6-drive-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-drive-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></div>
-          <div class="v6-tech-row"><label for="v6-drive-day-cycle">Paso del tiempo</label><select id="v6-drive-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></div>
+          <div class="v6-tech-row"><label for="v6-drive-day-cycle">Paso del tiempo</label><select id="v6-drive-day-cycle" data-race-day-cycle><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></div>
         </div>
         <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-drive-start" type="button">Girar la llave</button><button class="v6-btn" type="button" data-open-panel="workshop">Revisar en taller</button></div>
       </section>
@@ -450,6 +456,7 @@
         <header class="v6-panel-head"><div><span class="v6-kicker">Club y cronómetro</span><h2>Competencia</h2></div><p>Pruebas con reglamento, rivales y clasificación. La configuración histórica y la Restomod compiten en tablas separadas.</p></header>
         <div class="v6-section-title">Formatos</div>
         <div class="v6-grid v6-grid-3" id="v6-competition-cards"></div>
+        <div class="v6-note"><button type="button" class="v6-btn" id="v7-championship-open">Campeonato nacional · 5 / 10 / 15 etapas</button><div id="v7-championship-content" hidden></div></div>
         <div class="v6-section-title">Inscripción</div>
         <div class="v6-form-grid">
           <label class="v6-field"><span>Circuito</span><select id="v6-comp-track"><option value="dos_lagos">Dos Lagos</option><option value="aconcagua_horcones">Aconcagua · Horcones</option><option value="cuesta_lipan">Cuesta de Lipán</option><option value="paso_garibaldi">Paso Garibaldi</option><option value="cataratas_iguazu">Cataratas del Iguazú</option></select></label>
@@ -457,14 +464,14 @@
           <label class="v6-field"><span>Vueltas</span><select id="v6-comp-laps"><option value="1" selected>1</option><option value="2">2</option><option value="3">3</option></select></label>
           <label class="v6-field"><span>Clima</span><select id="v6-comp-weather"><option value="clear">Seco</option><option value="cloudy">Nublado</option><option value="rain">Lluvia</option><option value="storm">Tormenta</option><option value="fog">Niebla</option><option value="light-snow">Nieve ligera · Garibaldi / Lipán</option><option value="heavy-snow">Nevada Intensa · Garibaldi / Lipán</option></select></label>
           <label class="v6-field"><span>Cielo / momento</span><select id="v6-comp-sky" aria-describedby="v6-comp-sky-note"><option value="clear">Día despejado</option><option value="overcast">Día nublado</option><option value="golden-hour">Tarde dorada</option><option value="sunset">Atardecer</option><option value="moonrise">Noche con luna</option><option value="night">Noche profunda</option></select><small id="v6-comp-sky-note">Cielo inicial; el clima elegido se conserva durante el ciclo.</small></label>
-          <label class="v6-field"><span>Paso del tiempo</span><select id="v6-comp-day-cycle" data-race-day-cycle><option value="cycle">Ciclo activo · 12 min</option><option value="fixed">Cielo fijo</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></label>
+          <label class="v6-field"><span>Paso del tiempo</span><select id="v6-comp-day-cycle" data-race-day-cycle><option value="cycle">Ciclo de 12 minutos</option><option value="cycle-6">Ciclo de 6 minutos</option><option value="fixed">Hora fija</option></select><small>Amanecer, día, atardecer y noche. Se detiene al pausar.</small></label>
         </div>
         <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-competition-start" type="button" disabled>Inscribirse y salir</button><button class="v6-btn" id="v6-championship-view" type="button">Campeonato de club</button></div>
       </section>
 
       <section class="v6-panel" id="v6-workshop-panel" role="tabpanel" aria-labelledby="v6-tab-workshop">
         <header class="v6-panel-head"><div><span class="v6-kicker">Santuario técnico</span><h2>Taller mecánico</h2></div><p>Inspeccionar, mantener, documentar y ajustar. Cada cambio declara beneficio, contrapartida y clase.</p></header>
-        <div class="an-workshop-vehicle-select"><label for="v6-workshop-vehicle">Auto en el taller</label><select id="v6-workshop-vehicle"><option value="chevy">Chevy 250 Serie 2 · 1973</option><option value="chevy_400_1957">Chevrolet 400 · 1957</option><option value="chevrolet_1969">Chevrolet · 1969</option></select><span id="v6-workshop-vehicle-status" role="status">Chevy 250 Serie 2 · 1973</span></div>
+        <div class="an-workshop-vehicle-select"><label for="v6-workshop-vehicle">Auto en el taller</label><select id="v6-workshop-vehicle"><option value="chevrolet_1969">Chevy 250 SS Serie 2</option><option value="chevy_400_1957">Chevrolet 400</option></select><span id="v6-workshop-vehicle-status" role="status">Preparando el auto…</span></div>
         <div class="v6-originality"><span class="v6-class-badge" id="v6-workshop-class">Original</span><div><b id="v6-originality-title">Configuración histórica preservada</b><div id="v6-originality-copy">Sin conversiones modernas instaladas.</div></div></div>
         <nav id="v6-workshop-rail" role="tablist" aria-label="Secciones del taller">
           <button class="v6-rail-btn" role="tab" aria-selected="true" data-workshop-tab="appearance">Apariencia</button>
@@ -494,10 +501,10 @@
         <div class="v6-workshop-tab" id="v6-workshop-photo" data-workshop-page="photo">
           <div class="v6-section-title">Cámara de taller</div>
           <div class="v6-form-grid">
-            <label class="v6-field"><span>Foco</span><select id="v6-photo-focus"><option value="general">General</option><option value="front">Frente</option><option value="engine">Motor</option><option value="wheel">Rueda</option><option value="interior">Interior</option><option value="bench">Banco</option></select></label>
-            <label class="v6-field"><span>Lente</span><select id="v6-photo-lens"><option value="35">35 mm</option><option value="50" selected>50 mm</option><option value="85">85 mm macro</option></select></label>
+            <label class="v6-field"><span>Foco</span><select id="v6-photo-focus"><option value="general">General</option><option value="front">Frente</option><option value="engine">Motor</option><option value="wheel">Rueda</option><option value="interior">Interior</option><option value="bench">Banco</option><option value="collection">Colección</option></select></label>
+            <label class="v6-field"><span>Lente</span><select id="v6-photo-lens"><option value="28">28 mm</option><option value="35">35 mm</option><option value="50" selected>50 mm</option><option value="85">85 mm macro</option></select></label>
             <label class="v6-field"><span>Exposición <span class="v6-range-line"><output id="v6-photo-exposure-output">0.0 EV</output></span></span><input id="v6-photo-exposure" type="range" min="-1.5" max="1.5" value="0" step="0.1"></label>
-            <label class="v6-field"><span>Profundidad de campo</span><select id="v6-photo-dof"><option value="off">Vista técnica</option><option value="soft" selected>Suave</option><option value="macro">Macro</option></select></label>
+            <label class="v6-field"><span>Profundidad de campo</span><select id="v6-photo-dof" disabled aria-describedby="v6-photo-dof-note"><option value="off">Vista técnica</option></select><small id="v6-photo-dof-note">Profundidad óptica pendiente.</small></label>
           </div>
           <div class="v6-button-row"><button class="v6-btn v6-btn-primary" id="v6-photo-capture" type="button">Tomar fotografía</button><button class="v6-btn" id="v6-photo-reset" type="button">Restablecer cámara</button></div>
         </div>
@@ -505,6 +512,14 @@
 
       <section class="v6-panel" id="v6-collection-panel" role="tabpanel" aria-labelledby="v6-tab-collection">
         <header class="v6-panel-head"><div><span class="v6-kicker">Conocer, mantener, documentar</span><h2>Colección</h2></div><p>El progreso abre pruebas, piezas originales, documentos, herramientas, cámaras y contextos coherentes; nunca cajas aleatorias.</p></header>
+        <section class="v6-note" aria-labelledby="v6-earned-collection-title">
+          <h3 id="v6-earned-collection-title">Premios del taller</h3>
+          <p id="v6-earned-collection-status" role="status" aria-live="polite">0 de 20 piezas obtenidas. Los espacios vacíos se conservan hasta un logro válido.</p>
+          <p>Trofeos de circuito, medallas de pruebas y copas de campeonato. Los posters de destinos son decorativos.</p>
+          <button type="button" class="v6-btn" id="v6-view-collection" data-workshop-camera="collection" aria-pressed="false">Ver la vitrina</button>
+          <details><summary>Ver piezas obtenidas y pendientes</summary><ul id="v6-earned-collection-list"></ul></details>
+          <button type="button" class="v6-btn" id="v7-earned-album-open">Abrir cuaderno de ruta</button><p id="v7-earned-album-status" role="status"></p><section id="v7-earned-album" hidden aria-label="Álbum de llegadas reales"></section>
+        </section>
         <div class="v6-section-title">Ejes de progreso</div><div class="v6-axis-grid" id="v6-axis-grid"></div>
         <div class="v6-section-title">Archivo del propietario</div><div class="v6-collection-grid" id="v6-collection-grid"></div>
         <div class="v6-section-title">Próximo objetivo</div><div class="v6-note" id="v6-next-objective"><strong>Primera inspección:</strong> revisá el estado general en el taller y completá una prueba 0–100 válida.</div>
@@ -512,7 +527,7 @@
 
       <section class="v6-panel" id="v6-settings-panel" role="tabpanel" aria-labelledby="v6-tab-settings">
         <header class="v6-panel-head"><div><span class="v6-kicker">Placa técnica</span><h2>Ajustes</h2></div><p>Consecuencias claras, controles discretos y accesibilidad sin romper la lectura mecánica.</p></header>
-        <div class="v6-setting-group"><h3>Realismo gráfico</h3><label class="v6-tech-row"><span>Materiales e iluminación<small>Relieve, reflejos de pintura y metal, telas, vegetación y luz ambiental.</small></span><select name="v6-advanced-graphics-quality" data-advanced-graphics-quality aria-label="Calidad del realismo gráfico"><option value="auto">Adaptativo</option><option value="high">Alto</option><option value="balanced" selected>Equilibrado</option><option value="low">Bajo</option><option value="off">Apagado</option></select></label><p data-advanced-graphics-status role="status">Equilibrado · preparando materiales e iluminación.</p></div>
+        <div class="v6-setting-group"><h3>Realismo gráfico</h3><label class="v6-tech-row"><span>Materiales e iluminación<small>Relieve, reflejos de pintura y metal, telas, vegetación y luz ambiental.</small></span><select name="v6-advanced-graphics-quality" data-advanced-graphics-quality aria-label="Calidad del realismo gráfico"><option value="auto">Adaptativo</option><option value="cinematic">Cinemática / Ultra</option><option value="high">Alto</option><option value="balanced" selected>Equilibrado</option><option value="low">Bajo</option><option value="off">Apagado</option></select></label><p data-advanced-graphics-status role="status">Equilibrado · preparando materiales e iluminación.</p></div>
         <div class="v6-setting-group"><h3>Ray tracing</h3><label class="v6-tech-row"><span>Oclusión ambiental<small>Sombras de contacto sobre geometría opaca cercana. Mayor calidad puede reducir los FPS.</small></span><select name="v6-ray-tracing" data-ray-tracing-select aria-label="Ray tracing del juego"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><p data-ray-tracing-status role="status">Desactivado</p></div>
         <div class="v6-setting-group"><h3>Preset integral</h3><div class="v6-button-row"><button class="v6-btn v6-btn-small" data-v6-preset="original">Original</button><button class="v6-btn v6-btn-small" data-v6-preset="balanced">Equilibrado</button><button class="v6-btn v6-btn-small" data-v6-preset="assisted">Asistido</button><button class="v6-btn v6-btn-small" data-v6-preset="restomod">Restomod</button></div></div>
         <div class="v6-setting-group"><h3>Interfaz y accesibilidad</h3>
@@ -543,7 +558,7 @@
 </div>
 
 
-<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=e8db8317c8a85363"></script>
+<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=ab035c041897b730"></script>
 
 
 <canvas id="chevy-hud-webgl-canvas" aria-hidden="true"></canvas>
@@ -585,18 +600,18 @@
 <script  id="chevy-hud-asset-timer" type="application/octet-stream" data-filename="chevy-timer.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-timer/chevy-timer.glb" data-bytes="211116" data-sha256="4D65D89B6ADC0FEFA318130D21B7D9001E0493251ECF5F6AD2139EBBD7AEE8A3"></script>
 <script  id="chevy-hud-asset-navigation" type="application/octet-stream" data-filename="chevy-navigation.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-navigation/chevy-navigation.glb" data-bytes="609908" data-sha256="41AA91A47071A7589920D5A646C74E439329F6053AE27FAD9846C892DF7D0F0B"></script>
 <script  id="chevy-hud-asset-telemetry" type="application/octet-stream" data-filename="chevy-telemetry.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-telemetry/chevy-telemetry.glb" data-bytes="602412" data-sha256="FC8CBA16935B7ECE010769DDFA8DD362DCE311069F17D935E86DC6A7714B7F36"></script>
-<script id="chevy-hud-3d-runtime" src="./src/legacy/chevy-hud-3d-runtime.js?v=6070552faa480808"></script>
+<script id="chevy-hud-3d-runtime" src="./src/legacy/chevy-hud-3d-runtime.js?v=dac66b2b1f3b692e"></script>
 
-<script id="asfalto-v3-workshop-editor-runtime" src="./src/legacy/asfalto-v3-workshop-editor-runtime.js?v=f374e1fbd66e78dc"></script>
+<script id="asfalto-v3-workshop-editor-runtime" src="./src/legacy/asfalto-v3-workshop-editor-runtime.js?v=ec8a06713a3723fa"></script>
 
 <script  id="asfalto-v4-1-radio-model" type="application/octet-stream" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v4-1-radio-model/asfalto-v4-1-radio-model.bin" data-bytes="654164" data-sha256="E1420899D96511943B9F9E014E30A1F06B639A43FDBBA77EF481BD41EFD45710"></script>
 <script id="asfalto-v4-1-radio-manifest" type="application/json">{"version":1,"name":"Radio Chevrolet 1973","tracks":[{"id":"6e6477c63e9ec6d3","filename":"Artaud - Pescado Rabioso.mp3","title":"Artaud","artist":"Pescado Rabioso","mime":"audio/mpeg","duration":0,"payloadId":"6e6477c63e9ec6d3"},{"id":"f36cc240a96359e6","filename":"Gulp - Patricio Rey y sus Redonditos de Ricota.mp3","title":"Gulp","artist":"Patricio Rey y sus Redonditos de Ricota","mime":"audio/mpeg","duration":0,"payloadId":"f36cc240a96359e6"},{"id":"acd609abea19fc15","filename":"La grasa de las capitales - Seru Giran.mp3","title":"La grasa de las capitales","artist":"Seru Giran","mime":"audio/mpeg","duration":0,"payloadId":"acd609abea19fc15"}]}</script>
-<script id="asfalto-v4-1-radio-state" src="./src/legacy/asfalto-v4-1-radio-state.js"></script>
-<script id="asfalto-v4-1-radio-display" src="./src/legacy/asfalto-v4-1-radio-display.js"></script>
-<script id="asfalto-v4-1-radio-functional-core" src="./src/legacy/asfalto-v4-1-radio-functional-core.js"></script>
+<script id="asfalto-v4-1-radio-state" src="./src/legacy/asfalto-v4-1-radio-state.js?v=7e4e281bcd3e9909"></script>
+<script id="asfalto-v4-1-radio-display" src="./src/legacy/asfalto-v4-1-radio-display.js?v=372c52353e0b07f1"></script>
+<script id="asfalto-v4-1-radio-functional-core" src="./src/legacy/asfalto-v4-1-radio-functional-core.js?v=bc765353c202f92f"></script>
 <script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="6e6477c63e9ec6d3" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/6e6477c63e9ec6d3/6e6477c63e9ec6d3.bin" data-bytes="29668439" data-sha256="6E6477C63E9EC6D3F515DDC2C61CC7EA3EA19114B59C6F464AADD279D48AA30E"></script>
 <script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="f36cc240a96359e6" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/f36cc240a96359e6/f36cc240a96359e6.bin" data-bytes="56603931" data-sha256="F36CC240A96359E65C964E216382170F93B13D683B355A657273BED56B049F71"></script>
 <script  class="asfalto-v4-1-radio-track" type="application/octet-stream" data-track-id="acd609abea19fc15" data-mime="audio/mpeg" data-encoding="external-url" data-external-url="./assets/extracted/acd609abea19fc15/acd609abea19fc15.bin" data-bytes="16790824" data-sha256="ACD609ABEA19FC1570BE81A19D6E7091A8F663214CA77C6633A348FE65CD3823"></script>
-<script type="module" src="./src/ui/race-day-cycle-controls.mjs?v=c0a7450cc7232009"></script>
+<script type="module" src="./src/ui/race-day-cycle-controls.mjs?v=5f87a759443055e0"></script>
 </body>
 </html>

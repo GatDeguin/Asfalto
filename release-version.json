@@ -1,7 +1,10 @@
 {
-  "version": "v8-intro-brand-20260920",
+  "version": "v8-v7-recovery-20260920",
   "source": "Asfalto_Nacional_v8",
-  "validatedTests": 84,
+  "v8Baseline": "912b2f8",
+  "v7Features": "3486664",
+  "validatedTests": 189,
+  "targetedTests": 57,
   "physicalIphoneVerified": false,
   "introBrandVerified": true
 }

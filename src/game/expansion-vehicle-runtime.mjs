@@ -1,6 +1,6 @@
 const SS250_REVIEW_EYE=[.22,.235,.15865491525423722];
 const ss250InteriorReviewEnabled=id=>id==='chevy_400_1957';
-import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=79da6f20496c6a50';
+import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
 export function buildVehiclePhysicsSpec(base,id){
  const definition=getVehicleDefinition(id);if(!definition?.physicsEstimate)return base;
  return {...structuredClone(base),...structuredClone(definition.physicsEstimate),id:`${id}-${base.profile||'original'}`,label:definition.label,isCalibrationOnly:true};

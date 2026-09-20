@@ -1,4 +1,4 @@
-import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs';
+import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs?v=953e830bf733a7ab';
 
 // V3 stores body paint, trim, glass and chrome in one atlas. The source orange
 // pigment is isolated before recoloring; metallic and emissive pixels remain

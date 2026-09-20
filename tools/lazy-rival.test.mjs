@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=144a6369345e62c8',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=137fa1d93f159138',import.meta.url),'utf8');
 const block=source.slice(source.indexOf('  let rivalVisualPromise=null;'),source.indexOf('  raceChevyPresentation=await',source.indexOf('  let rivalVisualPromise=null;')));
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 function fixture({decode,convert,present}={}){
@@ -25,7 +25,7 @@ test('shutdown during presentation disposes late presentation and roots',async()
  const gate=deferred(),started=deferred(),f=fixture({present:()=>{started.resolve();return gate.promise;}});const p=f.ensure();await started.promise;f.stats.shutdown=true;gate.resolve({dispose(){f.stats.disposed.push('late-presentation');}});await assert.rejects(p,/shutdown/);assert.equal(f.stats.installed,0);assert.deepEqual(f.stats.disposed,['late-presentation','rig','source']);
 });
 const startBlock=source.slice(source.indexOf('  async function start({signal,onStage='),source.indexOf('  function pause(',source.indexOf('  async function start({signal,onStage=')));
-function raceStart(mode,ensure){return new Function('ui','options',`const environmentHostDisposed=false;const releaseRaceDayCycle=()=>{},raceWeatherEffects={reset(){}},syncEnvironment=()=>{throw Error('environment reached');};${startBlock};return start;`)({mode:{value:mode}},{ensureRivalVisual:ensure});}
+function raceStart(mode,ensure){return new Function('ui','options',`const withRacePreparation=fn=>fn(),prepareRaceStart=opts=>opts.environment();const environmentHostDisposed=false;const releaseRaceDayCycle=()=>{},raceWeatherEffects={reset(){}},syncEnvironment=()=>{throw Error('environment reached');};${startBlock};return start;`)({mode:{value:mode}},{ensureRivalVisual:ensure});}
 test('free drive bypasses rival; competition waits; cancellation cannot start race',async()=>{
  let loads=0;await assert.rejects(raceStart('free',()=>{loads++;})(),/environment reached/);assert.equal(loads,0);
  const gate=deferred(),controller=new AbortController();const p=raceStart('race',()=>{loads++;return gate.promise;})({signal:controller.signal});assert.equal(loads,1);controller.abort();gate.resolve();await assert.rejects(p,{name:'AbortError'});

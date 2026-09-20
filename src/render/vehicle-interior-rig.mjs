@@ -1,7 +1,7 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=79da6f20496c6a50';
-import {createSS250InteriorControls} from './ss250-interior-controls.mjs?v=balance-20260917';
-import {installSS250InstrumentGlass} from './ss250-instrument-glass.mjs?v=balance-20260917';
-import {installHeritageInteriorDetail} from './heritage-interior-detail.mjs?v=086eec30eb377189';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {createSS250InteriorControls} from './ss250-interior-controls.mjs?v=b48a81810fcdd7d3';
+import {installSS250InstrumentGlass} from './ss250-instrument-glass.mjs?v=e200ae68ce6dcce2';
+import {installHeritageInteriorDetail} from './heritage-interior-detail.mjs?v=4a5064ec18f25309';
 export function installVehicleInteriorRig(T,{root,vehicle,lods}){
  const definition=getVehicleDefinition(vehicle),pivots=[],axis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
  for(const model of lods){const meshes=[];model.traverse(n=>{if(n.userData?.steeringWheel)meshes.push(n);});if(meshes.length){const pivot=new T.Group();pivot.name=vehicle+'_CockpitSteeringPivot';pivot.position.fromArray(definition.steeringCenterSource);model.add(pivot);model.updateWorldMatrix(true,true);for(const node of meshes)pivot.attach(node);pivots.push(pivot);}}

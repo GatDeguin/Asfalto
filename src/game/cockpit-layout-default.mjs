@@ -1,0 +1,410 @@
+// Reviewed public calibration: assets/configuration/cockpit-layout.json.
+// Source SHA256:12e7ea5ac4992e279f0b2ce75cbc0e96c4d1896ed73456de803677a81c4906ea.
+// Kept in the module graph so API/static-seed failure still has an assembled cockpit.
+const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+export const COCKPIT_FACTORY_LAYOUT_ID='chevy-cockpit-v7-2026-09-07';
+export const COCKPIT_FACTORY_LAYOUT=freeze({
+  "version": 3,
+  "build": "10.0.0-racing-pov-100-autocontenido-v4.1-radio",
+  "updatedAt": "2026-09-07T03:19:59.714Z",
+  "transforms": {
+    "auto": {
+      "position": [
+        0,
+        -0.72,
+        0
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "cockpit-complete": {
+      "position": [
+        -0.381,
+        -0.86,
+        -2.514
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.9,
+        0.9,
+        0.9
+      ]
+    },
+    "front": {
+      "position": [
+        0.876,
+        -0.81,
+        -3.467
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.665,
+        2.665,
+        2.665
+      ]
+    },
+    "cabin": {
+      "position": [
+        0.876,
+        0.167,
+        0.648
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        2.965,
+        2.965,
+        2.965
+      ]
+    },
+    "roof": {
+      "position": [
+        4,
+        0.095,
+        2.171
+      ],
+      "rotation": [
+        0,
+        -90,
+        0
+      ],
+      "scale": [
+        1.047,
+        1.085,
+        1.762
+      ]
+    },
+    "rearview": {
+      "position": [
+        0.876,
+        1.5,
+        0.343
+      ],
+      "rotation": [
+        -4.398596993219371,
+        0,
+        0
+      ],
+      "scale": [
+        0.896,
+        0.896,
+        0.896
+      ]
+    },
+    "left-door-mirror": {
+      "position": [
+        -2.019,
+        0.524,
+        -0.19
+      ],
+      "rotation": [
+        0,
+        13.750987083139762,
+        6.899999999999977
+      ],
+      "scale": [
+        1.367,
+        1.367,
+        1.367
+      ]
+    },
+    "dashboard": {
+      "position": [
+        0,
+        0.243,
+        -0.1
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.329,
+        1.329,
+        1.329
+      ]
+    },
+    "radio": {
+      "position": [
+        0.952,
+        0.357,
+        0.267
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.455,
+        3.455,
+        3.455
+      ]
+    },
+    "speedometer": {
+      "position": [
+        -0.578,
+        0.38,
+        0.425
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.52,
+        1.52,
+        1.52
+      ]
+    },
+    "tachometer": {
+      "position": [
+        0.005,
+        0.38,
+        0.425
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.52,
+        1.52,
+        1.52
+      ]
+    },
+    "wheel": {
+      "position": [
+        -0.19,
+        0.214,
+        0.78
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.442,
+        1.442,
+        1.442
+      ]
+    },
+    "pedals": {
+      "position": [
+        -0.152,
+        -0.466,
+        0.25
+      ],
+      "rotation": [
+        0,
+        0,
+        180
+      ],
+      "scale": [
+        1.498,
+        1.498,
+        1.498
+      ]
+    },
+    "shifter": {
+      "position": [
+        0.952,
+        -0.19,
+        0.343
+      ],
+      "rotation": [
+        10.299999999999955,
+        0,
+        0
+      ],
+      "scale": [
+        3.022,
+        3.022,
+        3.022
+      ]
+    },
+    "shifter-base": {
+      "position": [
+        0,
+        0,
+        0.114
+      ],
+      "rotation": [
+        90.89999999999998,
+        0,
+        0
+      ],
+      "scale": [
+        0.093,
+        0.093,
+        0.093
+      ]
+    },
+    "shifter-boot": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "shifter-shaft": {
+      "position": [
+        0.0147,
+        0.0475,
+        -0.01225
+      ],
+      "rotation": [
+        -17.104877419447917,
+        3.1414952522357,
+        -20.667613437117097
+      ],
+      "scale": [
+        1.254,
+        1.254,
+        1.254
+      ]
+    },
+    "shifter-knob": {
+      "position": [
+        0,
+        0.101,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ignition": {
+      "position": [
+        0.392,
+        0.425,
+        0.437
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.969,
+        1.969,
+        1.969
+      ]
+    },
+    "ignition-key": {
+      "position": [
+        0,
+        0,
+        -0.03
+      ],
+      "rotation": [
+        0,
+        0,
+        -42
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    },
+    "ignition-keychain": {
+      "position": [
+        0,
+        0,
+        0.052
+      ],
+      "rotation": [
+        0,
+        0,
+        42
+      ],
+      "scale": [
+        0.99,
+        0.99,
+        0.99
+      ]
+    },
+    "light-switch": {
+      "position": [
+        -0.95,
+        0.425,
+        0.437
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        3.248,
+        3.248,
+        3.248
+      ]
+    }
+  },
+  "camera": {
+    "cockpit": {
+      "positionOffsetM": [
+        0,
+        0,
+        0
+      ],
+      "rotationOffsetDeg": [
+        -2.5,
+        0,
+        0
+      ],
+      "lensMode": "manual",
+      "focalLengthMm": 18,
+      "baseHorizontalFovDeg": 90,
+      "headMotion": {
+        "enabled": true,
+        "intensity": 0.5,
+        "responseSpeed": 0.8,
+        "translationScale": 1,
+        "rotationScale": 0.8
+      }
+    }
+  }
+});

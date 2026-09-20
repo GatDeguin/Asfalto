@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {createVehicleLighting} from '../src/render/vehicle-lighting.mjs?v=5e409c80a2bb6cd5';
+import {createVehicleLighting} from '../src/render/vehicle-lighting.mjs?v=cbf59234f390cc3e';
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
 function setup(){const root=new T.Group(),scene=new T.Scene();scene.add(root);return{scene,api:createVehicleLighting(T,{vehicle:'chevy',root,scene})}}

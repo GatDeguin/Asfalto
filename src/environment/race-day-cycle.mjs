@@ -1,4 +1,5 @@
-import {resolveEnvironment} from './environment-profiles.mjs';
+import {resolveEnvironment,getWeatherOptionsForTrack} from './environment-profiles.mjs?v=315916d6c7fab528';
+import {blendRaceWeatherProfiles} from './race-weather-cycle.mjs?v=98d02c4ab5b936e1';
 import {resolveRaceLighting} from './race-lighting.mjs';
 export const DAY_CYCLE_SECONDS=12*60;
 const wrap=hour=>((hour%24)+24)%24;
@@ -25,27 +26,44 @@ export function sampleRaceDayCycle(hour,target={direction:[0,1,0],color:[1,1,1]}
  return target;
 }
 export function createRaceDayCycle({skyId='clear',durationSeconds=DAY_CYCLE_SECONDS,enabled=true}={}){
- let elapsed=0,startHour=START_HOURS[skyId]??10,duration=DAY_CYCLE_SECONDS,on=enabled!==false;
+ let elapsed=0,activeSeconds=0,completedCycles=0,startHour=START_HOURS[skyId]??10,duration=DAY_CYCLE_SECONDS,on=enabled!==false;
  const state=sampleRaceDayCycle(startHour);
- function setOptions(options={}){if('enabled'in options)on=options.enabled!==false;if(Number.isFinite(options.durationSeconds)){const next=Math.max(60,Math.min(86400,options.durationSeconds));elapsed*=next/duration;duration=next;}return diagnostics();}
- function diagnostics(){return{enabled:on,durationSeconds:duration,elapsedSeconds:elapsed,hour:state.hour,phase:state.phase,from:state.from.skyId,to:state.to.skyId,blend:state.blend};}
+ function publish(){state.enabled=on;state.durationSeconds=duration;state.elapsedSeconds=elapsed;state.activeSeconds=activeSeconds;state.completedCycles=completedCycles;state.cycleProgress=elapsed/duration;return state;}
+ function setOptions(options={}){if('enabled'in options)on=options.enabled!==false;if(Number.isFinite(options.durationSeconds)){const next=Math.max(60,Math.min(86400,options.durationSeconds));elapsed*=next/duration;duration=next;}publish();return diagnostics();}
+ function diagnostics(){return{enabled:on,durationSeconds:duration,elapsedSeconds:elapsed,activeSeconds,completedCycles,cycleProgress:elapsed/duration,hour:state.hour,phase:state.phase,from:state.from.skyId,to:state.to.skyId,blend:state.blend};}
  setOptions({durationSeconds});
  return{state,setOptions,diagnostics,
-  reset(id=skyId){skyId=id;startHour=START_HOURS[id]??10;elapsed=0;return sampleRaceDayCycle(startHour,state);},
-  update({dt=0,status='IDLE',active=false}={}){if(on&&active&&status==='RUNNING'&&Number.isFinite(dt)&&dt>0){elapsed=(elapsed+dt)%duration;sampleRaceDayCycle(startHour+elapsed*24/duration,state);}return state;},
+  reset(id=skyId){skyId=id;startHour=START_HOURS[id]??10;elapsed=0;activeSeconds=0;completedCycles=0;sampleRaceDayCycle(startHour,state);return publish();},
+  update({dt=0,status='IDLE',active=false}={}){
+   if(on&&active&&status==='RUNNING'&&Number.isFinite(dt)&&dt>0){
+    activeSeconds+=dt;elapsed+=dt;const loops=Math.floor((elapsed+duration*1e-12)/duration);completedCycles+=loops;elapsed=Math.max(0,elapsed-loops*duration);
+    sampleRaceDayCycle(startHour+elapsed*24/duration,state);publish();
+   }return state;
+  },
  };
 }
-/** Build once per selected track/weather. Render-only output; the immutable
- * regional environment still owns temperature, grip, wetness and precipitation. */
+/** Build once per track/selected weather. Without a weather state, the existing
+ * render-only contract keeps all physical weather fields unchanged. With one,
+ * the host must also consume this same output for surface condition resolution. */
 export function createRaceDayEnvironment(T,base){
- const profiles=new Map();for(const skyId of ['clear','overcast','golden-hour','sunset','moonrise','night']){
-  const profile=resolveEnvironment(base.trackId,skyId,base.weatherId||base.weather||'clear');profiles.set(skyId,{profile,fogColor:new T.Color(profile.fog.color),ambientColor:new T.Color(profile.ambient.color)});
+ const profiles=new Map(),physical=new Map(),initial=base.weatherId||base.weather||'clear';
+ for(const weatherId of getWeatherOptionsForTrack(base.trackId)){
+  physical.set(weatherId,resolveEnvironment(base.trackId,base.presetId||base.skyId,weatherId));
+  for(const skyId of ['clear','overcast','golden-hour','sunset','moonrise','night']){
+   if(!profiles.has(skyId))profiles.set(skyId,new Map());
+   const profile=resolveEnvironment(base.trackId,skyId,weatherId);profiles.get(skyId).set(weatherId,{profile,fogColor:new T.Color(profile.fog.color),ambientColor:new T.Color(profile.ambient.color)});
+  }
  }
- const output={...base,dayCycle:{nightFactor:0,cloudiness:0,hour:0,phase:'day',atmosphereSunIntensity:0},sun:{...base.sun,color:new T.Color(base.sun.color)},fog:{...base.fog,color:new T.Color(base.fog.color)},ambient:{...base.ambient,color:new T.Color(base.ambient.color)}};
- return{environment:output,update(state){const a=profiles.get(state.from.skyId),b=profiles.get(state.to.skyId),t=state.blend;
-  output.skyId=state.skyId;output.exposure=state.exposure;output.dayCycle.nightFactor=state.nightFactor;output.dayCycle.cloudiness=state.cloudiness;output.dayCycle.hour=state.hour;output.dayCycle.phase=state.phase;output.dayCycle.atmosphereSunIntensity=state.atmosphereSunIntensity;
+ const fogScratch=new T.Color(),output={...base,weatherCycle:{},dayCycle:{nightFactor:0,cloudiness:0,hour:0,phase:'day',atmosphereSunIntensity:0},sun:{...base.sun,color:new T.Color(base.sun.color)},fog:{...base.fog,color:new T.Color(base.fog.color)},ambient:{...base.ambient,color:new T.Color(base.ambient.color)}};
+ return{environment:output,update(state,weatherState){
+  const from=weatherState?.fromWeatherId||initial,to=weatherState?.toWeatherId||initial,w=weatherState?.blend||0;
+  const a=profiles.get(state.from.skyId).get(from),b=profiles.get(state.to.skyId).get(from),c=profiles.get(state.from.skyId).get(to),d=profiles.get(state.to.skyId).get(to),t=state.blend;
+  if(weatherState)blendRaceWeatherProfiles(physical.get(from),physical.get(to),w,output);
+  output.skyId=state.skyId;output.exposure=state.exposure;output.dayCycle.nightFactor=state.nightFactor;output.dayCycle.cloudiness=Math.max(state.cloudiness,weatherState?output.weatherCycle.clouds:0);output.dayCycle.hour=state.hour;output.dayCycle.phase=state.phase;output.dayCycle.atmosphereSunIntensity=state.atmosphereSunIntensity;
   output.sun.lux=state.keyLightIntensity*90000/.95;output.sunIntensity=state.keyLightIntensity;output.sun.color.setRGB(...state.color);output.sun.elevationDeg=Math.asin(state.direction[1])*180/Math.PI;output.sun.azimuthDeg=Math.atan2(state.direction[0],state.direction[2])*180/Math.PI;
-  output.fog.color.copy(a.fogColor).lerp(b.fogColor,t);output.fog.density=a.profile.fog.density+(b.profile.fog.density-a.profile.fog.density)*t;
+  output.fog.color.copy(a.fogColor).lerp(b.fogColor,t);fogScratch.copy(c.fogColor).lerp(d.fogColor,t);output.fog.color.lerp(fogScratch,w);
+  const fogFrom=a.profile.fog.density+(b.profile.fog.density-a.profile.fog.density)*t,fogTo=c.profile.fog.density+(d.profile.fog.density-c.profile.fog.density)*t;
+  output.fog.density=fogFrom+(fogTo-fogFrom)*w;
   output.ambient.color.copy(a.ambientColor).lerp(b.ambientColor,t);output.ambient.intensity=a.profile.ambient.intensity+(b.profile.ambient.intensity-a.profile.ambient.intensity)*t;return output;
  }};
 }
