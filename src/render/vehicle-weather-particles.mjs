@@ -1,4 +1,4 @@
-import { effectsQuad, effectsRandom } from './weather-layers.mjs?v=80f1f43f830fce07';
+import { effectsQuad, effectsRandom } from './weather-layers.mjs?v=70a8853ebe26cb24';
 import { wheelWeatherEmission } from './weather-dynamics.mjs?v=470f93cd4d3a3352';
 import { getVehicleEngineMount } from './vehicle-engine-mount.mjs?v=0e10204a874b5b00';
 import { getVehicleDefinition } from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
@@ -41,7 +41,7 @@ if(alpha<.005)discard;gl_FragColor=vec4(color,alpha);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
 }`});
-    const mesh=new THREE.Mesh(geometry,material);mesh.name=material.name;mesh.frustumCulled=false;mesh.visible=false;parent.add(mesh);return{mesh,geometry,positions,velocities,data,count:0};
+    const mesh=new THREE.Mesh(geometry,material);mesh.name=material.name;mesh.frustumCulled=false;mesh.visible=false;mesh.userData.asfaltoPrewarm=true;parent.add(mesh);return{mesh,geometry,positions,velocities,data,count:0};
   }
   const alpha=batch(false),glow=batch(true),batches=[alpha,glow],attributeNames=['aPosition','aVelocity','aData'];
   function emit(kind,origin,count,power=1,lifetime=1,relativeVelocity=null) {
@@ -115,13 +115,13 @@ if(alpha<.005)discard;gl_FragColor=vec4(color,alpha);
       lightEnergy*=Math.exp(-dt*12);
       if(emission.fire>0){emit(4,exhaust,Math.ceil(2+emission.fire*9),emission.fire);emit(2,exhaust,1,.3,.75);lightEnergy=Math.max(lightEnergy,emission.fire*7);fireLight.position.copy(exhaust);}
       if(emission.engineFire){lightEnergy=1.8*emission.engineFire;fireLight.position.copy(hood);}
-      fireLight.intensity=Math.min(2,lightEnergy);fireLight.visible=lightEnergy>.002;
+      fireLight.intensity=Math.min(2,lightEnergy);fireLight.visible=true;
       if(emission.sparks>0){const contact=vehicle.metalContact;if(Array.isArray(contact?.point))position.fromArray(contact.point);else position.copy(contact?.point||vehicle.impactPosition||origin);position.y=Math.max(groundY+.02,position.y);emit(3,position,Math.ceil((8+emission.sparks*28)*tierFactor),emission.sparks,1,contact?.relativeVelocity);}
       alpha.count=0;glow.count=0;alive=0;
       for(let i=0;i<limit;i++){const p=pool[i];if(p.life<=0)continue;const target=p.kind>=3?glow:alpha,n=target.count++,a=n*3,b=n*4;target.positions[a]=p.x;target.positions[a+1]=p.y;target.positions[a+2]=p.z;target.velocities[a]=p.vx;target.velocities[a+1]=p.vy;target.velocities[a+2]=p.vz;target.data[b]=p.age/p.life;target.data[b+1]=p.kind;target.data[b+2]=p.size;target.data[b+3]=p.seed;alive++;}
       for(const target of batches){target.geometry.instanceCount=target.count;target.mesh.visible=target.count>0;if(target.count)for(const key of attributeNames)target.geometry.attributes[key].needsUpdate=true;}
     },
-    reset(){for(const p of pool)p.life=0;wheelBudgets.clear();lightEnergy=fireLight.intensity=0;fireLight.visible=false;previousHeading=null;cursor=0;alive=0;alpha.count=glow.count=0;sprayBudget=dustBudget=smokeBudget=engineBudget=engineFlameBudget=0;alpha.mesh.visible=glow.mesh.visible=false;alpha.geometry.instanceCount=glow.geometry.instanceCount=0;},
+    reset(){for(const p of pool)p.life=0;wheelBudgets.clear();lightEnergy=fireLight.intensity=0;fireLight.visible=true;previousHeading=null;cursor=0;alive=0;alpha.count=glow.count=0;sprayBudget=dustBudget=smokeBudget=engineBudget=engineFlameBudget=0;alpha.mesh.visible=glow.mesh.visible=false;alpha.geometry.instanceCount=glow.geometry.instanceCount=0;},
     getAliveCount:()=>alive,
     diagnostics:()=>({alive,capacity,limit,alpha:alpha.count,additive:glow.count,wheelSources:wheelBudgets.size,localLightIntensity:fireLight.intensity,wind:windVector.toArray()}),
     dispose(){if(disposed)return;disposed=true;fireLight.removeFromParent();for(const target of batches){target.mesh.removeFromParent();target.geometry.dispose();target.mesh.material.dispose();}},

@@ -2435,6 +2435,11 @@
       return this._rules.getGhostPoseAtDistance(distance);
     }
 
+    resetPerformanceMeasurement() {
+      Object.assign(this._physicsPerformance,{frameCount:0,totalSubsteps:0,lastSubsteps:0,maxSubstepsPerFrame:0,overruns:0});
+      this._physicsPerformance.frameTimesMs.length=0;
+    }
+
     getDiagnostics() {
       const stack = this._physicalStack?.diagnostics || {};
       const performanceState = this._physicsPerformance;

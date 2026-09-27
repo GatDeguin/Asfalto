@@ -1,6 +1,6 @@
 /** Phone parts use the already-reviewed display mesh; normalization retains the full-source reference box. */
 export function attachPhoneDisplayReference(mesh,json,phone){
- const data=json.extras?.asfaltoPhoneDisplay;if(!phone||!data)return mesh;
+ const data=json.extras?.asfaltoPhoneDisplay||(json.extras?.asfaltoDisplayLod?{name:json.extras.asfaltoDisplayLod.source,sourceBounds:json.extras.asfaltoDisplayLod.sourceBounds,provenance:json.extras.asfaltoDisplayLod}:null);if(!phone||!data)return mesh;
  const bounds=data.sourceBounds;if(!bounds||!['min','max'].every(k=>bounds[k]?.length===3&&bounds[k].every(Number.isFinite))||bounds.min.some((n,i)=>n>bounds.max[i]))throw new Error('Referencia móvil de cockpit inválida');
  mesh.userData.phoneDisplay={name:data.name,sourceBounds:structuredClone(bounds),provenance:structuredClone(data.provenance)};return mesh;
 }

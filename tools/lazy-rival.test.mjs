@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=137fa1d93f159138',import.meta.url),'utf8');
-const block=source.slice(source.indexOf('  let rivalVisualPromise=null;'),source.indexOf('  raceChevyPresentation=await',source.indexOf('  let rivalVisualPromise=null;')));
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=41c8b2c8c8da80ba',import.meta.url),'utf8');
+const block=source.match(/  let rivalVisualPromise=null;[\s\S]*?    return rivalVisualPromise;\r?\n  }/)[0];
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 function fixture({decode,convert,present}={}){
  const stats={decode:0,convert:0,present:0,rig:0,installed:0,disposed:[],shutdown:false};

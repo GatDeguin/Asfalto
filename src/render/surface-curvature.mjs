@@ -1,3 +1,4 @@
+import {bakeRead,bakeWrite,bakeSignature,bakeAttributeInput} from '../tracks/visuals/offline-track-bake.mjs?v=67e9450828b29db5';
 /** Geometry-derived signed convexity. Positive = convex with respect to triangle winding.
  * This bounded, seam-welded one-ring estimator is a shading attribute, never displacement. */
 const cache = new WeakMap();
@@ -10,9 +11,15 @@ export function computeSurfaceCurvature(T, geometry, {maxVertices=80000,maxTrian
   if(vertices>maxVertices)return fail('vertex-budget');
   if(triangles>maxTriangles)return fail('triangle-budget');
   const passes=Math.max(0,Math.min(3,Math.round(smoothing)));
-  const key=[position,position.version,index,index?.version,passes];
+  const key=[position,position.version??position.data?.version,position.offset,position.data?.stride,position.normalized,index,index?.version,index?.normalized,passes];
   const prior=cache.get(geometry);
   if(prior&&key.every((v,i)=>v===prior.key[i]))return {attribute:prior.attribute,diagnostics:{...prior.diagnostics,cached:true}};
+  const bakeKey='curvature:'+bakeSignature([bakeAttributeInput(position),bakeAttributeInput(index),passes,T.REVISION,finite.toString(),computeSurfaceCurvature.toString()]);
+  const baked=bakeRead(bakeKey);
+  if(baked&&(Array.isArray(baked.values)||ArrayBuffer.isView(baked.values))&&baked.values.length===vertices&&baked.values.every(Number.isFinite)){
+    const attribute=new T.BufferAttribute(new Float32Array(baked.values),1),diagnostics={...baked.diagnostics,cached:true};
+    cache.set(geometry,{key,attribute,diagnostics});return {attribute,diagnostics};
+  }
   let minX=Infinity,minY=Infinity,minZ=Infinity,maxX=-Infinity,maxY=-Infinity,maxZ=-Infinity;
   for(let i=0;i<vertices;i++){const x=position.getX(i),y=position.getY(i),z=position.getZ(i);if(!Number.isFinite(x+y+z))return fail('non-finite-position');minX=Math.min(minX,x);minY=Math.min(minY,y);minZ=Math.min(minZ,z);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);maxZ=Math.max(maxZ,z);}
   const tolerance=Math.max(1e-7,Math.max(maxX-minX,maxY-minY,maxZ-minZ)*1e-6),weld=new Map(),ids=new Uint32Array(vertices),points=[];
@@ -42,6 +49,7 @@ export function computeSurfaceCurvature(T, geometry, {maxVertices=80000,maxTrian
   const values=new Float32Array(vertices);let convex=0,concave=0,maximum=0;
   for(let i=0;i<vertices;i++){const value=curvature[ids[i]];values[i]=value;maximum=Math.max(maximum,Math.abs(value));if(value>.005)convex++;else if(value<-.005)concave++;}
   const attribute=new T.BufferAttribute(values,1),diagnostics={vertices,triangles,weldedVertices:count,convexVertices:convex,concaveVertices:concave,maximum,degenerateTriangles,reason:null,cached:false,physicalDeltaM:0};
+  bakeWrite(bakeKey,{values:Array.from(values),diagnostics});
   cache.set(geometry,{key,attribute,diagnostics});return {attribute,diagnostics:{...diagnostics}};
 }
 

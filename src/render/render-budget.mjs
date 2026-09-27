@@ -1,4 +1,4 @@
-import {TRACK_RENDER_POLICIES} from '../performance/track-performance-governor.mjs?v=80b7bc7f721a38cf';
+import {TRACK_RENDER_POLICIES} from '../performance/track-performance-governor.mjs?v=c2943f0c1c9be48f';
 const MiB=1024*1024;
 const budgets=Object.freeze({
  cinematic:{maxPixels:2560*1440,maxPostBytes:256*MiB,samples:4,effectPixels:518400,effectScale:.625},
@@ -43,7 +43,8 @@ export function createWorkshopRenderBudget(T,{renderer,phone=false}={}) {
   if(disposed)return last;
   quality=TRACK_RENDER_POLICIES[tier]?tier:'high';
   if(Number.isFinite(dimensions.pixelRatio)&&dimensions.pixelRatio>0)baseRatio=dimensions.pixelRatio;
-  const rect=renderer.domElement?.getBoundingClientRect?.()||originalSize;
+  const ownedSize=supported?renderer.getSize(new T.Vector2()):originalSize;
+  const rect=renderer.__renderView&&!renderer.__renderView.isActive()?{width:ownedSize.x,height:ownedSize.y}:(renderer.domElement?.getBoundingClientRect?.()||originalSize);
   const width=positive(dimensions.width,positive(rect.width,originalSize.x)),height=positive(dimensions.height,positive(rect.height,originalSize.y));
   const policy=TRACK_RENDER_POLICIES[quality];
   last=resolveRenderBudget({width,height,pixelRatio:baseRatio*policy.resolutionScale,quality,phone,passCount:1});

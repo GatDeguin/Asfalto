@@ -158,7 +158,7 @@ function mount() {
     if (open) game.workshop.focus('general');
   }
   function frameWorkshop(workshop, instant=false) {
-    if (!workshop?.camera || !workshop.car) return;
+    if (!workshop?.camera || !workshop.car || workshop.renderView&&!workshop.renderView.isActive()) return;
     if(workshop.collectionFocusActive){workshop.camera.clearViewOffset();return;}
     const camera=workshop.camera, rect=workshop.canvas.getBoundingClientRect();
     const appearance=root.dataset.anAppearance==='true', modes=root.dataset.anStep==='modes' && state.view==='section';

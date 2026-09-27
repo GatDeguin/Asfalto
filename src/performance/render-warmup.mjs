@@ -3,7 +3,7 @@ export async function prepareRenderPolicies({getTier,applyTier,prepare,paint=asy
  const tiers=['low','balanced','high','cinematic'],limit=tiers.indexOf(maximumTier);
  if(limit<0)throw new RangeError('Unknown maximum rendering tier: '+maximumTier);
  const previous=getTier(),started=performance.now(),prepared=[];
- try{for(const tier of tiers.slice(0,limit+1)){signal?.throwIfAborted();applyTier(tier);await waitForSignal(prepare(tier),signal);signal?.throwIfAborted();prepared.push(tier);await waitForSignal(paint(),signal);signal?.throwIfAborted();}return{prepared,durationMs:performance.now()-started};}
+ try{for(const tier of [previous]){signal?.throwIfAborted();applyTier(tier);await waitForSignal(prepare(tier),signal);signal?.throwIfAborted();prepared.push(tier);await waitForSignal(paint(),signal);signal?.throwIfAborted();}return{prepared,durationMs:performance.now()-started};}
  finally{applyTier(previous);}
 }
 
@@ -28,7 +28,7 @@ export function createRenderPreparationCache({limit=4}={}){
    const epoch=generation;
    const operation=tail.then(async()=>{
     options.signal?.throwIfAborted();
-    const fullKey=JSON.stringify([key,options.maximumTier||'high']);
+    const fullKey=JSON.stringify([key,options.getTier(),options.maximumTier||'high']);
     if(epoch===generation&&entries.has(fullKey)){const report=entries.get(fullKey);entries.delete(fullKey);entries.set(fullKey,report);hits++;return {...report,cached:true};}
     misses++;const report=await prepareRenderPolicies(options);options.signal?.throwIfAborted();
     if(epoch===generation){entries.set(fullKey,report);while(entries.size>limit)entries.delete(entries.keys().next().value);}

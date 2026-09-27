@@ -1,3 +1,4 @@
+import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=b5d99705e208d46d';
 /** Vehicle-specific wheel, prepared transactionally with the exterior selection.
  * The editable mount and animated steering pivot remain the input/animation contract.
  */
@@ -6,7 +7,7 @@ const releasedRoots=new WeakSet();
 function release(root){
  if(!root||releasedRoots.has(root))return;releasedRoots.add(root);root.removeFromParent();const geometries=new Set(),materials=new Set();
  root.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m)materials.add(m);});
- for(const g of geometries)g.dispose();for(const m of materials)m.dispose();
+ for(const g of geometries)if(!isBorrowedVehicleResource(g))g.dispose();for(const m of materials)m.dispose();releaseVehicleModel(root);
 }
 export function createVehicleCockpitWheel(T,{pivot,sharedWheel,targetWidth,loadGlb,tune=()=>{}}){
  let active=null,disposed=false,vehicle='chevy';const pending=new Set(),initialVisible=sharedWheel.visible;

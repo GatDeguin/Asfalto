@@ -50,7 +50,7 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
    }
   }
  }
- root.visible=false;pane.visible=false;let time=0,film=0,cycle=0,disposed=false;
+ root.traverse(node=>{node.userData.asfaltoPrewarm=true;});root.visible=false;pane.visible=false;let time=0,film=0,cycle=0,disposed=false;
  let lastPhase=NaN;
  function setPhase(phase){
   if(phase===lastPhase)return;lastPhase=phase;

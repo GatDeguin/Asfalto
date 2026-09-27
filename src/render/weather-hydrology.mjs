@@ -1,5 +1,5 @@
+import {computeWaterField,computeRoadField} from './hydrology-compute.mjs?v=d280021eea2b85af';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-function distanceSegment(x,z,a,b){const dx=b[0]-a[0],dz=b[2]-a[2],t=clamp(((x-a[0])*dx+(z-a[2])*dz)/(dx*dx+dz*dz||1),0,1);return Math.hypot(x-a[0]-dx*t,z-a[2]-dz*t);}
 /** Geometric perimeter, not a painted noise mask. Quantization joins GLB split vertices. */
 export function waterBoundarySegments(THREE,mesh){
   mesh.updateWorldMatrix(true,false);const position=mesh.geometry?.attributes.position,index=mesh.geometry?.index;
@@ -23,39 +23,25 @@ export function createWaterDistance(segments,fallbackY=0){
     return Math.hypot(inside?0:Math.sqrt(nearestSq),position.y-nearestY);
   };
 }
-export function createWaterHydrology(THREE,mesh){
+export function createWaterHydrology(THREE,mesh,{jobs}={}){
   const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
   const metadata={kind:materials.some(material=>/RIVER/.test(material?.name||''))?'river':'lake',...mesh.userData?.asfaltoWater},boundary=waterBoundarySegments(THREE,mesh),segments=metadata.shoreSegments?.length?metadata.shoreSegments:boundary;
-  const bounds=new THREE.Box3().setFromObject(mesh),size=bounds.getSize(new THREE.Vector3()),resolution=96;
-  const data=new Float32Array(resolution*resolution*4),maxDepth=Math.max(.1,Number(metadata.maxDepthM)||(metadata.kind==='river'?2:18));
-  // Explicitly a conservative shore wedge when no authored depth field exists.
-  // The field remains in metres; it is not an assertion of surveyed bathymetry.
-  const depthSamples=metadata.depthSamples||[],step=Math.max(1,Math.ceil(segments.length/2048));
-  for(let y=0;y<resolution;y++)for(let x=0;x<resolution;x++){
-    const wx=bounds.min.x+size.x*x/(resolution-1),wz=bounds.min.z+size.z*y/(resolution-1);let shore=Infinity;
-    for(let e=0;e<segments.length;e+=step)shore=Math.min(shore,distanceSegment(wx,wz,segments[e].a,segments[e].b));
-    if(!Number.isFinite(shore))shore=maxDepth/.22;
-    let depth=clamp(shore*.22+.06,0,maxDepth);
-    if(depthSamples.length){let numerator=0,denominator=0;for(const s of depthSamples){const d=Math.hypot(wx-s[0],wz-s[2]),weight=1/Math.max(.2,d*d);numerator+=Math.max(0,s[3])*weight;denominator+=weight;}depth=numerator/denominator;}
-    const offset=(y*resolution+x)*4;data[offset]=depth;data[offset+1]=shore;data[offset+2]=0;data[offset+3]=1;
-  }
-  const texture=new THREE.DataTexture(data,resolution,resolution,THREE.RGBAFormat,THREE.FloatType);texture.name='AN_GeometricWaterDepthShore';texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.needsUpdate=true;
-  return{texture,distanceToWater:createWaterDistance(boundary,(bounds.min.y+bounds.max.y)*.5),bounds:new THREE.Vector4(bounds.min.x,bounds.min.z,Math.max(.001,size.x),Math.max(.001,size.z)),metadata,
-    diagnostics:{segments:segments.length,depthSource:depthSamples.length?(metadata.depthSource||'authored-depth-samples'):'geometric-shore-wedge',maxDepthM:maxDepth},dispose(){texture.dispose();}};
+  const bounds=new THREE.Box3().setFromObject(mesh),size=bounds.getSize(new THREE.Vector3()),resolution=96,maxDepth=Math.max(.1,Number(metadata.maxDepthM)||(metadata.kind==='river'?2:18));
+  const input={segments:new Float64Array(segments.flatMap(({a,b})=>[...a,...b])),bounds:[bounds.min.x,bounds.min.z,size.x,size.z],maxDepth,resolution,depthSamples:new Float64Array((metadata.depthSamples||[]).flat())};
+  const controller=new AbortController();let disposed=false;
+  const diagnostics={segments:segments.length,depthSource:input.depthSamples.length?(metadata.depthSource||'authored-depth-samples'):'geometric-shore-wedge',maxDepthM:maxDepth,status:jobs?'pending':'ready',worker:!!jobs};
+  const texture=new THREE.DataTexture(jobs?new Float32Array(resolution*resolution*4):computeWaterField(input),resolution,resolution,THREE.RGBAFormat,THREE.FloatType);texture.name='AN_GeometricWaterDepthShore';texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.needsUpdate=true;
+  const ready=jobs?jobs.run('water',input,{signal:controller.signal}).catch(error=>{if(disposed)return null;diagnostics.worker=false;diagnostics.fallback=String(error?.message||error);return computeWaterField(input);}).then(values=>{if(disposed||!values)return false;texture.image.data=values;texture.needsUpdate=true;diagnostics.status='ready';return true;}):Promise.resolve(true);
+  return{texture,ready,distanceToWater:createWaterDistance(boundary,(bounds.min.y+bounds.max.y)*.5),bounds:new THREE.Vector4(bounds.min.x,bounds.min.z,Math.max(.001,size.x),Math.max(.001,size.z)),metadata,diagnostics,dispose(){if(disposed)return;disposed=true;controller.abort();diagnostics.status='disposed';texture.dispose();}};
 }
 /** Vertex drainage from neighbouring measured road heights; flat roads retain only a film. */
-export function installRoadHydrology(THREE,mesh){
+export function installRoadHydrology(THREE,mesh,{jobs}={}){
   const geometry=mesh.geometry,position=geometry?.attributes.position;if(!position)return()=>{};
-  const previous=geometry.getAttribute('anFxHydrology'),values=new Float32Array(position.count*2),world=[],grid=new Map(),v=new THREE.Vector3(),cell=3;
-  mesh.updateWorldMatrix(true,false);
-  for(let i=0;i<position.count;i++){v.fromBufferAttribute(position,i).applyMatrix4(mesh.matrixWorld);world.push(v.clone());const key=`${Math.floor(v.x/cell)},${Math.floor(v.z/cell)}`;const g=grid.get(key)||{sum:0,count:0};g.sum+=v.y;g.count++;grid.set(key,g);}
-  for(let i=0;i<world.length;i++){const p=world[i],cx=Math.floor(p.x/cell),cz=Math.floor(p.z/cell);let sum=0,n=0,min=Infinity,max=-Infinity;
-    for(let z=-1;z<=1;z++)for(let x=-1;x<=1;x++){const g=grid.get(`${cx+x},${cz+z}`);if(g){const h=g.sum/g.count;sum+=h;n++;min=Math.min(min,h);max=Math.max(max,h);}}
-    const local=grid.get(`${cx},${cz}`),localHeight=local.sum/local.count;
-    // Remove the broad road grade so a continuous uphill grade cannot become a puddle.
-    let curvature=0,pairs=0;for(const [x,z] of [[1,0],[0,1],[1,1],[1,-1]]){const a=grid.get(`${cx+x},${cz+z}`),b=grid.get(`${cx-x},${cz-z}`);if(a&&b){curvature+=(a.sum/a.count+b.sum/b.count)*.5-localHeight;pairs++;}}
-    const bowl=pairs?Math.max(0,curvature/pairs):0;values[i*2]=clamp(bowl,0,.035);values[i*2+1]=clamp((max-min)/(cell*2),0,1);
-  }
-  geometry.setAttribute('anFxHydrology',new THREE.BufferAttribute(values,2));
-  return()=>{if(geometry.getAttribute('anFxHydrology')?.array!==values)return;if(previous)geometry.setAttribute('anFxHydrology',previous);else geometry.deleteAttribute('anFxHydrology');};
+  const previous=geometry.getAttribute('anFxHydrology'),positions=new Float64Array(position.count*3),v=new THREE.Vector3();mesh.updateWorldMatrix(true,false);
+  for(let i=0;i<position.count;i++){v.fromBufferAttribute(position,i).applyMatrix4(mesh.matrixWorld);positions.set([v.x,v.y,v.z],i*3);}
+  const input={positions},values=jobs?new Float32Array(position.count*2):computeRoadField(input),attribute=new THREE.BufferAttribute(values,2),controller=new AbortController();let disposed=false;
+  geometry.setAttribute('anFxHydrology',attribute);
+  const restore=()=>{if(disposed)return;disposed=true;controller.abort();if(geometry.getAttribute('anFxHydrology')!==attribute)return;if(previous)geometry.setAttribute('anFxHydrology',previous);else geometry.deleteAttribute('anFxHydrology');};
+  restore.ready=jobs?jobs.run('road',input,{signal:controller.signal}).catch(()=>disposed?null:computeRoadField(input)).then(result=>{if(disposed||!result||geometry.getAttribute('anFxHydrology')!==attribute)return false;attribute.array.set(result);attribute.needsUpdate=true;return true;}):Promise.resolve(true);
+  return restore;
 }

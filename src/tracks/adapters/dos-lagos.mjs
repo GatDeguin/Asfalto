@@ -1,9 +1,11 @@
+import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
+import {freezeStaticTrackTransforms} from '../../render/frame-matrices.mjs?v=ca094c8344437cf8';
 import { createGameplayBridge as createCanonicalGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=457a8af4bf40a703';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=d76281dbc61c8cb9';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({
@@ -375,7 +377,7 @@ function createGameplayBridge(routeQuery, route) {
     direction:String(corner.direction||'').includes('Izquierda')?-1:1,severity:clamp(90/Math.max(30,Number(corner.radius_m)||90),0.18,1),
   })));
   return Object.freeze({
-    id:'dos_lagos',name:'Dos Lagos',description:'Ruta patagónica punto a punto entre Villarino y Falkner.',biome:'patagonia',environment:'forest',seed:501,
+    id:'dos_lagos',name:'Dos Lagos',description:'Ruta patagÃƒÂ³nica punto a punto entre Villarino y Falkner.',biome:'patagonia',environment:'forest',seed:501,
     palette:deepFreeze({skyTop:'#527f9d',skyHorizon:'#cadce3',ground:'#526448',dirt:'#806c55',grassBottom:'#344e2f',grassTop:'#69805b',treeBottom:'#173326',treeTop:'#45694a',curbA:'#e9e7df',curbB:'#c43d32',fog:'#b9cbd0',waterDeep:'#173f55',waterMid:'#427b91',waterHighlight:'#b9e0e5'}),
     shoulder,barrier,closed:false,length,maxCurvature,checkpoints,speedTrap:deepFreeze({start:7550,end:8250}),brakingMarkers,
     sample,widthAt,bankAt,idealLineOffset,surfaceAt,resolveBarrierCollision,
@@ -870,6 +872,7 @@ export function createDosLagosAdapter(dependencies) {
     }
     const signal = transaction.controller.signal;
     try {
+      await prepareTrackBake('dos_lagos',signal);
       assertCurrent(transaction);
       const requested = request.manifestUrl ?? dependencies.manifestUrl ?? request.entry?.manifest;
       if (!requested) throw new TypeError('manifestUrl is required');
@@ -911,7 +914,7 @@ export function createDosLagosAdapter(dependencies) {
       transaction.closure = closure?.closure || null;
       transaction.routeQuery = closure ? createRouteQuery(transaction.normalizedRoute) : sourceQuery;
       transaction.gameplay = closure ? createCanonicalGameplayBridge(transaction.routeQuery, transaction.normalizedRoute, {
-        id:'dos_lagos',name:'Dos Lagos',description:'Circuito patagónico con regreso a largada.',biome:authoredGameplay.biome,
+        id:'dos_lagos',name:'Dos Lagos',description:'Circuito patagÃƒÂ³nico con regreso a largada.',biome:authoredGameplay.biome,
         environment:authoredGameplay.environment,palette:authoredGameplay.palette,shoulder:authoredGameplay.shoulder,
         barrier:authoredGameplay.barrier,speedTrap:authoredGameplay.speedTrap,brakingMarkers:authoredGameplay.brakingMarkers,
       }) : authoredGameplay;
@@ -1020,6 +1023,7 @@ export function createDosLagosAdapter(dependencies) {
       );
       assertCurrent(transaction);
 
+      freezeStaticTrackTransforms(transaction.visualRoot);
       routeQuery = transaction.routeQuery;
       gameplay = transaction.gameplay;
       normalizedRoute = transaction.normalizedRoute;

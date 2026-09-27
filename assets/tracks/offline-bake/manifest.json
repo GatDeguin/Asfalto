@@ -1,0 +1,51 @@
+{
+  "schema": "asfalto-cpu-bake/v3",
+  "tracks": {
+    "dos_lagos": {
+      "file": "dos_lagos.bake.gz",
+      "bytes": 12039500,
+      "decodedBytes": 33024880,
+      "sha256": "d121a0a7fdc25d6b852eb8b2089e97f07a4f1384d10aee0a392d2d9f13ec3e09",
+      "entries": 220
+    },
+    "aconcagua_horcones": {
+      "file": "aconcagua_horcones.bake.gz",
+      "bytes": 5792946,
+      "decodedBytes": 25359800,
+      "sha256": "637f96837787a915339b50f298790d8085701f3bc3c330ced765ca60f84d5d16",
+      "entries": 54
+    },
+    "cuesta_lipan": {
+      "file": "cuesta_lipan.bake.gz",
+      "bytes": 10882341,
+      "decodedBytes": 29980920,
+      "sha256": "b327f2e8d3679d910cd5ce4ec4fd2e8d3fc2c1554b90c4f43242629cca8057a6",
+      "entries": 139
+    },
+    "paso_garibaldi": {
+      "file": "paso_garibaldi.bake.gz",
+      "bytes": 7269296,
+      "decodedBytes": 23891920,
+      "sha256": "93ac03a44ea9ae2506a6206f4989ebe1e7485e5d9fbc587c57e7f0c308cb1223",
+      "entries": 67
+    },
+    "cataratas_iguazu": {
+      "file": "cataratas_iguazu.bake.gz",
+      "bytes": 4444557,
+      "decodedBytes": 18519088,
+      "sha256": "03387d0dd4f9da105c23cfca878ad186e07c559cb5c58805e15c638e01c37e6d",
+      "entries": 773
+    }
+  },
+  "inputs": {
+    "src/tracks/visuals/closure-terrain.mjs": "df1932da2cc38e88755df00d0809383fd0b9ae714c166ad99875856fa9f4212f",
+    "src/tracks/visuals/terrain-refinement.mjs": "f1cd6e23a9ef1bd25b0fd1beac3a5122af90f58d7bf7592f38ad6537b31fb345",
+    "src/tracks/visuals/forest-terrain-detail.mjs": "c7c0289881bcab1bb184febb9b834fcb08eefa2f195dad9771c040e47724068f",
+    "src/render/surface-curvature.mjs": "ba5f1c09d4be959f693be2ec0236316f65431528db5a4cc0eac2597bb772713c",
+    "tracks\\dos-lagos\\manifest.json": "8e681510bf26543ceacfa47d0ca9aa767fee2cb38ef087980f6b5fbf0a8a8343",
+    "tracks\\aconcagua-horcones\\manifest.json": "5ac561c6ab79665727734bcfecdf605414719139c74673ff8adedd241704a2ef",
+    "tracks\\cuesta-lipan\\manifest.json": "78009a158f4cb10af5be71aa012d1cb6fd97e2dcd195d371bab91df4ed7768f6",
+    "tracks\\paso-garibaldi\\manifest.json": "f3f8af64b3553c9863e1b37c93760eb23d43c5cef1ec85532ac8ec8caafc0f29",
+    "tracks\\cataratas-iguazu\\manifest.json": "1ad2ca83d5e0510001933ded4623254d9917b78badadfafd7116b8b03b7accbf"
+  }
+}

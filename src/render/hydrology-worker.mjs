@@ -1,0 +1,2 @@
+import {computeWaterField,computeRoadField} from './hydrology-compute.mjs?v=d280021eea2b85af';
+self.onmessage=({data:{id,kind,input}})=>{const started=performance.now();try{if(!['water','road'].includes(kind))throw Error('Unknown hydrology operation');const values=(kind==='water'?computeWaterField:computeRoadField)(input);self.postMessage({id,values,computeMs:performance.now()-started},[values.buffer]);}catch(error){self.postMessage({id,error:String(error?.message||error)});}};

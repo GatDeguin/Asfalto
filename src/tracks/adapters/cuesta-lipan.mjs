@@ -1,3 +1,4 @@
+import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance, sourceStreamingDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
@@ -5,7 +6,7 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=457a8af4bf40a703';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=d76281dbc61c8cb9';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -24,7 +25,7 @@ const COLLISION_LOCKS = Object.freeze({
 const ENVIRONMENTS = new Set(['clear', 'overcast', 'golden', 'sunset', 'moonrise', 'night']);
 const PROFILE = Object.freeze({
   id: 'cuesta_lipan',
-  name: 'Cuesta de Lipán',
+  name: 'Cuesta de LipÃ¡n',
   description: 'Ruta de altura en la Puna, con asfalto seco, polvo mineral y fuertes desniveles.',
   biome: 'puna_high_altitude',
   environment: 'golden',
@@ -67,7 +68,7 @@ function parseJson(bytes, label) {
 
 function abortError(reason) {
   if (reason instanceof Error && reason.name === 'AbortError') return reason;
-  const error = new Error('Cuesta de Lipán load aborted');
+  const error = new Error('Cuesta de LipÃ¡n load aborted');
   error.name = 'AbortError';
   error.code = 'ABORT_ERR';
   return error;
@@ -299,6 +300,7 @@ export function createCuestaLipanAdapter(dependencies) {
       else callerSignal.addEventListener('abort', mirrorAbort, { once: true });
     }
     try {
+      await prepareTrackBake('cuesta_lipan',tx.controller.signal);
       current(tx);
       if (request.entry?.id && request.entry.id !== 'cuesta_lipan') throw new TypeError('entry identity mismatch');
       const registryBase = new URL('./', registryUrl);
@@ -326,8 +328,8 @@ export function createCuestaLipanAdapter(dependencies) {
       tx.routeQuery = routeQuery;
       tx.gameplay = gameplay;
       tx.sectors = locked.raw.streaming.sectors;
-      tx.visualRoot = dependencies.createTrackRoot('Cuesta de Lipán · visuales sectoriales');
-      tx.collisionRoot = dependencies.createTrackRoot('Cuesta de Lipán · colisión completa');
+      tx.visualRoot = dependencies.createTrackRoot('Cuesta de LipÃ¡n Â· visuales sectoriales');
+      tx.collisionRoot = dependencies.createTrackRoot('Cuesta de LipÃ¡n Â· colisiÃ³n completa');
       if (!validRoot(tx.visualRoot) || !validRoot(tx.collisionRoot)) throw new TypeError('track root factory returned an invalid root');
       await prepareTrackVisual(tx.visualRoot, { id: 'cuesta_lipan', query: sourceQuery, lengthM: sourceRoute.lengthM, signal: tx.controller.signal, sceneryOnly: true });
       current(tx);

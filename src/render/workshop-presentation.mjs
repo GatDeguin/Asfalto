@@ -1,3 +1,4 @@
+import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=2481e701be72bf1c';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';
@@ -46,23 +47,26 @@ export function projectSurfaceUVs(T, object, tile) {
 
 export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const T = workshop.T;
+  registerRenderPreparation(workshop.renderer,T);
   const { scene, renderer, workshopRoot: root, car } = workshop;
   const owned = [], originals = [];
   const vertexColors = {meshes:0,vertices:0,triangles:0};
   configureSurfaceRelief(T);
+  const probePreparation=new AbortController();let probePending=false,probeRevision=0,probeError=null;
+  const invalidateProbe=()=>{probeRevision++;probeDirty=true;};
   let reflector = null;
   let hdriEnvironment = null, detailsRoot = null;
   let staticBatches=null,architecture=null,livedIn=null;
   let collection=null,collectionItems=[],collectionPosters=[],collectionMemories=[],collectionLoad=null,collectionDisposed=false,room=null;
   const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(-5.8,2.2,4.7);collectionLight.castShadow=false;
   let detailPass = null, night = false, lastTime = null, probeDirty = false, contactShadow=null;
-  const probeGuard=createRoomProbeGuard(T,renderer,{onReset:()=>{probeDirty=true;}});
+  const probeGuard=createRoomProbeGuard(T,renderer,{onReset:()=>{probeError=null;invalidateProbe();}});
   const invalidateContact=()=>contactShadow?.invalidate();
   const previousEnvironment = scene.environment;
   const previousEnvironmentIntensity = scene.environmentIntensity;
   const previousEnvironmentRotation = scene.environmentRotation?.clone();
   const disposeOwned = () => {
-    probeGuard.dispose();
+    probePreparation.abort();probeGuard.dispose();
     globalThis.window?.removeEventListener?.('chevy:vehicle-config',invalidateContact);contactShadow?.dispose();contactShadow=null;
     collectionDisposed=true;collection?.dispose();collection=null;collectionLight.removeFromParent();collectionLight.dispose?.();
     staticBatches?.dispose();staticBatches=null;
@@ -199,7 +203,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   function rebuildCollection(){
     const next=createWorkshopCollection(T,{textures:{wood:collectionWood?.map,woodNormal:collectionWood?.normalMap,woodRoughness:collectionWood?.roughnessMap},collection:collectionItems,posters:collectionMemories.length?collectionMemories:collectionPosters});
     next.root.position.set(-5.8,floorBounds.isEmpty()?.18:floorBounds.max.y+.001,5.70);next.root.rotation.y=Math.PI;
-    if(room)next.setEnvironment(room.texture);collection?.dispose();collection=next;scene.add(next.root);workshop.cameraConstraint?.refresh([root,...scene.children.filter(o=>['Workshop_Blender_Service_Details','Workshop_Detail_Pass_1973','WorkshopCollection','Workshop_Architecture_E31','Workshop_LivedIn_E31'].includes(o.name))]);probeDirty=true;
+    if(room)next.setEnvironment(room.texture);collection?.dispose();collection=next;scene.add(next.root);workshop.cameraConstraint?.refresh([root,...scene.children.filter(o=>['Workshop_Blender_Service_Details','Workshop_Detail_Pass_1973','WorkshopCollection','Workshop_Architecture_E31','Workshop_LivedIn_E31'].includes(o.name))]);invalidateProbe();
   }
   rebuildCollection();scene.add(collectionLight);
   async function prepareCollection(){
@@ -257,11 +261,15 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const cubeTarget = new T.WebGLCubeRenderTarget(256, {type:T.HalfFloatType});
   const probe = new T.CubeCamera(.1, 45, cubeTarget);
   probe.position.set(0, 1.3, 0); scene.add(probe);
+  const withoutCar=fn=>{const visible=car.visible;try{car.visible=false;return fn();}finally{car.visible=visible;}};
   const carWasVisible = car.visible;
   let generator;
   try {
+    try{await prepareCubeCamera(renderer,scene,probe,{signal:probePreparation.signal,withState:withoutCar});}
+    catch(error){probeError=String(error?.message||error);console.warn('Workshop cubemap preparation failed; using HDRI',error);}
+    probePreparation.signal.throwIfAborted();
     car.visible = false;
-    room = probeGuard.capture(()=>{
+    room = probeError?{texture:null,dispose(){}}:probeGuard.capture(()=>{
       probe.update(renderer, scene);
       generator = new T.PMREMGenerator(renderer);
       return generator.fromCubemap(cubeTarget.texture);
@@ -275,14 +283,16 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   paint.forEachMaterial(m => {m.envMap = room.texture; m.needsUpdate = true;});
   collection?.setEnvironment(room.texture);
   const reflectedCarPosition=new T.Vector3();car.getWorldPosition(reflectedCarPosition);
-  function refreshRoomReflection() {
-    if(probeGuard.disabled()){car.getWorldPosition(reflectedCarPosition);probeDirty=false;return;}
+  async function refreshRoomReflection() {
+    if(probePending||probeError||collectionDisposed)return;probePending=true;const revision=probeRevision,contextEpoch=renderer.__renderHost?.diagnostics().contextEpoch;
+    if(probeGuard.disabled()){car.getWorldPosition(reflectedCarPosition);probeDirty=false;probePending=false;return;}
     const cube=new T.WebGLCubeRenderTarget(256,{type:T.HalfFloatType}),camera=new T.CubeCamera(.1,45,cube),pmrem=new T.PMREMGenerator(renderer);
     car.getWorldPosition(camera.position);camera.position.y+=1.15;scene.add(camera);
-    const visible=car.visible, floorVisible=reflector?.visible, detailVisible=detailPass.group.visible, contactVisible=contactShadow?.plane.visible;
+    const captureState=fn=>{const carVisible=car.visible,floor=reflector?.visible,detail=detailPass.group.visible,contact=contactShadow?.plane.visible;try{car.visible=false;if(reflector)reflector.visible=false;if(contactShadow)contactShadow.plane.visible=false;detailPass.group.visible=true;return fn();}finally{car.visible=carVisible;if(reflector)reflector.visible=floor;if(contactShadow)contactShadow.plane.visible=contact;detailPass.group.visible=detail;}};
     try {
-      car.visible=false;if(reflector)reflector.visible=false;if(contactShadow)contactShadow.plane.visible=false;detailPass.group.visible=true;
-      const next=probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);});
+      await prepareCubeCamera(renderer,scene,camera,{signal:probePreparation.signal,withState:captureState});
+      if(collectionDisposed||revision!==probeRevision||contextEpoch!==renderer.__renderHost?.diagnostics().contextEpoch)return;
+      const next=captureState(()=>probeGuard.capture(()=>{camera.update(renderer,scene);return pmrem.fromCubemap(cube.texture);}));
       paint.forEachMaterial(m=>{m.envMap=next.texture;m.needsUpdate=true;});
       workshop.vehiclePresentation?.setEnvironment(next.texture);
       collection?.setEnvironment(next.texture);
@@ -291,7 +301,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       car.traverse(object=>{for(const m of Array.isArray(object.material)?object.material:[object.material])if(m?.envMap===room.texture){m.envMap=next.texture;m.needsUpdate=true;}});
       owned.splice(owned.indexOf(room),1);room.dispose();room=next;owned.push(next);
       car.getWorldPosition(reflectedCarPosition);probeDirty=false;
-    } finally {car.visible=visible;if(reflector)reflector.visible=floorVisible;if(contactShadow)contactShadow.plane.visible=contactVisible;detailPass.group.visible=detailVisible;camera.removeFromParent();cube.dispose();pmrem.dispose();}
+    } catch(error){if(!collectionDisposed){probeError=String(error?.message||error);console.warn('Workshop cubemap preparation failed; retaining environment',error);}} finally {probePending=false;camera.removeFromParent();cube.dispose();pmrem.dispose();}
   }
 
   // Dry porous concrete uses its rough PBR response. A full-room mirror overlay
@@ -300,14 +310,14 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   globalThis.window?.addEventListener?.('chevy:vehicle-config',invalidateContact);
   const presentation = {
     configure,prepareCollection,
-    setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);workshop.cameraConstraint?.refresh();probeDirty=true;return architecture.diagnostics();},
+    setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);workshop.cameraConstraint?.refresh();invalidateProbe();return architecture.diagnostics();},
     invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
     setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
     // Earned memories are borrowed from the album lease. Rebuild before the host
     // releases its former lease; this controller never disposes these textures.
     setCollectionMemories(posters=[]){if(collectionDisposed)throw new Error('El taller ya se cerró.');if(!Array.isArray(posters))throw new TypeError('Memory posters must be an array');collectionMemories=posters.filter(p=>p?.texture?.isTexture&&p.source==='earned-race-memory'&&p.memoryId&&p.receiptId).slice(0,2);rebuildCollection();return collection.diagnostics();},
     getCollectionDiagnostics:()=>collection?.diagnostics(),
-    setLighting(mode) {const next=mode==='night';if(next!==night){night=next;configure();probeDirty=true;}return night?'night':'day';},
+    setLighting(mode) {const next=mode==='night';if(next!==night){night=next;configure();invalidateProbe();}return night?'night':'day';},
     getRoomEnvironment:()=>room.texture,
     setPaintColor: hex => paint.setColor(hex),
     update(t=0) {
@@ -318,7 +328,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       contactShadow.update();
       if(workshop.camera&&!workshop.drag&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))refreshRoomReflection();
     },
-    diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:!!room.texture,roomProbe:probeGuard.diagnostics(),planarReflection:!!reflector,textures:textureTasks.size,
+    diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:!!room.texture,roomProbe:{...probeGuard.diagnostics(),preparing:probePending,preparationError:probeError},planarReflection:!!reflector,textures:textureTasks.size,
       surfaceRelief:{...surfaceReliefDiagnostics(),materials:[...materials.values()].filter(m=>m.asfaltoHeightTexture).length,heightMaps:new Set([...materials.values()].map(m=>m.asfaltoHeightTexture).filter(Boolean)).size},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},
       hdri:'Poly Haven Workshop 2K CC0',environmentIntensity:scene.environmentIntensity,details:true,staticBatches:staticBatches.diagnostics(),detailPass:detailPass.diagnostics(),paint:paint.diagnostics()}),
     dispose(){ disposeOwned(); if (workshop.presentation === presentation) workshop.presentation = null; },

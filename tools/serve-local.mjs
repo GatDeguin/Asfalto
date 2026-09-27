@@ -1,4 +1,4 @@
-import { main } from '../server.mjs?v=f5649bc251c34d42';
+import { main } from '../server.mjs?v=a0bf97c66f8e1a23';
 
 main().catch((error) => {
   console.error(error?.stack || error?.message || String(error));

@@ -1,4 +1,5 @@
 import { createReadStream } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { realpath, stat } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
@@ -14,6 +15,7 @@ const MIME_TYPES = new Map([
   ['.glb', 'model/gltf-binary'], ['.gltf', 'model/gltf+json'], ['.wasm', 'application/wasm'],
   ['.ogg', 'audio/ogg'], ['.mp3', 'audio/mpeg'], ['.wav', 'audio/wav'],
   ['.mp4', 'video/mp4'], ['.png', 'image/png'], ['.jpg', 'image/jpeg'], ['.jpeg', 'image/jpeg'],
+  ['.webp', 'image/webp'], ['.svg', 'image/svg+xml'], ['.hdr', 'application/octet-stream'],
   ['.av3hdri', 'application/octet-stream'],
 ]);
 
@@ -51,6 +53,16 @@ export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitD
   const rootReal = await realpath(root);
   const cockpitLayout = createCockpitLayoutEndpoint(cockpitDataDirectory);
   const lightingPresets = createLightingPresetEndpoint(cockpitDataDirectory);
+  // Metadata-keyed, bounded digest cache. An arbitrary ?v= must never freeze stale files.
+  const fingerprints = new Map();
+  async function fingerprint(file, details) {
+    const key = file + ':' + details.size + ':' + details.mtimeMs + ':' + details.ctimeMs;
+    if (fingerprints.has(key)) return fingerprints.get(key);
+    const pending = (async () => { const hash = createHash('sha256'); for await (const chunk of createReadStream(file)) hash.update(chunk); return hash.digest('hex'); })();
+    fingerprints.set(key, pending);
+    while (fingerprints.size > 512) fingerprints.delete(fingerprints.keys().next().value);
+    try { return await pending; } catch (error) { fingerprints.delete(key); throw error; }
+  }
   let closed = false;
   let closePromise;
 
@@ -87,11 +99,43 @@ export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitD
     if (!details.isFile()) { sendText(response, 404, 'Not Found'); return; }
 
     const extension = path.extname(fileReal).toLowerCase();
-    const headers = { 'content-type': MIME_TYPES.get(extension) || 'application/octet-stream', 'content-length': details.size };
-    if (extension === '.js' || extension === '.mjs' || extension === '.json') headers['cache-control'] = 'no-store';
-    response.writeHead(200, headers);
-    if (request.method === 'HEAD') { response.end(); return; }
-    const stream = createReadStream(fileReal);
+    const version = new URL(request.url, 'http://localhost').searchParams.get('v') || '';
+    let digest = null;
+    if (/^[a-f0-9]{16,64}$/i.test(version)) {
+      try { digest = await fingerprint(fileReal, details); } catch { sendText(response, 404, 'Not Found'); return; }
+    }
+    const immutable = digest?.startsWith(version.toLowerCase()) && extension !== '.html';
+    const etag = digest ? '"' + digest + '"' : 'W/"' + details.size.toString(16) + '-' + details.mtimeMs.toString(16) + '-' + details.ctimeMs.toString(16) + '"';
+    const modified = Math.floor(details.mtimeMs / 1000) * 1000;
+    const headers = {
+      'content-type': MIME_TYPES.get(extension) || 'application/octet-stream',
+      'cache-control': immutable ? 'public, max-age=31536000, immutable' : 'no-cache',
+      etag, 'last-modified': new Date(modified).toUTCString(), 'accept-ranges': 'bytes',
+      'x-content-type-options': 'nosniff',
+    };
+    const noneMatch = request.headers['if-none-match'];
+    const notModified = noneMatch !== undefined
+      ? noneMatch.split(',').some(value => value.trim() === '*' || value.trim().replace(/^W\//, '') === etag.replace(/^W\//, ''))
+      : request.headers['if-modified-since'] && Date.parse(request.headers['if-modified-since']) >= modified;
+    if (notModified) { response.writeHead(304, headers); response.end(); return; }
+    let start = 0, end = details.size - 1, partial = false;
+    const ifRange = request.headers['if-range'];
+    const allowRange = !ifRange || (digest && ifRange === etag) || (!ifRange.includes('"') && Date.parse(ifRange) === modified);
+    const match = request.method === 'GET' && allowRange && /^bytes=(\d*)-(\d*)$/.exec(request.headers.range || '');
+    if (match) {
+      const from = match[1], to = match[2];
+      if (from) { start = Number(from); end = to ? Math.min(Number(to), end) : end; }
+      else if (to) start = Math.max(0, details.size - Number(to));
+      if ((!from && !to) || !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start > end || start >= details.size) {
+        response.writeHead(416, { ...headers, 'content-range': 'bytes */' + details.size, 'content-length': 0 }); response.end(); return;
+      }
+      partial = true; headers['content-range'] = 'bytes ' + start + '-' + end + '/' + details.size;
+    }
+    headers['content-length'] = partial ? end - start + 1 : details.size;
+    response.writeHead(partial ? 206 : 200, headers);
+    if (request.method === 'HEAD' || details.size === 0) { response.end(); return; }
+    const stream = createReadStream(fileReal, { start, end });
+    response.once('close', () => stream.destroy());
     stream.once('error', () => response.destroy());
     stream.pipe(response);
   });

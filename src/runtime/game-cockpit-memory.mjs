@@ -1,0 +1,2 @@
+import {gameCockpitAssets} from './game-cockpit-assets.mjs?v=024ac2c0b6d29bf9';import {assetByteCache} from './asset-byte-cache.mjs?v=ff36157512bb6612';import {decodeVehicleTransport} from './vehicle-transport.mjs?v=5ba37f6b7223e2cb';
+export async function readGameCockpitPart(key,signal){const entry=gameCockpitAssets[key];if(!entry)throw Error('Pieza de juego desconocida: '+key);return decodeVehicleTransport(await assetByteCache.read(new URL(entry.url,import.meta.url).href,{signal}),signal);}

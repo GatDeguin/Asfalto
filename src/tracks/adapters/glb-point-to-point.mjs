@@ -1,9 +1,11 @@
+import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
+import {freezeStaticTrackTransforms} from '../../render/frame-matrices.mjs?v=ca094c8344437cf8';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=457a8af4bf40a703';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=d76281dbc61c8cb9';
 const ENV = new Set(['clear','overcast','golden','sunset','moonrise','night']);
 const freeze = (v,seen=new Set()) => { if (!v || typeof v !== 'object' || Object.isFrozen(v) || seen.has(v)) return v; seen.add(v); Object.values(v).forEach(child=>freeze(child,seen)); return Object.freeze(v); };
 const abortError = () => Object.assign(new Error('operation aborted'), { name: 'AbortError' });
@@ -183,6 +185,7 @@ export function createGlbPointToPointAdapter(dependencies, policy) {
     const mirror=()=>transaction.controller.abort(caller?.reason);
     if(caller){if(caller.aborted)mirror();else caller.addEventListener('abort',mirror,{once:true});}
     try{
+      await prepareTrackBake(expected.id,transaction.controller.signal);
       current(transaction);
       const registry=dependencies.registryUrl===undefined?null:absoluteWithinRelease(dependencies.registryUrl,releaseRoot,'registry');
       const manifestBase=registry?new URL('./',registry):releaseRoot;
@@ -253,6 +256,7 @@ export function createGlbPointToPointAdapter(dependencies, policy) {
       transaction.disposeBridge=()=>bridgeDisposal||(bridgeDisposal=lifecycle('physics dispose',()=>bridgeSource?.dispose?.({signal:bridgeDisposeController.signal}),bridgeDisposeController.signal));
       if(!bridgeSource||typeof bridgeSource.browserStackFactory!=='function'||typeof bridgeSource.getCollisionRoot!=='function'||typeof bridgeSource.dispose!=='function'||bridgeSource.getCollisionRoot()!==transaction.collisionRoot)throw new TypeError('physics bridge is invalid');
       transaction.bridge=freeze({browserStackFactory:bridgeSource.browserStackFactory.bind(bridgeSource),getCollisionRoot:()=>pub()===transaction?transaction.collisionRoot:null,dispose:transaction.disposeBridge});
+      for(const root of transaction.visualRoots)freezeStaticTrackTransforms(root);
       transaction.visualRoots=Object.freeze([...transaction.visualRoots]);
       transaction.collisionRoots=Object.freeze([...transaction.collisionRoots]);
       transaction.query=query;transaction.route=route;transaction.gameplay=gameplay;ready=true;state='ready';return adapter;

@@ -18,7 +18,7 @@
 #v6-workshop-stage:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(90deg,rgba(6,7,8,.94) 0,rgba(6,7,8,.69) 29%,rgba(6,7,8,.06) 53%,rgba(6,7,8,.3) 100%),linear-gradient(0deg,rgba(0,0,0,.5),transparent 40%)}
 #v6-workshop-stage:after{content:"";position:absolute;inset:-30%;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,207,146,.09) 49%,rgba(255,222,173,.17) 52%,transparent 59%);animation:v6-light-pass 18s ease-in-out infinite alternate}
 @keyframes v6-light-pass{from{transform:translateX(-12%)}to{transform:translateX(12%)}}
-#v6-workshop-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none}
+#v6-main-menu #v6-workshop-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;touch-action:none}
 #v6-workshop-fallback{position:absolute;inset:0;z-index:1;display:grid;place-items:center;color:#777;background:radial-gradient(circle at 65% 38%,#313438,#171b1e 44%,#090b0d 78%)}
 .v6-fallback-car{position:relative;width:min(62vw,780px);aspect-ratio:2.2;border-bottom:4px solid rgba(230,108,24,.7);filter:drop-shadow(0 26px 28px #000)}
 .v6-fallback-car:before{content:"";position:absolute;left:9%;right:8%;bottom:13%;height:31%;border-radius:48% 16% 10% 10%;background:linear-gradient(165deg,#d77a3b,#7f2f16 65%,#181a1b);box-shadow:inset 0 -13px 20px #111}

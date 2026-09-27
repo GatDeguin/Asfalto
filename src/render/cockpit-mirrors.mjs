@@ -1,3 +1,4 @@
+import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=2481e701be72bf1c';
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=a7a3e535c754e44b';
 
 const QUALITY = Object.freeze({
@@ -99,6 +100,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   const pivot = new THREE.Mesh(new THREE.SphereGeometry(.023, 12, 8), chrome); pivot.name = 'Door mirror adjustment ball'; pivot.position.set(0, -.012, -.033); mounts.left.add(pivot);
   for (const mount of Object.values(mounts)) mount.traverse(mesh => { if (mesh.isMesh) { mesh.castShadow = false; mesh.receiveShadow = false; } });
 
+  const preparation=createPassPreparation();
   let currentQuality = null, disposed = false, rendering = false, feedsEnabled = true;
   const priorViewport = new THREE.Vector4(), priorScissor = new THREE.Vector4(), priorClearColor = new THREE.Color();
   function setQuality(value) {
@@ -117,19 +119,30 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     if (enabled === feedsEnabled) return;
     feedsEnabled = enabled;
     for (const feed of Object.values(feeds)) {
-      feed.glass.material.map = enabled ? feed.target.texture : null;
-      feed.glass.material.color.set(enabled ? '#dce9eb' : '#182328'); feed.glass.material.needsUpdate = true;
+      // Keep the mapped shader stable when feeds are toggled; a black tint hides
+      // the retained texture without introducing a map/no-map variant.
+      feed.glass.material.color.set(enabled ? '#dce9eb' : '#000000');
       if (enabled) feed.lastRenderMs = -Infinity;
     }
   }
   setQuality(quality);
 
-  function update({ renderer, scene, carPose, cameraPoses = null, cockpitVisible = true, enabled = true, quality: nextQuality = currentQuality, nowMs = globalThis.performance?.now?.() || Date.now(), force = false, captureSchedule = null } = {}) {
+  const key=options=>[options.renderer,options.scene,options.quality||currentQuality,options.variantKey||''];
+  function prepare(options={}){
+    if(disposed)return Promise.resolve(false);
+    setEnabled(options.enabled!==false);if(options.enabled===false)return Promise.resolve(false);
+    if(!options.renderer||!options.scene||!((typeof options.cameraPoses==='function'?options.cameraPoses():options.cameraPoses)||mirrorCameraPoses(THREE,options.carPose)))return Promise.resolve(false);
+    setQuality(options.quality||currentQuality);
+    return preparation.prepare(key(options),async isCurrent=>{for(const id of ['center','left']){if(!isCurrent())return;await prepareBatchedPass(options.renderer,()=>update({...options,prepareOnly:id,force:true,cockpitVisible:true,enabled:true}),{signal:options.signal,isCurrent});}},{signal:options.signal});
+  }
+  function update(options={}) {
+    const {renderer,scene,carPose,cameraPoses=null,cockpitVisible=true,enabled=true,quality:nextQuality=currentQuality,nowMs=globalThis.performance?.now?.()||Date.now(),force=false,captureSchedule=null,prepareOnly=null}=options;
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
     if (!renderer || !scene || !cockpitVisible || !enabled || renderer.getContext?.().isContextLost?.()) return 0;
     setQuality(nextQuality);
-    const due = ['center', 'left'].filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
+    if(!prepareOnly&&!preparation.ready(key({...options,quality:currentQuality}))){void prepare(options);return 0;}
+    const due = (prepareOnly?[prepareOnly]:['center', 'left']).filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
     if (!due.length) return 0;
     const poses = (typeof cameraPoses === 'function' ? cameraPoses() : cameraPoses) || mirrorCameraPoses(THREE, carPose);
     if (!poses) return 0;
@@ -151,6 +164,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
         const feed = feeds[id], pose = poses[id];
         feed.camera.position.fromArray(pose.position); feed.camera.up.fromArray(pose.up); feed.camera.lookAt(...pose.look); feed.camera.updateMatrixWorld(true);
         renderer.setRenderTarget(feed.target); renderer.setScissorTest(false);
+        if(prepareOnly)return compileVisiblePass(renderer,scene,feed.camera);
         renderer.clear(true, true, true); renderer.render(scene, feed.camera);
         feed.lastRenderMs = nowMs; feed.frames++; rendered++;
       }
@@ -168,7 +182,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
 
   function dispose() {
     if (disposed) return;
-    disposed = true;
+    disposed = true; preparation.dispose();
     const geometries = new Set(), materials = new Set();
     for (const mount of Object.values(mounts)) {
       mount.removeFromParent();
@@ -184,7 +198,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       { id: 'rearview-mirror', label: 'Retrovisor interior', object: mounts.center, capabilities: { position: true, rotation: true, scale: true, lens: false } },
       { id: 'left-door-mirror', label: 'Espejo lateral izquierdo', object: mounts.left, capabilities: { position: true, rotation: true, scale: true, lens: false } },
     ]),
-    feeds: Object.freeze(feeds), update, dispose,
-    diagnostics: () => ({ disposed, rendering, quality: currentQuality, enabled: feedsEnabled, centerFrames: feeds.center.frames, leftFrames: feeds.left.frames, centerSize: [feeds.center.target.width, feeds.center.target.height], leftSize: [feeds.left.target.width, feeds.left.target.height] }),
+    feeds: Object.freeze(feeds), update, prepare, invalidate:()=>preparation.invalidate(), dispose,
+    diagnostics: () => ({ preparation:preparation.diagnostics(), disposed, rendering, quality: currentQuality, enabled: feedsEnabled, centerFrames: feeds.center.frames, leftFrames: feeds.left.frames, centerSize: [feeds.center.target.width, feeds.center.target.height], leftSize: [feeds.left.target.width, feeds.left.target.height] }),
   });
 }

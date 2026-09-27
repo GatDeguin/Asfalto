@@ -1,5 +1,6 @@
-import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=ef65ac852f9d069d';
-import {supportedHdrSamples} from './render-target-capabilities.mjs?v=9ae9aca93c7ad99b';
+import {compileVisiblePass} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=6d1203c83e12e6ba';
+import {supportedHdrSamples} from './render-target-capabilities.mjs?v=d75829b876d7c18d';
 import {parseCubeLut,sampleCubeLut} from './cube-lut.mjs?v=45e678cbc6cf67ba';
 
 export const DEFAULT_COLOR_GRADE_SETTINGS=Object.freeze({lutId:'none',intensity:1,contrast:1,saturation:1,temperature:0,tint:0});
@@ -95,12 +96,12 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
   })().finally(()=>{if(pending.get(id)===record)pending.delete(id);});
   pending.set(id,record);return record.promise;
  }
- function ensurePass(){
+ function ensurePass({prepareOnly=false}={}){
   const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);
   const quality=getQuality(),wanted=Math.min(requestedSamples,renderSampleLimit(quality,phone));
-  if(sampleKey!==wanted){sampleKey=wanted;effectiveSamples=supportedHdrSamples(renderer,wanted);if(pass&&pass.target.samples!==effectiveSamples)releasePass();}
+  if(sampleKey!==wanted){sampleKey=wanted;effectiveSamples=supportedHdrSamples(renderer,wanted);}
   allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,samples:effectiveSamples});const width=allocationBudget.width,height=allocationBudget.height;
-  if(pass){if(pass.target.width!==width||pass.target.height!==height)pass.target.setSize(width,height);return;}
+  if(pass){if(!prepareOnly){if(pass.target.samples!==effectiveSamples){pass.target.dispose();pass.target.samples=effectiveSamples;}if(pass.target.width!==width||pass.target.height!==height)pass.target.setSize(width,height);}return;}
   const target=new T.WebGLRenderTarget(width,height,{type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:true,stencilBuffer:false});
   target.texture.name='ASFALTO_COLOR_HDR';target.texture.colorSpace=T.LinearSRGBColorSpace;target.samples=effectiveSamples;
   const uniforms={uScene:{value:target.texture},uLut3D:{value:null},uLut1D:{value:null},uLutKind:{value:0},uLutSize:{value:2},uIntensity:{value:0},uContrast:{value:1},uSaturation:{value:1},uTemperature:{value:0},uTint:{value:0},uDomainMin:{value:new T.Vector3()},uDomainMax:{value:new T.Vector3(1,1,1)},uToneMapping:{value:0},toneMappingExposure:{value:1}};
@@ -128,8 +129,10 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
    const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()??0,oldMip=renderer.getActiveMipmapLevel?.()??0,oldScissor=renderer.getScissorTest(),oldAutoClear=renderer.autoClear,oldInfoAutoReset=renderer.info?.autoReset;
    const viewport=new T.Vector4(),scissor=new T.Vector4();renderer.getCurrentViewport?.(viewport);renderer.getScissor?.(scissor);
    try{
-    ensurePass();renderer.setRenderTarget(pass.target);renderer.setScissorTest(false);
-    return compile({linearOutput:true});
+    ensurePass({prepareOnly:true});renderer.setRenderTarget(pass.target);renderer.setScissorTest(false);
+    const world=compile({linearOutput:true});
+    renderer.setRenderTarget(oldTarget,oldFace,oldMip);
+    return Promise.all([world,compileVisiblePass(renderer,pass.scene,pass.camera)]);
    }finally{
     renderer.setRenderTarget(oldTarget,oldFace,oldMip);if(renderer.getScissor)renderer.setScissor?.(scissor);renderer.setScissorTest(oldScissor);renderer.autoClear=oldAutoClear;if(renderer.info)renderer.info.autoReset=oldInfoAutoReset;
     if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(viewport);

@@ -2,6 +2,7 @@ const TIERS=Object.freeze(['cinematic','high','balanced','low']);
 const RING_SIZE=600,DOWNGRADE_SAMPLES=240,UPGRADE_SAMPLES=600,STATS_EVERY=30;
 const HIGH_MAX=20,BALANCED_MAX=25;
 const EMERGENCY_MS=1500,EMERGENCY_MIN_SAMPLES=8;
+const RECOVERY_HEALTHY_MS=30000,FAILED_TIER_RETRY_MS=90000;
 
 const POLICIES=Object.freeze({
  // Cinematic increases screen-space precision, not geometry, capture cadence or simulation.
@@ -19,18 +20,31 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
  initialTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];
  if(typeof onTierChange!=='function')throw new TypeError('Performance tier callback is required');
  const ring=new Float64Array(RING_SIZE),workRing=new Float64Array(RING_SIZE);
- let targetFps=60,severeElapsedMs=0,severeSamples=0;
+ let targetFps=60,severeElapsedMs=0,severeSamples=0,preparationHeld=false;
+ let adaptive=true,observedMs=0,recoveryHealthyMs=0,statsElapsedMs=0;
+ const retryAfterMs=new Map();
+ const upgradeRetryRemainingMs=()=>Math.max(0,(retryAfterMs.get(TIERS[TIERS.indexOf(currentTier)-1])||0)-observedMs);
  let count=0,cursor=0,sinceTransition=0,currentTier=initialTier,transitions=0,phase='initial',transitionReason='initial',lastTransitionMs=0,slow=0,healthy=0,dirty=true;
  let resources=Object.freeze({heapBytes:0,gpuTextures:0,gpuGeometries:0}),frameStats=stats([]),workStats=stats([]);
  const values=(r,n=count)=>Array.from({length:Math.min(n,count)},(_,i)=>r[(cursor-1-i+RING_SIZE)%RING_SIZE]);
  const refresh=()=>{if(dirty){frameStats=stats(values(ring));workStats=stats(values(workRing));dirty=false;}};
- function snapshot(){return Object.freeze({tier:currentTier,maximumTier,targetFps,phase,p50FrameMs:frameStats.p50,p95FrameMs:frameStats.p95,p99FrameMs:frameStats.p99,maxFrameIntervalMs:frameStats.max,hitchesOver100Ms:frameStats.hitches,p50FrameWorkMs:workStats.p50,p95FrameWorkMs:workStats.p95,p99FrameWorkMs:workStats.p99,maxFrameWorkMs:workStats.max,samples:count,capacity:RING_SIZE,consecutiveSlow:slow,consecutiveHealthy:healthy,severeElapsedMs,severeSamples,transitions,transitionReason,lastTransitionMs,renderPolicy:POLICIES[currentTier],resources,thresholds:Object.freeze({highMaxFrameMs:HIGH_MAX*60/targetFps,balancedMaxFrameMs:BALANCED_MAX*60/targetFps,downgradeSamples:DOWNGRADE_SAMPLES,upgradeSamples:UPGRADE_SAMPLES,emergencyMs:EMERGENCY_MS,emergencyMinSamples:EMERGENCY_MIN_SAMPLES})});}
- function transition(next,reason){const previousTier=currentTier;currentTier=next;sinceTransition=0;slow=0;healthy=0;severeElapsedMs=0;severeSamples=0;transitions++;transitionReason=reason;lastTransitionMs=Number(globalThis.performance?.now?.()??Date.now());onTierChange(Object.freeze({previousTier,tier:next,reason,renderPolicy:POLICIES[next],atMs:lastTransitionMs}));}
+ function snapshot(){return Object.freeze({tier:currentTier,maximumTier,targetFps,phase,adaptive,recoveryHealthyMs,upgradeRetryRemainingMs:upgradeRetryRemainingMs(),p50FrameMs:frameStats.p50,p95FrameMs:frameStats.p95,p99FrameMs:frameStats.p99,maxFrameIntervalMs:frameStats.max,hitchesOver100Ms:frameStats.hitches,p50FrameWorkMs:workStats.p50,p95FrameWorkMs:workStats.p95,p99FrameWorkMs:workStats.p99,maxFrameWorkMs:workStats.max,samples:count,capacity:RING_SIZE,consecutiveSlow:slow,consecutiveHealthy:healthy,severeElapsedMs,severeSamples,transitions,transitionReason,lastTransitionMs,renderPolicy:POLICIES[currentTier],resources,thresholds:Object.freeze({highMaxFrameMs:HIGH_MAX*60/targetFps,balancedMaxFrameMs:BALANCED_MAX*60/targetFps,downgradeSamples:DOWNGRADE_SAMPLES,upgradeSamples:UPGRADE_SAMPLES,recoveryHealthyMs:RECOVERY_HEALTHY_MS,failedTierRetryMs:FAILED_TIER_RETRY_MS,emergencyMs:EMERGENCY_MS,emergencyMinSamples:EMERGENCY_MIN_SAMPLES})});}
+ function transition(next,reason){const previousTier=currentTier;
+  // A tier that was too expensive must earn another attempt with actual driving
+  // time. Camera/preparation windows cannot erase this cooldown.
+  if(reason!=='requested-graphics-limit'&&TIERS.indexOf(next)>TIERS.indexOf(previousTier))retryAfterMs.set(previousTier,observedMs+FAILED_TIER_RETRY_MS);
+  currentTier=next;sinceTransition=0;recoveryHealthyMs=0;statsElapsedMs=0;slow=0;healthy=0;severeElapsedMs=0;severeSamples=0;transitions++;transitionReason=reason;lastTransitionMs=Number(globalThis.performance?.now?.()??Date.now());onTierChange(Object.freeze({previousTier,tier:next,reason,renderPolicy:POLICIES[next],atMs:lastTransitionMs}));}
  function sample(input={}){
+  // Compilation is a transient workload. Keep measuring real rAF elsewhere,
+  // but do not interpret shader/link work as the sustainable rendering budget.
+  if(input.preparing){if(!preparationHeld){preparationHeld=true;beginWindow('shader-preparation');}return diagnostics();}
+  if(preparationHeld){preparationHeld=false;return beginWindow('driving');}
   const frameMs=checked(input.frameMs,'frameMs'),workMs=checked(input.frameWorkMs??frameMs,'frameWorkMs');
   const nextResources={heapBytes:checked(input.heapBytes,'heapBytes'),gpuTextures:checked(input.gpuTextures,'gpuTextures'),gpuGeometries:checked(input.gpuGeometries,'gpuGeometries')};
-  const nextTarget=input.targetFps===30?30:60;if(nextTarget!==targetFps){severeElapsedMs=0;severeSamples=0;}targetFps=nextTarget;const budgetScale=60/targetFps;
+  const nextTarget=input.targetFps===30?30:60;if(nextTarget!==targetFps)beginWindow('target-cadence');targetFps=nextTarget;const budgetScale=60/targetFps;
+  const elapsedMs=Math.min(frameMs,250);observedMs+=elapsedMs;statsElapsedMs+=elapsedMs;
   resources=Object.freeze(nextResources);ring[cursor]=frameMs;workRing[cursor]=workMs;cursor=(cursor+1)%RING_SIZE;count=Math.min(RING_SIZE,count+1);sinceTransition++;dirty=true;
+  if(!adaptive){if(sinceTransition%STATS_EVERY===0)refresh();return snapshot();}
   const slowBoundary=(currentTier==='high'||currentTier==='cinematic')?HIGH_MAX*budgetScale:currentTier==='balanced'?BALANCED_MAX*budgetScale:Infinity;
   const healthyBoundary=currentTier==='low'?22*budgetScale:currentTier==='balanced'?16.7*budgetScale:currentTier==='high'&&maximumTier==='cinematic'?16.7*budgetScale:-Infinity;
   slow=frameMs>slowBoundary?slow+1:0;healthy=frameMs<=healthyBoundary?healthy+1:0;
@@ -38,30 +52,36 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
   if(currentTier!=='low'&&frameMs>severeBoundary){severeSamples++;severeElapsedMs+=Math.min(frameMs,250);}
   else{severeSamples=0;severeElapsedMs=0;}
   // Real elapsed overload, with a sample floor and a per-sample cap: a single
-  // loading hitch cannot cause an emergency. Ordinary recovery is unchanged.
+  // loading hitch cannot cause an emergency.
   if(severeSamples>=EMERGENCY_MIN_SAMPLES&&severeElapsedMs>=EMERGENCY_MS){
    refresh();transition(TIERS[TIERS.indexOf(currentTier)+1],'sustained-severe-overload');return snapshot();
   }
   if(sinceTransition%STATS_EVERY===0){
    refresh();
+   // p95 tolerates isolated hitches. Require consecutive healthy windows and
+   // elapsed time as well as samples, so a fast monitor cannot rush recovery.
+   if(count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary)recoveryHealthyMs+=statsElapsedMs;
+   else recoveryHealthyMs=0;
+   statsElapsedMs=0;
    if(sinceTransition>=DOWNGRADE_SAMPLES&&count>=DOWNGRADE_SAMPLES){
     const recent=stats(values(ring,DOWNGRADE_SAMPLES));
     if(currentTier==='cinematic'&&recent.p95>HIGH_MAX*budgetScale)transition('high','cinematic-p95-above-target-budget');
     else if(currentTier==='high'&&recent.p95>HIGH_MAX*budgetScale)transition('balanced','p95-above-target-budget');
     else if(currentTier==='balanced'&&recent.p95>BALANCED_MAX*budgetScale)transition('low','p95-above-balanced-budget');
-    else if(sinceTransition>=UPGRADE_SAMPLES&&count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary){
-     if(currentTier==='low'&&maximumTier!=='low')transition('balanced','600-window-p95-at-22ms');
-     else if(currentTier==='balanced'&&(maximumTier==='high'||maximumTier==='cinematic'))transition('high','600-window-p95-at-16.7ms');
-     else if(currentTier==='high'&&maximumTier==='cinematic')transition('cinematic','manual-cinematic-600-window-p95-at-16.7ms');
+    else if(sinceTransition>=UPGRADE_SAMPLES&&count>=UPGRADE_SAMPLES&&recoveryHealthyMs>=RECOVERY_HEALTHY_MS&&upgradeRetryRemainingMs()===0){
+     if(currentTier==='low'&&maximumTier!=='low')transition('balanced','sustained-healthy-recovery');
+     else if(currentTier==='balanced'&&(maximumTier==='high'||maximumTier==='cinematic'))transition('high','sustained-healthy-recovery');
+     else if(currentTier==='high'&&maximumTier==='cinematic')transition('cinematic','sustained-healthy-cinematic-recovery');
     }
    }
   }
   return snapshot();
  }
  function diagnostics(){refresh();return snapshot();}
- function beginWindow(nextPhase='driving'){ring.fill(0);workRing.fill(0);count=0;cursor=0;sinceTransition=0;slow=0;healthy=0;severeElapsedMs=0;severeSamples=0;phase=nextPhase;dirty=true;return diagnostics();}
- function setMaximumTier(next){if(!TIERS.includes(next))throw new RangeError('Invalid maximum performance tier: '+next);if(next===maximumTier)return diagnostics();maximumTier=next;if(TIERS.indexOf(currentTier)<TIERS.indexOf(next))transition(next,'requested-graphics-limit');return beginWindow('graphics-limit');}
- function reset(){currentTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];transitions=0;transitionReason='reset';lastTransitionMs=0;resources=Object.freeze({heapBytes:0,gpuTextures:0,gpuGeometries:0});return beginWindow('reset');}
- return Object.freeze({sample,tier:()=>currentTier,reset,beginWindow,diagnostics,setMaximumTier});
+ function beginWindow(nextPhase='driving'){ring.fill(0);workRing.fill(0);count=0;cursor=0;sinceTransition=0;slow=0;healthy=0;severeElapsedMs=0;severeSamples=0;phase=nextPhase;recoveryHealthyMs=0;statsElapsedMs=0;dirty=true;return diagnostics();}
+ function setMaximumTier(next){if(!TIERS.includes(next))throw new RangeError('Invalid maximum performance tier: '+next);if(next===maximumTier)return diagnostics();maximumTier=next;if((!adaptive&&currentTier!==next)||TIERS.indexOf(currentTier)<TIERS.indexOf(next))transition(next,'requested-graphics-limit');return beginWindow('graphics-limit');}
+ function setAdaptive(enabled){if(typeof enabled!=='boolean')throw new TypeError('adaptive must be boolean');if(enabled===adaptive)return diagnostics();adaptive=enabled;if(!adaptive&&currentTier!==maximumTier)transition(maximumTier,'fixed-quality');return beginWindow(adaptive?'adaptive-quality':'fixed-quality');}
+ function reset(){preparationHeld=false;observedMs=0;retryAfterMs.clear();currentTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];if(!adaptive)currentTier=maximumTier;transitions=0;transitionReason='reset';lastTransitionMs=0;resources=Object.freeze({heapBytes:0,gpuTextures:0,gpuGeometries:0});return beginWindow('reset');}
+ return Object.freeze({sample,tier:()=>currentTier,reset,beginWindow,diagnostics,setMaximumTier,setAdaptive});
 }
 export {POLICIES as TRACK_RENDER_POLICIES};

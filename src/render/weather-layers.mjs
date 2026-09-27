@@ -87,7 +87,7 @@ void main(){
  #include <tonemapping_fragment>
  #include <colorspace_fragment>
 }`});
-  const rain=new THREE.Mesh(effectsQuad(THREE,3200),precipitationMaterial);rain.name='AN_RainSnowStreaks';rain.frustumCulled=false;rain.visible=false;parent.add(rain);
+  const rain=new THREE.Mesh(effectsQuad(THREE,3200),precipitationMaterial);rain.name='AN_RainSnowStreaks';rain.frustumCulled=false;rain.visible=false;rain.userData.asfaltoPrewarm=true;parent.add(rain);
   function atmosphere(name,count,mist) {
     const uniforms={...shared,uOpacity:{value:0},uMist:{value:mist?1:0},uGround:{value:0}};
     const material=new THREE.ShaderMaterial({name,uniforms,transparent:true,depthWrite:false,side:THREE.DoubleSide,
@@ -109,7 +109,7 @@ vec3 lit=uColor*mix(.67,1.04,smoothstep(.1,.88,vUv.y)+density*.12);gl_FragColor=
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
 }`});
-    const mesh=new THREE.Mesh(effectsQuad(THREE,count,mist?128:912),material);mesh.name=name;mesh.frustumCulled=false;mesh.visible=false;parent.add(mesh);return{mesh,uniforms,material};
+    const mesh=new THREE.Mesh(effectsQuad(THREE,count,mist?128:912),material);mesh.name=name;mesh.frustumCulled=false;mesh.visible=false;mesh.userData.asfaltoPrewarm=true;parent.add(mesh);return{mesh,uniforms,material};
   }
   const clouds=atmosphere('AN_LayeredClouds',16,false),mist=atmosphere('AN_ValleyMist',9,true);
   const cameraPosition=new THREE.Vector3(),carMatrix=new THREE.Matrix4(),carScale=new THREE.Vector3(1,1,1);

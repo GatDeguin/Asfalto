@@ -1,3 +1,4 @@
+import {bakeRead,bakeWrite,bakeGeometryInput} from './offline-track-bake.mjs?v=67e9450828b29db5';
 // Connected, visual-only relief. X/Z, road envelope, shore and sector borders
 // remain fixed. A hidden owner retains the untouched imported buffers for disposal.
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
@@ -9,7 +10,7 @@ function noise(x,z){
   return(h(ix,iz)*(1-u)+h(ix+1,iz)*u)*(1-v)+(h(ix,iz+1)*(1-u)+h(ix+1,iz+1)*u)*v;
 }
 
-export function refineTerrainSurface(THREE,mesh,{roadField,waterLevel=-Infinity,region='dos_lagos',maxTriangles=280000,targetEdgeM=32,nearEdgeM=targetEdgeM,roadMarginM=20}={}){
+function refineTerrainSurfaceOriginal(THREE,mesh,{roadField,waterLevel=-Infinity,region='dos_lagos',maxTriangles=280000,targetEdgeM=32,nearEdgeM=targetEdgeM,roadMarginM=20}={}){
   if(!mesh?.isMesh||/^COLLISION_/i.test(mesh.name)||!mesh.geometry?.attributes?.position||!roadField)return null;
   if(mesh.userData.asfaltoTerrainRefinement)return mesh.userData.asfaltoTerrainRefinement;
   const source=mesh.geometry,p=source.attributes.position,index=source.index,color=source.attributes.color;
@@ -177,4 +178,22 @@ export function joinTerrainTiles(THREE,root,meshes){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setIndex(indices);
   if(colorSize)geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,colorSize));
   geometry.computeVertexNormals();const joined=new THREE.Mesh(geometry,meshes[0].material);joined.name='ASFALTO_CONTINUOUS_TERRAIN';joined.receiveShadow=true;root.add(joined);return joined;
+}
+
+export function refineTerrainSurface(THREE,mesh,options={}){
+  if(!mesh?.isMesh||!mesh.geometry?.attributes?.position||!options.roadField?.bakeSignature||mesh.userData.asfaltoTerrainRefinement)return refineTerrainSurfaceOriginal(THREE,mesh,options);
+  const {roadField,...rest}=options;
+  const key='refine:'+bakeGeometryInput(mesh,[rest,roadField.bakeSignature,THREE.REVISION,[refineTerrainSurfaceOriginal,clamp,smooth,edgeKey,noise].map(fn=>fn.toString())]);
+  const saved=bakeRead(key);
+  if(saved){
+    try{
+      const geometry=new THREE.BufferGeometryLoader().parse(saved.geometry),source=mesh.geometry;
+      if(!geometry.attributes.position||!geometry.attributes.normal)throw Error('invalid baked geometry');
+      geometry.computeBoundingBox();geometry.computeBoundingSphere();mesh.geometry=geometry;
+      const owner=new THREE.Mesh(source,mesh.material);owner.name='ASFALTO_TERRAIN_SOURCE_OWNER';owner.visible=false;mesh.add(owner);
+      return mesh.userData.asfaltoTerrainRefinement=Object.freeze({...saved.result});
+    }catch{} // A stale or malformed optional artifact uses the authored path.
+  }
+  const result=refineTerrainSurfaceOriginal(THREE,mesh,options);
+  if(result){const geometry=mesh.geometry.toJSON();delete geometry.uuid;bakeWrite(key,{geometry,result});}return result;
 }

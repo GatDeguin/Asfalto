@@ -1,6 +1,7 @@
-import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=cab994669e0c13cd';
+import {createHydrologyJobs} from './hydrology-jobs.mjs?v=3415d1d281b4f2e9';
+import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=f4d6d8707816c8ab';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
-import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=d2912fb3388fe938';
+import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=02f1a8ed11382fce';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
 const SURFACE_SHADER = `
 varying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;
@@ -149,8 +150,11 @@ gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
   const uniforms={uAnFxTime:{value:0},uAnFxWetness:{value:0},uAnFxRain:{value:0},uAnFxWind:{value:0},uAnFxSnow:{value:0},uAnFxSnowDetail:{value:1},uAnFxCompactedSnow:{value:0},uAnFxMelt:{value:0},uAnFxSnowLine:{value:0},uAnFxValleyFloor:{value:0},uAnFxMist:{value:0},uAnWindVector:{value:new THREE.Vector3(1,0,.3)},uAnWaterField:{value:null},uAnWaterBounds:{value:new THREE.Vector4()},uAnWaterFlow:{value:new THREE.Vector2()},uAnWaterShoreWidth:{value:1.5},uAnWaterMaxDepth:{value:18},uAnFxSky:{value:null},uAnFxSkyEnabled:{value:0},uAnFxSkyIntensity:{value:1},uAnFxSkyRotation:{value:new THREE.Matrix3()}};
   Object.assign(uniforms,{uAnCanopyField:{value:null},uAnCanopyBounds:{value:new THREE.Vector4(0,0,1,1)},uAnCanopyEnabled:{value:0},uAnWheelPaths:{value:Array.from({length:24},()=>new THREE.Vector4())},uAnWheelPathStrengths:{value:new Float32Array(24)},uAnWheelPathCount:{value:0}},roadWetness?.uniforms||{});
+  const hydrologyJobs=createHydrologyJobs();
   let reflection=null,reflectionEntries=[];
   let originals=[],owned=[],unpatch=[],hydrology=[],roadRestores=[],root=null,children=[],wetCount=0,fogCount=0;
+  let requestedTransmission=.12;
+  function setTransmission(value){requestedTransmission=value;for(const material of owned){if((material.transmission===0)!==(value===0))material.needsUpdate=true;material.transmission=value;}}
   const ownedSources=new Map();
   const audioWater={kind:'lake',distanceM:Infinity,flowMps:0,source:'mesh-shore-distance'};const audioPosition=new THREE.Vector3(Infinity,Infinity,Infinity);
   function clear(){reflection?.bind([]);reflectionEntries=[];audioPosition.set(Infinity,Infinity,Infinity);for(const restore of unpatch)restore();unpatch=[];for(const restore of roadRestores)restore();roadRestores=[];for(const field of hydrology)field.dispose();hydrology=[];for(const entry of originals)if(entry.mesh.material===entry.assigned)entry.mesh.material=entry.original;for(const material of owned)material.dispose();originals=[];owned=[];ownedSources.clear();root=null;children=[];wetCount=fogCount=0;uniforms.uAnFxSky.value=null;uniforms.uAnFxSkyEnabled.value=0;}
@@ -164,17 +168,17 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
       const assigned=list.map(material=>{
         if(!material)return material;
         const role=roles.get(material),isWater=!!mesh.userData.asfaltoWater||role==='water'||WATER_NAMES.test(material.name||'');
-        if(role==='asphalt'&&!roadGeometries.has(mesh.geometry)){roadRestores.push(installRoadHydrology(THREE,mesh));roadGeometries.add(mesh.geometry);}
+        if(role==='asphalt'&&!roadGeometries.has(mesh.geometry)){roadRestores.push(installRoadHydrology(THREE,mesh,{jobs:hydrologyJobs}));roadGeometries.add(mesh.geometry);}
         if(!isWater&&!patched.has(material)&&material.isMeshStandardMaterial){const wet=['asphalt','terrain','shoulder'].includes(role)||material.userData.asfaltoSnow===true;if(wet){const prior=material.userData.asfaltoTemporalWeather;material.userData.asfaltoTemporalWeather=true;unpatch.push(()=>{if(prior===undefined)delete material.userData.asfaltoTemporalWeather;else material.userData.asfaltoTemporalWeather=prior;});}unpatch.push(patchSurface(material,uniforms,wet?(role==='asphalt'?'asphalt':'ground'):'fog'));patched.add(material);fogCount++;if(wet)wetCount++;}
         if(!isWater)return material;
         changed=true;
         const river=/RIVER/.test(material.name)||['river','drain'].includes(mesh.userData.asfaltoWater?.kind);
         const optics=resolveWaterOptics(mesh.userData.asfaltoWater,river);
-        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:'#ffffff',roughness:optics.roughness,metalness:0,ior:1.333,transmission:.12,thickness:river?.65:2.8,attenuationColor:optics.deepColor,attenuationDistance:optics.attenuationDistanceM,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
+        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:'#ffffff',roughness:optics.roughness,metalness:0,ior:1.333,transmission:requestedTransmission,thickness:river?.65:2.8,attenuationColor:optics.deepColor,attenuationDistance:optics.attenuationDistanceM,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
         // Authored silhouettes remain unchanged. Metric waves replace baked flat blue
         // maps; refraction uses Three's physical transmission pass, reflection its HDRI.
         water.userData={...material.userData,asfaltoWaterEffects:true,v7WaterOptics:optics};
-        const field=createWaterHydrology(THREE,mesh);hydrology.push(field);const metadata=field.metadata,direction=metadata.flowDirection||{x:1,z:0};
+        const field=createWaterHydrology(THREE,mesh,{jobs:hydrologyJobs});hydrology.push(field);const metadata=field.metadata,direction=metadata.flowDirection||{x:1,z:0};
         water.attenuationDistance=optics.attenuationDistanceM;
         water.depthWrite=true;water.toneMapped=true;const waterUniforms={uAnWaterReflection:{value:null},uAnWaterReflectMatrix:{value:new THREE.Matrix4()},uAnWaterReflectReady:{value:0}};reflectionEntries.push({mesh,uniforms:waterUniforms});patchSurface(water,{...uniforms,...waterUniforms,uAnWaterShallow:{value:new THREE.Color(optics.shallowColor)},uAnWaterDeep:{value:new THREE.Color(optics.deepColor)},uAnWaterAbsorption:{value:optics.absorptionPerMeter},uAnWaterField:{value:field.texture},uAnWaterBounds:{value:field.bounds},uAnWaterFlow:{value:new THREE.Vector2(direction.x??direction[0]??1,direction.z??direction[2]??0).normalize().multiplyScalar(Number(metadata.flowSpeedMps)||(river?.7:0))},uAnWaterShoreWidth:{value:Math.max(.15,Number(metadata.shoreWidthM)||1.5)},uAnWaterMaxDepth:{value:field.diagnostics.maxDepthM}},'water',THREE.ShaderChunk.transmission_fragment);
         owned.push(water);ownedSources.set(water,material);return water;
@@ -183,7 +187,10 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
     });
     reflection?.bind(reflectionEntries);
   }
-  return{setTrack,
+  return{setTrack,setTransmission,
+    prepareHydrology:()=>Promise.all([...hydrology.map(field=>field.ready),...roadRestores.map(restore=>restore.ready)]),
+    prepareReflections(options){if(!reflectionEntries.length)return Promise.resolve(false);if(!reflection){reflection=createWaterSceneReflection(THREE);reflection.bind(reflectionEntries);}return reflection.prepare(options);},
+    invalidateReflections(){reflection?.invalidate();},
     renderReflections(options){if(!reflectionEntries.length)return false;if(!reflection){reflection=createWaterSceneReflection(THREE);reflection.bind(reflectionEntries);}else if(reflection.diagnostics().waterMeshes!==reflectionEntries.length)reflection.bind(reflectionEntries);return reflection.capture(options);},
     waterAudioAt(position){if(!position){audioWater.distanceM=Infinity;return audioWater;}if(audioPosition.distanceToSquared(position)<.25)return audioWater;audioPosition.copy(position);audioWater.distanceM=Infinity;for(const field of hydrology){const b=field.bounds,broad=Math.hypot(Math.max(b.x-position.x,0,position.x-b.x-b.z),Math.max(b.y-position.z,0,position.z-b.y-b.w));if(broad>audioWater.distanceM)continue;const distance=field.distanceToWater(position);if(distance<audioWater.distanceM){audioWater.distanceM=distance;audioWater.kind=field.metadata.kind||'lake';audioWater.flowMps=Number(field.metadata.flowSpeedMps)||(audioWater.kind==='river'?.7:0);}}return audioWater;},
     refresh({materialBindings,getMaterialBindings}={}){
@@ -193,8 +200,8 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
       const visualRoot=root,bindings=(getMaterialBindings?.()||materialBindings||[]).map(binding=>({...binding,material:ownedSources.get(binding.material)||binding.material}));
       clear();setTrack({visualRoot,materialBindings:bindings});return true;
     },
-    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);for(const material of owned){const transmission=policy.tier.transmission;if((material.transmission===0)!==(transmission===0))material.needsUpdate=true;material.transmission=transmission;material.roughness=Math.min(.7,material.userData.v7WaterOptics.roughness+policy.wind*.013);}},
-    diagnostics:()=>({waterMaterials:owned.length,wetSurfaceShaders:wetCount,fogSurfaceShaders:fogCount+owned.length,waterMeshes:originals.length,hydrology:hydrology.map(field=>field.diagnostics),roadDrainage:roadRestores.length,snowCover:uniforms.uAnFxSnow.value,snowDetail:uniforms.uAnFxSnowDetail.value,snowAppearance:'slope-and-wind-powder-with-grain',optics:owned.map(material=>({...material.userData.v7WaterOptics})),waveDirections:3,reflection:reflection?.diagnostics()||{model:'physical-env',frames:0,ownedTargets:0},refraction:owned.some(material=>material.transmission>0)?'physical-transmission':'tier-disabled'}),
-    dispose(){clear();reflection?.dispose();reflection=null;},
+    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);setTransmission(policy.tier.transmission);for(const material of owned){material.roughness=Math.min(.7,material.userData.v7WaterOptics.roughness+policy.wind*.013);}},
+    diagnostics:()=>({hydrologyJobs:hydrologyJobs.diagnostics(),waterMaterials:owned.length,wetSurfaceShaders:wetCount,fogSurfaceShaders:fogCount+owned.length,waterMeshes:originals.length,hydrology:hydrology.map(field=>field.diagnostics),roadDrainage:roadRestores.length,snowCover:uniforms.uAnFxSnow.value,snowDetail:uniforms.uAnFxSnowDetail.value,snowAppearance:'slope-and-wind-powder-with-grain',optics:owned.map(material=>({...material.userData.v7WaterOptics})),waveDirections:3,reflection:reflection?.diagnostics()||{model:'physical-env',frames:0,ownedTargets:0},refraction:owned.some(material=>material.transmission>0)?'physical-transmission':'tier-disabled'}),
+    dispose(){clear();hydrologyJobs.dispose();reflection?.dispose();reflection=null;},
   };
 }

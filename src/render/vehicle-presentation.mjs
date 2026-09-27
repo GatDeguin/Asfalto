@@ -1,3 +1,7 @@
+import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=b5d99705e208d46d';
+import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
+import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
+import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
 import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=50dd4e15c3f46e8d';
 import {createVehicleConditionAppearance} from './vehicle-condition-appearance.mjs?v=b72eee12bc990a95';
 import {thickenVehicleGlass} from './vehicle-glass.mjs?v=c333c48cb1235db7';
@@ -53,7 +57,7 @@ export function createVehiclePresentationState(vehicle='chevy') {
 function releaseModels(models,extraGeometries=[]) {
   const geometry=new Set(extraGeometries),material=new Set(),texture=new Set();
   for(const model of models)model?.traverse?.(o=>{if(o.geometry)geometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m){material.add(m);for(const [key,value] of Object.entries(m))if(value?.isTexture&&key!=='envMap')texture.add(value);}});
-  geometry.forEach(x=>x.dispose());material.forEach(x=>x.dispose());texture.forEach(x=>x.dispose());
+  geometry.forEach(x=>{if(!isBorrowedVehicleResource(x))x.dispose();});material.forEach(x=>x.dispose());texture.forEach(x=>{if(!isBorrowedVehicleResource(x))x.dispose();});models.forEach(releaseVehicleModel);
 }
 
 export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loadGlb,signal,lodLevels=[0,1,2],interiorReviewAsset=null,...options}={}) {
@@ -61,10 +65,10 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
   if(!Array.isArray(lodLevels)||!(JSON.stringify(lodLevels)==='[0]'||JSON.stringify(lodLevels)==='[0,1,2]'))throw new TypeError('Vehicle LOD policy must be [0] or [0,1,2]');
   const lods=[];
   try {
-    for(const level of (interiorReviewAsset?[0]:lodLevels)) {
+    for(const level of [0]) {
       if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
       const url=new URL(interiorReviewAsset||`../../assets/vehicles/${vehicle}-lod${level}.glb`,import.meta.url);
-      url.searchParams.set('v','400-review-r144-20260917');
+      url.searchParams.set('v',vehicleAssetVersions[url.pathname.split('/').pop()]||'400-review-r144-20260917');
       lods.push(await loadGlb(url.href,`${vehicle} exterior LOD ${level}`,signal));
     }
     if(vehicle==='chevy_400_1957'){
@@ -74,7 +78,15 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
       lods[0].add(interior);
     }
     if(signal?.aborted)throw new DOMException('Vehicle presentation cancelled','AbortError');
-    return installVehiclePresentation(T,{vehicle,modelRoot,lods,...options});
+    const primary=installVehiclePresentation(T,{vehicle,modelRoot,lods,...options});
+    if(interiorReviewAsset||lodLevels.length===1)return primary;
+    const position=new T.Vector3(),cameraPosition=new T.Vector3();
+    const lodUrl=level=>{const name=vehicle+'-lod'+level+'.glb',url=new URL('../../assets/vehicles/'+name,import.meta.url);url.searchParams.set('v',vehicleAssetVersions[name]||'400-review-r144-20260917');return url.href;};
+    return createDemandVehicleLods({primary,signal,
+      select(sample,current){if(['cockpit','hood'].includes(sample.cameraMode)||(!Number.isFinite(sample.projectedPixels)&&!(sample.snapshot?.timeSeconds>0)))return 0;let projectedPixels=sample.projectedPixels;if(!Number.isFinite(projectedPixels)&&sample.camera){primary.root.getWorldPosition(position);sample.camera.getWorldPosition(cameraPosition);projectedPixels=4.8*finite(sample.viewportHeight,800)/(2*Math.tan(finite(sample.camera.fov,46)*Math.PI/360)*Math.max(position.distanceTo(cameraPosition),.1));}return selectVehicleLod({projectedPixels,current,quality:sample.quality});},
+      prefetch:(level,signal)=>assetByteCache.read(lodUrl(level),{signal}),
+      async load(level,signal){const model=await loadGlb(lodUrl(level),vehicle+' exterior LOD '+level,signal);if(signal.aborted){releaseModels([model]);throw signal.reason;}const stage=new T.Group();stage.name=vehicle+'_DemandLOD'+level;stage.visible=false;modelRoot.add(stage);try{const view=installVehiclePresentation(T,{vehicle,modelRoot:stage,lods:[model],...options});const dispose=view.dispose;view.dispose=()=>{const result=dispose();stage.removeFromParent();return result;};view.root.visible=false;stage.visible=true;return view;}catch(error){stage.removeFromParent();releaseModels([model]);throw error;}}
+    });
   }catch(error){releaseModels(lods);throw error;}
 }
 
@@ -104,7 +116,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       if(wheelId||hood)pending.push({owner,wheelId,hood,stationary});
       // This supplied revision bakes AO in TEXCOORD_1. The legacy loader exposes
       // that stream as uv2; Three r180 selects the second stream through uv1.
-      if(vehicle==='chevy_400_1957'&&o.geometry?.attributes.uv2){o.geometry.setAttribute('uv1',o.geometry.attributes.uv2);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.aoMap){m.aoMap.channel=1;m.needsUpdate=true;}}
+      if(vehicle==='chevy_400_1957'&&o.geometry?.attributes.uv2){if(!isBorrowedVehicleResource(o.geometry))o.geometry.setAttribute('uv1',o.geometry.attributes.uv2);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.aoMap){if(!isBorrowedVehicleResource(m.aoMap))m.aoMap.channel=1;m.needsUpdate=true;}}
       if(/Glass/.test(o.material?.name)&&!definition?.preserveAuthoredMaterials){const original=thickenVehicleGlass(T,o,model);if(original)replacedGeometries.add(original);}
       o.castShadow=!/Glass/.test(o.material?.name);o.receiveShadow=true;
       if((Array.isArray(o.material)?o.material:[o.material]).some(m=>!/^SS250_/.test(m?.name||'')&&/Paint|StripeAtlas|Black_lacquer/.test(m?.name||''))&&!wheelId){appearance.add(o,new T.Matrix4().copy(conditionTransform).multiply(new T.Matrix4().copy(model.matrixWorld).invert().multiply(o.matrixWorld)));}
@@ -181,7 +193,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       m.customProgramCacheKey=()=>programKey;m.needsUpdate=true;
     }
   }
-  replacedMaterials.forEach(m=>m.dispose());replacedGeometries.forEach(g=>g.dispose());
+  replacedMaterials.forEach(m=>m.dispose());replacedGeometries.forEach(g=>{if(!isBorrowedVehicleResource(g))g.dispose();});
   modelRoot.add(root);previous.forEach(entry=>{entry.object.visible=false;});state.setCondition(initialCondition);
   const calibration=physicalCalibration?createVehiclePhysicalCalibration(T,{vehicle,root,modelRoot,tiers,spec:definition?.calibration}):null;
   const chassis=createVehicleChassis(T,{root,tiers,centers});let chassisInspection=null;

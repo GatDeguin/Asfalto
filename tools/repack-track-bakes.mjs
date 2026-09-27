@@ -1,0 +1,5 @@
+// Recompress the current binary container without decoding/re-encoding its layout.
+import fs from 'node:fs';import {gzipSync,gunzipSync} from 'node:zlib';import {createHash} from 'node:crypto';import {BAKE_SCHEMA,decodeBinaryBake} from '../src/tracks/visuals/bake-binary-codec.mjs?v=9a206fac5b81dd7a';
+const base=new URL('../assets/tracks/offline-bake/',import.meta.url),manifest=JSON.parse(fs.readFileSync(new URL('manifest.json',base)));if(manifest.schema!==BAKE_SCHEMA)throw Error('Use convert-track-bakes.mjs for legacy bakes');
+for(const [id,entry]of Object.entries(manifest.tracks)){const old=fs.readFileSync(new URL(entry.file,base)),raw=gunzipSync(old),payload=decodeBinaryBake(raw.buffer.slice(raw.byteOffset,raw.byteOffset+raw.byteLength));if(payload.id!==id)throw Error('bake id');const zipped=gzipSync(raw,{level:9});fs.writeFileSync(new URL(entry.file,base),zipped);entry.bytes=zipped.length;entry.decodedBytes=raw.length;entry.sha256=createHash('sha256').update(zipped).digest('hex');console.log(id,old.length,'->',zipped.length);}
+fs.writeFileSync(new URL('manifest.json',base),JSON.stringify(manifest,null,2)+'\n');

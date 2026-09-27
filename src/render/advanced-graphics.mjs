@@ -1,15 +1,31 @@
-import {createWorkshopRenderBudget} from './render-budget.mjs?v=ef65ac852f9d069d';
+import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {createWorkshopRenderBudget} from './render-budget.mjs?v=6d1203c83e12e6ba';
 import {createTextureFiltering} from './texture-filtering.mjs?v=2166f1881bcc67b5';
-import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=80b7bc7f721a38cf';
+import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=c2943f0c1c9be48f';
 import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=778703e2dae501e6';
-import {createAdvancedMaterials}from'./advanced-materials.mjs?v=8085b62d709b9eb4';
+import {createAdvancedMaterials}from'./advanced-materials.mjs?v=6d6d04b455e0a09a';
 import {createPivotPainter}from'./pivot-painter.mjs?v=315aaac8b0cc5a18';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=d9af1b27a4c5741d';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=d667141209654a13';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=827f6afdcb5bb32a';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=22341d6358cae7aa';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=faddc4d7745bf11f';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=dc7a4421c4479e97';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
+ registerRenderPreparation(renderer,T);
+ let structureRevision=0,structureDirty=true,preparedSignature=null,preparingSignature=null,prepareError=null;
+ const observed=new Set(),workshopLights=[];
+ const structureChanged=()=>{structureDirty=true;structureRevision++;};
+ function indexWorkshop(){
+  if(scope!=='workshop'||!structureDirty)return;
+  for(const node of observed){node.removeEventListener('childadded',structureChanged);node.removeEventListener('childremoved',structureChanged);}observed.clear();workshopLights.length=0;
+  scene.traverse(node=>{observed.add(node);node.addEventListener('childadded',structureChanged);node.addEventListener('childremoved',structureChanged);if(node.isLight)workshopLights.push(node);});structureDirty=false;
+ }
+ function preparationSignature(){indexWorkshop();return JSON.stringify([renderer.__renderHost?.diagnostics().contextEpoch,quality,settings,structureRevision,workshopLights.map(light=>{let visible=light.visible;for(let parent=light.parent;visible&&parent;parent=parent.parent)visible=parent.visible;return[visible,light.layers.mask,light.castShadow,!!light.map];})]);}
+ function prepare(compile=()=>compileVisiblePass(renderer,scene,camera)){
+  const signature=scope==='workshop'?preparationSignature():null;
+  const work=post.prepare(compile);
+  return Promise.resolve(work).then(result=>{if(!disposed&&scope==='workshop'&&signature===preparationSignature()){preparedSignature=signature;prepareError=null;}return result;});
+ }
  let settings=readAdvancedGraphics(),disposed=false,lastRefresh=-10,lastSignature='',lastField=-10,frames=0;
  // Reuse the same governor for the workshop's own frame intervals. Never feed
  // animation-clamped dt or synthetic FPS into it; the race keeps its existing owner.
@@ -31,7 +47,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  function setSettings(value){if(disposed)return;settings=normalizeAdvancedGraphics(value);configure();}
  const change=event=>setSettings(event.detail||{});globalThis.addEventListener?.('asfalto:advanced-graphics',change);configure();refresh();
  return{
-  refresh,setSettings,getEffectiveQuality:()=>quality,
+  refresh,invalidatePreparation(){structureRevision++;preparedSignature=null;},setSettings,getEffectiveQuality:()=>quality,
   resizeRenderer:dimensions=>rendererBudget?.apply(governed(),dimensions),
   getRendererQuality:()=>governed(),
   beginFrameWindow(){lastFrameTime=null;pendingFrame=false;return performanceGovernor?.beginWindow('workshop-visible');},
@@ -49,18 +65,27 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
    if(settings.dfao&&screenLightingPolicy(quality).dfao&&time-lastField>.6){field.refresh({camera});lastField=time;}
    frames++;
   },
-  prepare(compile=()=>renderer.compileAsync(scene,camera)){return post.prepare(compile);},
+  prepare,
+  syncPreparationQuality(){if(!disposed&&effectiveGraphicsQuality(settings,governed())!==quality)configure();},
   render(draw=()=>renderer.render(scene,camera)){
+   if(scope==='workshop'){
+    if(structureDirty)refresh();
+    const signature=preparationSignature();
+    if(preparedSignature!==signature){
+     if(preparingSignature!==signature&&prepareError?.signature!==signature){preparingSignature=signature;void prepare().catch(error=>{prepareError={signature,message:String(error?.message||error)};console.warn('Workshop shader preparation failed',error);}).finally(()=>{if(preparingSignature===signature)preparingSignature=null;});}
+     return;
+    }
+   }
    const started=performance.now();try{post.render(draw);}finally{
     if(performanceGovernor&&pendingFrame&&!disposed){
      const interval=lastFrameTime===null?0:frameTime-lastFrameTime;
-     if(interval>0)performanceGovernor.sample({frameMs:interval,frameWorkMs:Math.max(0,performance.now()-started),heapBytes:performance.memory?.usedJSHeapSize||0,gpuTextures:renderer.info.memory.textures||0,gpuGeometries:renderer.info.memory.geometries||0,targetFps:60});
+     if(interval>0)performanceGovernor.sample({preparing:isRenderPreparationPending(renderer),frameMs:interval,frameWorkMs:Math.max(0,performance.now()-started),heapBytes:performance.memory?.usedJSHeapSize||0,gpuTextures:renderer.info.memory.textures||0,gpuGeometries:renderer.info.memory.geometries||0,targetFps:60});
      else performanceGovernor.beginWindow('workshop-visible');
      lastFrameTime=frameTime;pendingFrame=false;
     }
    }
   },
-  diagnostics:()=>({scope,settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),rendererBudget:rendererBudget?.diagnostics()||null,measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
-  dispose(){if(disposed)return;disposed=true;globalThis.removeEventListener?.('asfalto:advanced-graphics',change);post.dispose();rendererBudget?.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
+  diagnostics:()=>({scope,preparation:{ready:scope!=='workshop'||preparedSignature===preparationSignature(),pending:!!preparingSignature,error:prepareError?.message||null},settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),rendererBudget:rendererBudget?.diagnostics()||null,measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
+  dispose(){if(disposed)return;disposed=true;for(const node of observed){node.removeEventListener('childadded',structureChanged);node.removeEventListener('childremoved',structureChanged);}observed.clear();globalThis.removeEventListener?.('asfalto:advanced-graphics',change);post.dispose();disposeRenderPreparation(renderer);rendererBudget?.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
  };
 }

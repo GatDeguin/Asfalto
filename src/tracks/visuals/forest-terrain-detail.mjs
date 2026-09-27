@@ -1,3 +1,4 @@
+import {bakeSignature} from './offline-track-bake.mjs?v=67e9450828b29db5';
 // Read-only route sampling, used only to constrain visible terrain and vegetation.
 export function visualRoadField(query, lengthM) {
   const cells=new Map(), samples=[], size=180, step=20;
@@ -6,13 +7,14 @@ export function visualRoadField(query, lengthM) {
     const key=Math.floor(record.position[0]/size)+':'+Math.floor(record.position[2]/size);
     if(!cells.has(key))cells.set(key,[]);cells.get(key).push(record);
   }
-  return (x,z)=>{
+  const field=(x,z)=>{
     const cx=Math.floor(x/size),cz=Math.floor(z/size); let best=null,d2=Infinity;
     const consider=record=>{const p=record.position,d=(p[0]-x)**2+(p[2]-z)**2;if(d<d2){d2=d;best=record;}};
     for(let dx=-2;dx<=2;dx++)for(let dz=-2;dz<=2;dz++)for(const record of cells.get((cx+dx)+':'+(cz+dz))||[])consider(record);
     if(!best)for(let i=0;i<samples.length;i+=10)consider(samples[i]);
     return {distanceM:Math.max(0,Math.sqrt(d2)-step),position:best?.position||[x,0,z],widthM:best?.widthM||8};
   };
+  field.bakeSignature=bakeSignature([samples,visualRoadField.toString()]);return field;
 }
 
 function noise(x,z){return Math.sin(x*.024+Math.sin(z*.018)*1.4)*.48+Math.sin(z*.043-x*.017)*.29+Math.sin(x*.083+z*.064)*.13+Math.sin(x*.17-z*.11)*.06;}

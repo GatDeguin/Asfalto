@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=94cfe8a9d3150ce6';
+import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=d92a588a8957657c';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -107,7 +107,7 @@ test('prepare compiles exact world then cabin lighting/material sets and restore
  const f=compileFixture(),background=f.scene.background,p=f.pass.prepare();
  assert.equal(f.compiled.length,1);assertRestored(f,background);
  const world=f.compiled[0];assert.deepEqual(world.meshes,[f.road]);assert.ok(world.lights.includes(f.own));assert.ok(!world.lights.includes(f.hidden));assert.equal(world.background,background);assert.equal(world.targetScene,f.scene);assert.deepEqual(world.extraLights,[]);
- f.pending[0].resolve();await Promise.resolve();assert.equal(f.compiled.length,2);assertRestored(f,background);
+ f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,2);assertRestored(f,background);
  const cabin=f.compiled[1];assert.deepEqual(cabin.meshes,[f.dash]);assert.deepEqual(cabin.lights,[f.light]);assert.equal(cabin.background,null);assert.equal(cabin.environment,f.scene.environment);assert.equal(cabin.cameraMask,1<<30);assert.equal(cabin.autoClear,false);assert.equal(cabin.shadowAutoUpdate,false);
  f.pending[1].resolve();await p;assertRestored(f,background);
 });
@@ -117,6 +117,16 @@ test('prepare outside cockpit compiles only world and leaves overlays visible',a
 for(const failAt of [1,2])for(const synchronous of [true,false])test(`prepare failure ${failAt}, synchronous=${synchronous}, restores scene and stops`,async()=>{
  const f=compileFixture(),background=f.scene.background,compile=f.renderer.compileAsync;let count=0;
  f.renderer.compileAsync=(...args)=>{if(++count===failAt&&synchronous)throw Error('compile failed');return compile(...args);};
- const p=f.pass.prepare();if(failAt===2){f.pending[0].resolve();await Promise.resolve();}
+ const p=f.pass.prepare();p.catch(()=>{});if(failAt===2){f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));}
  assertRestored(f,background);if(!synchronous)f.pending[failAt-1].reject(Error('compile failed'));await assert.rejects(p,/compile failed/);assert.equal(count,failAt);assertRestored(f,background);
+});
+test('cancelled world preparation never starts interior compile',async()=>{const f=compileFixture(),controller=new AbortController();const p=f.pass.prepare({signal:controller.signal});p.catch(()=>{});controller.abort();f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));f.pending[1]?.resolve();await assert.rejects(p,{name:'AbortError'});assert.equal(f.compiled.length,1);});
+
+test('steady cockpit frames reuse scene membership; new descendants invalidate the cache',()=>{const f=fixture(),pass=createCockpitRenderPass(f),traverse=f.scene.traverse.bind(f.scene);let traversals=0;f.scene.traverse=fn=>{traversals++;return traverse(fn);};pass.render();const first=traversals;pass.render();assert.equal(traversals,first);const group=new THREE.Group();f.cockpit.add(group);const mesh=new THREE.Mesh();group.add(mesh);pass.render();assert.ok(f.calls.at(-1).visible.includes(mesh));assert.ok(traversals>first);pass.dispose();});
+
+test('quality preparation reapplies and restores state separately around world and cabin compilation',async()=>{
+ const f=fixture(),waiters=[];let tier='high';const observed=[];
+ f.renderer.compileAsync=()=>{observed.push(tier);return new Promise(resolve=>waiters.push(resolve));};
+ const pass=createCockpitRenderPass(f),promise=pass.prepare({withState:compile=>{const old=tier;try{tier='low';return compile();}finally{tier=old;}}});
+ assert.equal(tier,'high');assert.deepEqual(observed,['low']);pass.render();assert.equal(tier,'high');waiters.shift()();await new Promise(resolve=>setImmediate(resolve));assert.equal(tier,'high');assert.deepEqual(observed,['low','low']);waiters.shift()();await promise;pass.dispose();
 });

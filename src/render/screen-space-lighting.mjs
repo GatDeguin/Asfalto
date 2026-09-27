@@ -1,5 +1,6 @@
-import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=ef65ac852f9d069d';
-import {supportedHdrSamples} from './render-target-capabilities.mjs?v=9ae9aca93c7ad99b';
+import {compileVisiblePass} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=6d1203c83e12e6ba';
+import {supportedHdrSamples} from './render-target-capabilities.mjs?v=d75829b876d7c18d';
 import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=e2765b113440f785';
 const policies=Object.freeze({
  cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.625,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
@@ -33,6 +34,15 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  const bounce=new T.ShaderMaterial({name:'ASFALTO_SSGI_DFAO',uniforms,vertexShader,fragmentShader:'varying vec2 vUv;\n'+depthGLSL+'\n'+(distanceField?.glsl||'float anDistanceFieldAO(vec3 p,vec3 n){return 1.;}')+'\n'+bounceGLSL,depthTest:false,depthWrite:false,blending:T.NoBlending});
  const composite=new T.ShaderMaterial({name:'ASFALTO_INDIRECT_COMPOSITE',uniforms,vertexShader,fragmentShader:compositeGLSL+depthGLSL+'\n'+(atmosphere?.glsl||'vec3 anApplyAtmosphere(vec3 c,vec3 p,vec2 uv){return c;}')+'\n'+compositeMain,depthTest:true,depthWrite:true,depthFunc:T.AlwaysDepth,blending:T.NoBlending});
  const quad=new T.Mesh(geometry,gtao);quad.frustumCulled=false;const passScene=new T.Scene();passScene.add(quad);const passCamera=new T.Camera();
+ // Preserve the fog program topology across quality tiers. Volumetrics already
+ // integrate extinction, so neutralize legacy fog numerically during the capture
+ // rather than removing it and compiling the entire world again on a downgrade.
+ function suppressLegacyFog(){
+  const fog=scene.fog;if(!volumeEnabled()||!fog)return ()=>{};
+  if(fog.isFogExp2){const density=fog.density;fog.density=0;return ()=>{fog.density=density;};}
+  if(fog.isFog){const near=fog.near,far=fog.far;fog.near=Math.max(1,camera.far);fog.far=fog.near*2;return ()=>{fog.near=near;fog.far=far;};}
+  return ()=>{};
+ }
  function volumeEnabled(){return !!(atmosphere&&features.volumetrics&&policy.volume&&atmosphere.uniforms?.anAtmoEnabled?.value!==0);}
  function hasIndirect(){return !!(features.gtao&&policy.aoSamples>0||features.ssgi&&policy.giRays>0||distanceField&&features.dfao&&policy.dfao);}
  function hasEffects(){return hasIndirect()||volumeEnabled();}
@@ -42,10 +52,13 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  let targetSamples=captureSamples();
  const contextRestored=()=>{releaseTargets();targetSamples=captureSamples();};
  renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
+ let preparationTargets=null;
+ function ensurePreparationTargets(){if(!preparationTargets){const make=()=>new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false});preparationTargets={color:make(),ao:make(),lighting:make()};preparationTargets.color.texture.colorSpace=T.LinearSRGBColorSpace;preparationTargets.color.texture.name='ASFALTO_INDIRECT_SOURCE';}return preparationTargets;}
  let allocationBudget=null;
  function ensureTargets(){
   const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples});const width=allocationBudget.width,height=allocationBudget.height,scale=Math.min(policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height))),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
   if(!targets){const params={type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false};const color=new T.WebGLRenderTarget(width,height,{...params,depthBuffer:true,samples:targetSamples});color.depthTexture=new T.DepthTexture(width,height,T.UnsignedIntType);color.texture.name='ASFALTO_INDIRECT_SOURCE';color.texture.colorSpace=T.LinearSRGBColorSpace;targets={color,ao:new T.WebGLRenderTarget(ew,eh,params),lighting:new T.WebGLRenderTarget(ew,eh,params)};}
+  if(targets.color.samples!==targetSamples){targets.color.dispose();targets.color.samples=targetSamples;}
   if(targets.color.width!==width||targets.color.height!==height)targets.color.setSize(width,height);
   for(const t of [targets.ao,targets.lighting])if(t.width!==ew||t.height!==eh)t.setSize(ew,eh);
   uniforms.anSceneDepth.value=targets.color.depthTexture;uniforms.anSceneColor.value=targets.color.texture;uniforms.anGtao.value=targets.ao.texture;uniforms.anLighting.value=targets.lighting.texture;uniforms.anResolution.value.set(width,height);uniforms.anLightingResolution.value.set(ew,eh);
@@ -53,19 +66,24 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  }
  return{
   setFeatures(value){features={...features,...value};uniforms.anAoStrength.value=features.gtao?.38:0;uniforms.anGiStrength.value=features.ssgi?.28:0;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;if(!hasEffects())releaseTargets();},
-  setQuality(tier){quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;releaseTargets();}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
+  setQuality(tier){quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
   prepare(compile){
    if(typeof compile!=='function')throw new TypeError('Screen lighting compile callback is required');
    if(disposed||!policy.enabled||!hasEffects()||renderer.getContext().isContextLost())return compile();
    if(rendering)throw Error('Screen lighting cannot prepare recursively');rendering=true;
-   const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()||0,oldMip=renderer.getActiveMipmapLevel?.()||0,oldAutoClear=renderer.autoClear,oldScissor=renderer.getScissorTest(),oldFog=scene.fog;
+   const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()||0,oldMip=renderer.getActiveMipmapLevel?.()||0,oldAutoClear=renderer.autoClear,oldScissor=renderer.getScissorTest(),oldFog=scene.fog,oldMaterial=quad.material;
    const savedViewport=new T.Vector4(),savedScissor=new T.Vector4();renderer.getViewport(savedViewport);renderer.getScissor(savedScissor);
+   const restoreFog=suppressLegacyFog();
    try{
-    ensureTargets();renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
-    if(volumeEnabled())scene.fog=null;
-    return compile();
+    const prepared=ensurePreparationTargets();renderer.setRenderTarget(prepared.color);renderer.setScissorTest(false);renderer.autoClear=true;
+    const work=[compile()];restoreFog();
+    const stage=(material,target)=>{quad.material=material;renderer.setRenderTarget(target);work.push(compileVisiblePass(renderer,passScene,passCamera));};
+    if(features.gtao&&policy.aoSamples>0)stage(gtao,prepared.ao);
+    if(hasIndirect())stage(bounce,prepared.lighting);
+    stage(composite,oldTarget);
+    return Promise.all(work);
    }finally{
-    scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(savedViewport);renderer.setScissor(savedScissor);renderer.setScissorTest(oldScissor);renderer.autoClear=oldAutoClear;rendering=false;
+    quad.material=oldMaterial;restoreFog();scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(savedViewport);renderer.setScissor(savedScissor);renderer.setScissorTest(oldScissor);renderer.autoClear=oldAutoClear;rendering=false;
    }
   },
   render(draw){
@@ -73,20 +91,20 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    if(rendering)throw Error('Screen lighting cannot render recursively');rendering=true;
    const oldTarget=renderer.getRenderTarget(),oldFace=renderer.getActiveCubeFace?.()||0,oldMip=renderer.getActiveMipmapLevel?.()||0,oldAutoClear=renderer.autoClear,oldInfo=renderer.info.autoReset,oldScissor=renderer.getScissorTest(),oldAlpha=renderer.getClearAlpha();
    renderer.getViewport(viewport);renderer.getCurrentViewport?.(currentViewport);renderer.getScissor(scissor);renderer.getClearColor(clearColor);const oldFog=scene.fog;
+   const restoreFog=suppressLegacyFog();
    try{
     onStage?.('Primer cuadro: buffers de iluminación');ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
     gtaoUniforms.cameraNear.value=camera.near;gtaoUniforms.cameraFar.value=camera.far;gtaoUniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);gtaoUniforms.cameraProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);gtaoUniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
     uniforms.anUseDfa.value=distanceField&&features.dfao&&policy.dfao?1:0;
     renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
-    if(volumeEnabled())scene.fog=null;
-    onStage?.('Primer cuadro: captura del mundo');draw();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
+    onStage?.('Primer cuadro: captura del mundo');draw();restoreFog();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
     onStage?.('Primer cuadro: oclusión GTAO');renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
     onStage?.('Primer cuadro: iluminación indirecta');renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
     onStage?.('Primer cuadro: composición del mundo');renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
    }catch(error){lastError=error.message;throw error;}
-   finally{scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
+   finally{restoreFog();scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
   },
   diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],spatialOnly:true,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
-  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
+  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();preparationTargets=null;noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
  };
 }

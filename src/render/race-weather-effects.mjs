@@ -1,16 +1,16 @@
 import { createRoadWetnessField } from './weather-road-wetness.mjs?v=26b6280c060db38d';
-import { createRivalWeatherParticles } from './weather-rival-particles.mjs?v=e662c912446ebd40';
-import { createWaterfallEffects } from './weather-waterfalls.mjs?v=4cf2ee02d20553a0';
+import { createRivalWeatherParticles } from './weather-rival-particles.mjs?v=7f03c6babd6f2fda';
+import { createWaterfallEffects } from './weather-waterfalls.mjs?v=1d2c23e5ab97d05f';
 import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs?v=b65e99f565d1554f';
 import { weatherEffectsPolicy, createVehicleEmissionState } from './weather-effects-policy.mjs?v=8f494b5f9b0bf7b4';
-import { createWeatherLayers } from './weather-layers.mjs?v=80f1f43f830fce07';
-import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=31ca46a964089e7b';
-import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=f35d1df8a92863b2';
+import { createWeatherLayers } from './weather-layers.mjs?v=70a8853ebe26cb24';
+import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=dc32d334f28b76ad';
+import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=5887cc67bd1dc21f';
 import { createSkyMatchedFog } from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 import { createWeatherDynamics } from './weather-dynamics.mjs?v=470f93cd4d3a3352';
 import { createWeatherWind } from './weather-wind.mjs';
 import { createWeatherLightning } from './weather-lightning.mjs';
-import { createWeatherWindshield } from './weather-windshield.mjs?v=212a4137f64a976e';
+import { createWeatherWindshield } from './weather-windshield.mjs?v=6c3ebaa493191d5f';
 import { createVehicleRainSurfaces } from './weather-vehicle-surface.mjs?v=04c089b22a01690a';
 
 /** Visual-only effects in the live renderer's metre-scale scene coordinates. */
@@ -27,6 +27,10 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
   const soundscape={windMps:wind.uniforms.uAnWindVector.value,rainIntensity:0,wetness:0,water:null,trackId:null,active:false};
   let disposed=false,time=0,updates=0,trackId=null,environment={},policy=weatherEffectsPolicy({},qualityTier),active=true;
   const smooth={clouds:policy.clouds,mist:0,intensity:0};
+  // This changes shader topology and must settle before the resize/prepare
+  // callback, not one simulation frame after the governor changes its tier.
+  function setQualityTier(value){qualityTier=value;policy={...policy,tier:weatherEffectsPolicy(environment,qualityTier).tier};surfaces.setTransmission(policy.tier.transmission);}
+  setQualityTier(qualityTier);
   function setTrack({id,trackId:nextId,visualRoot,materialBindings=[]}={}) {
     if(disposed)return false;
     waterfalls.clear();rivalEffects.clear();wind.clear();roadWetness.bind(visualRoot);surfaces.setTrack({visualRoot,materialBindings});trackRoot=visualRoot||null;trackChildren=visualRoot?[...visualRoot.children]:[];wind.bind(visualRoot);if(!visualRoot)fogAlignment.restore();trackId=id||nextId||null;acoustics.bind(visualRoot,trackId);waterfalls.setTrack({visualRoot});particles.reset();emissions.reset();dynamics.reset();lightning.reset();return true;
@@ -60,7 +64,10 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
     rivalEffects.update({dt,policy:vehiclePolicy,wind:windVector});
     if(dt>0){const emission=emissions.update({...vehicle,dt,wetness:policy.wetness});particles.update({dt,vehicle,emission,policy:vehiclePolicy,velocity,wind:windVector});}
   }
-  return{setTrack,update,
+  return{setTrack,update,setQualityTier,
+    prepareHydrology:()=>surfaces.prepareHydrology(),
+    prepareWaterReflections(options){if(disposed)return Promise.resolve(false);return surfaces.prepareReflections({...options,excludeRoots:[root,...(options.excludeRoots||[])],prepareRender:options=>fogAlignment.prepareRender(options)});},
+    invalidateReflections(){surfaces.invalidateReflections();},
     renderWaterReflections(options){if(disposed||!active)return false;return surfaces.renderReflections({...options,excludeRoots:[root,...(options.excludeRoots||[])],prepareRender:options=>fogAlignment.prepareRender(options)});},
     refreshTrack(options){if(disposed||!trackRoot||trackRoot.children.length===trackChildren.length&&trackChildren.every((child,i)=>trackRoot.children[i]===child))return false;waterfalls.clear();wind.clear();const changed=surfaces.refresh(options);wind.bind(trackRoot);roadWetness.bind(trackRoot);acoustics.bind(trackRoot,trackId);waterfalls.setTrack({visualRoot:trackRoot});trackChildren=[...trackRoot.children];return changed;},
     attachWindshield(options){windshield?.dispose();windshield=options?.cabinMount?createWeatherWindshield(THREE,{camera,...options}):null;return !!windshield;},
