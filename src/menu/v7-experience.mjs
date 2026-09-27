@@ -33,7 +33,7 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
  const observer=new MutationObserver(syncPhase);observer.observe(doc.body,{attributes:true,attributeFilter:['class']});
  const results=doc.querySelector('#v6-results-sheet');if(results)observer.observe(results,{attributes:true,attributeFilter:['class']});
  doc.addEventListener('change',onChange);doc.addEventListener('input',onChange);doc.addEventListener('click',onClick);doc.addEventListener('visibilitychange',syncPhase);globalThis.addEventListener('asfalto:race-state',syncPhase);globalThis.addEventListener('asfalto:race-settings',syncPhase);globalThis.addEventListener('asfalto-menu-ready',mountPanels);
- const api={flow,preferences:()=>({...prefs}),update:updateHud,announce,syncPhase,
+ const api={flow,preferences:()=>({...prefs}),preferencesInto:out=>Object.assign(out,prefs),update:updateHud,announce,syncPhase,
   shouldBlockDrivingInput(event){return !flow.state.drivingInput||inputIsEditing(event?.target);},
   bindAudio(context,destination){audio?.dispose();audio=createV7InteractionSound({context,destination,getVolume:()=>doc.hidden?0:prefs.interactionVolume});return audio;},
   setQuality({label='',reason='',visible=false}={}){quality.hidden=!visible;quality.textContent=[label,reason].filter(Boolean).join(' · ');},

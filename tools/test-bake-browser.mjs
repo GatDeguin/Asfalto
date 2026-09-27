@@ -1,4 +1,4 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {startServer} from '../server.mjs?v=a0bf97c66f8e1a23';
+import fs from 'node:fs';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {startServer} from '../server.mjs?v=7e5aa644ab732c4b';
 const {chromium}=createRequire('C:/Users/Gaston/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json')('playwright');
 const server=await startServer({root:fileURLToPath(new URL('../',import.meta.url))});let browser;
 try{
@@ -10,7 +10,7 @@ try{
   const old=bake.prepareTrackBake('dos_lagos').then(()=>false,e=>e.name==='AbortError'),current=bake.prepareTrackBake('cataratas_iguazu');out.overlapCancelled=await old;await current;out.finalId=bake.bakeDiagnostics().id;out.workerActive=bake.bakeDiagnostics().workerActive;clearInterval(timer);out.longTasks=long;return out;
  });
  for(const stat of Object.values(result.tracks)){assert.equal(stat.packed,true);assert.equal(stat.shared,true);assert.equal(stat.transferBuffers,1);assert.equal(stat.fallbacks,0);assert.ok(stat.heartbeatTicks>0);assert.equal(stat.workerActive,false);}assert.equal(result.aborted,true);assert.equal(result.overlapCancelled,true);assert.equal(result.finalId,'cataratas_iguazu');assert.equal(errors.length,0);
- const manifest=JSON.parse(fs.readFileSync(new URL('../assets/tracks/offline-bake/manifest.json?v=3f7afb7702579a52',import.meta.url)));manifest.tracks.dos_lagos.sha256='0'.repeat(64);await page.route('**/offline-bake/manifest.json',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(manifest)}));
+ const manifest=JSON.parse(fs.readFileSync(new URL('../assets/tracks/offline-bake/manifest.json?v=48d073cc63f12301',import.meta.url)));manifest.tracks.dos_lagos.sha256='0'.repeat(64);await page.route('**/offline-bake/manifest.json',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(manifest)}));
  result.corrupt=await page.evaluate(async()=>{const b=await import('/src/tracks/visuals/offline-track-bake.mjs');await b.prepareTrackBake('dos_lagos');return b.bakeDiagnostics();});assert.equal(result.corrupt.entries,0);assert.match(result.corrupt.lastError,/integrity/);console.log(JSON.stringify(result,null,2));
  fs.writeFileSync(new URL('../../Reports/Asfalto_Nacional_v8/performance-stage2-2026-09-26/task-1-browser.json',import.meta.url),JSON.stringify(result,null,2));
 }finally{await browser?.close();await server.close();}

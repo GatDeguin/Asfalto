@@ -1,4 +1,4 @@
-import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {startServer} from '../server.mjs?v=a0bf97c66f8e1a23';
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {startServer} from '../server.mjs?v=7e5aa644ab732c4b';
 const root=fileURLToPath(new URL('../',import.meta.url)),out=fileURLToPath(new URL('../../Reports/Asfalto_Nacional_v8/performance-2026-09-26/implementation/task-2-runtime-validation.json',import.meta.url));
 const {chromium}=createRequire('C:/Users/Gaston/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json')('playwright');
 const server=await startServer({root});let browser;const report={tracks:{},errors:[]};

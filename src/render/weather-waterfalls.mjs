@@ -1,5 +1,5 @@
 import {isHighGraphicsQuality} from './graphics-quality-policy.mjs?v=778703e2dae501e6';
-import { effectsQuad } from './weather-layers.mjs?v=70a8853ebe26cb24';
+import { effectsQuad } from './weather-layers.mjs?v=3739704650e329ef';
 
 /** A foam footprint clipped against the actual receiving-water triangles. */
 export function createImpactFoamGeometry(T,emitters){

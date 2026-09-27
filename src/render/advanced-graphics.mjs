@@ -3,13 +3,13 @@ import {createWorkshopRenderBudget} from './render-budget.mjs?v=6d1203c83e12e6ba
 import {createTextureFiltering} from './texture-filtering.mjs?v=2166f1881bcc67b5';
 import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=c2943f0c1c9be48f';
 import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=778703e2dae501e6';
-import {createAdvancedMaterials}from'./advanced-materials.mjs?v=6d6d04b455e0a09a';
+import {createAdvancedMaterials}from'./advanced-materials.mjs?v=24cbd52ef66a026e';
 import {createPivotPainter}from'./pivot-painter.mjs?v=315aaac8b0cc5a18';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=d9af1b27a4c5741d';
-import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=d667141209654a13';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=22341d6358cae7aa';
+import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=d751a8fc1ba0a957';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=1714c9c6d22ccd68';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=faddc4d7745bf11f';
-import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=dc7a4421c4479e97';
+import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
  registerRenderPreparation(renderer,T);
  let structureRevision=0,structureDirty=true,preparedSignature=null,preparingSignature=null,prepareError=null;

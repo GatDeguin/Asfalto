@@ -26,7 +26,7 @@
   function createSurface(host, kind, statusId = '') {
     const preserved = statusId && document.getElementById(statusId);
     host.classList.add('an-cinema-loading');
-    host.innerHTML = '<div class="an-cinema-image" aria-hidden="true"></div><div class="an-cinema-film" aria-hidden="true"><video muted playsinline preload="none" disablepictureinpicture></video><video muted playsinline preload="none" disablepictureinpicture></video></div><div class="an-cinema-shade" aria-hidden="true"></div><div class="an-cinema-masthead" aria-hidden="true"><span class="an-cinema-mark"><i></i><i></i></span><span>ASFALTO<br>NACIONAL</span><b>1973</b></div><div class="an-loading-card"><p class="an-loading-kicker"></p><h2 class="an-loading-title"></h2><p class="an-loading-caption"></p></div><div class="an-cinema-footer"><span class="an-cinema-chapter"></span><span class="an-cinema-rule" aria-hidden="true"></span><p class="an-loading-stage" role="status" aria-live="polite">Preparando…</p></div><div class="v6-progress" aria-hidden="true"><i></i></div>';
+    host.innerHTML = '<div class="an-cinema-image" aria-hidden="true"></div><div class="an-cinema-film" aria-hidden="true"><video muted playsinline preload="none" disablepictureinpicture></video><video muted playsinline preload="none" disablepictureinpicture></video></div><div class="an-cinema-shade" aria-hidden="true"></div><div class="an-cinema-masthead" aria-hidden="true"><span class="an-cinema-mark"><i></i><i></i></span><span>ASFALTO<br>NACIONAL</span><b>1973</b></div><div class="an-loading-card"><p class="an-loading-kicker"></p><h2 class="an-loading-title"></h2><p class="an-loading-caption"></p></div><div class="an-cinema-footer"><span class="an-loading-tachometer" aria-hidden="true"><i></i><b>RPM</b></span><span class="an-cinema-chapter"></span><span class="an-cinema-rule" aria-hidden="true"></span><p class="an-loading-stage" role="status" aria-live="polite">Preparando…</p></div><div class="v6-progress" aria-hidden="true"><i></i></div>';
     const brandImage=document.createElement('img');brandImage.src=new URL('../brand/asfalto-nacional-v7.webp',assetRoot).href;brandImage.alt='Asfalto Nacional';brandImage.width=2172;brandImage.height=724;host.querySelector('.an-cinema-masthead').replaceChildren(brandImage);
     if (preserved) {
       host.querySelector('.an-loading-stage').replaceWith(preserved);
@@ -105,8 +105,8 @@
         reconcile();
       },
       stage(text) { const node=host.querySelector('.an-loading-stage');if(node)node.textContent=text; },
-      activate(value) { if(value && !stillOnly())start(); else if(running)release(); },
-      stop() { release();clearTimeout(longTimer);delete host.dataset.longWait; },
+      activate(value) { host.dataset.needleRunning=String(value&&!reduced());if(value && !stillOnly())start(); else if(running)release(); },
+      stop() { host.dataset.needleRunning='false';release();clearTimeout(longTimer);delete host.dataset.longWait; },
       dispose() { this.stop();surfaces.delete(this); },
     };
     surfaces.add(surface);

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {normalizeVehicleCondition,conditionFromSnapshot,toPhysicalDamage,serviceVehicleCondition,terminalVehicleFaults,createVehicleConditionSession,ensureVehicleConditionProfile,selectVehicleCondition} from '../src/game/vehicle-condition.mjs?v=5c5fdcd62e78d501';
 import {createRolloverDetector} from '../src/game/rollover-detection.mjs?v=1cf152a1e215f4e6';
-await import('../src/legacy/asfalto-v6-vehicle-model.js?v=74ce4c39a4c52b36');
+await import('../src/legacy/asfalto-v6-vehicle-model.js?v=e65d6a457c35c21a');
 const core=globalThis.AsfaltoV6VehicleCore;
 const good=()=>normalizeVehicleCondition({});
 const impact=(condition,point=[1.7,.2,.7],impulseNs=30000)=>core.applyImpactDamage(toPhysicalDamage(condition,core.createDamageState),{impulseNs,localPointM:point});

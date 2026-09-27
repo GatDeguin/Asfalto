@@ -5,7 +5,7 @@ import os from 'node:os';
 import http from 'node:http';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
-import {startServer} from '../server.mjs?v=a0bf97c66f8e1a23';
+import {startServer} from '../server.mjs?v=7e5aa644ab732c4b';
 
 test('static HTTP revalidates mutable files, streams ranges and respects HEAD', async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'asfalto-http-'));

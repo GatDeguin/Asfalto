@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=22341d6358cae7aa';
+import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68';
 import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=292e6ddd31bddd0e';
 import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=d92a588a8957657c';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};

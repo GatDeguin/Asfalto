@@ -55,3 +55,38 @@ export function computeSurfaceCurvature(T, geometry, {maxVertices=80000,maxTrian
 
 /** Release cached CPU attribute data when its last presentation owner leaves. */
 export function releaseSurfaceCurvatureCache(geometry) { return cache.delete(geometry); }
+
+// Separate metric attribute for POM. Keep computeSurfaceCurvature and its bake
+// signature unchanged: the existing baked convexity is dimensionless shading.
+const reliefCache=new WeakMap();
+export function computeReliefCurvature(T,geometry,{maxVertices=80000,maxTriangles=140000}={}){
+ const p=geometry?.getAttribute?.('position'),idx=geometry?.getIndex?.(),count=p?.count||0;
+ if(!count||count>maxVertices||(idx?.count||count)/3>maxTriangles)return null;
+ const signature=[p,p.version??p.data?.version,idx,idx?.version];
+ const cached=reliefCache.get(geometry);if(cached&&signature.every((x,i)=>x===cached.signature[i]))return cached.attribute;
+ let span=0;const lo=[Infinity,Infinity,Infinity],hi=[-Infinity,-Infinity,-Infinity];
+ for(let i=0;i<count;i++)for(let c=0;c<3;c++){const v=p.getComponent(i,c);if(!Number.isFinite(v))return null;lo[c]=Math.min(lo[c],v);hi[c]=Math.max(hi[c],v);}
+ for(let c=0;c<3;c++)span=Math.max(span,hi[c]-lo[c]);
+ const epsilon=Math.max(1e-7,span*1e-6),weld=new Map(),points=[],ids=new Uint32Array(count);
+ for(let i=0;i<count;i++){const q=[p.getX(i),p.getY(i),p.getZ(i)],key=q.map((v,c)=>Math.round((v-lo[c])/epsilon)).join(',');let id=weld.get(key);if(id===undefined){id=points.length;weld.set(key,id);points.push(q);}ids[i]=id;}
+ const normals=new Float64Array(points.length*3),adjacency=Array.from({length:points.length},()=>new Set());
+ const faces=Math.floor((idx?.count||count)/3);
+ for(let f=0;f<faces;f++){
+  const a=ids[idx?idx.getX(f*3):f*3],b=ids[idx?idx.getX(f*3+1):f*3+1],c=ids[idx?idx.getX(f*3+2):f*3+2];
+  if(a===b||b===c||a===c)continue;
+  const pa=points[a],pb=points[b],pc=points[c];if(!pa||!pb||!pc)continue;
+  const ux=pb[0]-pa[0],uy=pb[1]-pa[1],uz=pb[2]-pa[2],vx=pc[0]-pa[0],vy=pc[1]-pa[1],vz=pc[2]-pa[2];
+  const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;if(nx*nx+ny*ny+nz*nz<epsilon**4)continue;
+  for(const i of [a,b,c]){normals[i*3]+=nx;normals[i*3+1]+=ny;normals[i*3+2]+=nz;}
+  adjacency[a].add(b).add(c);adjacency[b].add(a).add(c);adjacency[c].add(a).add(b);
+ }
+ const metric=new Float32Array(points.length);
+ for(let i=0;i<points.length;i++){
+  const n=i*3,length=Math.hypot(normals[n],normals[n+1],normals[n+2]);if(length<1e-15)continue;
+  const q=points[i];let sum=0,weight=0;
+  for(const j of adjacency[i]){const r=points[j],x=q[0]-r[0],y=q[1]-r[1],z=q[2]-r[2],d2=x*x+y*y+z*z;if(d2>epsilon*epsilon){sum+=2*(x*normals[n]+y*normals[n+1]+z*normals[n+2])/(length*d2);weight++;}}
+  metric[i]=sum/Math.max(1,weight);
+ }
+ const attribute=new T.BufferAttribute(Float32Array.from(ids,id=>metric[id]),1);
+ reliefCache.set(geometry,{signature,attribute});return attribute;
+}

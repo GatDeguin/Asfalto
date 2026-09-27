@@ -1,4 +1,4 @@
-import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs?v=dc7a4421c4479e97';
+import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=24cd5d52423b7125';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=87374a99c604ce32';
 import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
 // Blender-authored, local-metre meshes. All instances are visual and have no collision role.
@@ -159,6 +159,7 @@ export function addRoadsideDetails(THREE, root, { id, query, lengthM, heightAt, 
       for (let i=0;i<p.count;i++) { const factor=.5+Math.min(.5,Math.max(0,p.getY(i))*.8); color.set([factor,factor,factor],i*3); }
       geometry.setAttribute('color',new THREE.BufferAttribute(color,3)); grassMaterial.vertexColors=true;
     }
+    if(role==='rock')prepareSurfaceReliefGeometry(geometry);
     holder.add(new THREE.Mesh(geometry, materials[role]));
   }
   group.add(holder);

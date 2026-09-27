@@ -1,6 +1,6 @@
 import {createDrivingAudioBanks} from './driving-audio-banks.mjs?v=81162803ee9cade0';
 import {createAudioTargets} from './audio-targets.mjs?v=d16a18410f46456b';
-import { mechanicalEvents } from './v7-audio-state.mjs?v=eecccc1986f61671';
+import { mechanicalEvents } from './v7-audio-state.mjs?v=e6720400866e4cbf';
 import { drivingAudioState } from './race-driving-state.mjs?v=84ddd7aeddea355c';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 

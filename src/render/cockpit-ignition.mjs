@@ -1,4 +1,4 @@
-import { createIgnitionMotion } from './ignition-motion.mjs?v=138ba0c547873787';
+import { createIgnitionMotion } from './ignition-motion.mjs?v=6fe1bdf4284282d2';
 
 // The authored GLBs use meters, Y up and +Z toward the driver. The lock
 // origin is its front face; the main key origin is the tip of its blade.
@@ -63,12 +63,14 @@ export function createCockpitIgnition({ THREE, models } = {}) {
   keychainMount.add(chainMotion);
   keyMotion.add(keychainMount);
   const motion = createIgnitionMotion(), basis = new THREE.Quaternion(), worldScale = new THREE.Vector3();
-  const frameQuaternion = [0,0,0,1];
+  const frameQuaternion = [0,0,0,1],motionOptions={dt:1/60,paused:false,editing:false,reducedMotion:false,frameQuaternion,lengthM:.09};
+  const motionEuler=new THREE.Euler();
+  function rotateMotion(node,x,y,z){motionEuler.set(x,y,z);node.quaternion.setFromEuler(motionEuler);}
   let ignitionSequence=0,ignitionStartAtS=null,ignitionLastTime=null,ignitionTurn=0,ignitionState='ready',ignitionFault='none';
   function resetMotion() {
     motion.reset();
     ignitionStartAtS=null;ignitionTurn=0;if(rotor)rotor.rotation.z=RUN_ANGLE;
-    keyMotion.rotation.set(0,0,0);chainMotion.rotation.set(0,0,0);fobMotion.rotation.set(0,0,0);
+    rotateMotion(keyMotion,0,0,0);rotateMotion(chainMotion,0,0,0);rotateMotion(fobMotion,0,0,0);
   }
   mount.traverse(node => {
     if (!node.isMesh) return;
@@ -87,7 +89,8 @@ export function createCockpitIgnition({ THREE, models } = {}) {
       if (disposed) return false;
       basis.copy(mount.quaternion).multiply(keyMount.quaternion).multiply(keychainMount.quaternion).toArray(frameQuaternion);
       keychainMount.getWorldScale(worldScale);
-      const state = motion.step(snapshot, { ...options, frameQuaternion, lengthM:.064*Math.abs(worldScale.y) });
+      motionOptions.dt=options.dt??1/60;motionOptions.paused=!!options.paused;motionOptions.editing=!!options.editing;motionOptions.reducedMotion=!!options.reducedMotion;motionOptions.lengthM=.064*Math.abs(worldScale.y);
+      const state = motion.step(snapshot,motionOptions);
       const ignition=snapshot?.engine?.ignition,time=snapshot?.timeSeconds;
       if(ignition&&Number.isFinite(ignition.sequence)&&Number.isFinite(time)){
         if(ignition.sequence>ignitionSequence){ignitionSequence=ignition.sequence;ignitionStartAtS=Number.isFinite(ignition.startedAtS)?ignition.startedAtS:time;}
@@ -98,10 +101,10 @@ export function createCockpitIgnition({ THREE, models } = {}) {
       else if(!options.paused){const age=ignitionStartAtS===null?Infinity:Math.max(0,time-ignitionStartAtS);ignitionTurn=age<.35?(-12*Math.PI/180)*Math.exp(-age/.075)*Math.cos(age*22):0;}
       // Starter travel stays on physical child pivots; the user's key and
       // ignition editor mounts, their offsets and blade insertion never change.
-      keyMotion.rotation.set(state.keyPitch,0,state.keyRoll+ignitionTurn);
+      rotateMotion(keyMotion,state.keyPitch,0,state.keyRoll+ignitionTurn);
       if(rotor)rotor.rotation.z=RUN_ANGLE+ignitionTurn;
-      chainMotion.rotation.set(state.pitch,0,state.roll);
-      fobMotion.rotation.set(-state.pitch*.18,state.twist,-state.roll*.12);
+      rotateMotion(chainMotion,state.pitch,0,state.roll);
+      rotateMotion(fobMotion,-state.pitch*.18,state.twist,-state.roll*.12);
       return true;
     },
     editorTargets: Object.freeze([

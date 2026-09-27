@@ -610,6 +610,73 @@
     return {bodies:bodies.filter(body=>!excluded.has(body.handle)).length,standaloneColliders:colliders.length,staticQueriesRefreshed:refreshStaticQueries};
   }
 
+  // Per-session storage: numeric vectors/torques never escape as historical records.
+  function vectorInto(out, x, y, z) { out[0]=x; out[1]=y; out[2]=z; return out; }
+  function rapierInto(out, vector) { out.x=vector[0];out.y=vector[1];out.z=vector[2];return out; }
+  function fromRapierInto(out, vector) { return vectorInto(out,finite(vector?.x,0),finite(vector?.y,0),finite(vector?.z,0)); }
+  function rotateInto(out, vector, q) {
+    const x=vector[0],y=vector[1],z=vector[2],qx=finite(q.x,0),qy=finite(q.y,0),qz=finite(q.z,0),qw=finite(q.w,1);
+    const ix=qw*x+qy*z-qz*y,iy=qw*y+qz*x-qx*z,iz=qw*z+qx*y-qy*x,iw=-qx*x-qy*y-qz*z;
+    return vectorInto(out,ix*qw-iw*qx-iy*qz+iz*qy,iy*qw-iw*qy-iz*qx+ix*qz,iz*qw-iw*qz-ix*qy+iy*qx);
+  }
+  function normalizeInto(out, fallback) {const m=length(out);for(let i=0;i<3;i++)out[i]=m>1e-9?out[i]/m:fallback[i];return out;}
+  function fieldsInto(out, source) {for(const key in source)out[key]=source[key];return out;}
+  const EMPTY_PHYSICS_INPUT=Object.freeze({}), AXIS_FORWARD=Object.freeze([1,0,0]), AXIS_SIDE=Object.freeze([0,0,1]), AXIS_DOWN=Object.freeze([0,-1,0]), AXIS_UP=Object.freeze([0,1,0]);
+  const DEFAULT_ENVIRONMENT=Object.freeze({surface:'asphalt',mu:.92,waterDepthM:0,airDensityKgPm3:1.2});
+  // Allocated once per vehicle. Four-wheel scalar lanes share one backing store.
+  // Vector views are also fixed; only legacy public snapshots expose ordinary arrays.
+  function createContactStorage() {
+    const count = 4;
+    const buffer = new Float64Array(count * 15);
+    const lanes = {
+      buffer,
+      contact: new Uint8Array(count),
+      normalLoadN: buffer.subarray(0, 4),
+      compressionM: buffer.subarray(4, 8),
+      compressionVelocityMps: buffer.subarray(8, 12),
+      steering: buffer.subarray(12, 16),
+      couplingAdjustmentN: buffer.subarray(16, 20),
+      previousCompression: buffer.subarray(20, 24),
+    };
+    lanes.previousCompression.fill(NaN);
+    const contacts = new Array(count);
+    for (let i = 0; i < count; i++) {
+      const offset = 24 + i * 9;
+      contacts[i] = {
+        origin: buffer.subarray(offset, offset + 3),
+        point: buffer.subarray(offset + 3, offset + 6),
+        normal: buffer.subarray(offset + 6, offset + 9),
+        suspension: { springForceN: 0, damperForceN: 0, bumpStopForceN: 0, normalForceN: 0, compressionM: 0, travelLimited: false },
+      };
+      contacts[i].normal[1] = 1;
+    }
+    lanes.contacts = contacts;
+    return lanes;
+  }
+
+  function createPhysicsScratch(session) {
+    const vec=()=>new Float64Array(3), obj=()=>({x:0,y:0,z:0});
+    const contactData=createContactStorage(),contacts=contactData.contacts;
+    const wheels=session.wheels.map(w=>({id:w.id,axle:w.axle,angularSpeedRadps:0,normalLoadN:0,contact:false,mu:0,wheelRadiusM:session.spec.wheelRadiusM}));
+    const out={...session.core.createDynamicsScratch(),contacts,contactData,powertrainWheels:wheels,environmentOutput:{},controls:{},ackermann:{},ackermannInput:{},coupling:{},couplingInput:{},suspensionInput:{},wheelInput:{},waterInput:{},wear:{},
+      translation:[0,0,0],mount:vec(),down:vec(),bodyForward:vec(),bodySide:vec(),wheelForward:vec(),wheelSide:vec(),pointVelocity:vec(),velocity:vec(),angularVelocity:vec(),suspensionForce:vec(),tireForce:vec(),resistance:vec(),sumSuspension:vec(),sumTire:vec(),
+      force:obj(),point:obj(),rayOrigin:obj(),rayDirection:obj(),query:{wheelId:null,worldPosition:[0,0,0],speedMps:0,normalLoadN:0},brakeTorques:new Float64Array(4),locked:[false,false,false,false]};
+    out.rapierTranslation=obj();out.rapierVelocity=obj();out.rapierAngular=obj();out.rapierNormal=obj();out.rapierLocal=obj();out.rapierOrigin=obj();
+    out.rapierRotation={x:0,y:0,z:0,w:1};out.rapierOtherRotation={x:0,y:0,z:0,w:1};
+    out.ray=new session.RAPIER.Ray(out.rayOrigin,out.rayDirection);
+    out.contactState={contacts,rotation:null,translation:out.translation};
+    out.snapshots=Array.from({length:2},()=>({fixedHz:120,timeSeconds:0,chassis:{position:[0,0,0],rotation:[0,0,0,1],linearVelocity:[0,0,0],angularVelocity:[0,0,0],acceleration:[0,0,0]},
+      wheels:session.wheels.map(w=>({...w,point:[0,0,0],normal:[0,1,0],tire:{}})),steering:{frontAligningTorqueNm:0,frontContactRatio:0},
+      engine:{ignition:{state:'ready',sequence:0,startedAtS:0}},gearbox:{},clutch:{},brakes:{locked:[false,false,false,false],wheelBrakeTorquesNm:[0,0,0,0],absModulation:[1,1,1,1]},controls:{},chassisConfig:null,impact:false,impacts:[],damage:session.core.createMutableDamageState(),debugForces:{suspensionN:[0,0,0],tireN:[0,0,0],resistanceN:[0,0,0]}}));
+    const impactRecord=()=>({timeSeconds:0,impulseNs:0,magnitude:0,otherId:'world',material:'unknown',localPointM:[0,0,0],relativeVelocityMps:[0,0,0]});
+    out.impactHistory=Array.from({length:8},impactRecord);out.impactHistoryIndex=0;
+    out.impactSnapshotSlots=Array.from({length:2},()=>Array.from({length:8},impactRecord));
+    out.impactInput=impactRecord();out.impactRotation={x:0,y:0,z:0,w:1};
+    for(const key of ['impactLocal','impactPoint','impactOrigin','impactNormal','impactCenter','impactVelocity'])out[key]=vec();
+    out.snapshotIndex=0;
+    return out;
+  }
+
   class VehiclePhysicsSession {
     constructor(options) {
       if (!options?.RAPIER || !options?.world || !options?.core || !options?.spec) {
@@ -627,7 +694,7 @@
       this.setChassisConfig(options.chassisConfig || null);
       this.environment = typeof options.environment === 'function'
         ? options.environment
-        : () => ({ surface: 'asphalt', mu: 0.92, waterDepthM: 0, airDensityKgPm3: 1.2 });
+        : () => DEFAULT_ENVIRONMENT;
       this.world.timestep = FIXED_DT;
       const physical = createVehicleBody(this.RAPIER, this.world, this.spec, options.spawn || {});
       this.body = physical.body;
@@ -639,8 +706,8 @@
       }
       this.previousLinearVelocity = fromRapierVector(this.body.linvel());
       const state = this.core.createVehicleState(this.spec);
-      this.wheels = state.wheels.map((wheel) => ({ ...wheel }));
-      this.previousCompression = [NaN, NaN, NaN, NaN];
+      this.wheels = state.wheels.map((wheel) => ({ ...wheel, tire: {} }));
+      this.previousCompression = null;
       this.powertrainState = {
         engineRpm: this.spec.engine.idleRpm,
         gear: 1,
@@ -654,7 +721,7 @@
         frontTemperatureC: 20,
         rearTemperatureC: 20,
       };
-      this.damage = this.core.createDamageState();
+      this.damage = this.core.createMutableDamageState();
       this.impacts = [];
       this.staticImpactTimes = new Map();
       this.timeSeconds = 0;
@@ -663,6 +730,10 @@
       this.ignitionState = 'ready';
       this.disposed = false;
       this.lastSnapshot = null;
+      this.mutableSnapshots = options.mutableSnapshots === true;
+      this.scratch = createPhysicsScratch(this);
+      this.previousCompression = this.scratch.contactData.previousCompression;
+      this.reserveImpactContacts();
     }
 
     _engineStatus() {
@@ -683,6 +754,13 @@
       this.chassisConfig = value ? root.AsfaltoV6Chassis.sanitizeChassisConfig(value) : null;
       this.spec = root.AsfaltoV6Chassis?.chassisVehicleSpec(this.baseSpec, this.chassisConfig) || this.baseSpec;
       this.core.validateVehicleSpec(this.spec);
+      const chassis=root.AsfaltoV6Chassis,config=this.chassisConfig;
+      this.chassisDynamics={inertia:chassis?.chassisWheelInertia(config)||1.8,cooling:chassis?.chassisCoolingScale(config)||1};
+      if(config)for(const axle of ['front','rear']){
+        this.chassisDynamics[axle+'Dry']=chassis.chassisGripScale(config,{wetness:0,surface:'asphalt'},axle);
+        this.chassisDynamics[axle+'Wet']=chassis.chassisGripScale(config,{wetness:1,surface:'asphalt'},axle);
+        this.chassisDynamics[axle+'Loose']=chassis.chassisGripScale(config,{wetness:0,surface:'gravel'},axle);
+      }
       if (this.wheels && radius !== this.spec.wheelRadiusM) {
         for (const wheel of this.wheels) wheel.angularSpeedRadps *= radius / this.spec.wheelRadiusM;
         this.previousCompression?.fill(NaN);
@@ -702,466 +780,185 @@
     }
 
     _wheelContact(index, rotation, translation, steering) {
-      const wheel = this.wheels[index];
-      const mountLocal = [
-        wheel.localAnchorM[0],
-        this.spec.wheelRadiusM - this.spec.cgHeightM,
-        wheel.localAnchorM[2],
-      ];
-      const origin = add(translation, rotateByQuaternion(mountLocal, rotation));
-      const down = normalized(rotateByQuaternion([0, -1, 0], rotation), [0, -1, 0]);
-      const ray = new this.RAPIER.Ray(toRapierVector(origin), toRapierVector(down));
-      const hit = this.suspensionWorld.castRayAndGetNormal(
-        ray,
-        this.spec.wheelRadiusM + 0.55,
-        true,
-        undefined,
-        undefined,
-        undefined,
-        this.body,
-      );
-      if (!hit) return {
-        contact: false,
-        origin,
-        point: add(origin, scale(down, this.spec.wheelRadiusM + 0.18)),
-        normal: scale(down, -1),
-        compressionM: 0,
-        compressionVelocityMps: Number.isFinite(this.previousCompression[index])
-          ? (0 - this.previousCompression[index]) / FIXED_DT
-          : 0,
-        steering,
-      };
-      const normal = normalized(fromRapierVector(hit.normal), [0, 1, 0]);
-      const point = add(origin, scale(down, hit.timeOfImpact));
-      const axleSetup = wheel.axle === 'front' ? SUSPENSION.front : SUSPENSION.rear;
-      const compressionM = clamp(
-        axleSetup.staticCompressionM - (hit.timeOfImpact - this.spec.wheelRadiusM),
-        0,
-        SUSPENSION.maxTravelM,
-      );
-      return {
-        contact: dot(normal, scale(down, -1)) > 0.2,
-        origin,
-        point,
-        normal,
-        compressionM,
-        compressionVelocityMps: Number.isFinite(this.previousCompression[index])
-          ? (compressionM - this.previousCompression[index]) / FIXED_DT
-          : 0,
-        steering,
-      };
+      const s=this.scratch,d=s.contactData,wheel=this.wheels[index],out=s.contacts[index];
+      vectorInto(s.mount,wheel.localAnchorM[0],this.spec.wheelRadiusM-this.spec.cgHeightM,wheel.localAnchorM[2]);
+      rotateInto(out.origin,s.mount,rotation);
+      for(let i=0;i<3;i++)out.origin[i]+=translation[i];
+      normalizeInto(rotateInto(s.down,AXIS_DOWN,rotation),AXIS_DOWN);
+      // Rapier Ray is plain reusable JS storage; cast results remain Rapier-owned allocations; supported getter outputs are reused.
+      rapierInto(s.ray.origin,out.origin);rapierInto(s.ray.dir,s.down);
+      const hit=this.suspensionWorld.castRayAndGetNormal(s.ray,this.spec.wheelRadiusM+.55,true,undefined,undefined,undefined,this.body);
+      const distance=hit?hit.timeOfImpact:this.spec.wheelRadiusM+.18;
+      for(let i=0;i<3;i++)out.point[i]=out.origin[i]+s.down[i]*distance;
+      if(hit)normalizeInto(fromRapierInto(out.normal,hit.normal),AXIS_UP);
+      else for(let i=0;i<3;i++)out.normal[i]=-s.down[i];
+      const setup=index<2?SUSPENSION.front:SUSPENSION.rear;
+      d.compressionM[index]=hit?clamp(setup.staticCompressionM-(distance-this.spec.wheelRadiusM),0,SUSPENSION.maxTravelM):0;
+      d.contact[index]=hit&&-dot(out.normal,s.down)>.2?1:0;
+      d.compressionVelocityMps[index]=Number.isFinite(this.previousCompression[index])?(d.compressionM[index]-this.previousCompression[index])/FIXED_DT:0;
+      d.steering[index]=steering;
+      return out;
     }
 
     _collectContacts(controls) {
-      const maximumRoadWheelAngleRad = finite(
-        this.spec.steering?.maximumRoadWheelAngleRad,
-        0.48,
-      );
-      const rotation = this.body.rotation();
-      const translationObject = this.body.translation();
-      const translation = fromRapierVector(translationObject);
-      const ackermann = this.core.computeAckermann({
-        centerSteerRad: clamp(
-          finite(controls.steer, 0),
-          -maximumRoadWheelAngleRad,
-          maximumRoadWheelAngleRad,
-        ),
-        wheelbaseM: this.spec.wheelbaseM,
-        frontTrackM: this.spec.frontTrackM,
-      });
-      const steering = [ackermann.frontLeftRad, ackermann.frontRightRad, 0, 0];
-      const contacts = this.wheels.map((wheel, index) => this._wheelContact(
-        index,
-        rotation,
-        translation,
-        steering[index],
-      ));
-      for (let axleStart = 0; axleStart <= 2; axleStart += 2) {
-        const setup = axleStart === 0 ? SUSPENSION.front : SUSPENSION.rear;
-        const coupling = this.core.computeAxleCoupling({
-          leftCompressionM: contacts[axleStart].compressionM,
-          rightCompressionM: contacts[axleStart + 1].compressionM,
-          antiRollRateNpm: setup.antiRollRateNpm,
-          rigidCouplingRateNpm: setup.rigidCouplingRateNpm,
-          rigidAxle: setup.rigidAxle,
-        });
-        contacts[axleStart].couplingAdjustmentN = coupling.leftAdjustmentN;
-        contacts[axleStart + 1].couplingAdjustmentN = coupling.rightAdjustmentN;
+      const s=this.scratch,d=s.contactData,rotation=this.body.rotation(s.rapierRotation);
+      fromRapierInto(s.translation,this.body.translation(s.rapierTranslation));
+      const max=finite(this.spec.steering?.maximumRoadWheelAngleRad,.48),a=s.ackermannInput;
+      a.centerSteerRad=clamp(finite(controls.steer,0),-max,max);a.wheelbaseM=this.spec.wheelbaseM;a.frontTrackM=this.spec.frontTrackM;
+      this.core.computeAckermannInto(s.ackermann,a);
+      for(let i=0;i<4;i++)this._wheelContact(i,rotation,s.translation,i===0?s.ackermann.frontLeftRad:i===1?s.ackermann.frontRightRad:0);
+      for(let i=0;i<4;i+=2){const setup=i===0?SUSPENSION.front:SUSPENSION.rear,c=s.couplingInput;
+        c.leftCompressionM=d.compressionM[i];c.rightCompressionM=d.compressionM[i+1];
+        c.antiRollRateNpm=setup.antiRollRateNpm;c.rigidCouplingRateNpm=setup.rigidCouplingRateNpm;c.rigidAxle=setup.rigidAxle;
+        this.core.computeAxleCouplingInto(s.coupling,c);
+        d.couplingAdjustmentN[i]=s.coupling.leftAdjustmentN;d.couplingAdjustmentN[i+1]=s.coupling.rightAdjustmentN;
       }
-      return { contacts, rotation, translation };
+      s.contactState.rotation=rotation;return s.contactState;
     }
 
     _prepareWheelLoads(contacts) {
-      return contacts.map((contact, index) => {
-        const setup = index < 2 ? SUSPENSION.front : SUSPENSION.rear;
-        const suspension = this.core.computeSuspensionForce({
-          contact: contact.contact,
-          springRateNpm: setup.springRateNpm,
-          damperBumpNsPm: setup.damperBumpNsPm,
-          damperReboundNsPm: setup.damperReboundNsPm,
-          compressionM: contact.compressionM,
-          compressionVelocityMps: contact.compressionVelocityMps,
-          bumpStopStartM: SUSPENSION.bumpStopStartM,
-          maxTravelM: SUSPENSION.maxTravelM,
-        });
-        const wheelId = this.wheels[index].id;
-        const suspensionCondition = clamp(
-          finite(this.damage?.suspension?.[wheelId]?.condition, 1), 0.1, 1,
-        );
-        const normalLoadN = contact.contact
-          ? Math.max(0, (suspension.normalForceN + finite(contact.couplingAdjustmentN, 0)) * suspensionCondition)
-          : 0;
-        this.previousCompression[index] = contact.compressionM;
-        return { ...contact, suspension, normalLoadN };
-      });
+      const input=this.scratch.suspensionInput,d=this.scratch.contactData;
+      for(let i=0;i<4;i++) {const c=contacts[i],setup=i<2?SUSPENSION.front:SUSPENSION.rear;
+        input.contact=(d.contact[i]!==0);input.springRateNpm=setup.springRateNpm;input.damperBumpNsPm=setup.damperBumpNsPm;input.damperReboundNsPm=setup.damperReboundNsPm;
+        input.compressionM=d.compressionM[i];input.compressionVelocityMps=d.compressionVelocityMps[i];input.bumpStopStartM=SUSPENSION.bumpStopStartM;input.maxTravelM=SUSPENSION.maxTravelM;
+        this.core.computeSuspensionForceInto(c.suspension,input);
+        const condition=clamp(finite(this.damage?.suspension?.[this.wheels[i].id]?.condition,1),.1,1);
+        d.normalLoadN[i]=(d.contact[i]!==0)?Math.max(0,(c.suspension.normalForceN+finite(d.couplingAdjustmentN[i],0))*condition):0;
+        this.previousCompression[i]=d.compressionM[i];
+      }
+      return contacts;
     }
 
     _setRequestedGear(controls) {
-      const requested = controls.requestedGear;
-      // Game inputs may name an unavailable gate. Reject the whole shift here;
-      // the vehicle core remains strict for callers constructing invalid state.
-      if (!Number.isInteger(requested) || requested < -1 || requested > this.spec.gearbox.forward.length) {
-        controls.requestedGear = this.powertrainState.gear;
-        controls.clutchEngagement = this.powertrainState.clutchEngagement;
-        return;
+      const requested=controls.requestedGear,state=this.powertrainState;
+      if(!Number.isInteger(requested)||requested < -1||requested>this.spec.gearbox.forward.length){controls.requestedGear=state.gear;controls.clutchEngagement=state.clutchEngagement;return;}
+      if(requested!==state.gear){state.gear=requested;state.requestedGear=requested;state.temperatureC=finite(state.engineTemperatureC,state.temperatureC);}
+      state.clutchEngagement=clamp(finite(controls.clutchEngagement,1),0,1);
+    }
+
+    _sampleEnvironment(wheelId,point,speedMps,normalLoadN) {
+      const q=this.scratch.query;q.wheelId=wheelId;for(let k=0;k<3;k++)q.worldPosition[k]=point[k];q.speedMps=speedMps;q.normalLoadN=normalLoadN;
+      // Synchronous borrowed query: providers retaining it must copy explicitly.
+      return this.environment(q,this.scratch.environmentOutput)||DEFAULT_ENVIRONMENT;
+    }
+
+    // Borrowed double-buffer view: valid through the following fixed tick.
+    // Retainers/recorders call getSnapshotCopy() outside the simulation kernel.
+    stepFixedMutable(input) {
+      if(this.disposed)throw new Error('VehiclePhysicsSession disposed');
+      const s=this.scratch,d=s.contactData,controls=s.controls,spec=this.spec;
+      this.body.resetForces(true);this.body.resetTorques(true);
+      const max=finite(spec.steering?.maximumRoadWheelAngleRad,.48);
+      controls.throttle=clamp(finite(input?.throttle,0),0,1);controls.brake=clamp(finite(input?.brake,0),0,1);controls.handbrake=clamp(finite(input?.handbrake,0),0,1);
+      controls.steer=clamp(finite(input?.steer,0)*clamp(finite(this.damage?.steering?.condition,1),.2,1)+finite(this.damage?.steering?.offsetRad,0),-max,max);
+      controls.handwheelAngleRad=finite(input?.handwheelAngleRad,0);controls.clutchEngagement=clamp(finite(input?.clutchEngagement,1),0,1);controls.requestedGear=input?.requestedGear??this.powertrainState.gear;
+      controls.engineCoolingCondition=clamp(finite(this.damage?.engine?.coolingCondition,1),0,1);controls.engineFire=this.damage?.engine?.fire===true;
+      this._setRequestedGear(controls);
+      const contactState=this._collectContacts(controls),contacts=this._prepareWheelLoads(contactState.contacts);
+      for(let i=0;i<4;i++){const pw=s.powertrainWheels[i],w=this.wheels[i],c=contacts[i];pw.angularSpeedRadps=finite(w.angularSpeedRadps,0);pw.normalLoadN=d.normalLoadN[i];pw.contact=(d.contact[i]!==0);pw.wheelRadiusM=spec.wheelRadiusM;}
+      const powertrain=this.core.stepPowertrainInto(s.powertrain,this.powertrainState,controls,s.powertrainWheels,FIXED_DT,spec);
+      fieldsInto(this.powertrainState,powertrain.state);
+      for(let i=0;i<4;i++){
+        const c=contacts[i],w=this.wheels[i];let mu=finite(spec.tires?.dryMu,.92);
+        if(this.chassisConfig){const speed=length(fromRapierInto(s.pointVelocity,this.body.velocityAtPoint(rapierInto(s.point,c.point),s.rapierVelocity)));
+          const e=this._sampleEnvironment(w.id,c.point,speed,d.normalLoadN[i]),wi=s.waterInput;wi.speedMps=speed;wi.waterDepthM=finite(e.waterDepthM,0);wi.normalLoadN=d.normalLoadN[i];
+          mu=finite(e.mu,.92)*this.core.waterGripFactor(wi)*this._gripScale(e,i<2?'front':'rear');}
+        const damageTire=this.damage?.tires?.[w.id];s.powertrainWheels[i].mu=mu*clamp(.45+.55*finite(damageTire?.condition,1),.35,1)*clamp(.5+.5*finite(damageTire?.pressureRatio,1),.35,1);
       }
-      if (requested !== this.powertrainState.gear) {
-        this.powertrainState = {
-          ...this.core.requestGear(this.powertrainState, this.spec, requested).state,
-          engineRpm: this.powertrainState.engineRpm,
-          clutchSlipRadps: this.powertrainState.clutchSlipRadps,
-          temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
-        };
+      const oldFront=this.brakeState.frontTemperatureC,oldRear=this.brakeState.rearTemperatureC;
+      const brakes=this.core.stepBrakesInto(s.brakes,this.brakeState,controls,s.powertrainWheels,FIXED_DT,spec);
+      s.brakeTorques.set(brakes.wheelBrakeTorquesNm);
+      const bodySpeed=length(fromRapierInto(s.pointVelocity,this.body.linvel(s.rapierVelocity)));
+      for(let i=0;i<4;i++) {const w=this.wheels[i],c=contacts[i],enabled=this.chassisConfig?.abs&&bodySpeed>2&&(d.contact[i]!==0);
+        const slip=Math.max(-finite(w.slipRatio,0),1-Math.abs(w.angularSpeedRadps*spec.wheelRadiusM)/Math.max(2,bodySpeed));
+        this.absModulation[i]=enabled?clamp(this.absModulation[i]+(slip>.18?-16:4)*FIXED_DT,.04,1):1;
+        s.locked[i]=brakes.locked[i];
+        if(enabled){const handbrake=i>=2?1600*controls.handbrake:0;s.brakeTorques[i]=Math.max(0,s.brakeTorques[i]-handbrake)*this.absModulation[i]+handbrake;
+          const e=this._sampleEnvironment(w.id,c.point,bodySpeed,d.normalLoadN[i]),grip=this._gripScale(e,i<2?'front':'rear');
+          s.locked[i]=s.brakeTorques[i]>d.normalLoadN[i]*finite(e.mu,1)*grip*spec.wheelRadiusM&&Math.abs(w.angularSpeedRadps)>.5;}
       }
-      this.powertrainState.clutchEngagement = clamp(finite(controls.clutchEngagement, 1), 0, 1);
+      fieldsInto(this.brakeState,brakes.state);
+      if(this.chassisConfig){const cooling=this.chassisDynamics.cooling;
+        for(let axle=0;axle<2;axle++){const i=axle*2,key=axle===0?'frontTemperatureC':'rearTemperatureC',old=finite(axle===0?oldFront:oldRear,20),rate=axle===0?.01:.008;
+          const original=brakes.wheelBrakeTorquesNm[i]*Math.abs(this.wheels[i].angularSpeedRadps)+brakes.wheelBrakeTorquesNm[i+1]*Math.abs(this.wheels[i+1].angularSpeedRadps);
+          const actual=s.brakeTorques[i]*Math.abs(this.wheels[i].angularSpeedRadps)+s.brakeTorques[i+1]*Math.abs(this.wheels[i+1].angularSpeedRadps);
+          const originalCooling=Math.max(0,old-20)*rate*FIXED_DT,heat=this.brakeState[key]-old+originalCooling;
+          this.brakeState[key]=clamp(old+heat*(original>0?actual/original:1)-originalCooling*cooling,20,1000);}
+      }
+      normalizeInto(rotateInto(s.bodyForward,AXIS_FORWARD,contactState.rotation),AXIS_FORWARD);normalizeInto(rotateInto(s.bodySide,AXIS_SIDE,contactState.rotation),AXIS_SIDE);
+      s.sumSuspension.fill(0);s.sumTire.fill(0);
+      const snapshot=s.snapshots[s.snapshotIndex];s.snapshotIndex^=1;
+      let frontAligning=0,frontContacts=0,bottomOut=0;
+      for(let i=0;i<4;i++){
+        const c=contacts[i],w=this.wheels[i],ws=snapshot.wheels[i],outTire=ws.tire;
+        if(d.compressionM[i]>=SUSPENSION.maxTravelM-.002)bottomOut=Math.max(bottomOut,clamp(Math.max(0,finite(d.compressionVelocityMps[i],0)-1)/2,0,2));
+        if((d.contact[i]!==0)&&d.normalLoadN[i]>0){
+          const cos=Math.cos(d.steering[i]),sin=Math.sin(d.steering[i]);
+          for(let k=0;k<3;k++){s.wheelForward[k]=s.bodyForward[k]*cos+s.bodySide[k]*sin;s.wheelSide[k]=s.bodySide[k]*cos-s.bodyForward[k]*sin;}
+          normalizeInto(s.wheelForward,s.bodyForward);normalizeInto(s.wheelSide,s.bodySide);
+          fromRapierInto(s.pointVelocity,this.body.velocityAtPoint(rapierInto(s.point,c.point),s.rapierVelocity));
+          const longitudinal=dot(s.pointVelocity,s.wheelForward),lateral=dot(s.pointVelocity,s.wheelSide);
+          const drive=clamp(finite(this.damage?.drivetrain?.condition,1),.15,1)*clamp(finite(this.damage?.engine?.powerFactor,1),.2,1);
+          const brake=clamp(finite(this.damage?.brakes?.condition,1),.15,1)*(1-clamp(finite(this.damage?.brakes?.fade,0),0,.8));
+          const inertia=this.chassisDynamics.inertia;
+          const unbraked=finite(w.angularSpeedRadps,0)+(powertrain.wheelDriveTorquesNm[i]*drive-finite(w.tire?.fxN,0)*spec.wheelRadiusM)/inertia*FIXED_DT;
+          const angular=Math.sign(unbraked)*Math.max(0,Math.abs(unbraked)-s.brakeTorques[i]*brake/inertia*FIXED_DT);
+          const rotation=(finite(w.rotationRad,0)+angular*FIXED_DT)%(Math.PI*2);
+          const e=this._sampleEnvironment(w.id,c.point,Math.abs(longitudinal),d.normalLoadN[i]),wi=s.waterInput;
+          wi.speedMps=Math.abs(longitudinal);wi.waterDepthM=finite(e.waterDepthM,0);wi.normalLoadN=d.normalLoadN[i];
+          const damageTire=this.damage?.tires?.[w.id],factor=clamp(.45+.55*finite(damageTire?.condition,1),.35,1)*clamp(.5+.5*finite(damageTire?.pressureRatio,1),.35,1);
+          const grip=this._gripScale(e,i<2?'front':'rear');
+          const mu=clamp(finite(e.mu,.92)*this.core.waterGripFactor(wi)*factor*grip,.12,1.4),input=s.wheelInput;
+          input.targetSlipRatio=(angular*spec.wheelRadiusM-longitudinal)/Math.max(.5,Math.abs(longitudinal));input.targetSlipAngleRad=Math.atan2(lateral,Math.abs(longitudinal)+.5);
+          input.longitudinalSpeedMps=longitudinal;input.normalLoadN=d.normalLoadN[i];input.wheelRadiusM=spec.wheelRadiusM;input.mu=mu;input.surface=e.surface||'asphalt';
+          input.relaxationLengthM=i<2?finite(spec.tires?.frontRelaxationLengthM,.5):finite(spec.tires?.rearRelaxationLengthM,.42);
+          input.corneringStiffnessNprad=i<2?finite(spec.tires?.frontCorneringStiffnessNprad,50000):finite(spec.tires?.rearCorneringStiffnessNprad,58000);
+          input.longitudinalStiffnessN=i<2?finite(spec.tires?.frontLongitudinalStiffnessN,52000):finite(spec.tires?.rearLongitudinalStiffnessN,50000);
+          this.core.stepWheelStateInto(w,w,input,FIXED_DT,s.tire);
+          w.tireGripScale=grip;w.effectiveMu=mu;w.aligningTorqueNm=finite(w.tire.aligningTorqueNm,0);w.combinedUtilization=clamp(finite(w.tire.utilization,0),0,1);
+          w.angularSpeedRadps=angular;w.rotationRad=rotation;w.surface=e.surface||'asphalt';w.waterDepthM=finite(e.waterDepthM,0);
+          for(let k=0;k<3;k++){s.tireForce[k]=s.wheelForward[k]*w.tire.fxN+s.wheelSide[k]*w.tire.fyN;s.suspensionForce[k]=c.normal[k]*d.normalLoadN[i];s.sumSuspension[k]+=s.suspensionForce[k];s.sumTire[k]+=s.tireForce[k];}
+          this.body.addForceAtPoint(rapierInto(s.force,s.suspensionForce),rapierInto(s.point,c.point),true);this.body.addForceAtPoint(rapierInto(s.force,s.tireForce),s.point,true);
+        }
+        w.contact=(d.contact[i]!==0)&&d.normalLoadN[i]>0;w.normalLoadN=w.contact?d.normalLoadN[i]:0;w.compressionM=d.compressionM[i];w.compressionVelocityMps=d.compressionVelocityMps[i];w.steerAngleRad=d.steering[i];
+        for(const key in w)if(key!=='tire')ws[key]=w[key];ws.tire=outTire;
+        if(w.contact)fieldsInto(outTire,w.tire);else{outTire.fxN=0;outTire.fyN=0;outTire.utilization=0;outTire.warning=false;outTire.saturated=false;outTire.capacityN=0;outTire.aligningTorqueNm=0;outTire.muEffective=0;outTire.saturationAngleRad=0;ws.aligningTorqueNm=0;ws.combinedUtilization=0;}
+        for(let k=0;k<3;k++){ws.point[k]=c.point[k];ws.normal[k]=c.normal[k];}
+        if(i<2){frontAligning+=finite(ws.aligningTorqueNm,0);if(ws.contact)frontContacts++;}
+      }
+      fromRapierInto(s.velocity,this.body.linvel(s.rapierVelocity));const planarSpeed=Math.hypot(s.velocity[0],s.velocity[2]);s.resistance.fill(0);
+      if(planarSpeed>.05){const e=this._sampleEnvironment(undefined,contactState.translation,planarSpeed,undefined),density=clamp(finite(e.airDensityKgPm3,1.2),.8,1.4);
+        const force=-(.5*density*spec.aero.dragCoefficient*spec.aero.frontalAreaM2*planarSpeed*planarSpeed+spec.massKg*9.81*.015*clamp(finite(e.rollingResistanceMultiplier,1),.5,2));
+        s.resistance[0]=s.velocity[0]/planarSpeed*force;s.resistance[2]=s.velocity[2]/planarSpeed*force;this.body.addForce(rapierInto(s.force,s.resistance),true);}
+      fromRapierInto(s.angularVelocity,this.body.angvel(s.rapierAngular));this.world.step(this.impactEvents||undefined);this.timeSeconds+=FIXED_DT;if(this.ignitionState==='starting')this.ignitionState='running';
+      const hadImpact=this._captureStaticImpacts(s.velocity,s.angularVelocity);
+      const wear=s.wear;wear.engineRpm=this.powertrainState.engineRpm;wear.engineTemperatureC=finite(this.powertrainState.engineTemperatureC,this.powertrainState.temperatureC);wear.frontBrakeTemperatureC=this.brakeState.frontTemperatureC;wear.rearBrakeTemperatureC=this.brakeState.rearTemperatureC;wear.clutchSlipPowerW=Math.abs(this.powertrainState.clutchSlipRadps*powertrain.engineTorqueNm);wear.shiftShock=0;wear.bottomOut=bottomOut;
+      this.core.applyMechanicalWearInto(this.damage,this.damage,wear,FIXED_DT);
+      const ch=snapshot.chassis,q=this.body.rotation(s.rapierRotation);fromRapierInto(ch.position,this.body.translation(s.rapierTranslation));ch.rotation[0]=q.x;ch.rotation[1]=q.y;ch.rotation[2]=q.z;ch.rotation[3]=q.w;
+      fromRapierInto(ch.linearVelocity,this.body.linvel(s.rapierVelocity));fromRapierInto(ch.angularVelocity,this.body.angvel(s.rapierAngular));
+      for(let k=0;k<3;k++){ch.acceleration[k]=(ch.linearVelocity[k]-finite(this.previousLinearVelocity[k],ch.linearVelocity[k]))/FIXED_DT;this.previousLinearVelocity[k]=ch.linearVelocity[k];snapshot.debugForces.suspensionN[k]=s.sumSuspension[k];snapshot.debugForces.tireN[k]=s.sumTire[k];snapshot.debugForces.resistanceN[k]=s.resistance[k];}
+      snapshot.timeSeconds=this.timeSeconds;snapshot.steering.frontAligningTorqueNm=frontAligning;snapshot.steering.frontContactRatio=frontContacts/2;
+      this._engineStatusInto(snapshot.engine);snapshot.engine.rpm=this.powertrainState.engineRpm;snapshot.engine.temperatureC=wear.engineTemperatureC;snapshot.engine.load=controls.throttle;snapshot.engine.torqueNm=powertrain.engineTorqueNm*clamp(finite(this.damage?.engine?.powerFactor,1),.2,1);
+      snapshot.gearbox.gear=this.powertrainState.gear;snapshot.gearbox.requestedGear=controls.requestedGear;snapshot.clutch.engagement=this.powertrainState.clutchEngagement;snapshot.clutch.slipRadps=this.powertrainState.clutchSlipRadps;
+      snapshot.brakes.frontTemperatureC=this.brakeState.frontTemperatureC;snapshot.brakes.rearTemperatureC=this.brakeState.rearTemperatureC;snapshot.brakes.frontFade=brakes.frontFade;snapshot.brakes.rearFade=brakes.rearFade;
+      for(let i=0;i<4;i++){snapshot.brakes.locked[i]=s.locked[i];snapshot.brakes.wheelBrakeTorquesNm[i]=s.brakeTorques[i];snapshot.brakes.absModulation[i]=this.absModulation[i];}
+      fieldsInto(snapshot.controls,controls);snapshot.chassisConfig=this.chassisConfig;snapshot.impact=hadImpact;this._copyImpactsInto(snapshot);
+      this.core.copyDamageInto(snapshot.damage,this.damage);
+      this.lastSnapshot=snapshot;return snapshot;
+    }
+
+    _engineStatusInto(out) {
+      const e=this.damage?.engine;out.condition=clamp(finite(e?.condition,1),0,1);out.powerFactor=clamp(finite(e?.powerFactor,1),0,1);out.fire=e?.fire===true;
+      out.fault=out.fire?'fire':out.condition<1||out.powerFactor<1?'damaged':'none';out.ignition.state=this.ignitionState;out.ignition.sequence=this.ignitionSequence;out.ignition.startedAtS=this.ignitionStartedAtS;return out;
     }
 
     stepFixed(input) {
-      if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
-      this.body.resetForces(true);
-      this.body.resetTorques(true);
-      const steeringCondition = clamp(finite(this.damage?.steering?.condition, 1), 0.2, 1);
-      const steeringOffsetRad = finite(this.damage?.steering?.offsetRad, 0);
-      const maximumRoadWheelAngleRad = finite(
-        this.spec.steering?.maximumRoadWheelAngleRad,
-        0.48,
-      );
-      const controls = {
-        throttle: clamp(finite(input?.throttle, 0), 0, 1),
-        brake: clamp(finite(input?.brake, 0), 0, 1),
-        handbrake: clamp(finite(input?.handbrake, 0), 0, 1),
-        steer: clamp(
-          finite(input?.steer, 0) * steeringCondition + steeringOffsetRad,
-          -maximumRoadWheelAngleRad,
-          maximumRoadWheelAngleRad,
-        ),
-        handwheelAngleRad: finite(input?.handwheelAngleRad, 0),
-        clutchEngagement: clamp(finite(input?.clutchEngagement, 1), 0, 1),
-        requestedGear: input?.requestedGear ?? this.powertrainState.gear,
-        engineCoolingCondition: clamp(finite(this.damage?.engine?.coolingCondition, 1), 0, 1),
-        engineFire: this.damage?.engine?.fire === true,
-      };
-      this._setRequestedGear(controls);
-      this.body.resetForces?.(true);
-      this.body.resetTorques?.(true);
-
-      const contactState = this._collectContacts(controls);
-      const loadedContacts = this._prepareWheelLoads(contactState.contacts);
-      const powertrainWheels = loadedContacts.map((contact, index) => ({
-        id: this.wheels[index].id,
-        axle: this.wheels[index].axle,
-        angularSpeedRadps: finite(this.wheels[index].angularSpeedRadps, 0),
-        normalLoadN: contact.normalLoadN,
-        contact: contact.contact,
-      }));
-      const powertrain = this.core.stepPowertrain(
-        this.powertrainState,
-        controls,
-        powertrainWheels,
-        FIXED_DT,
-        this.spec,
-      );
-      this.powertrainState = { ...powertrain.state };
-      const brakeWheels = loadedContacts.map((contact, index) => {
-        let mu = finite(this.spec.tires?.dryMu, 0.92);
-        if (this.chassisConfig) {
-          const speedMps = Math.hypot(...fromRapierVector(this.body.velocityAtPoint(toRapierVector(contact.point))));
-          const environment = this.environment({ wheelId: this.wheels[index].id,
-            worldPosition: contact.point.slice(), speedMps, normalLoadN: contact.normalLoadN }) || {};
-          const waterFactor = this.core.waterGripFactor({ speedMps, waterDepthM: finite(environment.waterDepthM, 0), normalLoadN: contact.normalLoadN });
-          mu = finite(environment.mu, .92) * waterFactor
-            * root.AsfaltoV6Chassis.chassisGripScale(this.chassisConfig, environment, index < 2 ? 'front' : 'rear');
-        }
-        return { ...powertrainWheels[index], mu, wheelRadiusM: this.spec.wheelRadiusM };
-      });
-      const damagedBrakeWheels = brakeWheels.map((wheel, index) => {
-        const tireDamage = this.damage?.tires?.[this.wheels[index].id] || {};
-        const tireFactor = clamp(0.45 + 0.55 * finite(tireDamage.condition, 1), 0.35, 1)
-          * clamp(0.5 + 0.5 * finite(tireDamage.pressureRatio, 1), 0.35, 1);
-        return { ...wheel, mu: wheel.mu * tireFactor };
-      });
-
-      const brakeResult = this.core.stepBrakes(
-        this.brakeState,
-        controls,
-        damagedBrakeWheels,
-        FIXED_DT,
-        this.spec,
-      );
-      const brakes = { ...brakeResult, wheelBrakeTorquesNm: Array.from(brakeResult.wheelBrakeTorquesNm),
-        locked: Array.from(brakeResult.locked) };
-      const bodySpeedMps = Math.hypot(...fromRapierVector(this.body.linvel()));
-      for (let index = 0; index < 4; index += 1) {
-        const wheel = this.wheels[index];
-        const enabled = this.chassisConfig?.abs && bodySpeedMps > 2 && loadedContacts[index].contact;
-        const slip = Math.max(-finite(wheel.slipRatio, 0),
-          1 - Math.abs(wheel.angularSpeedRadps * this.spec.wheelRadiusM) / Math.max(2, bodySpeedMps));
-        this.absModulation[index] = enabled
-          ? clamp(this.absModulation[index] + (slip > .18 ? -16 : 4) * FIXED_DT, .04, 1) : 1;
-        if (enabled) {
-          const handbrakeNm = index >= 2 ? 1600 * controls.handbrake : 0;
-          brakes.wheelBrakeTorquesNm[index] = Math.max(0, brakes.wheelBrakeTorquesNm[index] - handbrakeNm)
-            * this.absModulation[index] + handbrakeNm;
-          const contact = loadedContacts[index];
-          const environment = this.environment({ wheelId: wheel.id, worldPosition: contact.point.slice(),
-            speedMps: bodySpeedMps, normalLoadN: contact.normalLoadN }) || {};
-          const gripScale = root.AsfaltoV6Chassis.chassisGripScale(this.chassisConfig, environment, index < 2 ? 'front' : 'rear');
-          const capacityNm = contact.normalLoadN * finite(environment.mu, 1) * gripScale * this.spec.wheelRadiusM;
-          brakes.locked[index] = brakes.wheelBrakeTorquesNm[index] > capacityNm && Math.abs(wheel.angularSpeedRadps) > .5;
-        }
-      }
-      const previousBrakeState = this.brakeState;
-      this.brakeState = { ...brakes.state };
-      if (this.chassisConfig) {
-        const cooling = root.AsfaltoV6Chassis.chassisCoolingScale(this.chassisConfig);
-        for (const [axle, indices, rate] of [['front', [0, 1], .01], ['rear', [2, 3], .008]]) {
-          const key = axle + 'TemperatureC', oldTemperature = finite(previousBrakeState[key], 20);
-          const originalPower = indices.reduce((sum, i) => sum + brakeResult.wheelBrakeTorquesNm[i] * Math.abs(this.wheels[i].angularSpeedRadps), 0);
-          const actualPower = indices.reduce((sum, i) => sum + brakes.wheelBrakeTorquesNm[i] * Math.abs(this.wheels[i].angularSpeedRadps), 0);
-          const workScale = originalPower > 0 ? actualPower / originalPower : 1;
-          const originalCooling = Math.max(0, oldTemperature - 20) * rate * FIXED_DT;
-          const generatedHeat = this.brakeState[key] - oldTemperature + originalCooling;
-          this.brakeState[key] = clamp(oldTemperature + generatedHeat * workScale - originalCooling * cooling, 20, 1000);
-        }
-      }
-
-      const bodyRotation = contactState.rotation;
-      const bodyForward = normalized(rotateByQuaternion([1, 0, 0], bodyRotation), [1, 0, 0]);
-      const bodySide = normalized(rotateByQuaternion([0, 0, 1], bodyRotation), [0, 0, 1]);
-      const wheelSnapshots = [];
-      let accumulatedSuspensionForce = [0, 0, 0];
-      let accumulatedTireForce = [0, 0, 0];
-      for (let index = 0; index < loadedContacts.length; index += 1) {
-        const contact = loadedContacts[index];
-        const wheel = this.wheels[index];
-        if (!contact.contact || contact.normalLoadN <= 0) {
-          this.wheels[index] = {
-            ...wheel,
-            contact: false,
-            normalLoadN: 0,
-            compressionM: contact.compressionM,
-            compressionVelocityMps: contact.compressionVelocityMps,
-            steerAngleRad: contact.steering,
-          };
-          wheelSnapshots.push({
-            ...this.wheels[index],
-            aligningTorqueNm: 0,
-            combinedUtilization: 0,
-            point: contact.point,
-            normal: contact.normal,
-            tire: { fxN: 0, fyN: 0, utilization: 0, warning: false, saturated: false, capacityN: 0 },
-          });
-          continue;
-        }
-        const steerCos = Math.cos(contact.steering);
-        const steerSin = Math.sin(contact.steering);
-        const wheelForward = normalized(add(scale(bodyForward, steerCos), scale(bodySide, steerSin)), bodyForward);
-        const wheelSide = normalized(add(scale(bodySide, steerCos), scale(bodyForward, -steerSin)), bodySide);
-        const pointVelocity = fromRapierVector(this.body.velocityAtPoint(toRapierVector(contact.point)));
-        const longitudinalSpeedMps = dot(pointVelocity, wheelForward);
-        const lateralSpeedMps = dot(pointVelocity, wheelSide);
-        const driveCondition = clamp(finite(this.damage?.drivetrain?.condition, 1), 0.15, 1)
-          * clamp(finite(this.damage?.engine?.powerFactor, 1), 0.2, 1);
-        const brakeCondition = clamp(finite(this.damage?.brakes?.condition, 1), 0.15, 1)
-          * (1 - clamp(finite(this.damage?.brakes?.fade, 0), 0, 0.8));
-        const wheelInertiaKgM2 = root.AsfaltoV6Chassis?.chassisWheelInertia(this.chassisConfig) || 1.8;
-        const driveAndTireTorqueNm = powertrain.wheelDriveTorquesNm[index] * driveCondition
-          - finite(wheel.tire?.fxN, 0) * this.spec.wheelRadiusM;
-        const unbrakedAngularSpeedRadps = finite(wheel.angularSpeedRadps, 0)
-          + driveAndTireTorqueNm / wheelInertiaKgM2 * FIXED_DT;
-        const brakeAngularDeltaRadps = brakes.wheelBrakeTorquesNm[index]
-          * brakeCondition / wheelInertiaKgM2 * FIXED_DT;
-        const angularSpeedRadps = Math.sign(unbrakedAngularSpeedRadps)
-          * Math.max(0, Math.abs(unbrakedAngularSpeedRadps) - brakeAngularDeltaRadps);
-        const targetSlipRatio = (angularSpeedRadps * this.spec.wheelRadiusM - longitudinalSpeedMps)
-          / Math.max(0.5, Math.abs(longitudinalSpeedMps));
-        const targetSlipAngleRad = Math.atan2(lateralSpeedMps, Math.abs(longitudinalSpeedMps) + 0.5);
-        const environment = this.environment({
-          wheelId: wheel.id,
-          worldPosition: contact.point.slice(),
-          speedMps: Math.abs(longitudinalSpeedMps),
-          normalLoadN: contact.normalLoadN,
-        }) || {};
-        const waterFactor = this.core.waterGripFactor({
-          speedMps: Math.abs(longitudinalSpeedMps),
-          waterDepthM: finite(environment.waterDepthM, 0),
-          normalLoadN: contact.normalLoadN,
-        });
-        const tireDamage = this.damage?.tires?.[wheel.id] || {};
-        const tireFactor = clamp(0.45 + 0.55 * finite(tireDamage.condition, 1), 0.35, 1)
-          * clamp(0.5 + 0.5 * finite(tireDamage.pressureRatio, 1), 0.35, 1);
-        const tireGripScale = root.AsfaltoV6Chassis?.chassisGripScale(this.chassisConfig, environment, index < 2 ? 'front' : 'rear') || 1;
-        const effectiveMu = clamp(finite(environment.mu, 0.92) * waterFactor * tireFactor * tireGripScale, 0.12, 1.4);
-        const stepped = this.core.stepWheelState(wheel, {
-          targetSlipAngleRad,
-          targetSlipRatio,
-          longitudinalSpeedMps,
-          normalLoadN: contact.normalLoadN,
-          wheelRadiusM: this.spec.wheelRadiusM,
-          mu: effectiveMu,
-          surface: environment.surface || 'asphalt',
-          relaxationLengthM: index < 2
-            ? finite(this.spec.tires?.frontRelaxationLengthM, 0.5)
-            : finite(this.spec.tires?.rearRelaxationLengthM, 0.42),
-          corneringStiffnessNprad: index < 2
-            ? finite(this.spec.tires?.frontCorneringStiffnessNprad, 50_000)
-            : finite(this.spec.tires?.rearCorneringStiffnessNprad, 58_000),
-          longitudinalStiffnessN: index < 2
-            ? finite(this.spec.tires?.frontLongitudinalStiffnessN, 52_000)
-            : finite(this.spec.tires?.rearLongitudinalStiffnessN, 50_000),
-        }, FIXED_DT);
-        const rotationRad = (finite(wheel.rotationRad, 0) + angularSpeedRadps * FIXED_DT) % (Math.PI * 2);
-        const tireForce = add(scale(wheelForward, stepped.tire.fxN), scale(wheelSide, stepped.tire.fyN));
-        const suspensionForce = scale(contact.normal, contact.normalLoadN);
-        accumulatedSuspensionForce = add(accumulatedSuspensionForce, suspensionForce);
-        accumulatedTireForce = add(accumulatedTireForce, tireForce);
-        this.body.addForceAtPoint(toRapierVector(suspensionForce), toRapierVector(contact.point), true);
-        this.body.addForceAtPoint(toRapierVector(tireForce), toRapierVector(contact.point), true);
-        this.wheels[index] = {
-          ...stepped,
-          tireGripScale, effectiveMu,
-          aligningTorqueNm: finite(stepped.tire?.aligningTorqueNm, 0),
-          combinedUtilization: clamp(finite(stepped.tire?.utilization, 0), 0, 1),
-          angularSpeedRadps,
-          rotationRad,
-          contact: true,
-          normalLoadN: contact.normalLoadN,
-          compressionM: contact.compressionM,
-          compressionVelocityMps: contact.compressionVelocityMps,
-          steerAngleRad: contact.steering,
-          surface: environment.surface || 'asphalt',
-          waterDepthM: finite(environment.waterDepthM, 0),
-        };
-        wheelSnapshots.push({
-          ...this.wheels[index],
-          point: contact.point,
-          normal: contact.normal,
-        });
-      }
-
-      const velocity = fromRapierVector(this.body.linvel());
-      const planarVelocity = [velocity[0], 0, velocity[2]];
-      const planarSpeed = length(planarVelocity);
-      let resistance = [0, 0, 0];
-      if (planarSpeed > 0.05) {
-        const environment = this.environment({ worldPosition: contactState.translation.slice(), speedMps: planarSpeed }) || {};
-        const density = clamp(finite(environment.airDensityKgPm3, 1.2), 0.8, 1.4);
-        const dragN = 0.5 * density * this.spec.aero.dragCoefficient
-          * this.spec.aero.frontalAreaM2 * planarSpeed * planarSpeed;
-        const rollingN = this.spec.massKg * 9.81 * 0.015
-          * clamp(finite(environment.rollingResistanceMultiplier, 1), 0.5, 2);
-        resistance = scale(normalized(planarVelocity, [1, 0, 0]), -(dragN + rollingN));
-        this.body.addForce(toRapierVector(resistance), true);
-      }
-
-      const preImpactAngularVelocity = fromRapierVector(this.body.angvel());
-      this.world.step(this.impactEvents || undefined);
-      this.timeSeconds += FIXED_DT;
-      if (this.ignitionState === 'starting') this.ignitionState = 'running';
-      const hadStaticImpact = this._captureStaticImpacts(velocity, preImpactAngularVelocity);
-      const translation = this.body.translation();
-      this.damage = this.core.applyMechanicalWear(this.damage, {
-        engineRpm: this.powertrainState.engineRpm,
-        engineTemperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
-        frontBrakeTemperatureC: this.brakeState.frontTemperatureC,
-        rearBrakeTemperatureC: this.brakeState.rearTemperatureC,
-        clutchSlipPowerW: Math.abs(this.powertrainState.clutchSlipRadps * powertrain.engineTorqueNm),
-        shiftShock: 0,
-        bottomOut: loadedContacts.reduce((severity, contact) => {
-          if (contact.compressionM < SUSPENSION.maxTravelM - 0.002) return severity;
-          const impactSpeedMps = Math.max(0, finite(contact.compressionVelocityMps, 0) - 1);
-          return Math.max(severity, clamp(impactSpeedMps / 2, 0, 2));
-        }, 0),
-      }, FIXED_DT);
-
-      const rotation = this.body.rotation();
-      const linearVelocity = this.body.linvel();
-      const angularVelocity = this.body.angvel();
-      const currentLinearVelocity = fromRapierVector(linearVelocity);
-      const acceleration = currentLinearVelocity.map(
-        (value, index) => (value - finite(this.previousLinearVelocity?.[index], value)) / FIXED_DT,
-      );
-      this.previousLinearVelocity = currentLinearVelocity.slice();
-      const frontWheels = wheelSnapshots.slice(0, 2);
-      const snapshot = {
-        fixedHz: 120,
-        timeSeconds: this.timeSeconds,
-        chassis: {
-          position: [translation.x, translation.y, translation.z],
-          rotation: [rotation.x, rotation.y, rotation.z, rotation.w],
-          linearVelocity: currentLinearVelocity,
-          angularVelocity: [angularVelocity.x, angularVelocity.y, angularVelocity.z],
-          acceleration,
-        },
-        wheels: wheelSnapshots,
-        steering: {
-          frontAligningTorqueNm: frontWheels.reduce(
-            (sum, wheel) => sum + finite(wheel.aligningTorqueNm, 0),
-            0,
-          ),
-          frontContactRatio: frontWheels.length
-            ? frontWheels.filter(wheel => wheel.contact).length / frontWheels.length
-            : 0,
-        },
-        engine: {
-          ...this._engineStatus(),
-          rpm: this.powertrainState.engineRpm,
-          temperatureC: finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC),
-          load: controls.throttle,
-          torqueNm: powertrain.engineTorqueNm
-            * clamp(finite(this.damage?.engine?.powerFactor, 1), 0.2, 1),
-        },
-        gearbox: {
-          gear: this.powertrainState.gear,
-          requestedGear: controls.requestedGear,
-        },
-        clutch: {
-          engagement: this.powertrainState.clutchEngagement,
-          slipRadps: this.powertrainState.clutchSlipRadps,
-        },
-        brakes: {
-          frontTemperatureC: this.brakeState.frontTemperatureC,
-          rearTemperatureC: this.brakeState.rearTemperatureC,
-          locked: Array.from(brakes.locked),
-          wheelBrakeTorquesNm: Array.from(brakes.wheelBrakeTorquesNm),
-          absModulation: this.absModulation.slice(),
-          frontFade: brakes.frontFade,
-          rearFade: brakes.rearFade,
-        },
-        controls,
-        chassisConfig: this.chassisConfig ? { ...this.chassisConfig } : null,
-        impact: hadStaticImpact,
-        impacts: this.impacts.slice(),
-        damage: this.damage,
-        debugForces: {
-          suspensionN: accumulatedSuspensionForce,
-          tireN: accumulatedTireForce,
-          resistanceN: resistance,
-        },
-      };
-      this.lastSnapshot = this.core.finiteSnapshot(snapshot);
+      const snapshot=this.stepFixedMutable(input);
+      if(!this.mutableSnapshots)this.lastSnapshot=this.core.finiteSnapshot(snapshot);
       return this.lastSnapshot;
     }
+
+    getSnapshotCopy() { return this.lastSnapshot ? this.core.finiteSnapshot(this.lastSnapshot) : null; }
 
     step(deltaSeconds, controls) {
       if (Math.abs(finite(deltaSeconds, 0) - FIXED_DT) > 1e-12) {
@@ -1170,81 +967,110 @@
       return this.stepFixed(controls);
     }
 
-    _captureStaticImpacts(linearVelocity, angularVelocity) {
-      if (!this.impactEvents || !this.world.contactPair) return false;
-      const contacts = new Map(), center = fromRapierVector(this.body.translation());
-      const ownHandles = new Set(this.colliders.map(collider => collider.handle));
-      // Rapier 0.20 clears solver contacts after stepping; force events retain
-      // the solved impulses (force * fixed dt), including CCD contacts.
-      this.impactEvents.drainContactForceEvents(event => {
-        const a = event.collider1(), b = event.collider2();
-        const ownHandle = ownHandles.has(a) ? a : ownHandles.has(b) ? b : null;
-        if (ownHandle === null) return;
-        const own = this.world.getCollider(ownHandle), other = this.world.getCollider(ownHandle===a?b:a);
-        if (!other || (other.parent() && !other.parent().isFixed())) return;
-        const impulseNs = Math.max(0, finite(event.totalForceMagnitude(), 0)) * FIXED_DT;
-        const normal = fromRapierVector(event.maxForceDirection());
-        let point = null;
-        this.world.contactPair(own, other, (manifold, flipped) => {
-          if (point || !manifold.numContacts()) return;
-          // Local contact positions are relative to the collider, not its body.
-          const local = fromRapierVector(flipped ? manifold.localContactPoint2(0) : manifold.localContactPoint1(0));
-          point = add(fromRapierVector(own.translation()), rotateByQuaternion(local, own.rotation()));
-        });
-        if (!point) return; // No contact geometry: do not invent a damage location.
-        const r = point.map((v, i) => v - center[i]), w = angularVelocity;
-        const pointVelocity = [linearVelocity[0]+w[1]*r[2]-w[2]*r[1],
-          linearVelocity[1]+w[2]*r[0]-w[0]*r[2],linearVelocity[2]+w[0]*r[1]-w[1]*r[0]];
-        const previous = contacts.get(other.handle);
-        contacts.set(other.handle, { impulseNs: impulseNs+(previous?.impulseNs||0), point,
-          speed: Math.max(Math.abs(dot(pointVelocity, normal)), previous?.speed||0),
-          material: other.asfaltoContactMaterial || 'unknown' });
-      });
-      let impacted = false;
-      for (const [handle, contact] of contacts) {
-        // Gravity/resting solver impulses do not damage the car. A cooldown
-        // coalesces successive solver frames of the same collision.
-        if (contact.impulseNs < this.spec.massKg * .65 || contact.speed < 2
-            || this.timeSeconds - (this.staticImpactTimes.get(handle) ?? -Infinity) < .3) continue;
-        const q = this.body.rotation();
-        const localPointM = rotateByQuaternion(contact.point.map((v, i) => v-center[i]), {x:-q.x,y:-q.y,z:-q.z,w:q.w});
-        this.staticImpactTimes.set(handle, this.timeSeconds);
-        this.applyImpact({ impulseNs:contact.impulseNs, localPointM, otherId:'world', material:contact.material,
-          relativeVelocityMps:linearVelocity });
-        impacted = true;
+    reserveImpactContacts() {
+      // Collider lifecycle boundary. Register new scene colliders before stepping.
+      if(!this._impactRegistry){this._impactRegistry=new Map();this._impactRecords=[];this._activeImpactIndices=[];
+        this._impactOwnHandles=new Set(this.colliders.map(c=>c.handle));
+        this._impactDrain=event=>this._onContactForce(event);
+        this._impactManifold=(manifold,flipped)=>{
+          if(this._impactHasPoint||!manifold.numContacts())return;
+          const s=this.scratch,own=this._impactOwn;
+          fromRapierInto(s.impactLocal,flipped?manifold.localContactPoint2(0,s.rapierLocal):manifold.localContactPoint1(0,s.rapierLocal));
+          rotateInto(s.impactPoint,s.impactLocal,own.rotation(s.rapierOtherRotation));fromRapierInto(s.impactOrigin,own.translation(s.rapierOrigin));
+          for(let k=0;k<3;k++)s.impactPoint[k]+=s.impactOrigin[k];this._impactHasPoint=true;
+        };
+        this._registerImpactCollider=collider=>{if(this._impactRegistry.has(collider.handle))return;
+          const record={index:this._impactRecords.length,handle:collider.handle,point:[0,0,0],impulseNs:0,speed:0,material:'unknown',tick:-1,lastTime:-Infinity};
+          this._impactRegistry.set(collider.handle,record);this._impactRecords.push(record);};
       }
-      for (const [handle, time] of this.staticImpactTimes) if(this.timeSeconds-time>1) this.staticImpactTimes.delete(handle);
+      if(!this._inImpactDrain) {
+        for(let i=this._impactRecords.length-1;i>=0;i--)if(!this.world.getCollider(this._impactRecords[i].handle)) {
+          this._impactRegistry.delete(this._impactRecords[i].handle);this._impactRecords.splice(i,1);
+        }
+        for(let i=0;i<this._impactRecords.length;i++)this._impactRecords[i].index=i;
+      }
+      this.world.forEachCollider?.(this._registerImpactCollider);
+      if(this._activeImpactIndices.length<this._impactRecords.length) {
+        const previous=this._activeImpactIndices;this._activeImpactIndices=new Uint32Array(this._impactRecords.length);this._activeImpactIndices.set(previous);
+      }
+    }
+
+    _onContactForce(event) {
+      const a=event.collider1(),b=event.collider2(),ownHandle=this._impactOwnHandles.has(a)?a:this._impactOwnHandles.has(b)?b:null;
+      if(ownHandle===null)return;
+      const own=this.world.getCollider(ownHandle),other=this.world.getCollider(ownHandle===a?b:a);
+      if(!other||(other.parent()&&!other.parent().isFixed()))return;
+      let record=this._impactRegistry.get(other.handle);
+      // Compatibility for external callers adding colliders without the lifecycle hook.
+      // Browser integration reserves at scene refresh; this fallback is exceptional/cold.
+      if(!record){this.reserveImpactContacts();record=this._impactRegistry.get(other.handle);if(!record)return;}
+      const s=this.scratch,impulse=Math.max(0,finite(event.totalForceMagnitude(),0))*FIXED_DT;
+      fromRapierInto(s.impactNormal,event.maxForceDirection(s.rapierNormal));
+      this._impactOwn=own;this._impactHasPoint=false;this.world.contactPair(own,other,this._impactManifold);
+      if(!this._impactHasPoint)return;
+      const p=s.impactPoint,c=s.impactCenter,w=s.angularVelocity,v=s.velocity,rx=p[0]-c[0],ry=p[1]-c[1],rz=p[2]-c[2];
+      vectorInto(s.impactVelocity,v[0]+w[1]*rz-w[2]*ry,v[1]+w[2]*rx-w[0]*rz,v[2]+w[0]*ry-w[1]*rx);
+      const speed=Math.abs(dot(s.impactVelocity,s.impactNormal));
+      if(record.tick!==this.timeSeconds){record.tick=this.timeSeconds;record.impulseNs=0;record.speed=0;this._activeImpactIndices[this._activeImpactCount++]=record.index;}
+      record.impulseNs+=impulse;record.speed=Math.max(speed,record.speed);record.material=other.asfaltoContactMaterial||'unknown';
+      for(let k=0;k<3;k++)record.point[k]=p[k];
+    }
+
+    _captureStaticImpacts(linearVelocity, angularVelocity) {
+      if(!this.impactEvents||!this.world.contactPair)return false;
+      const s=this.scratch;fromRapierInto(s.impactCenter,this.body.translation(s.rapierTranslation));
+      // Inputs ordinarily already alias s.velocity/angularVelocity.
+      for(let k=0;k<3;k++){s.velocity[k]=linearVelocity[k];s.angularVelocity[k]=angularVelocity[k];}
+      this._activeImpactCount=0;this._inImpactDrain=true;
+      try {this.impactEvents.drainContactForceEvents(this._impactDrain);} finally {this._inImpactDrain=false;}
+      let impacted=false;
+      for(let i=0;i<this._activeImpactCount;i++) {const c=this._impactRecords[this._activeImpactIndices[i]];
+        if(c.impulseNs<this.spec.massKg*.65||c.speed<2||this.timeSeconds-c.lastTime<.3)continue;
+        const q=this.body.rotation(s.rapierRotation);s.impactRotation.x=-q.x;s.impactRotation.y=-q.y;s.impactRotation.z=-q.z;s.impactRotation.w=q.w;
+        for(let k=0;k<3;k++)s.impactLocal[k]=c.point[k]-s.impactCenter[k];
+        rotateInto(s.impactInput.localPointM,s.impactLocal,s.impactRotation);s.impactInput.impulseNs=c.impulseNs;s.impactInput.otherId='world';s.impactInput.material=c.material;s.impactInput.relativeVelocityMps=s.velocity;
+        c.lastTime=this.timeSeconds;this._applyImpactMutable(s.impactInput);impacted=true;
+      }
       return impacted;
     }
 
+    _applyImpactMutable(event) {
+      const s=this.scratch,impulse=Math.max(0,finite(event?.impulseNs,0)),record=s.impactHistory[s.impactHistoryIndex];s.impactHistoryIndex=(s.impactHistoryIndex+1)%8;
+      record.timeSeconds=this.timeSeconds;record.impulseNs=impulse;record.magnitude=clamp(impulse/20000,0,1);record.otherId=String(event?.otherId||'world');record.material=String(event?.material||'unknown');
+      for(let k=0;k<3;k++){record.localPointM[k]=finite(event?.localPointM?.[k],0);record.relativeVelocityMps[k]=finite(event?.relativeVelocityMps?.[k],0);}
+      this.core.applyImpactDamageInto(this.damage,this.damage,record);
+      if(this.impacts.length===8){for(let i=0;i<7;i++)this.impacts[i]=this.impacts[i+1];this.impacts[7]=record;}else this.impacts.push(record);
+    }
+
     applyImpact(event) {
-      if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
-      const impulseNs = Math.max(0, finite(event?.impulseNs, 0));
-      const localPointM = Array.isArray(event?.localPointM)
-        ? event.localPointM.slice(0, 3).map(value => finite(value, 0))
-        : [0, 0, 0];
-      while (localPointM.length < 3) localPointM.push(0);
-      const record = Object.freeze({
-        timeSeconds: this.timeSeconds,
-        impulseNs,
-        magnitude: clamp(impulseNs / 20_000, 0, 1),
-        localPointM: Object.freeze(localPointM),
-        otherId: String(event?.otherId || 'world'),
-        material: String(event?.material || 'unknown'),
-        relativeVelocityMps: Object.freeze([0,1,2].map(i=>finite(event?.relativeVelocityMps?.[i],0))),
-      });
-      this.damage = this.core.applyImpactDamage(this.damage, { impulseNs, localPointM });
-      this.impacts = [...this.impacts.slice(-7), record];
-      if (this.lastSnapshot) {
-        this.lastSnapshot = this.core.finiteSnapshot({
-          ...this.lastSnapshot,
-          engine: { ...this.lastSnapshot.engine, ...this._engineStatus() },
-          impact: impulseNs > 0,
-          impacts: this.impacts.slice(),
-          damage: this.damage,
-        });
+      if(this.disposed)throw new Error('VehiclePhysicsSession disposed');
+      this._applyImpactMutable(event);
+      // An external discrete collision can occur between fixed ticks.
+      if(this.lastSnapshot){
+        if(!this.mutableSnapshots||Object.isFrozen(this.lastSnapshot)) {
+          this.lastSnapshot=this.core.finiteSnapshot({...this.lastSnapshot,engine:{...this.lastSnapshot.engine,...this._engineStatus()},impact:finite(event?.impulseNs,0)>0,impacts:this.impacts,damage:this.damage});
+        } else {
+          this._engineStatusInto(this.lastSnapshot.engine);this.lastSnapshot.impact=finite(event?.impulseNs,0)>0;
+          this.core.copyDamageInto(this.lastSnapshot.damage,this.damage);this._copyImpactsInto(this.lastSnapshot);
+        }
       }
       return this.lastSnapshot;
+    }
+
+    _copyImpactsInto(snapshot) {
+      snapshot.impacts.length=this.impacts.length;
+      const slots=snapshot===this.scratch.snapshots[0]?this.scratch.impactSnapshotSlots[0]:this.scratch.impactSnapshotSlots[1];
+      for(let i=0;i<this.impacts.length;i++){const source=this.impacts[i],out=slots[i];
+        out.timeSeconds=source.timeSeconds;out.impulseNs=source.impulseNs;out.magnitude=source.magnitude;out.otherId=source.otherId;out.material=source.material;
+        for(let k=0;k<3;k++){out.localPointM[k]=source.localPointM[k];out.relativeVelocityMps[k]=source.relativeVelocityMps[k];}snapshot.impacts[i]=out;
+      }
+    }
+
+    _gripScale(environment, axle) {
+      if(!this.chassisConfig)return 1;
+      const d=this.chassisDynamics,wetness=clamp(Number.isFinite(environment.wetness)?environment.wetness:environment.surface==='wet'||environment.waterDepthM>0?1:0,0,1),surface=environment.surface;
+      const loose=surface==='gravel'||surface==='grass'||surface==='dirt'||surface==='sand'||surface==='mud'||environment.surfaceState==='dust';
+      return axle==='rear'?(loose?d.rearLoose:d.rearDry+(d.rearWet-d.rearDry)*wetness):(loose?d.frontLoose:d.frontDry+(d.frontWet-d.frontDry)*wetness);
     }
 
     reset(options) {
@@ -1252,7 +1078,7 @@
       const frame = options?.frame || options?.spawn || {};
       this.teleport(frame, { x: 0, y: 0, z: 0 });
       const state = this.core.createVehicleState(this.spec);
-      this.wheels = state.wheels.map(wheel => ({ ...wheel }));
+      this.wheels = state.wheels.map(wheel => ({ ...wheel, tire: {} }));
       this.previousCompression.fill(NaN);
       const initialGear = Number.isInteger(options?.initialGear) && options.initialGear >= -1 && options.initialGear <= this.spec.gearbox.forward.length ? options.initialGear : 1;
       const initialClutchEngagement = initialGear === 0 ? 0 : 1;
@@ -1270,9 +1096,8 @@
         rearTemperatureC: 20,
       };
       this.absModulation = [1, 1, 1, 1];
-      if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
-      else if (options?.damageState) this.damage = this.core.finiteSnapshot(options.damageState);
-      else if (options?.resetDamage !== false) this.damage = this.core.createDamageState();
+      if (options?.damageState) this.core.copyDamageInto(this.damage, options.damageState);
+      else if (options?.resetDamage !== false) this.damage = this.core.createMutableDamageState();
       if (options?.resetClock !== false) this.timeSeconds = 0;
       if (options?.startEngine === true) {
         this.ignitionSequence = ++nextIgnitionSequence;
@@ -1341,6 +1166,7 @@
     teleport(spawn, linearVelocity = { x: 0, y: 0, z: 0 }) {
       if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
       this.staticImpactTimes.clear();
+      for(const record of this._impactRecords){record.lastTime=-Infinity;record.tick=-1;}
       this.impactEvents?.clear();
       const yaw = finite(spawn?.yawRad, 0);
       const suppliedRotation = Array.isArray(spawn?.rotation) && spawn.rotation.length >= 4

@@ -1,4 +1,4 @@
-import { COCKPIT_CALIBRATION_DEFAULTS, sanitizeCockpitCalibration } from './vehicle-camera-rig.mjs?v=11b71ce35d0b2e5d';
+import { COCKPIT_CALIBRATION_DEFAULTS, sanitizeCockpitCalibration } from './vehicle-camera-rig.mjs?v=11143673a6d2f5d7';
 
 const TRANSFORM_DEFAULTS = Object.freeze({
   position: Object.freeze([0, 0, 0]),

@@ -2,18 +2,18 @@ import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=0582cef83086d
 import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=ba691f7996493921';
-import {configureSurfaceRelief,installSurfaceRelief} from './surface-relief.mjs?v=dc7a4421c4479e97';
+import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=24cd5d52423b7125';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=f513705554b15af5';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=bbbf571860026333';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=9d7ddd559b41734b';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=77ea30e07072decd';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=66db38fcb568b36c';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
-import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=4a7b14bc2b90e2b7';
+import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=b66ea68fdcd8a34c';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=9535a171be7c3c52';
 import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs?v=b7edee06e0b828be';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs?v=7782bd35eb4862d7';
@@ -222,6 +222,7 @@ export function improveAuthoredSurfaces(root, { THREE, id, textures, query, leng
       if ((id === 'cuesta_lipan' && material.name === 'V2_TERRAIN_PBR') || (id === 'aconcagua_horcones' && /MAT_P1_TERRAIN_/.test(material.name))) terrainSheets.add(mesh);
       if (FOREST_TRACKS.has(id) && /(Terrain_Andean|MAT_TERRAIN_|MAT_PEAT)/.test(material.name)) forestSheets.add(mesh);
       metricUV(THREE, mesh, rule.metres);
+      if(/MAT_basalt|M_Rock_|Rock_PBR|MAT_ROCK|V2_ROCK_PBR/.test(material.name))prepareSurfaceReliefGeometry(mesh.geometry);
       mesh.receiveShadow = true;
       if (processed.has(material)) continue;
       processed.add(material);

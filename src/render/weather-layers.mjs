@@ -1,3 +1,4 @@
+import {createGpuSnowstorm} from './gpu-snowstorm.mjs?v=033289400028667c';
 const NOISE = `
 float anHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float anNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(anHash(i),anHash(i+vec2(1,0)),f.x),mix(anHash(i+vec2(0,1)),anHash(i+vec2(1)),f.x),f.y);}
@@ -11,7 +12,7 @@ export function effectsQuad(THREE, count, seed = 6147) {
 }
 const LOG_VERTEX = '#include <common>\n#include <logdepthbuf_pars_vertex>';
 const LOG_FRAGMENT = '#include <logdepthbuf_pars_fragment>';
-export function createWeatherLayers(THREE, parent) {
+export function createWeatherLayers(THREE, parent, {renderer=null}={}) {
   const shared={uTime:{value:0},uCenter:{value:new THREE.Vector3()},uRight:{value:new THREE.Vector3(1,0,0)},uUp:{value:new THREE.Vector3(0,1,0)},uVelocity:{value:new THREE.Vector3()},uWind:{value:1},uWindVector:{value:new THREE.Vector3(1,0,.3)},uColor:{value:new THREE.Color('#c1d0d5')}};
   const rainUniforms={...shared,uIntensity:{value:0},uSnow:{value:0},uSnowIntensity:{value:0},uSnowDetail:{value:1},uSnowTurbulence:{value:.65},uSnowLayerSplit:{value:new THREE.Vector2(.48,.82)},uSnowSizeScale:{value:1},uSnowOpacity:{value:1},uSnowColor:{value:new THREE.Color()},uSnowExtents:{value:[new THREE.Vector3(18,14,24),new THREE.Vector3(42,24,48),new THREE.Vector3(78,36,92)]},uGround:{value:0},uCarInverse:{value:new THREE.Matrix4()},uEnclosed:{value:0}};
   const precipitationMaterial=new THREE.ShaderMaterial({name:'AN_ScaledPrecipitation',uniforms:rainUniforms,transparent:true,depthWrite:false,side:THREE.DoubleSide,
@@ -112,13 +113,15 @@ vec3 lit=uColor*mix(.67,1.04,smoothstep(.1,.88,vUv.y)+density*.12);gl_FragColor=
     const mesh=new THREE.Mesh(effectsQuad(THREE,count,mist?128:912),material);mesh.name=name;mesh.frustumCulled=false;mesh.visible=false;mesh.userData.asfaltoPrewarm=true;parent.add(mesh);return{mesh,uniforms,material};
   }
   const clouds=atmosphere('AN_LayeredClouds',16,false),mist=atmosphere('AN_ValleyMist',9,true);
+  const snow=createGpuSnowstorm(THREE,parent,{uniforms:{u_time:shared.uTime,uWind:shared.uWindVector,uCarInverse:rainUniforms.uCarInverse,uEnclosed:rainUniforms.uEnclosed,uGround:rainUniforms.uGround}});
+  const viewportSize=new THREE.Vector2(),identityQuaternion=new THREE.Quaternion();
   const cameraPosition=new THREE.Vector3(),carMatrix=new THREE.Matrix4(),carScale=new THREE.Vector3(1,1,1);
   return {
-    update({time,camera,policy,velocity,groundY=0,color,wind,vehicle={},valleyFloorM}) {
+    update({time,camera,policy,velocity,groundY=0,color,wind,vehicle={},valleyFloorM,environment={}}) {
       shared.uTime.value=time;camera.getWorldPosition(cameraPosition);shared.uCenter.value.copy(cameraPosition);
       shared.uRight.value.setFromMatrixColumn(camera.matrixWorld,0);shared.uUp.value.setFromMatrixColumn(camera.matrixWorld,1);
       shared.uVelocity.value.copy(velocity);shared.uWind.value=policy.wind;if(wind)shared.uWindVector.value.copy(wind);if(color)shared.uColor.value.set(color);
-      rainUniforms.uGround.value=groundY;rainUniforms.uEnclosed.value=vehicle.position&&vehicle.enclosed!==false?1:0;if(vehicle.position)rainUniforms.uCarInverse.value.copy(carMatrix.compose(vehicle.position,vehicle.quaternion||new THREE.Quaternion(),carScale)).invert();
+      rainUniforms.uGround.value=groundY;rainUniforms.uEnclosed.value=vehicle.position&&vehicle.enclosed!==false?1:0;if(vehicle.position)rainUniforms.uCarInverse.value.copy(carMatrix.compose(vehicle.position,vehicle.quaternion||identityQuaternion,carScale)).invert();
       const snowIntensity=policy.snow?Math.max(0,Math.min(1,Number(policy.snowIntensity??policy.intensity)||0)):0;
       rainUniforms.uIntensity.value=policy.intensity;rainUniforms.uSnow.value=Number(policy.snow);rainUniforms.uSnowIntensity.value=snowIntensity;
       rainUniforms.uSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;
@@ -133,10 +136,20 @@ vec3 lit=uColor*mix(.67,1.04,smoothstep(.1,.88,vUv.y)+density*.12);gl_FragColor=
       rainUniforms.uSnowTurbulence.value=.55+snowIntensity*.62+(policy.heavySnow?.32:0);
       const budget=Math.min(3200,policy.snow?policy.tier.snow:policy.tier.rain);
       rain.geometry.instanceCount=Math.max(0,Math.min(budget,Math.round(Number(policy.precipitationCount)||0)));rain.visible=rain.geometry.instanceCount>0;
+      if(heavy){
+        rain.visible=false;snow.setCount(Math.round(snowIntensity*(policy.tier.snow>=1600?10000:policy.tier.snow>=950?5000:2000)));
+        const sun=environment.sun,direction=environment.dayCycle?null:environment.keyLightDirection;
+        if(direction)snow.uniforms.uLightDirection.value.set(direction.x??direction[0],direction.y??direction[1],direction.z??direction[2]).normalize();
+        else{const elevation=(sun?.elevationDeg??52)*Math.PI/180,azimuth=(sun?.azimuthDeg??320)*Math.PI/180;snow.uniforms.uLightDirection.value.set(Math.sin(azimuth)*Math.cos(elevation),Math.sin(elevation),Math.cos(azimuth)*Math.cos(elevation));}
+        snow.uniforms.uLightColor.value.set(sun?.color||environment.keyLightColor||'#fff5e4');
+        snow.uniforms.uLightIntensity.value=Math.max(0,environment.sunIntensity??environment.keyLightIntensity??((sun?.lux??90000)/90000));
+        snow.uniforms.uAmbient.value.set(environment.ambient?.color||rainUniforms.uSnowColor.value).multiplyScalar(Math.max(0,environment.ambient?.intensity??.25));
+        if(renderer)snow.resize(renderer.getDrawingBufferSize(viewportSize).y,camera.fov*Math.PI/180);
+      }else snow.setCount(0);
       clouds.uniforms.uOpacity.value=policy.clouds;clouds.uniforms.uGround.value=valleyFloorM??groundY;clouds.mesh.geometry.instanceCount=policy.tier.clouds;clouds.mesh.visible=policy.clouds>.01;
       mist.uniforms.uOpacity.value=policy.mist;mist.uniforms.uGround.value=valleyFloorM??groundY;mist.mesh.geometry.instanceCount=policy.tier.mist;mist.mesh.visible=policy.mist>.01;
     },
-    diagnostics:()=>({precipitation:rain.geometry.instanceCount,clouds:clouds.mesh.visible?clouds.mesh.geometry.instanceCount:0,mist:mist.mesh.visible?mist.mesh.geometry.instanceCount:0,enclosedExclusion:rainUniforms.uEnclosed.value===1,rainImpactFraction:.03,snowDepthLayers:3,snowNearFraction:rainUniforms.uSnowLayerSplit.value.x,snowSizeScale:rainUniforms.uSnowSizeScale.value,snowOpacity:rainUniforms.uSnowOpacity.value,snowIntensity:rainUniforms.uSnowIntensity.value,snowDetail:rainUniforms.uSnowDetail.value,snowTurbulence:rainUniforms.uSnowTurbulence.value,wind:shared.uWindVector.value.toArray()}),
-    dispose(){for(const mesh of [rain,clouds.mesh,mist.mesh]){mesh.removeFromParent();mesh.geometry.dispose();mesh.material.dispose();}},
+    diagnostics:()=>({precipitation:snow.mesh.visible?snow.mesh.geometry.drawRange.count:rain.geometry.instanceCount,clouds:clouds.mesh.visible?clouds.mesh.geometry.instanceCount:0,mist:mist.mesh.visible?mist.mesh.geometry.instanceCount:0,enclosedExclusion:rainUniforms.uEnclosed.value===1,rainImpactFraction:.03,snowDepthLayers:3,snowNearFraction:rainUniforms.uSnowLayerSplit.value.x,snowSizeScale:rainUniforms.uSnowSizeScale.value,snowOpacity:rainUniforms.uSnowOpacity.value,snowIntensity:rainUniforms.uSnowIntensity.value,snowDetail:rainUniforms.uSnowDetail.value,snowTurbulence:rainUniforms.uSnowTurbulence.value,wind:shared.uWindVector.value.toArray()}),
+    dispose(){snow.dispose();for(const mesh of [rain,clouds.mesh,mist.mesh]){mesh.removeFromParent();mesh.geometry.dispose();mesh.material.dispose();}},
   };
 }

@@ -331,11 +331,17 @@
       return true;
     }
 
+    // Legacy callers retain independent immutable results.
     advance(deltaSeconds, callback) {
+      return Object.freeze(this.advanceInto({}, deltaSeconds, callback));
+    }
+
+    // Caller owns result and callback; reuse both throughout the render loop.
+    advanceInto(out, deltaSeconds, callback) {
       if (typeof callback !== 'function') throw new TypeError('callback de fixed step requerido');
       const delta = Number(deltaSeconds);
       if (this.paused || !Number.isFinite(delta) || delta <= 0) {
-        return Object.freeze({ steps: 0, alpha: this.alpha, overruns: this.overruns, droppedSeconds: 0 });
+        out.steps=0;out.alpha=this.alpha;out.overruns=this.overruns;out.droppedSeconds=0;return out;
       }
       this.accumulatorSeconds += delta;
       let steps = 0;
@@ -352,12 +358,8 @@
         this.accumulatorSeconds = 0;
         this.overruns += 1;
       }
-      return Object.freeze({
-        steps,
-        alpha: this.alpha,
-        overruns: this.overruns,
-        droppedSeconds,
-      });
+      out.steps=steps;out.alpha=this.alpha;out.overruns=this.overruns;out.droppedSeconds=droppedSeconds;
+      return out;
     }
   }
 
@@ -952,7 +954,514 @@
     return state;
   }
 
+
+  // Mutable variants are for a single session owner. Public immutable APIs above
+  // retain their historical snapshot contract. No shared global scratch.
+  const EMPTY_INPUT = Object.freeze({});
+  const ZERO_VECTOR = Object.freeze([0, 0, 0]);
+  function copyFields(out, source) { for (const key in source) out[key] = source[key]; return out; }
+  function copyFieldsExceptTire(out, source) { if (out === source) return out; for (const key in source) if (key !== 'tire') out[key] = source[key]; return out; }
+  function createMutableDamageState() { return mutableDamageCopy(createDamageState()); }
+  function copyDamageInto(out, source) {
+    if (out === source) return out;
+    for (const key in source) {
+      if (key === 'suspension' || key === 'tires') {
+        for (let i = 0; i < WHEEL_IDS.length; i++) copyFields(out[key][WHEEL_IDS[i]], source[key][WHEEL_IDS[i]]);
+      } else copyFields(out[key], source[key]);
+    }
+    return out;
+  }
+  function createDynamicsScratch() {
+    return {
+      powertrain: { state: {}, wheelDriveTorquesNm: new Float64Array(4) },
+      brakes: { state: {}, wheelBrakeTorquesNm: new Float64Array(4), locked: [false, false, false, false] },
+      tire: { input: {}, lateral: {}, longitudinal: {}, combinedInput: {} },
+    };
+  }
+
+  function torqueAtRpmUnchecked(spec, rpm, throttle) {
+
+    const curve = spec.engine.torqueCurveNm;
+    const speed = clamp(finiteNumber(rpm, spec.engine.idleRpm), curve[0][0], curve[curve.length - 1][0]);
+    let torque = curve[curve.length - 1][1];
+    for (let index = 1; index < curve.length; index += 1) {
+      const previous = curve[index - 1];
+      const next = curve[index];
+      if (speed <= next[0]) {
+        torque = lerp(previous[1], next[1], (speed - previous[0]) / (next[0] - previous[0]));
+        break;
+      }
+    }
+    const pedal = clamp(finiteNumber(throttle, 0), 0, 1);
+    const response = pedal === 0 ? 0 : 0.08 * pedal + 0.92 * Math.pow(pedal, 1.1);
+    return torque * response;
+  }
+  function computeSuspensionForceInto(out, input) {
+    const values = input || EMPTY_INPUT;
+    if (values.contact === false) {
+      { out.normalForceN = 0;
+      out.springForceN = 0;
+      out.damperForceN = 0;
+      out.bumpStopForceN = 0;
+      out.compressionM = 0;
+      out.travelLimited = false;
+      return out; }
+    }
+    const maxTravelM = Math.max(1e-4, finiteNumber(values.maxTravelM, 0.18));
+    const compressionM = clamp(finiteNumber(values.compressionM, 0), 0, maxTravelM);
+    const velocity = finiteNumber(values.compressionVelocityMps, 0);
+    const springRate = Math.max(0, finiteNumber(values.springRateNpm, 0));
+    const bumpRate = Math.max(0, finiteNumber(values.damperBumpNsPm, 0));
+    const reboundRate = Math.max(0, finiteNumber(values.damperReboundNsPm, 0));
+    const bumpStopStartM = clamp(finiteNumber(values.bumpStopStartM, maxTravelM), 0, maxTravelM);
+    const springForceN = springRate * compressionM;
+    const damperForceN = (velocity >= 0 ? bumpRate : reboundRate) * velocity;
+    const stopRange = Math.max(1e-4, maxTravelM - bumpStopStartM);
+    const stopCompression = Math.max(0, compressionM - bumpStopStartM);
+    const stopProgress = clamp(stopCompression / stopRange, 0, 1);
+    const bumpStopRateNpm = Math.max(120_000, springRate * 4);
+    const bumpStopForceN = bumpStopRateNpm * stopCompression * (1 + 4 * stopProgress * stopProgress);
+    { out.normalForceN = Math.max(0, springForceN + damperForceN + bumpStopForceN);
+      out.springForceN = springForceN;
+      out.damperForceN = damperForceN;
+      out.bumpStopForceN = bumpStopForceN;
+      out.compressionM = compressionM;
+      out.travelLimited = finiteNumber(values.compressionM, 0) >= maxTravelM;
+      return out; }
+  }
+
+  function computeAxleCouplingInto(out, input) {
+    const values = input || EMPTY_INPUT;
+    const differenceM = finiteNumber(values.leftCompressionM, 0)
+      - finiteNumber(values.rightCompressionM, 0);
+    const antiRollRateNpm = Math.max(0, finiteNumber(values.antiRollRateNpm, 0));
+    const rigidRateNpm = values.rigidAxle
+      ? Math.max(0, finiteNumber(values.rigidCouplingRateNpm, 0))
+      : 0;
+    const transferN = differenceM * (antiRollRateNpm + rigidRateNpm);
+    { out.leftAdjustmentN = transferN;
+      out.rightAdjustmentN = -transferN;
+      out.transferN = transferN;
+      return out; }
+  }
+
+  function tireCapacityInto(out, input) {
+    const load = Math.max(0, finiteNumber(input?.normalLoadN, 0));
+    const baseMu = Math.max(0, finiteNumber(input?.mu, 0));
+    const surfaceFactor = SURFACE_GRIP[input?.surface || 'asphalt'] ?? 0.55;
+    if (load === 0 || baseMu === 0) { out.capacityN = 0;
+      out.muEffective = 0;
+      return out; }
+    const loadFactor = Math.pow(load / 4000, -0.08);
+    const muSurface = baseMu * surfaceFactor;
+    const muEffective = clamp(muSurface * loadFactor, muSurface * 0.55, muSurface * 1.25);
+    { out.capacityN = muEffective * load;
+      out.muEffective = muEffective;
+      return out; }
+  }
+
+  function computeFialaLateralInto(out, input) {
+    const angle = clamp(finiteNumber(input?.slipAngleRad, 0), -0.75, 0.75);
+    const stiffness = Math.max(1, finiteNumber(input?.corneringStiffnessNprad, 1));
+    const capacity = tireCapacityInto(out, input);
+    if (angle === 0 || capacity.capacityN === 0) {
+      { out.forceN = 0;
+      out.aligningTorqueNm = 0;
+      out.saturationAngleRad = 0;
+      out.utilization = 0;
+      out.warning = false;
+      out.saturated = false;
+      copyFields(out, capacity);
+      return out; }
+    }
+    const saturationAngleRad = Math.atan(3 * capacity.capacityN / stiffness);
+    const tangent = Math.tan(angle);
+    let forceN;
+    let saturated = Math.abs(angle) >= saturationAngleRad;
+    if (saturated) {
+      forceN = -Math.sign(angle) * capacity.capacityN;
+    } else {
+      const c2 = stiffness * stiffness;
+      const c3 = c2 * stiffness;
+      const f = capacity.capacityN;
+      forceN = -stiffness * tangent
+        + c2 * Math.abs(tangent) * tangent / (3 * f)
+        - c3 * tangent * tangent * tangent / (27 * f * f);
+      forceN = clamp(forceN, -capacity.capacityN, capacity.capacityN);
+      saturated = Math.abs(forceN) >= capacity.capacityN;
+    }
+    const utilization = capacity.capacityN > 0 ? Math.min(1, Math.abs(forceN) / capacity.capacityN) : 0;
+    const warning = Math.abs(angle) >= saturationAngleRad * 0.7;
+    const aligningTorqueNm = -forceN * 0.085 * Math.max(0, 1 - utilization);
+    { out.forceN = forceN;
+      out.aligningTorqueNm = aligningTorqueNm;
+      out.saturationAngleRad = saturationAngleRad;
+      out.utilization = utilization;
+      out.warning = warning;
+      out.saturated = saturated;
+      copyFields(out, capacity);
+      return out; }
+  }
+
+  function computeLongitudinalBrushInto(out, input) {
+    const ratio = clamp(finiteNumber(input?.slipRatio, 0), -2, 2);
+    const stiffness = Math.max(1, finiteNumber(input?.longitudinalStiffnessN, 1));
+    const capacity = tireCapacityInto(out, input);
+    const raw = stiffness * ratio;
+    const forceN = clamp(raw, -capacity.capacityN, capacity.capacityN);
+    const utilization = capacity.capacityN > 0 ? Math.min(1, Math.abs(raw) / capacity.capacityN) : 0;
+    { out.forceN = forceN;
+      out.utilization = utilization;
+      out.warning = utilization >= 0.75;
+      out.saturated = capacity.capacityN > 0 && Math.abs(raw) >= capacity.capacityN;
+      copyFields(out, capacity);
+      return out; }
+  }
+
+  function combineTireForcesInto(out, input) {
+    const capacityN = Math.max(0, finiteNumber(input?.capacityN, 0));
+    const rawFxN = finiteNumber(input?.rawFxN, 0);
+    const rawFyN = finiteNumber(input?.rawFyN, 0);
+    const demand = capacityN > 0 ? Math.hypot(rawFxN / capacityN, rawFyN / capacityN) : 0;
+    const scale = demand > 1 ? 1 / demand : 1;
+    { out.fxN = rawFxN * scale;
+      out.fyN = rawFyN * scale;
+      out.aligningTorqueNm = finiteNumber(input?.aligningTorqueNm, 0) * scale;
+      out.utilization = Math.min(1, demand);
+      out.warning = Boolean(input?.warning) || demand >= 0.75;
+      out.saturated = demand >= 1;
+      out.capacityN = capacityN;
+      return out; }
+  }
+
+  function computeTireForcesInto(out, input, scratch) {
+    const lateral = computeFialaLateralInto(scratch.lateral, input);
+    const longitudinal = computeLongitudinalBrushInto(scratch.longitudinal, input);
+    const capacityN = Math.min(lateral.capacityN, longitudinal.capacityN);
+scratch.combinedInput.rawFxN = longitudinal.forceN;
+      scratch.combinedInput.rawFyN = lateral.forceN;
+      scratch.combinedInput.capacityN = capacityN;
+      scratch.combinedInput.aligningTorqueNm = lateral.aligningTorqueNm;
+      scratch.combinedInput.warning = lateral.warning || longitudinal.warning;
+    const combined = combineTireForcesInto(out, scratch.combinedInput);
+    { copyFields(out, combined);
+      out.muEffective = lateral.muEffective;
+      out.warning = combined.warning;
+      out.saturated = combined.saturated || lateral.saturated || longitudinal.saturated;
+      out.saturationAngleRad = lateral.saturationAngleRad;
+      return out; }
+  }
+
+  function computeAckermannInto(out, input) {
+    const center = clamp(finiteNumber(input?.centerSteerRad, 0), -1.2, 1.2);
+    if (center === 0) { out.frontLeftRad = 0;
+      out.frontRightRad = 0;
+      return out; }
+    const wheelbase = Math.max(0.1, finiteNumber(input?.wheelbaseM, 0.1));
+    const track = Math.max(0.1, finiteNumber(input?.frontTrackM, 0.1));
+    const sign = Math.sign(center);
+    const radius = wheelbase / Math.tan(Math.abs(center));
+    const inner = Math.atan(wheelbase / Math.max(0.05, radius - track * 0.5));
+    const outer = Math.atan(wheelbase / (radius + track * 0.5));
+    out.frontLeftRad = sign > 0 ? inner : -outer;
+    out.frontRightRad = sign > 0 ? outer : -inner;
+    return out;
+  }
+
+  function stepWheelStateInto(out, state, input, dt, scratch) {
+    const stepSeconds = finiteNumber(dt, 0);
+    if (stepSeconds <= 0) throw new TypeError('dt de rueda debe ser positivo');
+    const speed = Math.abs(finiteNumber(input?.longitudinalSpeedMps, 0));
+    const relaxationLength = Math.max(0.05, finiteNumber(input?.relaxationLengthM, 0.45));
+    const relaxationAlpha = 1 - Math.exp(-Math.max(0.5, speed) * stepSeconds / relaxationLength);
+    const slipAngleRad = lerp(
+      finiteNumber(state?.slipAngleRad, 0),
+      clamp(finiteNumber(input?.targetSlipAngleRad, 0), -0.75, 0.75),
+      relaxationAlpha,
+    );
+    const slipRatio = lerp(
+      finiteNumber(state?.slipRatio, 0),
+      clamp(finiteNumber(input?.targetSlipRatio, 0), -2, 2),
+      relaxationAlpha,
+    );
+    const pressureRatio = clamp(finiteNumber(state?.pressureRatio, 1), 0.2, 1.2);
+    const condition = clamp(finiteNumber(state?.condition, 1), 0, 1);
+scratch.input.normalLoadN = input?.normalLoadN;
+      scratch.input.surface = input?.surface;
+      scratch.input.corneringStiffnessNprad = input?.corneringStiffnessNprad;
+      scratch.input.longitudinalStiffnessN = input?.longitudinalStiffnessN;
+      scratch.input.slipAngleRad = slipAngleRad;
+      scratch.input.slipRatio = slipRatio;
+      scratch.input.mu = Math.max(0, finiteNumber(input?.mu, 0)) * (0.65 + 0.35 * pressureRatio) * condition;
+    const tire = computeTireForcesInto(out.tire, scratch.input, scratch);
+    const wheelRadius = Math.max(0.05, finiteNumber(input?.wheelRadiusM, 0.3));
+    const angularTarget = finiteNumber(input?.longitudinalSpeedMps, 0) * (1 + slipRatio) / wheelRadius;
+    const angularBlend = 1 - Math.exp(-12 * stepSeconds);
+    const angularSpeedRadps = lerp(finiteNumber(state?.angularSpeedRadps, 0), angularTarget, angularBlend);
+    const rotationRad = (finiteNumber(state?.rotationRad, 0) + angularSpeedRadps * stepSeconds) % (Math.PI * 2);
+    const previousTemperature = clamp(finiteNumber(state?.temperatureC, 20), 0, 200);
+    const slipWork = (Math.abs(tire.fxN * slipRatio)
+      + Math.abs(tire.fyN * Math.tan(slipAngleRad))) * speed;
+    const temperatureC = clamp(
+      previousTemperature + slipWork * stepSeconds / 90_000
+        - Math.max(0, previousTemperature - 20) * 0.015 * stepSeconds,
+      20,
+      140,
+    );
+    { copyFieldsExceptTire(out, state);
+      out.slipAngleRad = slipAngleRad;
+      out.slipRatio = slipRatio;
+      out.angularSpeedRadps = angularSpeedRadps;
+      out.rotationRad = rotationRad;
+      out.temperatureC = temperatureC;
+      out.pressureRatio = pressureRatio;
+      out.condition = condition;
+      out.relaxationAlpha = relaxationAlpha;
+      out.tire = tire;
+      return out; }
+  }
+
+  function stepPowertrainInto(out, state, controls, wheels, dt, spec) {
+    // Spec validated at session creation/configuration, outside the fixed loop.
+    const stepSeconds = finiteNumber(dt, 0);
+    if (stepSeconds <= 0) throw new TypeError('dt de powertrain debe ser positivo');
+    if (!Array.isArray(wheels) || wheels.length !== 4) throw new TypeError('powertrain requiere cuatro ruedas');
+    const gear = Number.isInteger(state?.gear) ? state.gear : 0;
+    if (gear < -1 || gear > spec.gearbox.forward.length) throw new RangeError('estado de marcha invalido');
+    const ratio = gear === -1 ? -spec.gearbox.reverse
+      : gear === 0 ? 0
+        : spec.gearbox.forward[gear - 1];
+    const throttle = clamp(finiteNumber(controls?.throttle, 0), 0, 1);
+    const clutchEngagement = clamp(finiteNumber(state?.clutchEngagement, 0), 0, 1);
+    let drivenCount = 0, wheelOmegaSum = 0, openDiffUnloaded = false;
+    for (let i = 0; i < wheels.length; i++) {
+      if (spec.drivetrain.drivenAxle !== 'all' && wheels[i].axle !== spec.drivetrain.drivenAxle) continue;
+      drivenCount++; wheelOmegaSum += Math.abs(finiteNumber(wheels[i].angularSpeedRadps, 0));
+      if (wheels[i].contact === false || finiteNumber(wheels[i].normalLoadN, 0) < 100) openDiffUnloaded = true;
+    }
+    const meanWheelOmega = drivenCount ? wheelOmegaSum / drivenCount : 0;
+    const drivelineRpm = Math.abs(ratio) > 0
+      ? meanWheelOmega * 60 / (Math.PI * 2) * Math.abs(ratio) * spec.gearbox.finalDrive
+      : spec.engine.idleRpm;
+    const previousRpm = clamp(
+      finiteNumber(state?.engineRpm, spec.engine.idleRpm),
+      spec.engine.idleRpm,
+      spec.engine.mechanicalLimitRpm + 250,
+    );
+    const freeTargetRpm = spec.engine.idleRpm
+      + throttle * (spec.engine.mechanicalLimitRpm - spec.engine.idleRpm);
+    const coupledTargetRpm = Math.max(spec.engine.idleRpm, drivelineRpm);
+    const targetRpm = ratio === 0
+      ? freeTargetRpm
+      : lerp(freeTargetRpm, coupledTargetRpm, clutchEngagement);
+    const rpmRate = ratio === 0 ? 3.2 : 8.0;
+    const engineRpm = clamp(
+      lerp(previousRpm, targetRpm, 1 - Math.exp(-rpmRate * stepSeconds)),
+      spec.engine.idleRpm,
+      spec.engine.mechanicalLimitRpm + 250,
+    );
+    const clutchSlipRadps = ratio === 0 ? 0 : (engineRpm - coupledTargetRpm) * Math.PI * 2 / 60;
+    const engineTorqueNm = torqueAtRpmUnchecked(spec, engineRpm, throttle);
+    const differentialFactor = openDiffUnloaded && spec.drivetrain.differential === 'open' ? 0.08 : 1;
+    const driveTorqueNm = ratio === 0 ? 0
+      : engineTorqueNm * ratio * spec.gearbox.finalDrive * spec.drivetrain.efficiency
+        * clutchEngagement * differentialFactor;
+    const wheelDriveTorquesNm = out.wheelDriveTorquesNm;
+    wheelDriveTorquesNm.fill(0);
+    for (let index = 0; index < wheels.length; index++) if (spec.drivetrain.drivenAxle === 'all' || wheels[index].axle === spec.drivetrain.drivenAxle) wheelDriveTorquesNm[index] = driveTorqueNm / drivenCount;
+    // Coolant temperature is independent of clutch slip heat. The thermostat
+    // opens above 80 C; radiator damage and measured wheel speed affect cooling.
+    const engineCooling = clamp(finiteNumber(controls?.engineCoolingCondition, 1), 0.05, 1);
+    const previousEngineTemperature = clamp(finiteNumber(state?.engineTemperatureC, 20), -30, 220);
+    const roadSpeedMps = meanWheelOmega * spec.wheelRadiusM;
+    const thermalLoad = 0.28 + throttle * 0.55 + engineRpm / spec.engine.mechanicalLimitRpm * 0.22;
+    const radiatorCooling = Math.max(0, previousEngineTemperature - 80) * 0.042
+      * engineCooling * (1 + Math.min(40, roadSpeedMps) / 45);
+    const engineTemperatureC = clamp(previousEngineTemperature
+      + (thermalLoad + (controls?.engineFire === true ? 3 : 0) - radiatorCooling) * stepSeconds, -30, 220);
+copyFields(out.state, state);
+      out.state.engineTemperatureC = engineTemperatureC;
+      out.state.engineRpm = engineRpm;
+      out.state.gear = gear;
+      out.state.clutchEngagement = clutchEngagement;
+      out.state.clutchSlipRadps = clutchSlipRadps;
+      out.state.temperatureC = clamp(finiteNumber(state?.temperatureC, 20)
+        + Math.abs(clutchSlipRadps * engineTorqueNm) * stepSeconds / 60_000, 20, 220);
+    const nextState = out.state;
+    { out.state = nextState;
+      out.engineTorqueNm = engineTorqueNm;
+      out.driveTorqueNm = driveTorqueNm;
+      out.wheelDriveTorquesNm = wheelDriveTorquesNm;
+      out.differentialUnloaded = openDiffUnloaded;
+      return out; }
+  }
+
+  function stepBrakesInto(out, state, controls, wheels, dt, spec) {
+    // Spec validated by the session.
+    const stepSeconds = finiteNumber(dt, 0);
+    if (stepSeconds <= 0) throw new TypeError('dt de frenos debe ser positivo');
+    if (!Array.isArray(wheels) || wheels.length !== 4) throw new TypeError('frenos requieren cuatro ruedas');
+    const pedal = clamp(finiteNumber(controls?.brake, 0), 0, 1);
+    const handbrake = clamp(finiteNumber(controls?.handbrake, 0), 0, 1);
+    const normalized = clamp((pedal - 0.06) / 0.94, 0, 1);
+    const previousPressure = clamp(
+      finiteNumber(state?.hydraulicPressure, normalized), 0, 1,
+    );
+    const buildSeconds = Math.max(0, finiteNumber(spec.brakes?.pressureBuildSeconds, 0));
+    const releaseSeconds = Math.max(0, finiteNumber(spec.brakes?.pressureReleaseSeconds, 0));
+    const pressureStep = normalized >= previousPressure
+      ? (buildSeconds > 0 ? stepSeconds / buildSeconds : 1)
+      : (releaseSeconds > 0 ? stepSeconds / releaseSeconds : 1);
+    const hydraulicPressure = previousPressure
+      + clamp(normalized - previousPressure, -pressureStep, pressureStep);
+    const servo = hydraulicPressure
+      * (0.55 + 0.45 * Math.min(1, hydraulicPressure / 0.22));
+    const frontTemperatureC = clamp(finiteNumber(state?.frontTemperatureC, 20), 20, 1000);
+    const rearTemperatureC = clamp(finiteNumber(state?.rearTemperatureC, 20), 20, 1000);
+    const frontFade = brakeFade(
+      frontTemperatureC,
+      finiteNumber(spec.brakes?.frontFadeStartC, 420),
+      finiteNumber(spec.brakes?.frontFadeSpanC, 350),
+    );
+    const rearFade = brakeFade(
+      rearTemperatureC,
+      finiteNumber(spec.brakes?.rearFadeStartC, 300),
+      finiteNumber(spec.brakes?.rearFadeSpanC, 350),
+      finiteNumber(spec.brakes?.rearMaximumFade, 0.65),
+    );
+    let averageWheelSpeedMps = 0;
+    for (let i = 0; i < wheels.length; i++) averageWheelSpeedMps += Math.abs(finiteNumber(wheels[i].angularSpeedRadps, 0)) * Math.max(0.05, finiteNumber(wheels[i].wheelRadiusM, spec.wheelRadiusM));
+    averageWheelSpeedMps /= wheels.length;
+    const highSpeedFrictionLoss = clamp(
+      (averageWheelSpeedMps - finiteNumber(spec.brakes?.highSpeedFrictionStartMps, 24))
+        / Math.max(1, finiteNumber(spec.brakes?.highSpeedFrictionSpanMps, 18)),
+      0,
+      finiteNumber(spec.brakes?.highSpeedMaximumFrictionLoss, 0.36),
+    );
+    const masterTorqueNm = finiteNumber(spec.brakes?.masterTorqueNm, 4800)
+      * servo * (1 - highSpeedFrictionLoss);
+    const frontBias = clamp(finiteNumber(spec.brakes?.frontBias, 0.62), 0.5, 0.8);
+    const frontWarmFactor = brakeWarmFactor(
+      frontTemperatureC,
+      finiteNumber(spec.brakes?.frontOptimalTemperatureC, 20),
+      finiteNumber(spec.brakes?.frontColdFrictionFactor, 1),
+    );
+    const rearWarmFactor = brakeWarmFactor(
+      rearTemperatureC,
+      finiteNumber(spec.brakes?.rearOptimalTemperatureC, 20),
+      finiteNumber(spec.brakes?.rearColdFrictionFactor, 1),
+    );
+    const frontPerWheelNm = masterTorqueNm * frontBias * 0.5 * frontWarmFactor * (1 - frontFade);
+    const rearPerWheelNm = masterTorqueNm * (1 - frontBias) * 0.5 * rearWarmFactor * (1 - rearFade) + 1600 * handbrake;
+    const wheelBrakeTorquesNm = out.wheelBrakeTorquesNm;
+    wheelBrakeTorquesNm[0] = wheelBrakeTorquesNm[1] = frontPerWheelNm;
+    wheelBrakeTorquesNm[2] = wheelBrakeTorquesNm[3] = rearPerWheelNm;
+    const locked = out.locked;
+    for (let index = 0; index < wheels.length; index++) {
+      const wheel = wheels[index];
+      const capacityNm = Math.max(0, finiteNumber(wheel.normalLoadN, 0))
+        * Math.max(0, finiteNumber(wheel.mu, 0.92))
+        * Math.max(0.05, finiteNumber(wheel.wheelRadiusM, spec.wheelRadiusM));
+      locked[index] = Math.abs(finiteNumber(wheel.angularSpeedRadps, 0)) > 0.5
+        && wheelBrakeTorquesNm[index] > capacityNm;
+    }
+    const frontPowerW = Math.abs(frontPerWheelNm)
+      * (Math.abs(finiteNumber(wheels[0].angularSpeedRadps, 0))
+        + Math.abs(finiteNumber(wheels[1].angularSpeedRadps, 0)));
+    const rearPowerW = Math.abs(rearPerWheelNm)
+      * (Math.abs(finiteNumber(wheels[2].angularSpeedRadps, 0))
+        + Math.abs(finiteNumber(wheels[3].angularSpeedRadps, 0)));
+    const frontHeatCapacityJpC = Math.max(1000, finiteNumber(spec.brakes?.frontHeatCapacityJpC, 95_000));
+    const rearHeatCapacityJpC = Math.max(1000, finiteNumber(spec.brakes?.rearHeatCapacityJpC, 120_000));
+    const nextFrontTemperatureC = clamp(frontTemperatureC
+      + frontPowerW * stepSeconds / frontHeatCapacityJpC - Math.max(0, frontTemperatureC - 20) * 0.01 * stepSeconds, 20, 1000);
+    const nextRearTemperatureC = clamp(rearTemperatureC
+      + rearPowerW * stepSeconds / rearHeatCapacityJpC - Math.max(0, rearTemperatureC - 20) * 0.008 * stepSeconds, 20, 1000);
+    { copyFields(out.state, state);
+      out.state.frontTemperatureC = nextFrontTemperatureC;
+      out.state.hydraulicPressure = hydraulicPressure;
+      out.state.rearTemperatureC = nextRearTemperatureC;
+      out.wheelBrakeTorquesNm = wheelBrakeTorquesNm;
+      out.locked = locked;
+      out.frontFade = frontFade;
+      out.rearFade = rearFade;
+      return out; }
+  }
+
+  function applyMechanicalWearInto(out, state, telemetry, dt) {
+    const stepSeconds = finiteNumber(dt, 0);
+    if (stepSeconds <= 0) throw new TypeError('dt de desgaste debe ser positivo');
+    const next = copyDamageInto(out, state);
+    const overrev = clamp((finiteNumber(telemetry?.engineRpm, 0) - 5200) / 1000, 0, 2);
+    const engineTemperatureC = finiteNumber(telemetry?.engineTemperatureC, 20);
+    const engineHeat = clamp((engineTemperatureC - 105) / 40, 0, 2);
+    const thermalExposure = Math.max(0, (engineTemperatureC - 135) / 20);
+    const exposureRate = thermalExposure > 0 ? Math.min(2, thermalExposure) : -2;
+    next.engine.heatExposureSeconds = clamp(finiteNumber(next.engine.heatExposureSeconds, 0) + exposureRate * stepSeconds, 0, 30);
+    const leakingFuel = finiteNumber(next.engine.fuelLeak, 0);
+    next.engine.fire = next.engine.fire === true || next.engine.heatExposureSeconds >= 8
+      || (leakingFuel > 0.35 && engineTemperatureC > 125 && next.engine.heatExposureSeconds >= 3);
+    next.engine.fireIntensity = next.engine.fire ? clamp(Math.max(finiteNumber(next.engine.fireIntensity, 0), 0.35 + leakingFuel * 0.45 + engineHeat * 0.2), 0.35, 1) : 0;
+    const frontHeat = clamp((finiteNumber(telemetry?.frontBrakeTemperatureC, 20) - 420) / 350, 0, 2);
+    const rearHeat = clamp((finiteNumber(telemetry?.rearBrakeTemperatureC, 20) - 300) / 350, 0, 2);
+    const clutchStress = clamp(finiteNumber(telemetry?.clutchSlipPowerW, 0) / 100_000, 0, 2);
+    const shiftShock = clamp(finiteNumber(telemetry?.shiftShock, 0), 0, 2);
+    const bottomOut = clamp(finiteNumber(telemetry?.bottomOut, 0), 0, 2);
+    next.engine.condition = conditionAfter(next.engine.condition, (overrev * 0.02 + engineHeat * 0.01 + next.engine.fireIntensity * 0.02) * stepSeconds, 0.15);
+    next.engine.powerFactor = conditionAfter(next.engine.powerFactor, (overrev * 0.03 + engineHeat * 0.02 + next.engine.fireIntensity * 0.03) * stepSeconds, 0.2);
+    next.engine.coolingCondition = conditionAfter(next.engine.coolingCondition, engineHeat * 0.015 * stepSeconds, 0.2);
+    next.brakes.condition = conditionAfter(next.brakes.condition, (frontHeat + rearHeat) * 0.012 * stepSeconds, 0.15);
+    next.brakes.fade = clamp(next.brakes.fade + (frontHeat + rearHeat) * 0.01 * stepSeconds, 0, 0.8);
+    next.gearbox.condition = conditionAfter(next.gearbox.condition, shiftShock * 0.01 * stepSeconds, 0.15);
+    next.gearbox.shiftReliability = conditionAfter(next.gearbox.shiftReliability, shiftShock * 0.015 * stepSeconds, 0.2);
+    next.drivetrain.condition = conditionAfter(next.drivetrain.condition, clutchStress * 0.012 * stepSeconds, 0.15);
+    for (const wheel of WHEEL_IDS) {
+      next.suspension[wheel].condition = conditionAfter(
+        next.suspension[wheel].condition,
+        bottomOut * 0.01 * stepSeconds,
+        0.1,
+      );
+    }
+    return next;
+  }
+
+  function applyImpactDamageInto(out, state, event) {
+    const next = copyDamageInto(out, state);
+    const impulse = Math.max(0, finiteNumber(event?.impulseNs, 0));
+    const loss = impulse / (impulse + 60_000) * 0.9;
+    const point = Array.isArray(event?.localPointM) ? event.localPointM : ZERO_VECTOR;
+    const x = finiteNumber(point[0], 0);
+    const y = finiteNumber(point[1], 0);
+    const z = finiteNumber(point[2], 0);
+    if (x > 0.8) next.body.frontCondition = conditionAfter(next.body.frontCondition, loss, 0.15);
+    if (x > 0.8 && Math.abs(z) < 0.9 && y > -0.6 && y < 0.8) {
+      next.engine.coolingCondition = conditionAfter(next.engine.coolingCondition, loss * 1.2, 0.2);
+      next.engine.condition = conditionAfter(next.engine.condition, loss * 0.45, 0.15);
+      next.engine.fuelLeak = clamp(finiteNumber(next.engine.fuelLeak, 0) + Math.max(0, impulse - 18000) / 65000, 0, 1);
+      // A major engine-bay crush can rupture fuel lines and ignite immediately.
+      // Low impulse, side and rear contacts cannot trip this condition.
+      if (impulse >= 45000 && next.engine.fuelLeak >= 0.4) {
+        next.engine.fire = true;
+        next.engine.fireIntensity = Math.max(finiteNumber(next.engine.fireIntensity, 0), 0.4 + next.engine.fuelLeak * 0.6);
+      }
+    }
+    if (Math.abs(z) > 0.5) next.body.sideCondition = conditionAfter(next.body.sideCondition, loss * 0.8, 0.15);
+    if (y < -0.25) next.body.undersideCondition = conditionAfter(next.body.undersideCondition, loss * 0.9, 0.1);
+    if (x > 0.5 || Math.abs(z) > 0.5) {
+      next.steering.condition = conditionAfter(next.steering.condition, loss * 0.75, 0.2);
+      next.steering.offsetRad = clamp(next.steering.offsetRad + Math.sign(z || 1) * loss * 0.08, -0.18, 0.18);
+    }
+    const wheel = (x >= 0 ? 'front' : 'rear') + (z >= 0 ? 'Right' : 'Left');
+    next.suspension[wheel].condition = conditionAfter(next.suspension[wheel].condition, loss * 0.85, 0.1);
+    next.tires[wheel].condition = conditionAfter(next.tires[wheel].condition, loss * 0.55, 0.05);
+    next.tires[wheel].pressureRatio = conditionAfter(next.tires[wheel].pressureRatio, loss * 0.6, 0.15);
+    if (x < -0.4 || y < -0.25) next.drivetrain.condition = conditionAfter(next.drivetrain.condition, loss * 0.6, 0.15);
+    return next;
+  }
+
   root.AsfaltoV6VehicleCore = Object.freeze({
+    createDynamicsScratch, createMutableDamageState, copyDamageInto,
+    computeSuspensionForceInto, computeAxleCouplingInto, tireCapacityInto, computeFialaLateralInto, computeLongitudinalBrushInto, combineTireForcesInto, computeTireForcesInto, computeAckermannInto, stepWheelStateInto, stepPowertrainInto, stepBrakesInto, applyMechanicalWearInto, applyImpactDamageInto,
     CHEVY_ORIGINAL_SPEC,
     CHEVY_RESTOMOD_SPEC,
     FALCON_CALIBRATED_SPEC,

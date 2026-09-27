@@ -1,10 +1,11 @@
-import { AN_ATMOSPHERE_GLSL, AN_SKY_VERTEX_GLSL, AN_SKY_FRAGMENT_GLSL } from './volumetric-atmosphere.glsl.mjs?v=792f41a49b3f335a';
-export { AN_ATMOSPHERE_GLSL } from './volumetric-atmosphere.glsl.mjs?v=792f41a49b3f335a';
+import {createBlueNoiseTexture} from './blue-noise-tile.mjs?v=c78d55c27e38001a';
+import { AN_ATMOSPHERE_GLSL, AN_SKY_VERTEX_GLSL, AN_SKY_FRAGMENT_GLSL } from './volumetric-atmosphere.glsl.mjs?v=94ccbf04ba7488a9';
+export { AN_ATMOSPHERE_GLSL } from './volumetric-atmosphere.glsl.mjs?v=94ccbf04ba7488a9';
 
 const PI=Math.PI;
 const finite=(value,fallback=0)=>Number.isFinite(Number(value))?Number(value):fallback;
 const clamp=(value,low,high)=>Math.max(low,Math.min(high,value));
-const QUALITY=Object.freeze({cinematic:{skySteps:16,volumeSteps:20,lightSteps:4},off:{skySteps:6,volumeSteps:0,lightSteps:0},low:{skySteps:6,volumeSteps:8,lightSteps:2},balanced:{skySteps:10,volumeSteps:12,lightSteps:3},high:{skySteps:16,volumeSteps:20,lightSteps:4},ultra:{skySteps:24,volumeSteps:32,lightSteps:4}});
+const QUALITY=Object.freeze({cinematic:{skySteps:16,volumeSteps:8,lightSteps:4},off:{skySteps:6,volumeSteps:0,lightSteps:0},low:{skySteps:6,volumeSteps:8,lightSteps:2},balanced:{skySteps:10,volumeSteps:8,lightSteps:3},high:{skySteps:16,volumeSteps:8,lightSteps:4},ultra:{skySteps:24,volumeSteps:8,lightSteps:4}});
 const PRESETS={clear:{elevation:52,azimuth:320,lux:90000},overcast:{elevation:55,azimuth:340,lux:18000},'golden-hour':{elevation:14,azimuth:280,lux:34000},sunset:{elevation:4,azimuth:270,lux:10000},moonrise:{elevation:18,azimuth:80,lux:1200},night:{elevation:-8,azimuth:0,lux:0}};
 const FOG_DENSITY={clear:.000045,cloudy:.0007,rain:.0013,storm:.0028,fog:.0075,'light-snow':.002,'heavy-snow':.006};
 const BETA_R=[.0058,.0135,.0331]; // inverse kilometres in the spherical sky integrator
@@ -78,10 +79,10 @@ export function resolveAtmosphereParameters({scope='world',environment={},weathe
 }
 
 export function createAtmosphereUniforms(T){return{
- anAtmoEnabled:{value:1},anAtmoCameraWorld:{value:new T.Matrix4()},anAtmoViewMatrix:{value:new T.Matrix4()},anAtmoProjection:{value:new T.Matrix4()},
+ anAtmoBlueNoise:{value:null},anAtmoFrame:{value:0},anAtmoEnabled:{value:1},anAtmoCameraWorld:{value:new T.Matrix4()},anAtmoViewMatrix:{value:new T.Matrix4()},anAtmoProjection:{value:new T.Matrix4()},
  anAtmoSunDirection:{value:new T.Vector3(0,1,0)},anAtmoSunColor:{value:new T.Color(1,1,1)},anAtmoSunIntensity:{value:20},anAtmoAmbient:{value:new T.Color(.1,.12,.14)},
  anAtmoRayleigh:{value:new T.Vector3(.0000058,.0000135,.0000331)},anAtmoDensity:{value:.000045},anAtmoBaseHeight:{value:0},anAtmoFalloff:{value:.0025},anAtmoMieG:{value:.76},
- anAtmoMaxDistance:{value:2400},anAtmoOcclusionDistance:{value:180},anAtmoShaftStrength:{value:1},anAtmoTime:{value:0},anAtmoVolumeSteps:{value:20},anAtmoLightSteps:{value:4},
+ anAtmoMaxDistance:{value:2400},anAtmoOcclusionDistance:{value:180},anAtmoShaftStrength:{value:1},anAtmoTime:{value:0},anAtmoVolumeSteps:{value:8},anAtmoLightSteps:{value:4},
 };}
 function assignColor(target,value,fallback){if(value?.isColor)target.copy(value);else if(Array.isArray(value))target.setRGB(...value);else target.set(value??fallback);return target;}
 
@@ -93,11 +94,13 @@ function assignColor(target,value,fallback){if(value?.isColor)target.copy(value)
 export function createPhysicalAtmosphere(T,{scene,scope='world',quality='high'}={}){
  if(!scene?.isScene)throw new TypeError('createPhysicalAtmosphere requires a Three scene');
  const uniforms=createAtmosphereUniforms(T),skyUniforms={anSkySunDirection:{value:new T.Vector3(0,1,0)},anSkySunColor:{value:new T.Color(1,1,1)},anSkySunIntensity:{value:20},anSkyAltitude:{value:2},anSkyTurbidity:{value:1},anSkyBlend:{value:0},anSkyNight:{value:0},anSkySteps:{value:16}};
+ const blueNoise=createBlueNoiseTexture(T);uniforms.anAtmoBlueNoise.value=blueNoise;
  const geometry=new T.SphereGeometry(1,32,16),material=new T.ShaderMaterial({name:'Atmósfera · Rayleigh y Mie',uniforms:skyUniforms,vertexShader:AN_SKY_VERTEX_GLSL,fragmentShader:AN_SKY_FRAGMENT_GLSL,side:T.BackSide,transparent:true,depthWrite:false,depthTest:true,fog:false,toneMapped:true});
  const sky=new T.Mesh(geometry,material);sky.name='Cielo físico · dispersión atmosférica';sky.frustumCulled=false;sky.renderOrder=-10000;sky.userData.physicalAtmosphereSky=true;sky.visible=false;scene.add(sky);
  let disposed=false,currentQuality=QUALITY[quality]?quality:'high',parameters=resolveAtmosphereParameters({scope}),updated=false,lastKey='',lastDiagnosticTime=-Infinity,zenithRadiance=[0,0,0];
  function applyQuality(){const tier=QUALITY[currentQuality];uniforms.anAtmoEnabled.value=!disposed&&currentQuality!=='off'?1:0;uniforms.anAtmoVolumeSteps.value=tier.volumeSteps;uniforms.anAtmoLightSteps.value=tier.lightSteps;skyUniforms.anSkySteps.value=tier.skySteps;sky.visible=!disposed&&updated&&currentQuality!=='off'&&scope==='world'&&(!parameters.night||!scene.background);}
  const controller={sky,uniforms,glsl:AN_ATMOSPHERE_GLSL,
+  beginFrame(frame){uniforms.anAtmoFrame.value=(frame>>>0)%1024;},
   update({camera,time=0,environment={},weather,sunDirection,sunColor,skyId}={}){
    if(disposed)return;
    parameters=resolveAtmosphereParameters({scope,environment,weather,skyId,fogOverride:scene.userData?.asfaltoFogOverride});
@@ -122,8 +125,8 @@ export function createPhysicalAtmosphere(T,{scene,scope='world',quality='high'}=
   setQuality(value){if(!disposed){currentQuality=QUALITY[value]?value:'high';applyQuality();}return currentQuality;},
   diagnostics(){return{scope,quality:currentQuality,disposed,enabled:uniforms.anAtmoEnabled.value===1,skyVisible:sky.visible,skyId:parameters.skyId,night:parameters.night,skyModel:'spherical-single-scattering-rayleigh-mie',volumeModel:'height-density-beer-lambert',screenSpaceOcclusion:true,offscreenOcclusion:false,
    skySteps:skyUniforms.anSkySteps.value,volumeSteps:uniforms.anAtmoVolumeSteps.value,lightSteps:uniforms.anAtmoLightSteps.value,density:uniforms.anAtmoDensity.value,baseHeight:parameters.baseHeight,heightFalloff:parameters.falloff,sunIntensity:parameters.sunIntensity,skyBlend:skyUniforms.anSkyBlend.value,
-   sharedEnvironmentPreserved:true,legacyFogManagedByCaller:true,zenithRadiance:zenithRadiance.slice(),ownedGeometries:disposed?0:1,ownedMaterials:disposed?0:1,ownedTextures:0};},
-  dispose(){if(disposed)return;disposed=true;uniforms.anAtmoEnabled.value=0;sky.visible=false;sky.removeFromParent();geometry.dispose();material.dispose();},
+   sharedEnvironmentPreserved:true,legacyFogManagedByCaller:true,zenithRadiance:zenithRadiance.slice(),ownedGeometries:disposed?0:1,ownedMaterials:disposed?0:1,ownedTextures:disposed?0:1,volumeSampling:'8 stratified void-and-cluster blue-noise'};},
+  dispose(){if(disposed)return;disposed=true;uniforms.anAtmoEnabled.value=0;sky.visible=false;sky.removeFromParent();geometry.dispose();material.dispose();blueNoise.dispose();},
  };
  applyQuality();return controller;
 }

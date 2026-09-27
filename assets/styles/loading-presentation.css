@@ -57,3 +57,34 @@ body.an-loading-open #workshop-editor-toggle,body.an-loading-open #workshop-edit
 }
 @media(prefers-reduced-motion:reduce){.an-cinema-loading,.an-cinema-film video{transition:none!important}}
 body.v6-reduce-motion .an-cinema-loading,body.v6-reduce-motion .an-cinema-film video{transition:none!important}
+
+/* Compositor-eligible loading needle: no per-frame JS/layout updates. */
+.an-cinema-loading .an-loading-tachometer {
+  position: relative; flex: 0 0 64px; width: 64px; height: 36px;
+  overflow: hidden; border: 1px solid currentColor; border-bottom: 0;
+  border-radius: 36px 36px 0 0; opacity: .8;
+}
+.an-cinema-loading .an-loading-tachometer i {
+  position: absolute; left: 31px; bottom: 5px; width: 26px; height: 2px;
+  background: #d89962; transform-origin: 0 50%; transform: rotate(-160deg);
+  will-change: transform; animation: an-loading-tacho 2.6s ease-in-out infinite;
+  animation-play-state: paused;
+}
+.an-cinema-loading .an-loading-tachometer b {
+  position: absolute; inset: auto 0 1px; text-align: center;
+  font: 7px/1.2 monospace; letter-spacing: 1px;
+}
+.an-cinema-loading[data-needle-running="true"] .an-loading-tachometer i {
+  animation-play-state: running;
+}
+@keyframes an-loading-tacho {
+  0%,100% { transform: rotate(-160deg); }
+  20% { transform: rotate(-95deg); }
+  38% { transform: rotate(-130deg); }
+  62% { transform: rotate(-30deg); }
+  80% { transform: rotate(-70deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .an-cinema-loading .an-loading-tachometer i { animation: none; will-change: auto; }
+}
+

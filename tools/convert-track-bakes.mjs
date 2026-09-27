@@ -15,4 +15,4 @@ for(const [id,entry]of Object.entries(old.tracks)){
  report.tracks[id]={beforeBytes:compressed.length,afterBytes:zipped.length,decodedBytes:encoded.byteLength,spatialQueries:queries,elapsedMs:performance.now()-started};report.beforeBytes+=compressed.length;report.afterBytes+=zipped.length;console.log(id,JSON.stringify(report.tracks[id]));
 }
 // Publish manifest only after every artifact passed exact byte and query checks.
-fs.writeFileSync(new URL('assets/tracks/offline-bake/manifest.json?v=3f7afb7702579a52',root),JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(report,null,2));
+fs.writeFileSync(new URL('assets/tracks/offline-bake/manifest.json?v=48d073cc63f12301',root),JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify(report,null,2));

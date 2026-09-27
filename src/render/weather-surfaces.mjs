@@ -1,11 +1,19 @@
+import {WEATHER_VERTEX_FRAME,WEATHER_NORMAL_HELPERS} from './surface-weather.glsl.mjs?v=4659f155d8a61d7e';
 import {createHydrologyJobs} from './hydrology-jobs.mjs?v=3415d1d281b4f2e9';
 import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=f4d6d8707816c8ab';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
 import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=02f1a8ed11382fce';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
 const SURFACE_SHADER = `
+${WEATHER_NORMAL_HELPERS}
 varying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;
-uniform float uAnFxTime,uAnFxWetness,uAnFxRain,uAnFxWind,uAnFxSnow,uAnFxSnowDetail;
+uniform float uAnFxTime,uAnFxRain,uAnFxWind,uAnFxSnowDetail;
+// One upload: wetness, snow cover, compacted snow, melt water. No material map fetch.
+uniform vec4 uAnFxWeather;
+#define uAnFxWetness uAnFxWeather.x
+#define uAnFxSnow uAnFxWeather.y
+#define uAnFxCompactedSnow uAnFxWeather.z
+#define uAnFxMelt uAnFxWeather.w
 uniform vec3 uAnWaterShallow,uAnWaterDeep;uniform float uAnWaterAbsorption;
 uniform sampler2D uAnWaterReflection;uniform mat4 uAnWaterReflectMatrix;uniform float uAnWaterReflectReady;
 uniform sampler2D uAnCanopyField;uniform vec4 uAnCanopyBounds,uAnWheelPaths[24];uniform float uAnCanopyEnabled,uAnWheelPathStrengths[24];uniform int uAnWheelPathCount;
@@ -13,7 +21,7 @@ float anRoadWetness(vec3 p){float wet=uAnFxWetness;vec2 uv=(p.xz-uAnCanopyBounds
 if(uAnCanopyEnabled>.5&&all(greaterThanEqual(uv,vec2(0.)))&&all(lessThanEqual(uv,vec2(1.)))){float edge=smoothstep(0.,.07,uv.x)*smoothstep(0.,.07,uv.y)*(1.-smoothstep(.93,1.,uv.x))*(1.-smoothstep(.93,1.,uv.y));wet*=1.-texture2D(uAnCanopyField,uv).r*edge*.35;}
 float cleared=0.;for(int i=0;i<24;i++){if(i>=uAnWheelPathCount)break;vec4 line=uAnWheelPaths[i];vec2 direction=line.zw-line.xy;float t=clamp(dot(p.xz-line.xy,direction)/max(.001,dot(direction,direction)),0.,1.);float d=length(p.xz-line.xy-direction*t);cleared=max(cleared,(1.-smoothstep(.11,.23,d))*uAnWheelPathStrengths[i]);}
 return wet*(1.-cleared*.65);}
-uniform float uAnFxCompactedSnow,uAnFxMelt,uAnFxSnowLine,uAnFxValleyFloor,uAnFxMist;
+uniform float uAnFxSnowLine,uAnFxValleyFloor,uAnFxMist;
 uniform vec3 uAnWindVector;uniform sampler2D uAnWaterField;uniform vec4 uAnWaterBounds;uniform vec2 uAnWaterFlow;uniform float uAnWaterShoreWidth,uAnWaterMaxDepth;
 uniform sampler2D uAnFxSky;uniform float uAnFxSkyEnabled,uAnFxSkyIntensity;uniform mat3 uAnFxSkyRotation;
 float anSurfaceHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
@@ -32,6 +40,9 @@ return (sin(q.x*.23+q.y*.08-t*.68+broadPhase)*.019
 function patchSurface(material, uniforms, kind, transmissionChunk) {
   const water=kind==='water',ground=kind==='ground',fogOnly=kind==='fog';
   const compile=material.onBeforeCompile,cache=material.customProgramCacheKey;
+  const priorAssetUniforms=Object.getOwnPropertyDescriptor(material.userData,'assetUniforms');
+  // Expose references for the caller's resource collector, without taking texture ownership.
+  material.userData.assetUniforms={...material.userData.assetUniforms,...uniforms};
   material.onBeforeCompile=function(shader,renderer){
     compile?.call(this,shader,renderer);
     // Depth/distance passes inherit this hook through vegetation wrappers but
@@ -40,7 +51,7 @@ function patchSurface(material, uniforms, kind, transmissionChunk) {
     if(!shader.vertexShader.includes('#include <defaultnormal_vertex>'))return;
     Object.assign(shader.uniforms,uniforms);
     shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;'+(kind==='asphalt'?'\nattribute vec2 anFxHydrology;':''));
-    if(!fogOnly)shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvAnFxSurface = position;vAnFxWorldNormal=normalize(transformedNormal * mat3(viewMatrix));vAnFxSlope=max(0.,vAnFxWorldNormal.y);vAnFxHydrology='+(kind==='asphalt'?'anFxHydrology':'vec2(0.)')+';');
+    if(!fogOnly)shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvAnFxSurface = position;'+WEATHER_VERTEX_FRAME+'vAnFxHydrology='+(kind==='asphalt'?'anFxHydrology':'vec2(0.)')+';');
     shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
 vec4 anFxWorld=vec4(transformed,1.);
 #ifdef USE_INSTANCING
@@ -51,12 +62,14 @@ vAnFxSurface=vAnFxWorldPosition;`);
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n'+SURFACE_SHADER);
     // Terrain projection owns color/roughness chunks; main remains a common,
     // unconditional anchor across Standard, Physical and chained terrain hooks.
-    if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(/void\s+main\s*\(\s*\)\s*\{/,main=>main+'\nfloat anWorldWetness='+(kind==='asphalt'?'anRoadWetness(vAnFxWorldPosition)':'uAnFxWetness')+';');
+    if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(/void\s+main\s*\(\s*\)\s*\{/,main=>main+'\nfloat anWorldWetness='+(kind==='asphalt'?'anRoadWetness(vAnFxWorldPosition)':'uAnFxWetness')+';\nvec4 anWeatherPacked=clamp(uAnFxWeather,0.,1.);\nfloat anSnowAltitude=smoothstep(uAnFxSnowLine-70.,uAnFxSnowLine+160.,vAnFxWorldPosition.y);');
     const normalAnchor=shader.fragmentShader.includes('// ASFALTO_LANDSCAPE_NORMAL_END')?'// ASFALTO_LANDSCAPE_NORMAL_END':'#include <normal_fragment_maps>';
     if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(normalAnchor,`${normalAnchor}
 float anHeight=${water?'anWaterHeight(vAnFxSurface.xz)*(1.+uAnFxWind*.13)':ground?'0.':'anRainHeight(vAnFxSurface.xz)*uAnFxRain*anWorldWetness'};
-vec3 anDx=dFdx(-vViewPosition),anDy=dFdy(-vViewPosition);vec3 anR1=cross(anDy,normal),anR2=cross(normal,anDx);float anDet=dot(anDx,anR1);
-normal=normalize(max(abs(anDet),1e-8)*normal-sign(anDet)*(dFdx(anHeight)*anR1+dFdy(anHeight)*anR2));
+vec3 anDx=dFdx(-vViewPosition),anDy=dFdy(-vViewPosition);
+// xy: water/rain gradient; zw: snow gradient. Derivatives are shared explicitly.
+vec4 anWeatherGradient=vec4(dFdx(anHeight),dFdy(anHeight),0.,0.);
+${ground?'':'normal=anPerturbWeatherNormal(normal,anDx,anDy,anWeatherGradient.xy);'}
 ${ground?'roughnessFactor=mix(roughnessFactor,max(.4,roughnessFactor*.84),anWorldWetness*.75);':''}
 ${water?`vec2 anWaterUV=(vAnFxSurface.xz-uAnWaterBounds.xy)/uAnWaterBounds.zw;vec2 anDepthShore=texture2D(uAnWaterField,anWaterUV).rg;
 float anAbsorption=1.-exp(-anDepthShore.x*uAnWaterAbsorption);
@@ -68,9 +81,9 @@ if(uAnFxSnow>.0001){
  // Stable metre-space deposition: broad patches and leeward ridges reveal the
  // original terrain/rock/leaf color until accumulation reaches each threshold.
  vec2 anSnowWind=normalize(uAnWindVector.xz+vec2(.001)),anSnowAcross=vec2(-anSnowWind.y,anSnowWind.x);
- float anAltitude=smoothstep(uAnFxSnowLine-70.,uAnFxSnowLine+160.,vAnFxWorldPosition.y);
+ float anAltitude=anSnowAltitude;
  float anShelter=.76+.24*clamp(1.-dot(vAnFxWorldNormal.xz,anSnowWind),0.,1.);
- float anSnowCoverage=clamp(uAnFxSnow*(.66+.34*anAltitude)*anShelter,0.,1.);
+ float anSnowCoverage=clamp(anWeatherPacked.y*(.66+.34*anAltitude)*anShelter,0.,1.);
  float anSnowMacro=anSurfaceNoise(vAnFxSurface.xz*.075);
  anSnowDrift=anSurfaceNoise(vec2(dot(vAnFxSurface.xz,anSnowWind)*.085,dot(vAnFxSurface.xz,anSnowAcross)*.46)+anSnowMacro*1.7);
  float anSnowField=.10+.70*(anSnowMacro*.46+anSnowDrift*.32+anSurfaceNoise(vAnFxSurface.xz*.63+vAnFxSurface.y*.11)*.22);
@@ -93,8 +106,8 @@ if(uAnFxSnow>.0001){
  if(dot(anSnowMacroNormal,normal)<0.)anSnowMacroNormal=-anSnowMacroNormal;
  normal=normalize(mix(normal,anSnowMacroNormal,anSnow*.62));
  float anSnowHeight=(anSnowGrain-.5)*.0009*anSnow;
- vec3 anSnowR1=cross(anDy,normal),anSnowR2=cross(normal,anDx);float anSnowDet=dot(anDx,anSnowR1);
- normal=normalize(max(abs(anSnowDet),1e-8)*normal-sign(anSnowDet)*(dFdx(anSnowHeight)*anSnowR1+dFdy(anSnowHeight)*anSnowR2));
+ anWeatherGradient.zw=vec2(dFdx(anSnowHeight),dFdy(anSnowHeight));
+ normal=anPerturbWeatherNormal(normal,anDx,anDy,anWeatherGradient.zw);
 }
 diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.74,.79,.82),uAnFxMelt*.24);`}`);
     if(!water&&!ground&&!fogOnly)shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
@@ -143,12 +156,12 @@ gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
   };
   material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
   material.needsUpdate=true;
-  return()=>{material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
+  return()=>{if(priorAssetUniforms)Object.defineProperty(material.userData,'assetUniforms',priorAssetUniforms);else delete material.userData.assetUniforms;material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
 }
 
 /** Owns only replacement water materials and shader hooks, never source maps/geometry. */
 export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
-  const uniforms={uAnFxTime:{value:0},uAnFxWetness:{value:0},uAnFxRain:{value:0},uAnFxWind:{value:0},uAnFxSnow:{value:0},uAnFxSnowDetail:{value:1},uAnFxCompactedSnow:{value:0},uAnFxMelt:{value:0},uAnFxSnowLine:{value:0},uAnFxValleyFloor:{value:0},uAnFxMist:{value:0},uAnWindVector:{value:new THREE.Vector3(1,0,.3)},uAnWaterField:{value:null},uAnWaterBounds:{value:new THREE.Vector4()},uAnWaterFlow:{value:new THREE.Vector2()},uAnWaterShoreWidth:{value:1.5},uAnWaterMaxDepth:{value:18},uAnFxSky:{value:null},uAnFxSkyEnabled:{value:0},uAnFxSkyIntensity:{value:1},uAnFxSkyRotation:{value:new THREE.Matrix3()}};
+  const uniforms={uAnFxWeather:{value:new THREE.Vector4()},uAnFxTime:{value:0},uAnFxWetness:{value:0},uAnFxRain:{value:0},uAnFxWind:{value:0},uAnFxSnow:{value:0},uAnFxSnowDetail:{value:1},uAnFxCompactedSnow:{value:0},uAnFxMelt:{value:0},uAnFxSnowLine:{value:0},uAnFxValleyFloor:{value:0},uAnFxMist:{value:0},uAnWindVector:{value:new THREE.Vector3(1,0,.3)},uAnWaterField:{value:null},uAnWaterBounds:{value:new THREE.Vector4()},uAnWaterFlow:{value:new THREE.Vector2()},uAnWaterShoreWidth:{value:1.5},uAnWaterMaxDepth:{value:18},uAnFxSky:{value:null},uAnFxSkyEnabled:{value:0},uAnFxSkyIntensity:{value:1},uAnFxSkyRotation:{value:new THREE.Matrix3()}};
   Object.assign(uniforms,{uAnCanopyField:{value:null},uAnCanopyBounds:{value:new THREE.Vector4(0,0,1,1)},uAnCanopyEnabled:{value:0},uAnWheelPaths:{value:Array.from({length:24},()=>new THREE.Vector4())},uAnWheelPathStrengths:{value:new Float32Array(24)},uAnWheelPathCount:{value:0}},roadWetness?.uniforms||{});
   const hydrologyJobs=createHydrologyJobs();
   let reflection=null,reflectionEntries=[];
@@ -200,7 +213,7 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
       const visualRoot=root,bindings=(getMaterialBindings?.()||materialBindings||[]).map(binding=>({...binding,material:ownedSources.get(binding.material)||binding.material}));
       clear();setTrack({visualRoot,materialBindings:bindings});return true;
     },
-    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);setTransmission(policy.tier.transmission);for(const material of owned){material.roughness=Math.min(.7,material.userData.v7WaterOptics.roughness+policy.wind*.013);}},
+    update({time,policy,skyFog,wind,dynamics}){uniforms.uAnFxTime.value=time;uniforms.uAnFxWetness.value=policy.wetness;uniforms.uAnFxRain.value=policy.rainy?policy.intensity:0;uniforms.uAnFxWind.value=policy.wind;uniforms.uAnFxSnow.value=Math.max(0,Math.min(1,Number(dynamics?.snowCover??(policy.snow?policy.snowIntensity??policy.intensity:0))||0));uniforms.uAnFxSnowDetail.value=policy.tier.snow>=1600?1:policy.tier.snow>=950?.65:.3;uniforms.uAnFxCompactedSnow.value=dynamics?.compactedSnow||0;uniforms.uAnFxMelt.value=dynamics?.meltWater||0;uniforms.uAnFxMist.value=policy.mist;uniforms.uAnFxWeather.value.set(uniforms.uAnFxWetness.value,uniforms.uAnFxSnow.value,uniforms.uAnFxCompactedSnow.value,uniforms.uAnFxMelt.value);if(wind)uniforms.uAnWindVector.value.copy(wind);uniforms.uAnFxSkyEnabled.value=skyFog?.enabled?1:0;uniforms.uAnFxSky.value=skyFog?.texture||null;uniforms.uAnFxSkyIntensity.value=skyFog?.intensity??1;if(skyFog?.rotation)uniforms.uAnFxSkyRotation.value.copy(skyFog.rotation);setTransmission(policy.tier.transmission);for(const material of owned){material.roughness=Math.min(.7,material.userData.v7WaterOptics.roughness+policy.wind*.013);}},
     diagnostics:()=>({hydrologyJobs:hydrologyJobs.diagnostics(),waterMaterials:owned.length,wetSurfaceShaders:wetCount,fogSurfaceShaders:fogCount+owned.length,waterMeshes:originals.length,hydrology:hydrology.map(field=>field.diagnostics),roadDrainage:roadRestores.length,snowCover:uniforms.uAnFxSnow.value,snowDetail:uniforms.uAnFxSnowDetail.value,snowAppearance:'slope-and-wind-powder-with-grain',optics:owned.map(material=>({...material.userData.v7WaterOptics})),waveDirections:3,reflection:reflection?.diagnostics()||{model:'physical-env',frames:0,ownedTargets:0},refraction:owned.some(material=>material.transmission>0)?'physical-transmission':'tier-disabled'}),
     dispose(){clear();hydrologyJobs.dispose();reflection?.dispose();reflection=null;},
   };

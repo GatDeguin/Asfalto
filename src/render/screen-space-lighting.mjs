@@ -1,9 +1,11 @@
+import {createScreenSpaceTarget,supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=40515a8a242d2631';
+import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLSL,compositeMain,volumeMain,historyMain} from './screen-space-lighting.glsl.mjs?v=b5205d6a5b490b64';
 import {compileVisiblePass} from './pass-preparation.mjs?v=2481e701be72bf1c';
 import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=6d1203c83e12e6ba';
 import {supportedHdrSamples} from './render-target-capabilities.mjs?v=d75829b876d7c18d';
 import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=e2765b113440f785';
 const policies=Object.freeze({
- cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.625,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
+ cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.5,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
  high:Object.freeze({enabled:true,maxWidth:768,maxPixels:589824,scale:.5,aoSamples:24,giRays:6,giSteps:12,dfao:true,volume:true}),
  balanced:Object.freeze({enabled:true,maxWidth:576,maxPixels:331776,scale:.5,aoSamples:12,giRays:3,giSteps:8,dfao:true,volume:true}),
  low:Object.freeze({enabled:true,maxWidth:384,maxPixels:147456,scale:.4,aoSamples:6,giRays:0,giSteps:0,dfao:false,volume:false}),
@@ -11,19 +13,18 @@ const policies=Object.freeze({
 });
 export const screenLightingPolicy=tier=>policies[tier]||policies.balanced;
 export function depthToViewDistance(depth,near,far,logarithmic=false){return logarithmic?Math.expm1(Math.log1p(far)*depth):near*far/(far-depth*(far-near));}
-const vertexShader="varying vec2 vUv;void main(){vUv=position.xy*.5+.5;gl_Position=vec4(position.xy,0.,1.);}";
-const depthGLSL="\nuniform sampler2D anSceneDepth;\nuniform mat4 anProjection,anProjectionInverse,anCameraWorld;\nuniform float anNear,anFar;\nuniform bool anLogDepth;\nuniform vec2 anResolution;\nfloat anReadDepth(vec2 uv){return texture2D(anSceneDepth,clamp(uv,vec2(0.),vec2(1.))).r;}\nfloat anViewDistance(float d){if(anLogDepth)return exp2(d*log2(anFar+1.))-1.;return anNear*anFar/(anFar-d*(anFar-anNear));}\nvec3 anViewPosition(vec2 uv){\n float d=anReadDepth(uv);vec4 p=anProjectionInverse*vec4(uv*2.-1.,1.,1.);vec3 ray=p.xyz/p.w;\n return ray*(anViewDistance(d)/max(.000001,-ray.z));\n}\nvec3 anDepthNormal(vec2 uv){\n vec2 pixel=1./anResolution;vec3 p=anViewPosition(uv),l=anViewPosition(uv-vec2(pixel.x,0.)),r=anViewPosition(uv+vec2(pixel.x,0.)),b=anViewPosition(uv-vec2(0.,pixel.y)),t=anViewPosition(uv+vec2(0.,pixel.y));\n vec3 dx=abs(l.z-p.z)<abs(r.z-p.z)?p-l:r-p,dy=abs(b.z-p.z)<abs(t.z-p.z)?p-b:t-p;\n vec3 n=cross(dx,dy);return dot(n,n)>1e-14?normalize(n):vec3(0.,0.,1.);\n}";
-const bounceGLSL="\nuniform sampler2D anSceneColor,anGtao;\nuniform int anGiRays,anGiSteps;\nuniform float anAoStrength,anGiStrength,anUseDfa;\nfloat anRandom(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}\nvec3 anBounce(vec3 p,vec3 n){\n if(anGiRays==0||p.z < -90.)return vec3(0.);\n vec3 tangent=normalize(cross(n,abs(n.z)<.9?vec3(0.,0.,1.):vec3(0.,1.,0.))),bitangent=cross(n,tangent),sum=vec3(0.);\n float rotation=anRandom(floor(vUv*anResolution*.5))*6.2831853;\n for(int ray=0;ray<6;ray++){\n  if(ray>=anGiRays)break;\n  float u=(float(ray)+.5)/float(anGiRays),phi=float(ray)*2.3999632+rotation;\n  vec3 direction=tangent*(cos(phi)*sqrt(u))+bitangent*(sin(phi)*sqrt(u))+n*sqrt(1.-u);\n  vec3 origin=p+n*.06;\n  for(int step=1;step<=12;step++){\n   if(step>anGiSteps)break;\n   float fraction=float(step)/float(anGiSteps),distance=.12+fraction*fraction*5.;\n   vec3 samplePoint=origin+direction*distance;\n   if(samplePoint.z>-.05)break;\n   vec4 projected=anProjection*vec4(samplePoint,1.);vec2 uv=projected.xy/projected.w*.5+.5;\n   if(any(lessThan(uv,vec2(.002)))||any(greaterThan(uv,vec2(.998))))break;\n   if(anReadDepth(uv)>=.999999)continue;\n   vec3 hit=anViewPosition(uv);float behind=hit.z-samplePoint.z;\n   if(behind>0.){\n    float thickness=.15+distance*.06;\n    if(behind<thickness&&length(hit-origin)<5.4){\n     vec3 hn=anDepthNormal(uv);float facing=max(0.,dot(hn,-direction));\n     vec3 incoming=min(texture2D(anSceneColor,uv).rgb,vec3(3.));\n     sum+=incoming*facing*(1.-smoothstep(2.5,5.4,length(hit-origin)));\n    }\n    break;\n   }\n  }\n }\n return sum/max(1.,float(anGiRays));\n}\nvoid main(){\n float depth=anReadDepth(vUv);\n if(depth>=.999999){gl_FragColor=vec4(0.,0.,0.,1.);return;}\n vec3 p=anViewPosition(vUv),n=anDepthNormal(vUv);\n float ao=mix(1.,texture2D(anGtao,vUv).r,anAoStrength);\n if(anUseDfa>.5&&-p.z<70.){\n  vec3 wp=(anCameraWorld*vec4(p,1.)).xyz,wn=normalize(mat3(anCameraWorld)*n);\n  // Both methods estimate the same occlusion; avoid multiplying their estimates.\n  ao=min(ao,anDistanceFieldAO(wp,wn));\n }\n gl_FragColor=vec4(anBounce(p,n)*anGiStrength,clamp(ao,.46,1.));\n}";
-const compositeGLSL="uniform sampler2D anSceneColor,anLighting;\nuniform vec2 anLightingResolution;\nvarying vec2 vUv;\n";
-const compositeMain="\nvoid main(){\n vec4 color=texture2D(anSceneColor,vUv);float depth=anReadDepth(vUv);vec3 p=anViewPosition(vUv);\n vec4 lighting=vec4(0.);float weight=0.;\n for(int x=-1;x<=1;x++)for(int y=-1;y<=1;y++){\n  vec2 uv=clamp(vUv+vec2(float(x),float(y))/anLightingResolution,vec2(.001),vec2(.999));\n  float delta=abs(anViewPosition(uv).z-p.z),w=exp(-delta/max(.06,-p.z*.004))*((x==0&&y==0)?2.:1.);\n  lighting+=texture2D(anLighting,uv)*w;weight+=w;\n }\n lighting/=max(weight,.0001);vec3 result=color.rgb;\n if(depth<.999999){result*=lighting.a;result+=lighting.rgb*min(color.rgb+.06,vec3(1.));}\n result=anApplyAtmosphere(result,p,vUv);\n gl_FragColor=vec4(max(result,vec3(0.)),color.a);\n gl_FragDepth=depth;\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}";
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
 export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,onStage=null}={}){
- let disposed=false,rendering=false,frames=0,targets=null,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
+ let disposed=false,rendering=false,frames=0,targets=null,historyValid=false,historyIndex=0,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
+ const hdrSupported=supportsScreenSpaceHDR(renderer);
+ const previousWorld=new T.Matrix4(),previousView=new T.Matrix4(),previousProjection=new T.Matrix4();
+ let previousNear=camera.near,previousFar=camera.far;
+ const atmosphereState=new Float64Array(12);
  const size=new T.Vector2(),currentViewport=new T.Vector4(),viewport=new T.Vector4(),scissor=new T.Vector4(),clearColor=new T.Color();
  const definitions=gtaoShaderDefinitions(T),noise=definitions.generateMagicSquareNoise(5);
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute([-1,-1,0,3,-1,0,-1,3,0],3));geometry.setAttribute('uv',new T.Float32BufferAttribute([0,0,2,0,0,2],2));
- const uniforms={anSceneDepth:{value:null},anSceneColor:{value:null},anGtao:{value:null},anLighting:{value:null},anResolution:{value:new T.Vector2()},anLightingResolution:{value:new T.Vector2()},anProjection:{value:camera.projectionMatrix},anProjectionInverse:{value:camera.projectionMatrixInverse},anCameraWorld:{value:camera.matrixWorld},anNear:{value:camera.near},anFar:{value:camera.far},anLogDepth:{value:!!renderer.capabilities.logarithmicDepthBuffer},anGiRays:{value:policy.giRays},anGiSteps:{value:policy.giSteps},anAoStrength:{value:.38},anGiStrength:{value:.28},anUseDfa:{value:0},...(atmosphere?.uniforms||{}),...(distanceField?.uniforms||{})};
+ const uniforms={anMetadata:{value:null},anPreviousMetadata:{value:null},anFog:{value:null},anFogRaw:{value:null},anFogHistory:{value:null},anUseVolume:{value:false},anHistoryValid:{value:false},anPreviousView:{value:previousView},anPreviousProjection:{value:previousProjection},anSceneDepth:{value:null},anSceneColor:{value:null},anGtao:{value:null},anLighting:{value:null},anResolution:{value:new T.Vector2()},anLightingResolution:{value:new T.Vector2()},anProjection:{value:camera.projectionMatrix},anProjectionInverse:{value:camera.projectionMatrixInverse},anCameraWorld:{value:camera.matrixWorld},anNear:{value:camera.near},anFar:{value:camera.far},anLogDepth:{value:!!renderer.capabilities.logarithmicDepthBuffer},anGiRays:{value:policy.giRays},anGiSteps:{value:policy.giSteps},anAoStrength:{value:.38},anGiStrength:{value:.28},anUseDfa:{value:0},...(atmosphere?.uniforms||{}),...(distanceField?.uniforms||{})};
  const gtaoUniforms=T.UniformsUtils.clone(definitions.GTAOShader.uniforms);gtaoUniforms.tNoise.value=noise;gtaoUniforms.radius.value=1.2;gtaoUniforms.thickness.value=.7;gtaoUniforms.distanceFallOff.value=1;gtaoUniforms.anGtaoLogDepth={value:!!renderer.capabilities.logarithmicDepthBuffer};
  let gtaoFragment=definitions.GTAOShader.fragmentShader;
  gtaoFragment=gtaoFragment.replace('vec3 getViewPosition(',gtaoAdapter)
@@ -32,7 +33,14 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  .replace('vec2 sinHorizons = sqrt(1. - cosHorizons * cosHorizons);','cosHorizons=clamp(cosHorizons,vec2(-1.),vec2(1.));vec2 sinHorizons = sqrt(max(vec2(0.),1. - cosHorizons * cosHorizons));');
  const gtao=new T.ShaderMaterial({name:'ASFALTO_GTAO',uniforms:gtaoUniforms,defines:{...definitions.GTAOShader.defines,SAMPLES:policy.aoSamples||6,NORMAL_VECTOR_TYPE:0},vertexShader,fragmentShader:gtaoFragment,depthTest:false,depthWrite:false,blending:T.NoBlending});
  const bounce=new T.ShaderMaterial({name:'ASFALTO_SSGI_DFAO',uniforms,vertexShader,fragmentShader:'varying vec2 vUv;\n'+depthGLSL+'\n'+(distanceField?.glsl||'float anDistanceFieldAO(vec3 p,vec3 n){return 1.;}')+'\n'+bounceGLSL,depthTest:false,depthWrite:false,blending:T.NoBlending});
- const composite=new T.ShaderMaterial({name:'ASFALTO_INDIRECT_COMPOSITE',uniforms,vertexShader,fragmentShader:compositeGLSL+depthGLSL+'\n'+(atmosphere?.glsl||'vec3 anApplyAtmosphere(vec3 c,vec3 p,vec2 uv){return c;}')+'\n'+compositeMain,depthTest:true,depthWrite:true,depthFunc:T.AlwaysDepth,blending:T.NoBlending});
+ const atmosphereGLSL=atmosphere?.glsl||'vec4 anIntegrateAtmosphere(vec3 p,vec2 uv){return vec4(0.);} vec3 anCompositeAtmosphere(vec3 c,vec3 p,vec4 f){return c;} vec3 anApplyAtmosphere(vec3 c,vec3 p,vec2 uv){return c;}';
+ const baseGLSL='varying vec2 vUv;\n'+depthGLSL+'\n'+metadataGLSL;
+ const postMaterial=(name,fragment)=>new T.ShaderMaterial({name,uniforms,vertexShader,fragmentShader:baseGLSL+'\n'+fragment,depthTest:false,depthWrite:false,blending:T.NoBlending});
+ const metadata=postMaterial('ASFALTO_SURFACE_METADATA',metadataMain);
+ const volume=postMaterial('ASFALTO_FOG_EIGHT_STRATA',atmosphereGLSL+'\n'+volumeMain);
+ const history=postMaterial('ASFALTO_FOG_REPROJECT',historyMain);
+ const composite=postMaterial('ASFALTO_INDIRECT_COMPOSITE',atmosphereGLSL+'\n'+bilateralGLSL+'\n'+compositeMain);
+ composite.depthTest=true;composite.depthWrite=true;composite.depthFunc=T.AlwaysDepth;
  const quad=new T.Mesh(geometry,gtao);quad.frustumCulled=false;const passScene=new T.Scene();passScene.add(quad);const passCamera=new T.Camera();
  // Preserve the fog program topology across quality tiers. Volumetrics already
  // integrate extinction, so neutralize legacy fog numerically during the capture
@@ -45,28 +53,84 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  }
  function volumeEnabled(){return !!(atmosphere&&features.volumetrics&&policy.volume&&atmosphere.uniforms?.anAtmoEnabled?.value!==0);}
  function hasIndirect(){return !!(features.gtao&&policy.aoSamples>0||features.ssgi&&policy.giRays>0||distanceField&&features.dfao&&policy.dfao);}
- function hasEffects(){return hasIndirect()||volumeEnabled();}
- function releaseTargets(){if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;allocationBudget=null;}
+ function hasEffects(){return hdrSupported&&(hasIndirect()||volumeEnabled());}
+ function releaseTargets(){historyValid=false;if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;allocationBudget=null;}
  function requestedCaptureSamples(){return Math.min(renderSampleLimit(quality,phone),samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples);}
  function captureSamples(){return supportedHdrSamples(renderer,requestedCaptureSamples());}
  let targetSamples=captureSamples();
- const contextRestored=()=>{releaseTargets();targetSamples=captureSamples();};
+ const contextRestored=()=>{releaseTargets();releasePreparationTargets();targetSamples=captureSamples();};
  renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
  let preparationTargets=null;
- function ensurePreparationTargets(){if(!preparationTargets){const make=()=>new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false});preparationTargets={color:make(),ao:make(),lighting:make()};preparationTargets.color.texture.colorSpace=T.LinearSRGBColorSpace;preparationTargets.color.texture.name='ASFALTO_INDIRECT_SOURCE';}return preparationTargets;}
+ function releasePreparationTargets(){
+  if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();
+  preparationTargets=null;
+ }
+ function makeTarget(width,height,name,{color=false,ao=false}={}){
+  return createScreenSpaceTarget(T,width,height,name,{color,ao,samples:targetSamples});
+ }
+ function ensurePreparationTargets(){
+  if(!preparationTargets)preparationTargets={
+   color:makeTarget(1,1,'ASFALTO_INDIRECT_SOURCE',{color:true}),
+   ao:makeTarget(1,1,'ASFALTO_GTAO_R8',{ao:true}),
+   lighting:makeTarget(1,1,'ASFALTO_GI_RGB_AO_A'),metadata:makeTarget(1,1,'ASFALTO_METADATA'),
+   volume:makeTarget(1,1,'ASFALTO_FOG_RAW'),history:makeTarget(1,1,'ASFALTO_FOG_HISTORY')
+  };
+  return preparationTargets;
+ }
  let allocationBudget=null;
  function ensureTargets(){
-  const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples});const width=allocationBudget.width,height=allocationBudget.height,scale=Math.min(policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height))),ew=Math.max(2,Math.floor(width*scale)),eh=Math.max(2,Math.floor(height*scale));
-  if(!targets){const params={type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:false,stencilBuffer:false};const color=new T.WebGLRenderTarget(width,height,{...params,depthBuffer:true,samples:targetSamples});color.depthTexture=new T.DepthTexture(width,height,T.UnsignedIntType);color.texture.name='ASFALTO_INDIRECT_SOURCE';color.texture.colorSpace=T.LinearSRGBColorSpace;targets={color,ao:new T.WebGLRenderTarget(ew,eh,params),lighting:new T.WebGLRenderTarget(ew,eh,params)};}
-  if(targets.color.samples!==targetSamples){targets.color.dispose();targets.color.samples=targetSamples;}
-  if(targets.color.width!==width||targets.color.height!==height)targets.color.setSize(width,height);
-  for(const t of [targets.ao,targets.lighting])if(t.width!==ew||t.height!==eh)t.setSize(ew,eh);
-  uniforms.anSceneDepth.value=targets.color.depthTexture;uniforms.anSceneColor.value=targets.color.texture;uniforms.anGtao.value=targets.ao.texture;uniforms.anLighting.value=targets.lighting.texture;uniforms.anResolution.value.set(width,height);uniforms.anLightingResolution.value.set(ew,eh);
+  const destination=renderer.getRenderTarget();
+  if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);
+  allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples});
+  const width=allocationBudget.width,height=allocationBudget.height;
+  const scale=Math.min(.5,policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height)));
+  const ew=Math.max(1,Math.floor(width*scale)),eh=Math.max(1,Math.floor(height*scale));
+  if(!targets){
+   targets={color:makeTarget(width,height,'ASFALTO_INDIRECT_SOURCE',{color:true}),ao:makeTarget(ew,eh,'ASFALTO_GTAO_R8',{ao:true}),lighting:makeTarget(ew,eh,'ASFALTO_GI_RGB_AO_A'),
+    metadata0:makeTarget(ew,eh,'ASFALTO_METADATA_0'),metadata1:makeTarget(ew,eh,'ASFALTO_METADATA_1')};
+   historyValid=false;
+  }
+  if(volumeEnabled()&&!targets.fogRaw){
+   targets.fogRaw=makeTarget(ew,eh,'ASFALTO_FOG_RAW');
+   targets.fog0=makeTarget(ew,eh,'ASFALTO_FOG_HISTORY_0');targets.fog1=makeTarget(ew,eh,'ASFALTO_FOG_HISTORY_1');historyValid=false;
+  }else if(!volumeEnabled()&&targets.fogRaw){
+   for(const key of ['fogRaw','fog0','fog1']){targets[key].dispose();delete targets[key];}historyValid=false;
+  }
+  if(targets.color.samples!==targetSamples){targets.color.dispose();targets.color.samples=targetSamples;historyValid=false;}
+  for(const [key,target]of Object.entries(targets)){
+   const w=key==='color'?width:ew,h=key==='color'?height:eh;
+   if(target.width!==w||target.height!==h){target.setSize(w,h);historyValid=false;}
+  }
+  uniforms.anSceneDepth.value=targets.color.depthTexture;uniforms.anSceneColor.value=targets.color.texture;
+  uniforms.anGtao.value=targets.ao.texture;uniforms.anLighting.value=targets.lighting.texture;
+  uniforms.anMetadata.value=targets['metadata'+historyIndex].texture;
+  uniforms.anPreviousMetadata.value=targets['metadata'+(1-historyIndex)].texture;
+  uniforms.anFogRaw.value=targets.fogRaw?.texture||null;
+  uniforms.anFogHistory.value=targets['fog'+(1-historyIndex)]?.texture||null;
+  uniforms.anFog.value=targets['fog'+historyIndex]?.texture||null;
+  uniforms.anUseVolume.value=volumeEnabled();
+  uniforms.anResolution.value.set(width,height);uniforms.anLightingResolution.value.set(ew,eh);
   gtaoUniforms.tDepth.value=targets.color.depthTexture;gtaoUniforms.resolution.value.set(ew,eh);
  }
+ function updateHistoryValidity(){
+  const current=camera.matrixWorld.elements,prior=previousWorld.elements,projection=camera.projectionMatrix.elements;
+  const dx=current[12]-prior[12],dy=current[13]-prior[13],dz=current[14]-prior[14];
+  if(dx*dx+dy*dy+dz*dz>25||current[8]*prior[8]+current[9]*prior[9]+current[10]*prior[10]<.5||camera.near!==previousNear||camera.far!==previousFar)historyValid=false;
+  for(let i=0;i<16;i++)if(Math.abs(projection[i]-previousProjection.elements[i])>1e-5)historyValid=false;
+  const u=atmosphere?.uniforms;
+  if(u){
+   // Avoid preserving history across a weather preset or lighting cut. Slow
+   // drift is handled by the current neighborhood clamp in the history shader.
+   const scalars=['anAtmoDensity','anAtmoFalloff','anAtmoSunIntensity','anAtmoBaseHeight','anAtmoMieG','anAtmoMaxDistance'];
+   for(let i=0;i<scalars.length;i++){const value=u[scalars[i]]?.value||0;if(Math.abs(value-atmosphereState[i])>Math.max(.00001,Math.abs(value)*.08))historyValid=false;atmosphereState[i]=value;}
+   const sun=u.anAtmoSunDirection?.value,color=u.anAtmoSunColor?.value;
+   for(let i=0;i<3;i++){const direction=sun?.getComponent(i)||0,channel=color?(i===0?color.r:i===1?color.g:color.b):0;if(Math.abs(direction-atmosphereState[6+i])>.08||Math.abs(channel-atmosphereState[9+i])>.08)historyValid=false;atmosphereState[6+i]=direction;atmosphereState[9+i]=channel;}
+  }
+  uniforms.anHistoryValid.value=historyValid;
+ }
  return{
-  setFeatures(value){features={...features,...value};uniforms.anAoStrength.value=features.gtao?.38:0;uniforms.anGiStrength.value=features.ssgi?.28:0;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;if(!hasEffects())releaseTargets();},
-  setQuality(tier){quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
+  setFeatures(value){historyValid=false;features={...features,...value};uniforms.anAoStrength.value=features.gtao?.38:0;uniforms.anGiStrength.value=features.ssgi?.28:0;uniforms.anGiRays.value=features.ssgi?policy.giRays:0;if(!hasEffects())releaseTargets();},
+  setQuality(tier){historyValid=false;quality=tier;const next=screenLightingPolicy(tier);if(next===policy)return;policy=next;const nextSamples=captureSamples();if(nextSamples!==targetSamples){targetSamples=nextSamples;}uniforms.anGiRays.value=features.ssgi?policy.giRays:0;uniforms.anGiSteps.value=policy.giSteps;if(gtao.defines.SAMPLES!==(policy.aoSamples||6)){gtao.defines.SAMPLES=policy.aoSamples||6;gtao.needsUpdate=true;}if(!policy.enabled||!hasEffects())releaseTargets();},
   prepare(compile){
    if(typeof compile!=='function')throw new TypeError('Screen lighting compile callback is required');
    if(disposed||!policy.enabled||!hasEffects()||renderer.getContext().isContextLost())return compile();
@@ -78,8 +142,10 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
     const prepared=ensurePreparationTargets();renderer.setRenderTarget(prepared.color);renderer.setScissorTest(false);renderer.autoClear=true;
     const work=[compile()];restoreFog();
     const stage=(material,target)=>{quad.material=material;renderer.setRenderTarget(target);work.push(compileVisiblePass(renderer,passScene,passCamera));};
+    stage(metadata,prepared.metadata);
     if(features.gtao&&policy.aoSamples>0)stage(gtao,prepared.ao);
     if(hasIndirect())stage(bounce,prepared.lighting);
+    if(volumeEnabled()){stage(volume,prepared.volume);stage(history,prepared.history);}
     stage(composite,oldTarget);
     return Promise.all(work);
    }finally{
@@ -93,18 +159,24 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    renderer.getViewport(viewport);renderer.getCurrentViewport?.(currentViewport);renderer.getScissor(scissor);renderer.getClearColor(clearColor);const oldFog=scene.fog;
    const restoreFog=suppressLegacyFog();
    try{
-    onStage?.('Primer cuadro: buffers de iluminación');ensureTargets();camera.updateMatrixWorld();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
+    onStage?.('Primer cuadro: buffers de iluminación');ensureTargets();camera.updateMatrixWorld();atmosphere?.beginFrame?.(frames);updateHistoryValidity();uniforms.anNear.value=camera.near;uniforms.anFar.value=camera.far;
     gtaoUniforms.cameraNear.value=camera.near;gtaoUniforms.cameraFar.value=camera.far;gtaoUniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);gtaoUniforms.cameraProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);gtaoUniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
     uniforms.anUseDfa.value=distanceField&&features.dfao&&policy.dfao?1:0;
     renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
     onStage?.('Primer cuadro: captura del mundo');draw();restoreFog();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
+    renderer.setRenderTarget(targets['metadata'+historyIndex]);quad.material=metadata;renderer.render(passScene,passCamera);
     onStage?.('Primer cuadro: oclusión GTAO');renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
     onStage?.('Primer cuadro: iluminación indirecta');renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
+    if(volumeEnabled()){
+     renderer.setRenderTarget(targets.fogRaw);quad.material=volume;renderer.render(passScene,passCamera);
+     renderer.setRenderTarget(targets['fog'+historyIndex]);quad.material=history;renderer.render(passScene,passCamera);
+    }
     onStage?.('Primer cuadro: composición del mundo');renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);renderer.autoClear=false;quad.material=composite;renderer.render(passScene,passCamera);frames++;
-   }catch(error){lastError=error.message;throw error;}
+    previousWorld.copy(camera.matrixWorld);previousView.copy(camera.matrixWorldInverse);previousProjection.copy(camera.projectionMatrix);previousNear=camera.near;previousFar=camera.far;historyValid=volumeEnabled();historyIndex=1-historyIndex;
+   }catch(error){historyValid=false;lastError=error.message;throw error;}
    finally{restoreFog();scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
   },
-  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],spatialOnly:true,targets:targets?3:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'hemisphere depth ray marching with bilateral filtering',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
-  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();preparationTargets=null;noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();composite.dispose();}
+  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],hdrSupported,spatialOnly:!volumeEnabled(),fogHistoryValid:historyValid,targets:targets?Object.keys(targets).length:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'half-resolution RGB GI + A AO, symmetric plane/depth/normal bilateral',fog:'8 blue-noise strata with reprojected clamped history',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
+  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();preparationTargets=null;noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();metadata.dispose();volume.dispose();history.dispose();composite.dispose();}
  };
 }

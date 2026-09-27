@@ -199,8 +199,13 @@
     }
     const { parseGlb, makeAttribute, textureFromInfo } = helpers;
 
-    let { json, bin } = parseGlb(bytes);
-    ({ json, bin } = await decodeMeshoptDocument(json, bin, helpers.meshoptDecoder, label));
+    const owned=new Set();let failed=false;
+    const own=resource=>{if(!resource)return resource;if(failed)resource.dispose?.();else owned.add(resource);return resource;};
+    const checkpoint=helpers.checkpoint;
+    try {
+    let { json, bin } = helpers.decodedDocument || parseGlb(bytes);
+    if(!helpers.decodedDocument)({ json, bin } = await decodeMeshoptDocument(json, bin, helpers.meshoptDecoder, label));
+    if(checkpoint)await checkpoint();
     const graph = validateNodeGraph(json, label);
     const textureCache = new Map();
 
@@ -212,7 +217,7 @@
       if (!textureCache.has(cacheKey)) {
         textureCache.set(
           cacheKey,
-          textureFromInfo(THREE, json, bin, info, srgb),
+          Promise.resolve(textureFromInfo(THREE, json, bin, info, srgb)).then(own),
         );
       }
       return textureCache.get(cacheKey);
@@ -260,6 +265,8 @@
         aoMap: occlusionMap,
         aoMapIntensity: definition.occlusionTexture?.strength ?? 1,
       });
+      own(material);
+      if(checkpoint)await checkpoint();
       // Preserve authored surface ownership and semantic metadata from Blender.
       if (definition.extras && typeof definition.extras === 'object') {
         material.userData = { ...material.userData, ...JSON.parse(JSON.stringify(definition.extras)) };
@@ -278,6 +285,7 @@
       metalness: 0.05,
     });
 
+    own(fallbackMaterial);
     const vertexColorVariants = new Map();
 
     function materialForPrimitive(primitive, meshIndex, primitiveIndex) {
@@ -296,7 +304,7 @@
       }
       if (primitive.attributes?.COLOR_0 == null) return baseMaterial;
       if (!vertexColorVariants.has(baseMaterial)) {
-        const variant = baseMaterial.clone();
+        const variant = own(baseMaterial.clone());
         variant.vertexColors = true;
         vertexColorVariants.set(baseMaterial, variant);
       }
@@ -304,14 +312,17 @@
     }
 
 
-    const meshTemplates = (json.meshes || []).map((meshDefinition, meshIndex) => {
+    const meshTemplates=[];
+    for(let meshIndex=0;meshIndex<(json.meshes||[]).length;meshIndex++){
+      const meshDefinition=json.meshes[meshIndex];
+      if(checkpoint)await checkpoint();
       const group = new THREE.Group();
       group.name = meshDefinition.name || 'Mesh_' + meshIndex;
       for (const [primitiveIndex, primitive] of (meshDefinition.primitives || []).entries()) {
         if ((primitive.mode ?? 4) !== 4 || primitive.attributes?.POSITION == null) {
           throw new Error(label + ': primitiva GLB no soportada ' + primitiveIndex);
         }
-        const geometry = new THREE.BufferGeometry();
+        const geometry = own(new THREE.BufferGeometry());
         const semanticNames = {
           POSITION: 'position',
           NORMAL: 'normal',
@@ -342,11 +353,15 @@
         object.castShadow = false;
         object.receiveShadow = true;
         group.add(object);
+        if(checkpoint)await checkpoint();
       }
-      return group;
-    });
+      meshTemplates.push(group);
+    }
 
-    const nodes = graph.definitions.map((definition, index) => {
+    const nodes=[];
+    for(let index=0;index<graph.definitions.length;index++){
+      const definition=graph.definitions[index];
+      if(checkpoint)await checkpoint();
       const object = definition.mesh != null
         ? meshTemplates[definition.mesh].clone(true)
         : new THREE.Group();
@@ -361,18 +376,34 @@
         if (definition.rotation) object.quaternion.fromArray(definition.rotation);
         if (definition.scale) object.scale.fromArray(definition.scale);
       }
-      return object;
-    });
-    graph.definitions.forEach((definition, index) => {
+      nodes.push(object);
+    }
+    for(let index=0;index<graph.definitions.length;index++){
+      const definition=graph.definitions[index];
       for (const childIndex of definition.children || []) {
         nodes[index].add(nodes[childIndex]);
       }
-    });
+      if(checkpoint)await checkpoint();
+    }
     const sceneRoot = new THREE.Group();
     sceneRoot.name = label;
     for (const nodeIndex of graph.rootIndices) sceneRoot.add(nodes[nodeIndex]);
     sceneRoot.updateMatrixWorld(true);
+    // Dispose templates/materials not referenced by the selected scene.
+    const used=new Set();
+    sceneRoot.traverse(node=>{
+      if(node.geometry)used.add(node.geometry);
+      const list=Array.isArray(node.material)?node.material:[node.material];
+      for(const material of list)if(material){used.add(material);for(const value of Object.values(material))if(value?.isTexture)used.add(value);}
+    });
+    for(const resource of owned)if(!used.has(resource))resource.dispose?.();
     return sceneRoot;
+    } catch(error) {
+      failed=true;const errors=[error];
+      for(const resource of owned)try{resource.dispose?.();}catch(disposeError){errors.push(disposeError);}
+      if(errors.length>1)throw new AggregateError(errors,label+': load and cleanup failed');
+      throw error;
+    }
   }
 
   function createCollisionProbe(THREE, collisionRoot) {

@@ -8,6 +8,8 @@
  * Inputs and return value are linear scene radiance, before tone mapping.
  */
 export const AN_ATMOSPHERE_GLSL = /* glsl */ `
+uniform sampler2D anAtmoBlueNoise;
+uniform float anAtmoFrame;
 uniform float anAtmoEnabled;
 uniform mat4 anAtmoCameraWorld;
 uniform mat4 anAtmoViewMatrix;
@@ -55,40 +57,63 @@ float anAtmoSunVisibility(vec3 sampleView,vec3 sunView) {
  }
  return mix(1.0,visibility,clamp(anAtmoShaftStrength,0.0,1.0));
 }
-vec3 anApplyAtmosphere(vec3 radiance,vec3 viewPosition,vec2 uv) {
- if(anAtmoEnabled<0.5||anReadDepth(uv)>=0.999999)return radiance;
+// Integral exp(-max(height,0)/8000) over a segment. This exact molecular
+// optical depth lets one RGBA16F store RGB scattering and aerosol optical depth
+// without approximating colored transmittance with a scalar alpha.
+float anMolecularIntegral(float originY,float directionY,float rayLength){
+ float lo=0.,hi=rayLength,ground=0.;
+ if(abs(directionY)<1e-6)return rayLength*exp(-max(originY,0.)/8000.);
+ float crossing=-originY/directionY;
+ if(directionY>0.){lo=clamp(crossing,0.,rayLength);ground=lo;}
+ else{hi=clamp(crossing,0.,rayLength);ground=rayLength-hi;}
+ float span=max(0.,hi-lo),h=max(0.,originY+directionY*lo),x=directionY*span/8000.;
+ float ratio=abs(x)<.001?1.-x*.5+x*x/6.:(1.-exp(-x))/x;
+ return ground+span*exp(-h/8000.)*ratio;
+}
+vec4 anIntegrateAtmosphere(vec3 viewPosition,vec2 uv){
+ if(anAtmoEnabled<.5||anAtmoVolumeSteps<=0||anReadDepth(uv)>=.999999)return vec4(0.);
  float rayLength=min(length(viewPosition),anAtmoMaxDistance);
- if(rayLength<0.001)return radiance;
- vec3 viewRay=normalize(viewPosition);
- vec3 worldRay=normalize((anAtmoCameraWorld*vec4(viewRay,0.0)).xyz);
- vec3 origin=anAtmoCameraWorld[3].xyz;
- vec3 sunView=normalize((anAtmoViewMatrix*vec4(anAtmoSunDirection,0.0)).xyz);
- float mu=clamp(dot(worldRay,anAtmoSunDirection),-1.0,1.0);
- float phaseR=anAtmoPhaseR(mu),phaseM=anAtmoPhaseM(mu);
- float segment=rayLength/float(max(anAtmoVolumeSteps,1));
- // Stable subpixel dither avoids moving grain when time is paused.
- float jitter=fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(0.06711056,0.00583715))));
- vec3 transmittance=vec3(1.0),scattering=vec3(0.0);
- for(int index=0;index<32;index++) {
-  if(index>=anAtmoVolumeSteps)break;
-  float distanceAlong=(float(index)+0.25+0.5*jitter)*segment;
+ if(rayLength<.001)return vec4(0.);
+ vec3 viewRay=normalize(viewPosition),worldRay=normalize((anAtmoCameraWorld*vec4(viewRay,0.)).xyz);
+ vec3 origin=anAtmoCameraWorld[3].xyz,sunView=normalize((anAtmoViewMatrix*vec4(anAtmoSunDirection,0.)).xyz);
+ float mu=clamp(dot(worldRay,anAtmoSunDirection),-1.,1.);
+ const int AN_VOLUME_SAMPLES=8;
+ float phaseR=anAtmoPhaseR(mu),phaseM=anAtmoPhaseM(mu),segment=rayLength/float(AN_VOLUME_SAMPLES);
+ // A spatial rank tile with a temporal Cranley-Patterson rotation. Each sample
+ // stays inside its own interval; neither a hash nor interleaved white noise.
+ vec2 noisePixel=mod(floor(gl_FragCoord.xy)+vec2(mod(anAtmoFrame,32.),mod(floor(anAtmoFrame/32.)*7.,32.)),32.);
+ float rank=texture2D(anAtmoBlueNoise,(noisePixel+.5)/32.).r;
+ float jitter=fract(rank+anAtmoFrame*.61803398875);
+ vec3 transmittance=vec3(1.),scattering=vec3(0.);float aerosolDepth=0.,previousMolecular=0.;
+ for(int index=0;index<AN_VOLUME_SAMPLES;index++){
+  // Decorrelate strata with ALU only: still one blue-noise texture fetch.
+  float stratumJitter=fract(jitter+float(index)*.754877666);
+  float distanceAlong=(float(index)+stratumJitter)*segment;
   vec3 position=origin+worldRay*distanceAlong;
-  float height=max(position.y-anAtmoBaseHeight,0.0);
-  // Low-amplitude moving density structure; extinction is integrated in metres.
-  float structure=0.96+0.04*sin(position.x*0.035+position.z*0.027+anAtmoTime*0.08)*sin(position.y*0.06-position.z*0.017);
+  float height=max(position.y-anAtmoBaseHeight,0.);
+  float structure=.96+.04*sin(position.x*.035+position.z*.027+anAtmoTime*.08)*sin(position.y*.06-position.z*.017);
   float aerosol=anAtmoDensity*exp(-height*anAtmoFalloff)*structure;
-  vec3 molecular=anAtmoRayleigh*exp(-max(position.y,0.0)/8000.0);
-  vec3 extinction=molecular+vec3(aerosol);
-  vec3 segmentTransmittance=exp(-extinction*segment);
-  float visibility=anAtmoSunIntensity>0.0001?anAtmoSunVisibility(viewRay*distanceAlong,sunView):0.0;
+  float cumulativeMolecular=anMolecularIntegral(origin.y,worldRay.y,(float(index)+1.)*segment);
+  vec3 molecular=anAtmoRayleigh*max(0.,cumulativeMolecular-previousMolecular)/max(segment,.000001);
+  previousMolecular=cumulativeMolecular;
+  vec3 extinction=molecular+vec3(aerosol),segmentTransmittance=exp(-extinction*segment);
+  float visibility=anAtmoSunIntensity>.0001?anAtmoSunVisibility(viewRay*distanceAlong,sunView):0.;
   vec3 sunlight=anAtmoSunColor*anAtmoSunIntensity*visibility;
-  vec3 source=sunlight*(molecular*phaseR+vec3(aerosol*0.92*phaseM))+anAtmoAmbient*aerosol;
-  // Analytic integration inside each piecewise-constant density interval.
-  scattering+=transmittance*source*(vec3(1.0)-segmentTransmittance)/max(extinction,vec3(0.00000001));
-  transmittance*=segmentTransmittance;
-  if(max(max(transmittance.r,transmittance.g),transmittance.b)<0.002)break;
+  vec3 source=sunlight*(molecular*phaseR+vec3(aerosol*.92*phaseM))+anAtmoAmbient*aerosol;
+  scattering+=transmittance*source*(vec3(1.)-segmentTransmittance)/max(extinction,vec3(.00000001));
+  transmittance*=segmentTransmittance;aerosolDepth+=aerosol*segment;
  }
- return max(vec3(0.0),radiance*transmittance+scattering);
+ return vec4(max(scattering,vec3(0.)),aerosolDepth);
+}
+vec3 anCompositeAtmosphere(vec3 radiance,vec3 viewPosition,vec4 volume){
+ float rayLength=min(length(viewPosition),anAtmoMaxDistance);
+ vec3 worldRay=normalize((anAtmoCameraWorld*vec4(normalize(viewPosition),0.)).xyz);
+ float molecular=anMolecularIntegral(anAtmoCameraWorld[3].y,worldRay.y,rayLength);
+ return max(vec3(0.),radiance*exp(-anAtmoRayleigh*molecular-vec3(max(volume.a,0.)))+volume.rgb);
+}
+vec3 anApplyAtmosphere(vec3 radiance,vec3 viewPosition,vec2 uv){
+ if(anAtmoEnabled<.5||anAtmoVolumeSteps<=0||anReadDepth(uv)>=.999999)return radiance;
+ return anCompositeAtmosphere(radiance,viewPosition,anIntegrateAtmosphere(viewPosition,uv));
 }
 `;
 

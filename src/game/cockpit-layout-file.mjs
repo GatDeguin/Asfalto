@@ -1,6 +1,6 @@
 import {staticSeedUrl} from './hosting-mode.mjs?v=bcd45c5c9364a26f';
 import { COCKPIT_FACTORY_LAYOUT } from './cockpit-layout-default.mjs?v=41ddb2cbdf200068';
-import { sanitizeCompositionState, sanitizeTransform, migrateCompositionState } from './composition-editor-state.mjs?v=8ed48999c4e7ed8b';
+import { sanitizeCompositionState, sanitizeTransform, migrateCompositionState } from './composition-editor-state.mjs?v=409c5b1f833e82b4';
 
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const valid = value => record(value) && [1, 2, 3].includes(value.version) && record(value.transforms);

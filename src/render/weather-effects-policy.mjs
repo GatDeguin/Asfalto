@@ -1,4 +1,5 @@
-import { metalContactEmission } from './weather-dynamics.mjs?v=470f93cd4d3a3352';
+const EMPTY_EMISSION=Object.freeze({});
+import { metalContactEmission } from './weather-dynamics.mjs?v=97b633343145b353';
 const clamp = (value, low, high) => Math.max(low, Math.min(high, Number(value) || 0));
 export const WEATHER_EFFECTS_TIERS = Object.freeze({
   cinematic:Object.freeze({ rain:3200, snow:1600, clouds:16, mist:9, particles:560, transmission:.22 }),
@@ -23,13 +24,14 @@ export function weatherEffectsPolicy(environment = {}, quality = 'balanced') {
   };
 }
 export function createVehicleEmissionState() {
+  const output={fire:0,sparks:0,spray:0,dust:0,tireSmoke:0,engineSmoke:0,engineFire:0};
   let throttle = 0, collisionCount = 0, hadImpact = false, hadMetal = false, cooldown = 0;
   return {
-    update(value = {}) {
-      const dt = clamp(value.dt,0,.05), speed = Math.abs(Number(value.speedMps) || 0), wet = clamp(value.wetness,0,1);
+    update(value = EMPTY_EMISSION, dtOverride=value.dt, wetOverride=value.wetness) {
+      const dt = clamp(dtOverride,0,.05), speed = Math.abs(Number(value.speedMps) || 0), wet = clamp(wetOverride,0,1);
       cooldown = Math.max(0,cooldown-dt);
       const nextThrottle = clamp(value.throttle,0,1);
-      const engineDamage = value.engineDamage || {};
+      const engineDamage = value.engineDamage || EMPTY_EMISSION;
       const engineFire = value.engineFire === true || engineDamage.fire === true
         ? clamp(engineDamage.fireIntensity ?? value.engineFireIntensity ?? 1, .15, 1) : 0;
       const engineSmoke = Math.max(clamp((Number(value.engineTemperatureC)-112)/45,0,.75),
@@ -43,12 +45,11 @@ export function createVehicleEmissionState() {
       const metalStrength=metalContactEmission(value.metalContact);
       const sparks=metalStrength>0&&(!hadMetal||impactEdge)?metalStrength:0;hadMetal=metalStrength>0;
       collisionCount = count; hadImpact = !!value.impact; throttle = nextThrottle;
-      return { fire, sparks,
-        spray:wet > .15 && speed > 2 ? clamp((speed-2)/35,0,1)*wet : 0,
-        dust:['gravel','dirt','grass','shoulder','sand'].includes(value.surface) && speed > 3 && wet < .4 ? clamp((speed-3)/24,0,1)*(1-wet*2.5) : 0,
-        tireSmoke:wet < .25 && speed > 5 ? clamp((Number(value.slip)-.28)*1.8,0,.7) : 0,
-        engineSmoke, engineFire,
-      };
+      output.fire=fire;output.sparks=sparks;output.spray=wet>.15&&speed>2?clamp((speed-2)/35,0,1)*wet:0;
+      const surface=value.surface,soil=surface==='gravel'||surface==='dirt'||surface==='grass'||surface==='shoulder'||surface==='sand';
+      output.dust=soil&&speed>3&&wet<.4?clamp((speed-3)/24,0,1)*(1-wet*2.5):0;
+      output.tireSmoke=wet<.25&&speed>5?clamp((Number(value.slip)-.28)*1.8,0,.7):0;
+      output.engineSmoke=engineSmoke;output.engineFire=engineFire;return output;
     },
     reset() { throttle=0;collisionCount=0;hadImpact=false;hadMetal=false;cooldown=0; },
   };

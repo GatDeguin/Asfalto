@@ -1,5 +1,9 @@
+import {decodeGlbInWorker} from '../runtime/glb-decode-client.mjs?v=91a1751f8f15975f';
+import {smoothAnalog} from '../render/cockpit-animator.mjs?v=1e70e16a21a9b8b3';
+import {AssetPipeline,createAssetLifecycleManager,disposeAssets} from '../runtime/asset-lifecycle.mjs?v=a4c55886c0272d57';
+import {createEngineControlRing,createEngineControlReader} from '../audio/engine-control-ring.mjs?v=1004f2bad30c31a3';
 import {getRenderHost} from '../runtime/render-host.mjs?v=529634b49006a89f';
-import {getVehicleResourcePool} from '../render/vehicle-resource-pool.mjs?v=b5d99705e208d46d';
+import {getVehicleResourcePool,isBorrowedVehicleResource,releaseVehicleModel} from '../render/vehicle-resource-pool.mjs?v=b5d99705e208d46d';
 import {isRenderPreparationPending,getRenderPreparationDiagnostics} from '../render/pass-preparation.mjs?v=2481e701be72bf1c';
 import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=10dbdf3e21c982ac';
 import {createVehicleTemplateReference} from '../render/vehicle-template-reference.mjs?v=3045a31dc1e41520';
@@ -41,7 +45,7 @@ import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs
 import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=ae78b625f42d9dd9';
 import {startupDemand} from '../runtime/startup-demand.mjs?v=d7f04a8f3c4b6613';
 import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=2451a6adbe22e7d9';
-import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=0958da2fd48484da';
+import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=ff808be94a1df463';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=15e8f09e2eadaf19';
 import {createFramePacer} from '../performance/frame-pacer.mjs?v=29ce1359ddeca000';
 import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs?v=938a78863582c3c2';
@@ -53,11 +57,11 @@ import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-c
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=c042c9baa6b51abe';
 import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
 import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=58acc62683bb4eac';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=2126450a5798a05e';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=2c38d39f9fd1ea14';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=778703e2dae501e6';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=faddc4d7745bf11f';
-import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=dc7a4421c4479e97';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=d706ca072e346fe2';
+import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=eead7222493ddf39';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=cb4421d5b87d806c';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1276b85e67c42976';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=bc7bf5b2d6806a8a';
@@ -65,32 +69,32 @@ import { enableCustomLogarithmicDepth } from '../render/logarithmic-depth.mjs?v=
 import { createPhysicalRenderBridge } from '../game/physical-render-bridge.mjs?v=a7a3e535c754e44b';
 import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs?v=953e830bf733a7ab';
 import { createRaceCameraEntrance } from '../game/race-camera-entrance.mjs?v=9c2541ec2c0fc94e';
-import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs';
-import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=b505d29d36fc2156';
+import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=91536e58ba4745bc';
+import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=c169f74bff564db6';
 import { createRaceOpening } from '../game/race-opening.mjs?v=8211392789cad055';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=6178e38252dbfb9e';
 import {createLightingEditor} from '../menu/lighting-editor.mjs?v=e4535be24a4eafe4';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=292e6ddd31bddd0e';
 import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=65b923efda2cac08';
-import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=d730e0b995acbd9c';
+import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=bef28e3d64640e6d';
 import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=a2ccd04ee211ccf4';
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=c1775e5ac0ca65c0';
 import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=6eb33370562f7d1a';
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=ad9cf23a91b437ab';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=d92a588a8957657c';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=491e881b58b262ea';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=e0104b160e8436ab';
-import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=b3d0520149736731';
-import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=5dc564db7a89a5ef';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=82bd4492d14bfcf7';
+import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=f0d5b72ad6716b19';
+import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=b680ab5421ec92f2';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aef1d67d0250fcce';
-import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=633c269811bfdee9';
-import {engineMix} from '../audio/v7-audio-state.mjs?v=eecccc1986f61671';
+import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=1ad94b3ee1a81d73';
+import {engineMix} from '../audio/v7-audio-state.mjs?v=e6720400866e4cbf';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=84ddd7aeddea355c';
-import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=8f494b5f9b0bf7b4';
-import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=11b71ce35d0b2e5d';
+import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=46da8d8e8b960aa3';
+import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=11143673a6d2f5d7';
 import { createCameraBoomCollisionQuery } from '../game/camera-boom-collision.mjs?v=32104ba795e573bb';
-import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=8ed48999c4e7ed8b';
-import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=d4f75d48fa9bb1e0';
+import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=409c5b1f833e82b4';
+import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=9e74405907c8762a';
 import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironment } from '../environment/environment-profiles.mjs?v=315916d6c7fab528';
 import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=801e455862a54ff2';
 import { resolveRaceLighting, applyRaceLightingSupport, orientHdriRows } from '../environment/race-lighting.mjs';
@@ -2417,10 +2421,11 @@ function createGauge(THREE, kind, radius) {
 
   let spring = { value: kind === 'rpm' ? ENGINE_SPEC.idleRpm : 0, velocity: 0 };
   const maximum = kind === 'speed' ? 220 : 6000;
+  const needleAxis=new THREE.Vector3(0,0,1);
   function update(value, dt, gear = 'N') {
-    const target = clamp(value, 0, maximum);
-    spring = stepSpring(spring, target, dt, kind === 'speed' ? 62 : 72, kind === 'speed' ? 14 : 16, 0, maximum);
-    needle.rotation.z = valueToNeedleRotation(spring.value, 0, maximum);
+    const target = clamp(Number.isFinite(value)?value:0, 0, maximum);
+    spring.value=smoothAnalog(spring.value,target,kind==='speed'?12:16,dt);
+    needle.quaternion.setFromAxisAngle(needleAxis,valueToNeedleRotation(spring.value,0,maximum));
     if (kind === 'speed') {
       display.update(String(Math.round(spring.value)).padStart(3, '0'), 'km/h');
     } else {
@@ -2617,7 +2622,9 @@ function createManualShifter(THREE, knobModel) {
   const midpoint = new THREE.Vector3();
   const up = new THREE.Vector3(0, 1, 0);
 
+  let lastLeverX=NaN,lastLeverY=NaN;
   function update(leverX, leverY) {
+    if(leverX===lastLeverX&&leverY===lastLeverY)return;lastLeverX=leverX;lastLeverY=leverY;
     const offsetX = clamp(leverX, -1, 1) * 0.030;
     const offsetZ = -clamp(leverY, -1, 1) * 0.025;
     basePoint.set(offsetX * 0.10, 0.018, offsetZ * 0.10);
@@ -2643,7 +2650,7 @@ function createManualShifter(THREE, knobModel) {
 
 'use strict';
 
-const ENGINE_WORKLET_SOURCE = String.raw`
+const ENGINE_WORKLET_SOURCE = createEngineControlReader.toString() + '\n' + String.raw`
 'use strict';
 
 const TAU = Math.PI * 2;
@@ -2827,30 +2834,13 @@ class CylinderPulseEngine {
 }
 
 class Chevy250EngineProcessor extends AudioWorkletProcessor {
-  static get parameterDescriptors() {
-    const k = (name, defaultValue, minValue, maxValue) => ({
-      name,
-      defaultValue,
-      minValue,
-      maxValue,
-      automationRate: 'k-rate',
-    });
-    return [
-      k('rpm', 820, 0, 6000), k('throttle', 0, 0, 1), k('load', 0, -1, 1),
-      k('speed', 0, 0, 70), k('brake', 0, 0, 1), k('accel', 0, -15, 15),
-      k('clutch', 0, 0, 1), k('gear', 0, -1, 5), k('limiter', 1, 0, 1),
-      k('engineLevel', 1, 0, 1.25), k('exhaustLevel', 0.92, 0, 1.25),
-      k('intakeLevel', 0.62, 0, 1.25), k('mechanicalLevel', 0.38, 0, 1.25),
-      k('roadLevel', 0.44, 0, 1.25), k('brakeLevel', 0.56, 0, 1.25),
-      k('profile', 0, 0, 2), k('idleRoughness', 0.38, 0, 1),
-      k('exhaustCharacter', 0.52, 0, 1), k('intakeCharacter', 0.48, 0, 1),
-      k('transmissionCharacter', 0.42, 0, 1), k('popsLevel', 0.24, 0, 1),
-      k('stereoWidth', 0.68, 0, 1), k('quality', 1, 0, 1),
-    ];
-  }
+  static get parameterDescriptors() { return []; }
 
-  constructor() {
+  constructor(options) {
     super();
+    const config=options.processorOptions;
+    this.controls=createEngineControlReader(this.port,config.sharedBuffer,config.initial);
+    this.startSequence=0;this.shiftSequence=0;
     this.cylinders = new CylinderPulseEngine();
     this.exhaustBank = new VariableModalBank(8);
     this.intakeBank = new VariableModalBank(4);
@@ -2905,20 +2895,6 @@ class Chevy250EngineProcessor extends AudioWorkletProcessor {
     this.profile = 0;
     this.quality = 1;
 
-    this.port.onmessage = (event) => {
-      const data = event.data || {};
-      if (data.type === 'start') {
-        this.startEnvelope = 1;
-        this.shutdownEnvelope = 1;
-        this.rpmSmooth = Math.max(220, Number(data.rpm) || 320);
-      } else if (data.type === 'stop') {
-        this.shutdownEnvelope = 0;
-      } else if (data.type === 'shift') {
-        this.shiftEnvelope = Math.max(this.shiftEnvelope, clampValue(Number(data.intensity) || 0.72, 0.15, 1.35));
-      } else if (data.type === 'pop') {
-        this.popEnvelope = Math.max(this.popEnvelope, clampValue(Number(data.intensity) || 0.72, 0.15, 1.45));
-      }
-    };
   }
 
   randomLeft() {
@@ -3002,31 +2978,33 @@ class Chevy250EngineProcessor extends AudioWorkletProcessor {
     if (!output || output.length === 0) return true;
     const left = output[0];
     const right = output[1] || output[0];
-    const p = (name) => parameters[name][0];
+    const control=this.controls.read();
+    if(control[23]!==this.startSequence){this.startSequence=control[23];this.startEnvelope=1;this.shutdownEnvelope=1;this.rpmSmooth=Math.max(220,control[25]||320);}
+    if(control[24]!==this.shiftSequence){this.shiftSequence=control[24];this.shiftEnvelope=Math.max(this.shiftEnvelope,clampValue(control[26]||.72,.15,1.35));}
 
-    const rpmTarget = p('rpm');
-    const throttleTarget = p('throttle');
-    const loadTarget = p('load');
-    const speedTarget = p('speed');
-    const brakeTarget = p('brake');
-    const acceleration = p('accel');
-    const clutchTarget = p('clutch');
-    const gear = p('gear');
-    const limiter = p('limiter');
-    const engineLevel = p('engineLevel');
-    const exhaustLevel = p('exhaustLevel');
-    const intakeLevel = p('intakeLevel');
-    const mechanicalLevel = p('mechanicalLevel');
-    const roadLevel = p('roadLevel');
-    const brakeLevel = p('brakeLevel');
-    const profile = clampValue(Math.round(p('profile')), 0, 2);
-    const idleRoughness = p('idleRoughness');
-    const exhaustCharacter = p('exhaustCharacter');
-    const intakeCharacter = p('intakeCharacter');
-    const transmissionCharacter = p('transmissionCharacter');
-    const popsLevel = p('popsLevel');
-    const stereoWidth = p('stereoWidth');
-    const quality = p('quality') >= 0.5 ? 1 : 0;
+    const rpmTarget = control[0];
+    const throttleTarget = control[1];
+    const loadTarget = control[2];
+    const speedTarget = control[3];
+    const brakeTarget = control[4];
+    const acceleration = control[5];
+    const clutchTarget = control[6];
+    const gear = control[7];
+    const limiter = control[8];
+    const engineLevel = control[9];
+    const exhaustLevel = control[10];
+    const intakeLevel = control[11];
+    const mechanicalLevel = control[12];
+    const roadLevel = control[13];
+    const brakeLevel = control[14];
+    const profile = clampValue(Math.round(control[15]), 0, 2);
+    const idleRoughness = control[16];
+    const exhaustCharacter = control[17];
+    const intakeCharacter = control[18];
+    const transmissionCharacter = control[19];
+    const popsLevel = control[20];
+    const stereoWidth = control[21];
+    const quality = control[22] >= 0.5 ? 1 : 0;
 
     this.profile = profile;
     this.quality = quality;
@@ -3282,6 +3260,11 @@ class EngineSoundSynth {
     this.backend = 'none';
     this.lastGear = 'N';
     this.fallback = null;
+    this.controls=createEngineControlRing();
+    this.preferencesState={};globalThis.__asfaltoV7Experience?.preferencesInto?.(this.preferencesState);
+    this.mixInput={rpm:0,load:0,throttle:0,cameraMode:'cockpit',reducedRange:false};
+    this.mixState={compressor:{threshold:0,ratio:0,knee:0}};
+    this.nativeShiftSequence=0;
     this.saturationDrive = -1;
     this.onStatus('Esperando interacción', 'armed');
   }
@@ -3313,6 +3296,8 @@ class EngineSoundSynth {
       return false;
     }
     try {
+      this.controls.dispose();this.controls=createEngineControlRing();this.source?.disconnect?.();this.source=null;this.params=null;this.fallback=null;this.nativeShiftSequence=0;this.lastIgnitionSequence=0;
+      if(this.context&&this.context.state!=="closed")await this.context.close();
       this.context = new AudioContextCtor({ latencyHint: 'interactive', sampleRate: 48000 });
       await this.context.resume();
       this.buildOutputBus();
@@ -3321,6 +3306,7 @@ class EngineSoundSynth {
         const url = URL.createObjectURL(new Blob([ENGINE_WORKLET_SOURCE], { type: 'text/javascript' }));
         try { await this.context.audioWorklet.addModule(url); } finally { URL.revokeObjectURL(url); }
         const node = new AudioWorkletNode(this.context, 'chevy-250-engine-v2', {
+          processorOptions:{sharedBuffer:this.controls.shared?this.controls.buffer:null,initial:this.controls.values},
           numberOfInputs: 0,
           numberOfOutputs: 1,
           outputChannelCount: [2],
@@ -3330,6 +3316,7 @@ class EngineSoundSynth {
         });
         node.connect(this.cabinLowpass);
         this.source = node;
+        this.controls.attach(node.port);
         this.params = node.parameters;
         this.backend = 'AudioWorklet PTR v2';
         // The physics ignition sequence triggers the start impulse when a session starts.
@@ -3547,7 +3534,11 @@ class EngineSoundSynth {
     gearOscillator.start();
     noiseSource.start();
 
+    const shiftOscillator=ctx.createOscillator(),shiftGain=ctx.createGain(),shiftPanner=ctx.createStereoPanner();
+    shiftOscillator.type='sine';shiftOscillator.frequency.value=38;shiftGain.gain.value=.0001;shiftPanner.pan.value=.08;
+    shiftOscillator.connect(shiftGain).connect(shiftPanner).connect(this.cabinLowpass);shiftOscillator.start();
     this.fallback = {
+      shiftVoice:{oscillator:shiftOscillator,gain:shiftGain,panner:shiftPanner},
       bus,
       harmonics,
       noiseSource,
@@ -3569,23 +3560,7 @@ class EngineSoundSynth {
     };
   }
 
-  setParam(name, value, timeConstant = 0.025) {
-    if (!this.context || !Number.isFinite(value)) return false;
-    const param = this.params?.get(name);
-    if (!param) return false;
-    // Collision acceleration is valid physics, but each audio control has its
-    // own nominal range. Preserve the physical telemetry and bound only sound.
-    const target = Math.max(param.minValue, Math.min(param.maxValue, value));
-    const tau = Number.isFinite(timeConstant) ? Math.max(0, timeConstant) : 0.025;
-    const targets = this.paramTargets || (this.paramTargets = new WeakMap());
-    const previous = targets.get(param);
-    // A repeated identical target already follows the same exponential ramp.
-    if (previous?.value === target && previous.tau === tau) return false;
-    param.setTargetAtTime(target, this.context.currentTime, tau);
-    if (previous) { previous.value = target; previous.tau = tau; }
-    else targets.set(param, { value: target, tau });
-    return true;
-  }
+  setParam(name,value,timeConstant=.025){return this.controls.set(name,value);}
 
   applySettings() {
     this.cameraMode=null;
@@ -3636,18 +3611,21 @@ class EngineSoundSynth {
   update(vehicle, controls, gear, {cameraMode='cockpit',physicalRoad=false,ignition=null}={}) {
     if (!this.context || !this.started) return;
     const audio=this.getSettings().audio,now=this.context.currentTime,inside=cameraMode==='cockpit';
-    if(Number.isSafeInteger(ignition?.sequence)&&ignition.sequence>0&&ignition.sequence!==this.lastIgnitionSequence){this.lastIgnitionSequence=ignition.sequence;this.source?.port?.postMessage({type:'start',rpm:vehicle.rpm});}
+    if(Number.isSafeInteger(ignition?.sequence)&&ignition.sequence>0&&ignition.sequence!==this.lastIgnitionSequence){this.lastIgnitionSequence=ignition.sequence;this.controls.start(vehicle.rpm);}
     if(this.cameraMode!==cameraMode){this.cameraMode=cameraMode;const cabin=inside?audio.cabin:0;this.cabinLowpass?.frequency.setTargetAtTime(inside?4600+4400*(1-cabin):14500,now,.18);this.wetGain?.gain.setTargetAtTime(inside?.025+cabin*.18:.012,now,.18);}
     this.setParam('roadLevel',physicalRoad?0:audio.road,.04);this.setParam('brakeLevel',physicalRoad?0:audio.brakes,.04);
-    const v7Prefs=globalThis.__asfaltoV7Experience?.preferences?.()||{};
-    const v7Mix=engineMix({rpm:vehicle.rpm,load:vehicle.engineLoad||0,throttle:vehicle.effectiveThrottle??controls.throttle,cameraMode,reducedRange:v7Prefs.reducedRange});
+    const v7Prefs=globalThis.__asfaltoV7Experience?.preferencesInto?.(this.preferencesState)||this.preferencesState;
+    const mixInput=this.mixInput;mixInput.rpm=vehicle.rpm;mixInput.load=vehicle.engineLoad||0;mixInput.throttle=vehicle.effectiveThrottle??controls.throttle;mixInput.cameraMode=cameraMode;mixInput.reducedRange=v7Prefs.reducedRange;
+    const v7Mix=engineMix(mixInput,this.mixState);
     this.setParam('engineLevel',audio.engine*v7Mix.engineLevel*(v7Prefs.engineVolume??1),.08);
     this.setParam('exhaustLevel',audio.exhaust*v7Mix.exhaustLevel,.10);
     this.setParam('intakeLevel',audio.intake*v7Mix.intakeLevel,.10);
     this.setParam('mechanicalLevel',audio.mechanical*v7Mix.mechanicalLevel,.10);
     this.setParam('popsLevel',audio.pops*v7Mix.popsLevel,.10);
     this.setParam('stereoWidth',audio.stereoWidth*v7Mix.stereoWidth,.12);
-    for(const field of ['threshold','ratio','knee'])this.compressor?.[field]?.setTargetAtTime(v7Mix.compressor[field],now,.12);
+    this.compressor?.threshold.setTargetAtTime(v7Mix.compressor.threshold,now,.12);
+    this.compressor?.ratio.setTargetAtTime(v7Mix.compressor.ratio,now,.12);
+    this.compressor?.knee.setTargetAtTime(v7Mix.compressor.knee,now,.12);
     const numericGear = gear === 'R' ? -1 : gear === 'N' ? 0 : Number(gear) || 0;
     this.setParam('rpm', vehicle.rpm, 0.020);
     this.setParam('throttle', vehicle.effectiveThrottle ?? controls.throttle, 0.014);
@@ -3659,83 +3637,77 @@ class EngineSoundSynth {
     this.setParam('gear', numericGear, 0.020);
     this.setParam('limiter', vehicle.limiterCut ?? 1, 0.006);
 
+    this.controls.values[27]=v7Prefs.engineVolume??1;this.controls.values[28]=audio.stereoWidth;
+    this.controls.publish();
     if (!this.fallback) return;
+    const control=this.controls.consume();
     const ctx = this.context;
-    const profileIndex = audio.profile === 'race' ? 2 : audio.profile === 'sport' ? 1 : 0;
-    const revFrequency = Math.max(14, vehicle.rpm / 60);
-    const throttle = Math.max(0, Math.min(1, vehicle.effectiveThrottle ?? controls.throttle));
-    const load = Math.max(0, vehicle.engineLoad || 0);
-    const speed = Math.abs(vehicle.speedMps || 0);
-    const profileDrive = [1.0, 1.08, 1.14][profileIndex];
-    this.fallback.harmonics.forEach((voice) => {
+    if(control[24]!==this.nativeShiftSequence){this.nativeShiftSequence=control[24];this.playNativeShift(control[26]);}
+    const profileIndex = control[15];
+    const revFrequency = Math.max(14, control[0] / 60);
+    const throttle = Math.max(0, Math.min(1, control[1]));
+    const load = Math.max(0, control[2]);
+    const speed = Math.abs(control[3]);
+    const profileDrive = profileIndex===2?1.14:profileIndex===1?1.08:1;
+    for(let voiceIndex=0;voiceIndex<this.fallback.harmonics.length;voiceIndex++){
+      const voice=this.fallback.harmonics[voiceIndex];
       voice.oscillator.frequency.setTargetAtTime(revFrequency * voice.order, ctx.currentTime, 0.022);
       const firingEmphasis = voice.order === 3 ? 1.0 : 0.68;
       voice.gain.gain.setTargetAtTime(
         voice.level * firingEmphasis * (0.20 + throttle * 0.76 + load * 0.28)
-          * audio.engine * v7Mix.engineLevel * (v7Prefs.engineVolume??1) * profileDrive,
+          * control[9] * profileDrive,
         ctx.currentTime,
         0.026,
       );
-      voice.panner.pan.setTargetAtTime(voice.basePan * (0.52 + audio.stereoWidth * 0.70), ctx.currentTime, 0.08);
-    });
+      voice.panner.pan.setTargetAtTime(voice.basePan * (0.52 + control[28] * 0.70), ctx.currentTime, 0.08);
+    }
 
     this.fallback.exhaustFilter.frequency.setTargetAtTime(
-      430 + vehicle.rpm * (0.13 + audio.exhaustCharacter * 0.05),
+      430 + control[0] * (0.13 + control[17] * 0.05),
       ctx.currentTime,
       0.045,
     );
     this.fallback.exhaustGain.gain.setTargetAtTime(
-      (0.018 + throttle * 0.11 + load * 0.055) * audio.exhaust * v7Mix.exhaustLevel * (v7Prefs.engineVolume??1) * profileDrive,
+      (0.018 + throttle * 0.11 + load * 0.055) * control[10] * control[27] * profileDrive,
       ctx.currentTime,
       0.030,
     );
     this.fallback.intakeFilter.frequency.setTargetAtTime(
-      560 + vehicle.rpm * (0.18 + audio.intakeCharacter * 0.04),
+      560 + control[0] * (0.18 + control[18] * 0.04),
       ctx.currentTime,
       0.045,
     );
     this.fallback.intakeGain.gain.setTargetAtTime(
-      Math.pow(throttle, 1.12) * (0.025 + vehicle.rpm / 6000 * 0.085) * audio.intake * v7Mix.intakeLevel * (v7Prefs.engineVolume??1),
+      Math.pow(throttle, 1.12) * (0.025 + control[0] / 6000 * 0.085) * control[11] * control[27],
       ctx.currentTime,
       0.025,
     );
     this.fallback.roadFilter.frequency.setTargetAtTime(130 + speed * 17, ctx.currentTime, 0.05);
-    this.fallback.roadGain.gain.setTargetAtTime((physicalRoad?0:Math.pow(Math.min(1.2, speed / 45), 1.25) * 0.085 * audio.road), ctx.currentTime, 0.04);
+    this.fallback.roadGain.gain.setTargetAtTime((Math.pow(Math.min(1.2, speed / 45), 1.25) * 0.085 * control[13]), ctx.currentTime, 0.04);
     this.fallback.brakeFilter.frequency.setTargetAtTime(900 + speed * 32, ctx.currentTime, 0.04);
-    this.fallback.brakeGain.gain.setTargetAtTime((physicalRoad?0:(controls.brake || 0) * Math.min(1, speed / 16) * 0.16 * audio.brakes), ctx.currentTime, 0.025);
+    this.fallback.brakeGain.gain.setTargetAtTime((control[4] * Math.min(1, speed / 16) * 0.16 * control[14]), ctx.currentTime, 0.025);
 
-    const gearRatio = numericGear < 0 ? 3.10 : [0, 2.95, 1.94, 1.34, 1.0, 0.78][Math.abs(numericGear)] || 0;
+    const gearRatio = control[7] < 0 ? 3.10 : (control[7]===1?2.95:control[7]===2?1.94:control[7]===3?1.34:control[7]===4?1:control[7]===5?.78:0);
     const wheelFrequency = speed / (Math.PI * 2 * 0.315);
-    const gearFrequency = Math.max(24, wheelFrequency * gearRatio * 3.08 * (numericGear < 0 ? 17 : 13));
+    const gearFrequency = Math.max(24, wheelFrequency * gearRatio * 3.08 * (control[7] < 0 ? 17 : 13));
     this.fallback.gearOscillator.frequency.setTargetAtTime(gearFrequency, ctx.currentTime, 0.022);
     this.fallback.gearGain.gain.setTargetAtTime(
       gearRatio > 0
-        ? Math.min(1, speed / 8) * (0.012 + audio.transmissionCharacter * 0.045) * (numericGear < 0 ? 2.1 : 1)
+        ? Math.min(1, speed / 8) * (0.012 + control[19] * 0.045) * (control[7] < 0 ? 2.1 : 1)
         : 0,
       ctx.currentTime,
       0.025,
     );
   }
 
-  notifyShift(fromGear, toGear, intensity = 0.72) {
-    if (this.source?.port) this.source.port.postMessage({ type: 'shift', fromGear, toGear, intensity });
-    if (this.fallback && this.context) {
-      const ctx = this.context;
-      const oscillator = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const panner = ctx.createStereoPanner();
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(82, ctx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(38, ctx.currentTime + 0.115);
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.17 * intensity, ctx.currentTime + 0.007);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.14);
-      panner.pan.value = 0.08;
-      oscillator.connect(gain).connect(panner).connect(this.cabinLowpass);
-      oscillator.onended = () => { try { oscillator.disconnect(); } catch {} try { gain.disconnect(); } catch {} try { panner.disconnect(); } catch {} };
-      oscillator.start();
-      oscillator.stop(ctx.currentTime + 0.15);
-    }
+  notifyShift(fromGear,toGear,intensity=.72){this.controls.shift(intensity);this.controls.publish();}
+
+  playNativeShift(intensity){
+    const voice=this.fallback?.shiftVoice;if(!voice||!this.context)return;
+    const now=this.context.currentTime;
+    voice.oscillator.frequency.cancelScheduledValues(now);voice.gain.gain.cancelScheduledValues(now);
+    voice.oscillator.frequency.setValueAtTime(82,now);voice.oscillator.frequency.exponentialRampToValueAtTime(38,now+.115);
+    voice.gain.gain.setValueAtTime(.0001,now);voice.gain.gain.exponentialRampToValueAtTime(Math.max(.0001,.17*intensity),now+.007);voice.gain.gain.exponentialRampToValueAtTime(.0001,now+.14);
   }
 
   async setEnabled(enabled) {
@@ -4655,7 +4627,7 @@ try {
   });
   const engineSoundSettings = () => ({
     audio: {
-      enabled: gameSettings.soundEnabled && !document.hidden && !document.body.classList.contains('v6-menu-open') && !document.body.classList.contains('an-intro-open') && !document.body.classList.contains('an-race-paused'),
+      enabled: gameSettings.soundEnabled && !documentFlags.hidden && !documentFlags.menuOpen && !documentFlags.introOpen && !document.body.classList.contains('an-race-paused'),
       profile: gameSettings.audioProfile,
       idleRoughness: gameSettings.idleRoughness,
       exhaustCharacter: gameSettings.exhaustCharacter,
@@ -4775,6 +4747,8 @@ try {
   function rememberCockpitCalibration(state){vehicleCockpitCalibrations.set(window.__asfaltoSelectedPlayerVehicle||'chevy',structuredClone(state));vehicleCameraRig?.setCockpitCalibration(state);}
   const headMotion=createCockpitHeadMotion();let headMotionControls=null;
   const headMotionOffset=new THREE.Vector3(),headMotionQuaternion=new THREE.Quaternion();
+  const engineAudioContext={cameraMode:'cockpit',physicalRoad:true,ignition:null},cockpitMotionContext={dt:0,paused:false,editing:false,reducedMotion:false};
+  const headCameraQuaternion=[0,0,0,1],headContext={mode:'cockpit',paused:false,reducedMotion:false,cameraWorldQuaternion:headCameraQuaternion};
   const cameraEntrance = createRaceCameraEntrance();
   let lightingEditor=null,colorGrading=null,advancedGraphics=null,graphicsSettings=null;
   const cameraOpening = createRaceOpening();
@@ -8281,34 +8255,22 @@ listen(window,'chevy:vehicle-config',(event)=>{
 }
 
   const trackGlbHelpers = { parseGlb, makeAttribute, textureFromInfo, meshoptDecoder: MeshoptDecoder };
+  const trackAssetLifecycle=createAssetLifecycleManager({renderer,isExternalResource:resource=>isBorrowedVehicleResource(resource)||resource===scene.environment||resource===scene.background});
+  const rivalAssetPipeline=new AssetPipeline({
+    concurrency:1,capacity:4,lifecycle:trackAssetLifecycle,
+    loader:{async parseAsync(buffer,base,{signal,checkpoint}){
+      const decodedDocument=await decodeGlbInWorker(buffer,{signal});
+      signal.throwIfAborted();
+      return{scene:await globalThis.AsfaltoV5GlbCore.completeGlbToObject(
+        THREE,decodedDocument?null:new Uint8Array(buffer),'Falcon v6',
+        {...trackGlbHelpers,decodedDocument,checkpoint}
+      )};
+    }}
+  });
   function disposeTrackObjectRoot(root) {
-    if (!root || typeof root.traverse !== 'function') return false;
-    // Detach first so render decorators restore the owner's source resources before disposal.
-    root.removeFromParent?.();
-    advancedGraphics?.refresh();
-    const geometries = new Set();
-    const materials = new Set();
-    const textures = new Set();
-    root.traverse(object => {
-      if (object?.geometry?.dispose && !geometries.has(object.geometry)) {
-        geometries.add(object.geometry);
-        object.geometry.dispose();
-      }
-      for (const material of (Array.isArray(object?.material) ? object.material : [object?.material])) {
-        if (!material || materials.has(material)) continue;
-        materials.add(material);
-        for (const value of Object.values(material)) {
-          if (value?.isTexture && value.dispose && !textures.has(value)) {
-            textures.add(value);
-            value.dispose();
-          }
-        }
-        material.dispose?.();
-      }
-    });
-    root.removeFromParent?.();
-    root.clear?.();
-    return true;
+    if(!root?.traverse)return false;
+    root.removeFromParent?.();advancedGraphics?.refresh();
+    disposeAssets(root,{manager:trackAssetLifecycle});releaseVehicleModel(root);root.clear?.();return true;
   }
   let modularRaceWorld = null;
   let techoMount = null;
@@ -8346,12 +8308,18 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let cockpitMirrors = null,vehicleCockpitWheel=null,cockpitRenderPass=null;
   let cockpitIgnition = null,cockpitLightSwitch=null;
   let rayTracing=null,rayTracingSettings=null;
-  let modularRuntimeShutdown = null;
+  let modularRuntimeShutdown = null,cockpitHudTimer=null;
+  const documentFlags={hidden:document.hidden,menuOpen:false,introOpen:false,reducedMotion:false};
+  function syncDocumentFlags(){documentFlags.hidden=document.hidden;documentFlags.menuOpen=document.body.classList.contains('v6-menu-open');documentFlags.introOpen=document.body.classList.contains('an-intro-open');documentFlags.reducedMotion=document.body.classList.contains('v6-reduce-motion');}
+  syncDocumentFlags();const documentFlagObserver=new MutationObserver(syncDocumentFlags);documentFlagObserver.observe(document.body,{attributes:true,attributeFilter:['class']});document.addEventListener('visibilitychange',syncDocumentFlags);
   const modularRuntimeCleanup = { attempts: 0, completed: 0, failures: [] };
   function disposeModularRuntime() {
     if (modularRuntimeShutdown) return modularRuntimeShutdown;
     modularRuntimeCleanup.attempts += 1;
+    documentFlagObserver.disconnect();document.removeEventListener("visibilitychange",syncDocumentFlags);
+    if(cockpitHudTimer!==null){clearInterval(cockpitHudTimer);cockpitHudTimer=null;}
     modularRuntimeShutdown = Promise.resolve().then(async () => {
+      rivalAssetPipeline.dispose();
       advancedGraphics?.dispose();advancedGraphics=null;graphicsSettings?.dispose();graphicsSettings=null;
       try { await modularRaceWorld?.dispose?.(); } finally {
         cameraOpening.cancel();cameraOpeningOverlay.dispose();headMotionControls?.dispose();headMotion.dispose();lightingEditor?.dispose();colorGrading?.dispose();rayTracingSettings?.dispose();rayTracing?.dispose();
@@ -8363,6 +8331,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
         disposeCockpitRoof();
         disposeShifterKnob();
       }
+      trackAssetLifecycle.dispose();
       raceRenderView.release();
       modularRuntimeCleanup.completed += 1;
     }, error => { modularRuntimeCleanup.failures.push(String(error?.message || error)); throw error; });
@@ -8514,9 +8483,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
       const assertRivalActive=()=>{modularHostInitialization.assertActive();if(modularRuntimeShutdown)throw new Error('Rival: host shutdown');};
       try{
         assertRivalActive();
-        const bytes=await globalThis.AsfaltoV5PayloadCore.decodePayloadById(document,'asfalto-v6-falcon',gunzipBase64);
-        assertRivalActive();
-        sourceRoot=await globalThis.AsfaltoV5GlbCore.completeGlbToObject(THREE,bytes,'Falcon v6',trackGlbHelpers);
+        const payload=document.getElementById('asfalto-v6-falcon');
+        const gltf=await rivalAssetPipeline.enqueue(payload.dataset.externalUrl,{signal:modularHostInitialization.signal,sha256:payload.dataset.sha256,expectedBytes:Number(payload.dataset.bytes)});
+        sourceRoot=gltf.scene;assertRivalActive();
         assertRivalActive();
         const manifest=JSON.parse(document.getElementById('asfalto-v6-falcon-rig').textContent);
         rig=globalThis.AsfaltoV6Falcon.createFalconVisualRig(THREE,sourceRoot,manifest);
@@ -8711,6 +8680,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   cockpit.add(wheelMount);
   const wheelPivot = normalizeObject(THREE, wheelMesh, COCKPIT_LAYOUT.wheel.targetWidth);
   wheelPivot.name = 'VolanteInteractivo';
+  const steeringAxis=new THREE.Vector3(0,0,1),steeringBase=wheelPivot.quaternion.clone(),steeringRotation=new THREE.Quaternion();
   wheelMount.add(wheelPivot);
   vehicleCockpitWheel=createVehicleCockpitWheel(THREE,{pivot:wheelPivot,sharedWheel:wheelMesh,targetWidth:COCKPIT_LAYOUT.wheel.targetWidth,loadGlb:window.__asfaltoLoadVehicleModel,tune:tuneAsset});
 
@@ -9690,10 +9660,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       },
     });
     const physical=mirrorPhysicalSnapshot(raceFeedback);
-    cockpitIgnition?.update(physical?.snapshot, {
-      dt, paused, editing:compositionEditor?.isActive() || false,
-      reducedMotion:ignitionMotionPreference?.matches || document.body.classList.contains('v6-reduce-motion'),
-    });
+    cockpitMotionContext.dt=dt;cockpitMotionContext.paused=paused;cockpitMotionContext.editing=compositionEditor?.isActive()||false;cockpitMotionContext.reducedMotion=ignitionMotionPreference?.matches||documentFlags.reducedMotion;
+    cockpitIgnition?.update(physical?.snapshot,cockpitMotionContext);
     cockpitLightSwitch?.update(dt);
     const physicalControls=physical?.controls||{
       throttle:0,brake:0,clutchEngagement:1,handbrake:0,
@@ -9701,10 +9669,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
     gaugeCluster.update(Math.abs(vehicle.speedMps)*3.6,vehicle.rpm,gearState.gear,dt);
     instrumentPhysicalTimeSeconds=Number.isFinite(raceWorld.state?.physicsSnapshot?.timeSeconds)?raceWorld.state.physicsSnapshot.timeSeconds:null;
     const instrument= raceWorld.getDrivingLights(),dark=/night|dusk|sunset|noche/.test(instrument.phase||'');gaugeCluster.speed.setIllumination(instrument.instrumentPower,dark);gaugeCluster.rpm.setIllumination(instrument.instrumentPower,dark);
-    engineSound.update(vehicle,{
-      throttle:physicalControls.throttle,
-      brake:physicalControls.brake,
-    },gearState.gear,{cameraMode:raceCameraState.current,physicalRoad:true,ignition:physical?.snapshot?.engine?.ignition});
+    engineAudioContext.cameraMode=raceCameraState.current;engineAudioContext.ignition=physical?.snapshot?.engine?.ignition;
+    engineSound.update(vehicle,physicalControls,gearState.gear,engineAudioContext);
   }
 
   function advanceSimulation(seconds) {
@@ -9734,9 +9700,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
   function applyMechanicalVisuals() {
     acceleratorPivot.rotation.x = accelerator.value * 0.30;
     brakePivot.rotation.x = brake.value * 0.24;
-    wheelPivot.rotation.z = steerToWheelRotation(steering.steer, maxWheelAngle);
+    steeringRotation.setFromAxisAngle(steeringAxis,steerToWheelRotation(steering.steer,maxWheelAngle));
+    wheelPivot.quaternion.copy(steeringBase).multiply(steeringRotation);
     shifterMechanism.update(gearState.x, gearState.y);
-    updateHud();
   }
 
   let raceCameraInitialized = false;
@@ -9787,7 +9753,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       camera.position.add(entranceOffset);
       camera.updateMatrixWorld();
     }
-    const head=headMotion.update(renderFrame.currentSnapshot,frameDt,{mode:opening.blocking?'cinematic':mode,paused:raceWorld.isPaused,reducedMotion:compositionEditor?.isActive()||ignitionMotionPreference?.matches||document.body.classList.contains('v6-reduce-motion'),cameraWorldQuaternion:camera.quaternion.toArray()});
+    headContext.mode=opening.blocking?'cinematic':mode;headContext.paused=raceWorld.isPaused;headContext.reducedMotion=compositionEditor?.isActive()||ignitionMotionPreference?.matches||documentFlags.reducedMotion;camera.quaternion.toArray(headCameraQuaternion);
+    const head=headMotion.update(renderFrame.currentSnapshot,frameDt,headContext);
     headMotionOffset.fromArray(head.positionOffsetM).applyQuaternion(camera.quaternion);camera.position.add(headMotionOffset);headMotionQuaternion.fromArray(head.quaternion);camera.quaternion.multiply(headMotionQuaternion);
     cockpitHeadRoot.position.fromArray(head.compensationPositionM);cockpitHeadRoot.quaternion.fromArray(head.compensationQuaternion);camera.updateMatrixWorld();
     cockpitViewPreset?.compensate(renderFrame.currentSnapshot);
@@ -10027,6 +9994,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }); } finally { if(!modularRuntimeShutdown)requestAnimationFrame(animate); }
   }
 
+  cockpitHudTimer=setInterval(()=>{if(!modularRuntimeShutdown)updateHud();},100);
   setLoading('Aplicando presupuesto gráfico y controles…');
   applySettings({ persist: false });
   setSettingsPanelOpen(false);

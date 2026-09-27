@@ -258,16 +258,17 @@
     };
   }
 
-  function safeInput(input) {
-    return {
-      steer: clamp(finite(input?.steer, 0), -0.65, 0.65),
-      handwheelAngleRad: finite(input?.handwheelAngleRad, 0),
-      throttle: clamp(finite(input?.throttle, 0), 0, 1),
-      brake: clamp(finite(input?.brake, 0), 0, 1),
-      handbrake: clamp(finite(input?.handbrake, 0), 0, 1),
-      clutchEngagement: clamp(finite(input?.clutchEngagement, 1), 0, 1),
-      requestedGear: Number.isInteger(input?.requestedGear) ? input.requestedGear : undefined,
-    };
+  function safeInput(input) { return safeInputInto({}, input); }
+
+  function safeInputInto(out, input) {
+    out.steer = clamp(finite(input?.steer, 0), -0.65, 0.65);
+    out.handwheelAngleRad = finite(input?.handwheelAngleRad, 0);
+    out.throttle = clamp(finite(input?.throttle, 0), 0, 1);
+    out.brake = clamp(finite(input?.brake, 0), 0, 1);
+    out.handbrake = clamp(finite(input?.handbrake, 0), 0, 1);
+    out.clutchEngagement = clamp(finite(input?.clutchEngagement, 1), 0, 1);
+    out.requestedGear = Number.isInteger(input?.requestedGear) ? input.requestedGear : undefined;
+    return out;
   }
 
   function qaPhysicalRouteInput(driverCommand, projection, track) {
@@ -684,9 +685,10 @@
     };
   }
 
+  const EMPTY_PHYSICS_ENVIRONMENT=Object.freeze({});
   function createEnvironmentAdapter(getEnvironmentState, trackAdapter) {
-    return (query = {}) => {
-      const state = getEnvironmentState?.() || {};
+    return (query = {}, output = {}) => {
+      const state = getEnvironmentState?.() || EMPTY_PHYSICS_ENVIRONMENT;
       const rain = state.rain?.visible
         ? clamp(finite(state.rain.intensity, 0), 0, 1)
         : 0;
@@ -701,21 +703,14 @@
         ? clamp(finite(surfaceCondition.gripMultiplier, 1), 0.35, 1.15)
         : 1 - rain * 0.34;
       const aquaplaningEnabled = surfaceCondition?.aquaplaningEnabled === true;
-      return {
-        surface: surface === 'road' ? 'asphalt' : surface === 'shoulder' ? 'gravel' : 'grass',
-        mu: clamp(baseMu * gripMultiplier, 0.35, 1.15),
-        gripMultiplier,
-        waterDepthM: aquaplaningEnabled
-          ? clamp(finite(surfaceCondition.looseSurfaceDepthM, 0), 0, 0.05)
-          : surfaceCondition ? 0 : rain * 0.006,
-        surfaceState: surfaceCondition?.state || null,
-        wetness: clamp(finite(surfaceCondition?.wetness, surfaceCondition?.state === 'wet' ? 1 : surfaceCondition?.state === 'damp' ? .5 : rain), 0, 1),
-        rollingResistanceMultiplier: surfaceCondition
-          ? clamp(finite(surfaceCondition.rollingResistanceMultiplier, 1), 0.5, 2)
-          : 1,
-        aquaplaningEnabled,
-        airDensityKgPm3: 1.2,
-      };
+      output.surface=surface==='road'?'asphalt':surface==='shoulder'?'gravel':'grass';
+      output.mu=clamp(baseMu*gripMultiplier,.35,1.15);output.gripMultiplier=gripMultiplier;
+      output.waterDepthM=aquaplaningEnabled?clamp(finite(surfaceCondition.looseSurfaceDepthM,0),0,.05):surfaceCondition?0:rain*.006;
+      output.surfaceState=surfaceCondition?.state||null;
+      output.wetness=clamp(finite(surfaceCondition?.wetness,surfaceCondition?.state==='wet'?1:surfaceCondition?.state==='damp'?.5:rain),0,1);
+      output.rollingResistanceMultiplier=surfaceCondition?clamp(finite(surfaceCondition.rollingResistanceMultiplier,1),.5,2):1;
+      output.aquaplaningEnabled=aquaplaningEnabled;output.airDensityKgPm3=1.2;
+      return output;
     };
   }
 
@@ -897,6 +892,7 @@
       world: playerWorld,
       suspensionWorld,
       core: vehicleCore,
+      mutableSnapshots: true,
       spec: vehicleSpec,
       chassisConfig: resolveChassisConfig(options),
       spawn: initialFrame,
@@ -924,6 +920,7 @@
       world: rivalWorld,
       suspensionWorld,
       core: vehicleCore,
+      mutableSnapshots: true,
       spec: vehicleCore.FALCON_CALIBRATED_SPEC,
       spawn: falconSpawn,
       environment,
@@ -1080,7 +1077,7 @@
       physicsSession,
       rival,
       trackAdapter,
-      refreshSceneColliders:options=>sceneCollisionLayer?.refresh(options),
+      refreshSceneColliders:options=>{const changed=sceneCollisionLayer?.refresh(options);if(changed){physicsSession.reserveImpactContacts();rivalSession.reserveImpactContacts();}return changed;},
       transformReferenceFrame(transform, reference={}) {
         if(disposalStarted)throw new Error('physical stack is disposed');
         physicsCore.validateReferenceTransform(transform);
@@ -1167,6 +1164,8 @@
       this._previousRivalSnapshot = null;
       this._currentRivalSnapshot = null;
       this._physicalObservers = new Set();
+      this._physicalFrameView={};this._physicalEnvironment={};
+      this._physicalEnvironmentQuery={worldPosition:null,speedMps:0};
       this._vehicleMaintenance = options.vehicleMaintenance || null;
       this._physicalSessionSequence = 0;
       this._physicalQAMutated = false;
@@ -1198,7 +1197,9 @@
         lastSubsteps: 0,
         maxSubstepsPerFrame: 0,
         overruns: 0,
-        frameTimesMs: [],
+        frameTimesMs: new Float64Array(7200),
+        frameTimeCursor: 0,
+        frameTimeCount: 0,
       };
       this._prepared = false;
       this._preparing = null;
@@ -1240,7 +1241,7 @@
         if(this._disposed||this._physicalSessionSequence!==sequence||this._physicsTrackAdapter!==adapter)throw new Error('Physical road-test session changed');
         return adapter.samplePhysicalRoute(progress);
       }});
-      return Object.freeze({...this.getPhysicalObservationState(),routeQuery,projection:freezeDeep(cloneProjection(this._projection)),snapshot:this._snapshot,vehicleSpec,displacementLiters:vehicleSpec.engine?.displacementLiters});
+      return Object.freeze({...this.getPhysicalObservationState(),routeQuery,projection:freezeDeep(cloneProjection(this._projection)),snapshot:this.getPhysicsSnapshotCopy(),vehicleSpec,displacementLiters:vehicleSpec.engine?.displacementLiters});
     }
 
     _invalidatePhysicalObservers(reason) {
@@ -1256,14 +1257,29 @@
 
     _emitPhysicalStep(statusBefore, previousTime) {
       if ((!this._physicalObservers.size && !this._vehicleMaintenance) || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
-      const snapshot = this._snapshot;
-      const environment = this._physicsSession.environment?.({worldPosition:snapshot.chassis.position,speedMps:Math.hypot(...snapshot.chassis.linearVelocity)}) || {};
-      const frame = freezeDeep({sessionSequence:this._physicalSessionSequence,tick:Math.round(snapshot.timeSeconds*120),statusBefore,running:statusBefore==='RUNNING',snapshot,projection:cloneProjection(this._projection),environment:{...environment},qa:this._physicalQAMutated,teleports:this._playerTeleportCount-this._physicalTeleportBaseline,recoveries:this._recoveryCount,referenceChart:this._referenceChart});
+      const snapshot=this._snapshot,q=this._physicalEnvironmentQuery;
+      q.worldPosition=snapshot.chassis.position;q.speedMps=Math.hypot(...snapshot.chassis.linearVelocity);
+      const environment=this._physicsSession.environment?.(q,this._physicalEnvironment)||this._physicalEnvironment;
+      const frame=this._physicalFrameView;
+      frame.sessionSequence=this._physicalSessionSequence;frame.tick=Math.round(snapshot.timeSeconds*120);
+      frame.statusBefore=statusBefore;frame.running=statusBefore==='RUNNING';frame.snapshot=snapshot;
+      frame.projection=this._projection;frame.environment=environment;frame.qa=this._physicalQAMutated;
+      frame.teleports=this._playerTeleportCount-this._physicalTeleportBaseline;frame.recoveries=this._recoveryCount;frame.referenceChart=this._referenceChart;
+      // Maintenance consumes the borrowed view synchronously. Historical observers
+      // explicitly own a copy; never recursively freeze the physics ring buffers.
       this._vehicleMaintenance?.sample(frame);
+      if(!this._physicalObservers.size)return;
+      const historical=freezeDeep({...frame,snapshot:this.getPhysicsSnapshotCopy(),projection:cloneProjection(this._projection),environment:{...environment}});
       for (const observer of [...this._physicalObservers]) {
         if (!this._physicalObservers.has(observer)) continue;
-        try { observer.sample(frame); } catch { this._physicalObservers.delete(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
+        try { observer.sample(historical); } catch { this._physicalObservers.delete(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
       }
+    }
+
+    getPhysicsSnapshotCopy() {
+      const core=this._browserOptions.vehicleCore||root.AsfaltoV6VehicleCore;
+      if(!this._snapshot)return null;
+      return core?.finiteSnapshot ? core.finiteSnapshot(this._snapshot) : freezeDeep(JSON.parse(JSON.stringify(this._snapshot)));
     }
 
     transformReferenceFrame(transform, options={}) {
@@ -2186,8 +2202,7 @@
         return this._lastFeedback;
       }
 
-      const controls = safeInput(input);
-      this._lastControls = controls;
+      const controls = safeInputInto(this._lastControls, input);
       const requestedSeconds = finite(seconds, 0);
       if (requestedSeconds > MAX_FRAME_SECONDS) this._physicsPerformance.overruns += 1;
       this._accumulator += clamp(requestedSeconds, 0, MAX_FRAME_SECONDS);
@@ -2209,8 +2224,9 @@
       performanceState.totalSubsteps += substeps;
       performanceState.lastSubsteps = substeps;
       performanceState.maxSubstepsPerFrame = Math.max(performanceState.maxSubstepsPerFrame, substeps);
-      performanceState.frameTimesMs.push(frameMs);
-      if (performanceState.frameTimesMs.length > 7200) performanceState.frameTimesMs.shift();
+      performanceState.frameTimesMs[performanceState.frameTimeCursor] = frameMs;
+      performanceState.frameTimeCursor = (performanceState.frameTimeCursor + 1) % performanceState.frameTimesMs.length;
+      performanceState.frameTimeCount = Math.min(performanceState.frameTimeCount + 1, performanceState.frameTimesMs.length);
       if (!feedback) {
         feedback = this._mergeFeedback(
           null,
@@ -2437,13 +2453,14 @@
 
     resetPerformanceMeasurement() {
       Object.assign(this._physicsPerformance,{frameCount:0,totalSubsteps:0,lastSubsteps:0,maxSubstepsPerFrame:0,overruns:0});
-      this._physicsPerformance.frameTimesMs.length=0;
+      this._physicsPerformance.frameTimeCursor=0;
+      this._physicsPerformance.frameTimeCount=0;
     }
 
     getDiagnostics() {
       const stack = this._physicalStack?.diagnostics || {};
       const performanceState = this._physicsPerformance;
-      const frameTimesMs = performanceState.frameTimesMs.slice().sort((a, b) => a - b);
+      const frameTimesMs = performanceState.frameTimesMs.slice(0, performanceState.frameTimeCount).sort();
       const frameMsMax = frameTimesMs.length ? frameTimesMs[frameTimesMs.length - 1] : 0;
       return Object.freeze({
         ...stack,

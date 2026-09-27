@@ -1,4 +1,4 @@
-import { sanitizeHeadMotionCalibration } from './cockpit-head-motion.mjs';
+import { sanitizeHeadMotionCalibration } from './cockpit-head-motion.mjs?v=91536e58ba4745bc';
 
 const installations = new WeakMap();
 const numericControls = Object.freeze([

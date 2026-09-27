@@ -38,10 +38,10 @@
     }
   },
   "inputs": {
-    "src/tracks/visuals/closure-terrain.mjs": "df1932da2cc38e88755df00d0809383fd0b9ae714c166ad99875856fa9f4212f",
+    "src/tracks/visuals/closure-terrain.mjs": "2913422bf1e6d0ebb98dae7beae2b079a04ff5b587173114d3416f3d412b04ab",
     "src/tracks/visuals/terrain-refinement.mjs": "f1cd6e23a9ef1bd25b0fd1beac3a5122af90f58d7bf7592f38ad6537b31fb345",
     "src/tracks/visuals/forest-terrain-detail.mjs": "c7c0289881bcab1bb184febb9b834fcb08eefa2f195dad9771c040e47724068f",
-    "src/render/surface-curvature.mjs": "ba5f1c09d4be959f693be2ec0236316f65431528db5a4cc0eac2597bb772713c",
+    "src/render/surface-curvature.mjs": "b65bd00ab81d3d272a168edaa15cbfbdf4a2d7b30400fe5ee21f9bf42ae3696d",
     "tracks\\dos-lagos\\manifest.json": "8e681510bf26543ceacfa47d0ca9aa767fee2cb38ef087980f6b5fbf0a8a8343",
     "tracks\\aconcagua-horcones\\manifest.json": "5ac561c6ab79665727734bcfecdf605414719139c74673ff8adedd241704a2ef",
     "tracks\\cuesta-lipan\\manifest.json": "78009a158f4cb10af5be71aa012d1cb6fd97e2dcd195d371bab91df4ed7768f6",

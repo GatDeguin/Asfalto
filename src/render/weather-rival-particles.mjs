@@ -1,5 +1,5 @@
-import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=5887cc67bd1dc21f';
-import {createVehicleEmissionState} from './weather-effects-policy.mjs?v=8f494b5f9b0bf7b4';
+import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=e563a937681655ef';
+import {createVehicleEmissionState} from './weather-effects-policy.mjs?v=46da8d8e8b960aa3';
 const METAL=new Set(['metal','steel','guardrail','vehicle-metal']);
 const EMPTY=Object.freeze([]);
 /** Actual rival snapshots share the original player/rival particle quota. */
@@ -14,7 +14,7 @@ export function createRivalWeatherParticles(T,parent){
    if(!entry){
     const group=new T.Group();group.name='AN_RivalWeather_'+id;parent.add(group);
     const vehicle={id,position:new T.Vector3(),quaternion:new T.Quaternion(),velocity:new T.Vector3(),enclosed:true};
-    entry={group,vehicle,particles:createVehicleWeatherParticles(T,group,{light:false}),emissions:createVehicleEmissionState(),lastImpact:null,impactPoint:new T.Vector3(),contact:{point:[0,0,0],relativeVelocity:[0,0,0],impulseNs:0,material:'metal'}};entries.set(id,entry);
+    entry={frame:{dt:0,vehicle,emission:null,policy:null,velocity:vehicle.velocity,wind:null},group,vehicle,particles:createVehicleWeatherParticles(T,group,{light:false}),emissions:createVehicleEmissionState(),lastImpact:null,impactPoint:new T.Vector3(),contact:{point:[0,0,0],relativeVelocity:[0,0,0],impulseNs:0,material:'metal'}};entries.set(id,entry);
    }
    const v=entry.vehicle,c=snapshot.chassis;
    v.position.fromArray(c.position);v.quaternion.fromArray(c.rotation);if(c.linearVelocity)v.velocity.fromArray(c.linearVelocity);
@@ -37,9 +37,9 @@ export function createRivalWeatherParticles(T,parent){
  }
  return{prepare,
   update({dt,policy,wind}){totalAlive=0;for(const e of entries.values()){
-   if(dt>0){e.vehicle.dt=dt;e.vehicle.wetness=policy.wetness;e.particles.update({dt,vehicle:e.vehicle,emission:e.emissions.update(e.vehicle),policy,velocity:e.vehicle.velocity,wind});}
+   if(dt>0){e.vehicle.dt=dt;e.vehicle.wetness=policy.wetness;e.frame.dt=dt;e.frame.emission=e.emissions.update(e.vehicle);e.frame.policy=policy;e.frame.wind=wind;e.particles.update(e.frame);}
    totalAlive+=e.particles.getAliveCount();
   }},
   reset(){for(const e of entries.values()){e.particles.reset();e.emissions.reset();e.lastImpact=null;}totalAlive=0;},clear,
-  diagnostics:()=>({count:entries.size,totalAlive,vehicles:[...entries].map(([id,e])=>({id,position:e.vehicle.position.toArray(),speedMps:e.vehicle.speedMps,...e.particles.diagnostics()})),drawBatches:entries.size*2}),dispose:clear};
+  diagnostics:()=>({count:entries.size,totalAlive,vehicles:[...entries].map(([id,e])=>({id,position:e.vehicle.position.toArray(),speedMps:e.vehicle.speedMps,...e.particles.diagnostics()})),drawBatches:entries.size}),dispose:clear};
 }

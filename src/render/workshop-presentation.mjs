@@ -8,7 +8,7 @@ import { hdrLoaderClass } from './hdr-loader-factory.mjs?v=a130e3899f731e73';
 import { createChevyPaintController } from './chevy-paint-controller.mjs?v=491e881b58b262ea';
 import { createWorkshopDetailPass, applyPatina } from './workshop-detail-pass.mjs?v=662675a5f6d0562e';
 import { createWorkshopStaticBatches } from './workshop-static-batches.mjs?v=99fa32fcf6b82496';
-import { configureSurfaceRelief, installSurfaceRelief, surfaceReliefDiagnostics } from '../tracks/visuals/surface-relief.mjs?v=dc7a4421c4479e97';
+import { configureSurfaceRelief, prepareSurfaceReliefGeometry, installSurfaceRelief, surfaceReliefDiagnostics } from '../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
 import { createWorkshopVertexGeometry } from './workshop-vertex-colors.mjs?v=23d898e420566e5c';
 
 const SURFACES = Object.freeze({
@@ -175,6 +175,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       object.material = material;
       const projected=projectSurfaceUVs(T, object, SURFACES[name].tile);
       object.geometry=createWorkshopVertexGeometry(T,object,SURFACES[name].id);
+      if(SURFACES[name].silhouette)prepareSurfaceReliefGeometry(object.geometry);
       projected.dispose();owned.push(object.geometry);
       vertexColors.meshes++;vertexColors.vertices+=object.geometry.attributes.position.count;
       vertexColors.triangles+=object.geometry.userData.workshopVertexColors.triangles;
@@ -199,6 +200,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   });
   detailPass=createWorkshopDetailPass(T,workshop,{floorY:floorBounds.isEmpty()?.188:floorBounds.max.y});
   staticBatches=createWorkshopStaticBatches(T,scene,[root,detailsRoot,architecture.staticRoot,livedIn.root]);
+  staticBatches.group.traverse(object=>{if(object.isMesh&&object.material?.userData.asfaltoRelief?.silhouette)prepareSurfaceReliefGeometry(object.geometry);});
   const collectionWood=materials.get('MAT_Wood_Dark_Oiled');
   function rebuildCollection(){
     const next=createWorkshopCollection(T,{textures:{wood:collectionWood?.map,woodNormal:collectionWood?.normalMap,woodRoughness:collectionWood?.roughnessMap},collection:collectionItems,posters:collectionMemories.length?collectionMemories:collectionPosters});

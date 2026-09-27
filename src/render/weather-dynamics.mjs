@@ -20,17 +20,17 @@ export function createWeatherDynamics(){
   };
 }
 /** An actual wheel snapshot is mandatory for physically located emissions. */
-export function wheelWeatherEmission(wheel={},speedMps=0,wetness=0){
+export function wheelWeatherEmission(wheel={},speedMps=0,wetness=0,out={}){
   const speed=Math.abs(Number(speedMps)||0),load=clamp(wheel.normalLoadN/3500,0,1.5),wet=clamp(wetness);
   const enabled=wheel.contact===true&&load>0&&Array.isArray(wheel.point)&&wheel.point.length>=3;
-  const surface=wheel.surface||'asphalt',soil=['gravel','dirt','grass','shoulder','sand'].includes(surface);
+  const surface=wheel.surface||'asphalt',soil=surface==='gravel'||surface==='dirt'||surface==='grass'||surface==='shoulder'||surface==='sand';
   const water=clamp(Math.max(Number(wheel.waterDepthM)||0,wet*.004)/.012);
   const slip=Math.max(Math.abs(Number(wheel.slipRatio)||0),Math.abs(Math.tan(Number(wheel.slipAngleRad)||0)));
   const dustLife=surface==='dirt'||surface==='sand'?2.8:surface==='gravel'?1.15:.75;
-  return{spray:enabled?clamp((speed-2)/30)*Math.sqrt(load)*water:0,
-    dust:enabled&&soil?clamp((speed-3)/24)*load*clamp(1-wet*2.5):0,
-    smoke:enabled&&!soil&&wet<.25?clamp((speed-4)/15)*clamp((slip-.28)*1.8,0,.8)*load:0,
-    dustLife:dustLife*(1-wet*.7),surface,load,water};
+  out.spray=enabled?clamp((speed-2)/30)*Math.sqrt(load)*water:0;
+  out.dust=enabled&&soil?clamp((speed-3)/24)*load*clamp(1-wet*2.5):0;
+  out.smoke=enabled&&!soil&&wet<.25?clamp((speed-4)/15)*clamp((slip-.28)*1.8,0,.8)*load:0;
+  out.dustLife=dustLife*(1-wet*.7);out.surface=surface;out.load=load;out.water=water;return out;
 }
 export function metalContactEmission(contact){
   if(!contact||!['metal','steel','guardrail','vehicle-metal'].includes(contact.material)||!contact.point||!contact.relativeVelocity)return 0;
