@@ -70,8 +70,20 @@ function interpolateWheel(before, after, alpha) {
   };
 }
 
+// This public render snapshot owns its immutable history. Physics snapshots
+// are borrowed ring-buffer views; a shallow spread must never freeze them.
+function copySnapshotBranch(value) {
+  if (Array.isArray(value)) return value.map(copySnapshotBranch);
+  if (ArrayBuffer.isView(value)) return Array.from(value);
+  if (!value || typeof value !== 'object') return value;
+  const copy = {};
+  for (const key of Object.keys(value)) copy[key] = copySnapshotBranch(value[key]);
+  return copy;
+}
+
 export function interpolateVehicleSnapshot(previous, current, interpolation = 1) {
   if (!previous?.chassis || !current?.chassis) return null;
+  current = copySnapshotBranch(current);
   const alpha = clamp(finite(interpolation, 1), 0, 1);
   const beforePosition = vector(previous.chassis.position, 3, [0, 0, 0]);
   const afterPosition = vector(current.chassis.position, 3, beforePosition);

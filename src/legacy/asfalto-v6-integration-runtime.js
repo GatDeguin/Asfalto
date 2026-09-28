@@ -898,13 +898,14 @@
       spawn: initialFrame,
       environment,
     });
+    // Diagnostic copies are ordinary arrays; never freeze live typed physics buffers.
     const initialWheelContacts = Object.freeze(
       physicsSession._collectContacts({ steer: 0 }).contacts.map((contact, index) => Object.freeze({
         id: physicsSession.wheels[index].id,
-        contact: contact.contact,
-        compressionM: contact.compressionM,
-        point: Object.freeze(contact.point.slice()),
-        normal: Object.freeze(contact.normal.slice()),
+        contact: physicsSession.scratch.contactData.contact[index] !== 0,
+        compressionM: physicsSession.scratch.contactData.compressionM[index],
+        point: Object.freeze(Array.from(contact.point)),
+        normal: Object.freeze(Array.from(contact.normal)),
       })),
     );
 

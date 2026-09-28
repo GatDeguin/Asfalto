@@ -26,7 +26,7 @@ test('cube prepares six target faces with immediate target and XR restoration',a
  await p;assert.deepEqual(faces,[0,1,2,3,4,5]);cube.dispose();
 });
 import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=f4d6d8707816c8ab';
-import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=65b923efda2cac08';
+import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=879b08aa5b4f0b13';
 function captureFixture(){let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');const compiled=[],drawn=[],pending=[];
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(70,1,.1,100);camera.position.set(0,4,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const state=c=>({target,tone:r.toneMapping,clipping:r.clippingPlanes.length,layers:c.layers.mask,visible:scene.children.filter(o=>o.visible).map(o=>o.uuid),xr:r.xr.enabled,shadow:r.shadowMap.autoUpdate});

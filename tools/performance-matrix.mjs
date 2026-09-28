@@ -1,6 +1,6 @@
 // Sequential, resumable real-GPU benchmark. One browser/GPU process only.
 import os from 'node:os';import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createHash} from 'node:crypto';import {createRequire} from 'node:module';
-import {startServer} from '../server.mjs?v=7e5aa644ab732c4b';import {matrixCases,summarizeIntervals,validateRun,qualityTransitionWindows,benchmarkEnvironment} from './performance-matrix-core.mjs?v=470665282579cded';
+import {startServer} from '../server.mjs?v=ec9ca3d30198bdb8';import {matrixCases,summarizeIntervals,validateRun,qualityTransitionWindows,benchmarkEnvironment} from './performance-matrix-core.mjs?v=470665282579cded';
 import {withWatchdog} from './performance-matrix-watchdog.mjs?v=c378812c5ee5c044';
 const app=fileURLToPath(new URL('../',import.meta.url)),args=process.argv.slice(2);
 const arg=(name,fallback)=>args.find(v=>v.startsWith(name+'='))?.slice(name.length+1)??fallback;

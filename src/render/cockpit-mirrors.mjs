@@ -1,5 +1,5 @@
 import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=2481e701be72bf1c';
-import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=a7a3e535c754e44b';
+import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=3bfbde2ea40b338a';
 
 const QUALITY = Object.freeze({
   cinematic: { center: [512, 144, 24], left: [256, 192, 18] },

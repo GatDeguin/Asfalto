@@ -22,7 +22,7 @@ for(const height of [.56,3])for(const configured of [false,true]){
 }
 console.log('physics runtime: 64 real Rapier ticks matched baseline; grounded/airborne, ABS/chassis, impact, buffer reuse and historical copy passed');
 
-vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=66ce0674eb0bc54b',root),'utf8'),context);
+vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=36c7b7d2619c02c2',root),'utf8'),context);
 const proto=context.AsfaltoV6Integration.RaceSimulationV6.prototype;
 const live=session(context,.56,false);live.stepFixed({});
 let recorded,maintenance;

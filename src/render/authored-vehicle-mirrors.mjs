@@ -1,5 +1,5 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
-import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=65b923efda2cac08';
+import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=879b08aa5b4f0b13';
 // Optical faces share the existing capture feeds, but sit on each authored housing.
 export function attachAuthoredMirrors(T,presentation,id,feeds){
  if(getVehicleDefinition(id)?.cockpit!=='authored-interior'&&id!=='chevy_400_1957')return null;

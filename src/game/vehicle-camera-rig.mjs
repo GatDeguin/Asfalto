@@ -1,5 +1,5 @@
 import { HEAD_MOTION_DEFAULTS, sanitizeHeadMotionCalibration } from './cockpit-head-motion.mjs?v=91536e58ba4745bc';
-import { interpolateVehicleSnapshot } from './physical-render-bridge.mjs?v=a7a3e535c754e44b';
+import { interpolateVehicleSnapshot } from './physical-render-bridge.mjs?v=3bfbde2ea40b338a';
 import { MAX_LIFT_M, reframeCameraBoom } from './camera-boom-collision.mjs?v=32104ba795e573bb';
 
 const DEG = Math.PI / 180;
