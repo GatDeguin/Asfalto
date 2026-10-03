@@ -1,0 +1,242 @@
+✖ Falcon stays unloaded until requested, concurrent races and restarts reuse it (1.8308ms)
+✖ failed rival preparation cleans partial resources and can retry (1.4315ms)
+✖ shutdown during conversion disposes late model and never installs rival (3.3335ms)
+✖ shutdown during presentation disposes late presentation and roots (0.9453ms)
+✔ free drive bypasses rival; competition waits; cancellation cannot start race (1.4022ms)
+ℹ Error: Test "Falcon stays unloaded until requested, concurrent races and restarts reuse it" at tools\lazy-rival.test.mjs:15:1 generated asynchronous activity after the test ended. This activity created the error "ReferenceError: rivalAssetPipeline is not defined" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Falcon stays unloaded until requested, concurrent races and restarts reuse it" at tools\lazy-rival.test.mjs:15:1 generated asynchronous activity after the test ended. This activity created the error "ReferenceError: rivalAssetPipeline is not defined" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+✖ prepare capture contexts match actual render, grading=false (8.8603ms)
+✖ prepare capture contexts match actual render, grading=true (2.1045ms)
+✖ nested prepare restores all state on callback failure, async=false (1.7234ms)
+✖ nested prepare restores all state on callback failure, async=true (0.7514ms)
+✔ disabled effects and neutral grade prepare bypass all target allocations (0.835ms)
+✖ fog topology survives quality changes without double extinction, exponential=false (1.3785ms)
+✖ fog topology survives quality changes without double extinction, exponential=true (0.5647ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 2
+ℹ fail 10
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 180.5168
+
+✖ failing tests:
+
+test at tools\lazy-rival.test.mjs:15:1
+✖ Falcon stays unloaded until requested, concurrent races and restarts reuse it (1.8308ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:16:131)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\lazy-rival.test.mjs:18:1
+✖ failed rival preparation cleans partial resources and can retry (1.4315ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /load failed/. Input:
+  
+  'ReferenceError: rivalAssetPipeline is not defined'
+  
+      at async TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:19:121)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ReferenceError: rivalAssetPipeline is not defined
+        at eval (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+        at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+        at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:19:144)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+        at Test.postRun (node:internal/test_runner/test:1537:19)
+        at Test.run (node:internal/test_runner/test:1462:12)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    expected: /load failed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\lazy-rival.test.mjs:21:1
+✖ shutdown during conversion disposes late model and never installs rival (3.3335ms)
+  ReferenceError: rivalAssetPipeline is not defined
+      at eval (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+      at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:22:119)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at tools\lazy-rival.test.mjs:24:1
+✖ shutdown during presentation disposes late presentation and roots (0.9453ms)
+  ReferenceError: rivalAssetPipeline is not defined
+      at eval (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+      at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/lazy-rival.test.mjs:25:119)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at tools\render-preparation.test.mjs:17:34
+✖ prepare capture contexts match actual render, grading=false (8.8603ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(captured.length>=4)
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:24:32)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:17:34
+✖ prepare capture contexts match actual render, grading=true (2.1045ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(captured.length>=4)
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:24:32)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:29:40
+✖ nested prepare restores all state on callback failure, async=false (1.7234ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /compile failed/. Input:
+  
+  'AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n' +
+    '\n' +
+    '1 !== 2000\n'
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:32:44)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    1 !== 2000
+    
+        at file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:95
+        at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+        at file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:43
+        at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/race-color-grade.mjs?v=292e6ddd31bddd0e:133:17)
+        at run (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:24)
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:32:44)
+        at async Test.run (node:internal/test_runner/test:1404:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:969:7),
+    expected: /compile failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:29:40
+✖ nested prepare restores all state on callback failure, async=true (0.7514ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2000
+  
+      at file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:95
+      at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:43
+      at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/race-color-grade.mjs?v=292e6ddd31bddd0e:133:17)
+      at run (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:31:24)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:32:26)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2000,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:39:39
+✖ fog topology survives quality changes without double extinction, exponential=false (1.3785ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   4,
+  +   80
+  -   2000,
+  -   4000
+    ]
+  
+      at capture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:43:145)
+      at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:44:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 4, 80 ],
+    expected: [ 2000, 4000 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:39:39
+✖ fog topology survives quality changes without double extinction, exponential=true (0.5647ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   0.012
+  -   0
+    ]
+  
+      at capture (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:43:145)
+      at Object.prepare (file:///D:/2026/Chevy/Asfalto_Nacional_v8/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/render-preparation.test.mjs:44:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0.012 ],
+    expected: [ 0 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

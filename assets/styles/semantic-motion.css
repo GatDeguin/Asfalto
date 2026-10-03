@@ -1,0 +1,55 @@
+/* Intention tokens. No movement is required to complete an action. */
+:root {
+  --an-motion-response: 120ms;
+  --an-motion-information: 160ms;
+  --an-motion-context: 240ms;
+  --an-motion-travel: 8px;
+  --an-motion-readable: .86;
+  --an-motion-arrive: cubic-bezier(.2,.7,.2,1);
+}
+@media (max-width: 720px), (max-height: 500px) {
+  :root { --an-motion-travel: 4px; }
+}
+
+/* Keep hit targets stationary; border, color and outline communicate choice. */
+#v6-main-menu.an-cinematic-menu .v6-card,
+#v6-main-menu.an-cinematic-menu .an-mode-card,
+#v6-main-menu.an-cinematic-menu .v6-nav-btn {
+  transition-property: color, background-color, border-color;
+  transition-duration: var(--an-motion-response);
+  transition-timing-function: var(--an-motion-arrive);
+}
+#v6-main-menu.an-cinematic-menu .v6-card:hover,
+#v6-main-menu.an-cinematic-menu .v6-card[aria-selected=true],
+#v6-main-menu.an-cinematic-menu .an-mode-card:hover,
+#v6-main-menu.an-cinematic-menu .an-mode-card:focus-visible {
+  transform: none;
+}
+#v6-main-menu.an-cinematic-menu :is(.v6-nav-btn, .an-panel-back, .v6-card, .an-mode-card):active {
+  transform: none;
+}
+/* Measured progress must not lag behind the real value. */
+#v6-main-menu .v6-progress > i { transition: none; }
+
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading),
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *,
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading)::before,
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading)::after,
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *::before,
+body:is(.v6-reduce-motion, .an-v7-reduce-motion) :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading),
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *,
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading)::before,
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading)::after,
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *::before,
+  :is(#v6-main-menu, .an-race-pause, .an-cinema-loading) *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

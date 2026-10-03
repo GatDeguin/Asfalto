@@ -1,0 +1,46 @@
+{
+  "mode": "app",
+  "startedAt": "2026-10-03T03:27:50.844Z",
+  "checks": [
+    "entrada integrada conservó el perfil",
+    "última intención mantiene sección correcta",
+    "transición de sección conectada a evento real",
+    "detalle corresponde a selección real"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [
+    {
+      "label": "full-game-menu",
+      "viewport": [
+        1280,
+        800
+      ],
+      "sceneActive": true,
+      "durationMs": 2510.5,
+      "frames": 142,
+      "frameP50Ms": 16.69999999999891,
+      "frameP95Ms": 16.80000000000109,
+      "maxFrameMs": 133.40000000000146,
+      "framesOver34Ms": 1,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "synchronousClickMaxMs": 18.299999952316284
+    }
+  ],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "stack": {
+    "three": "180",
+    "vehicle": "chevrolet_1969",
+    "tests": 12,
+    "nav": 6
+  },
+  "status": "fail",
+  "failure": "AssertionError [ERR_ASSERTION]: navegar cancela detalle saliente\n    at check (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:24:40)\n    at app (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:124:3)\n    at async file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:146:51"
+}

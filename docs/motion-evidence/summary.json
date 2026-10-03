@@ -1,0 +1,105 @@
+{
+  "motionScenarios": [
+    {
+      "mode": "contracts",
+      "status": "pass",
+      "checks": 18
+    },
+    {
+      "mode": "css",
+      "status": "pass",
+      "checks": 8
+    },
+    {
+      "mode": "app",
+      "status": "pass",
+      "checks": 16
+    },
+    {
+      "mode": "touch",
+      "status": "pass",
+      "checks": 5
+    },
+    {
+      "mode": "driving",
+      "status": "pass",
+      "checks": 6
+    }
+  ],
+  "checkCount": 53,
+  "generalSuite": {
+    "total": 317,
+    "passed": 307,
+    "failed": 10,
+    "receivedFilesUnchanged": true
+  },
+  "release": {
+    "status": "pass",
+    "commands": [
+      "node tools/verify-v8-release.mjs --write",
+      "node tools/verify-v8-release.mjs"
+    ],
+    "files": 979,
+    "bytes": 992397958,
+    "increaseBytes": 45466,
+    "inventory": "8CA5B4CD708CEE2CB6FD2DCF3B2CD28B50C1C238D48F015B93435294DAE0FB2C",
+    "dependenciesAdded": 0,
+    "changed": [
+      {
+        "path": "README.md",
+        "kind": "modified",
+        "bytes": 28832
+      },
+      {
+        "path": "assets/styles/loading-presentation.css",
+        "kind": "modified",
+        "bytes": 6967
+      },
+      {
+        "path": "assets/styles/semantic-motion.css",
+        "kind": "added",
+        "bytes": 2536
+      },
+      {
+        "path": "docs/motion-semantico.md",
+        "kind": "added",
+        "bytes": 18889
+      },
+      {
+        "path": "index.html",
+        "kind": "modified",
+        "bytes": 82295
+      },
+      {
+        "path": "src/menu/menu-presentation.mjs",
+        "kind": "modified",
+        "bytes": 21997
+      },
+      {
+        "path": "src/menu/menu-sections.mjs",
+        "kind": "modified",
+        "bytes": 13267
+      },
+      {
+        "path": "src/menu/race-pause-menu.mjs",
+        "kind": "modified",
+        "bytes": 9871
+      },
+      {
+        "path": "src/menu/race-session-presentation.mjs",
+        "kind": "modified",
+        "bytes": 5923
+      },
+      {
+        "path": "src/menu/semantic-motion.mjs",
+        "kind": "added",
+        "bytes": 2866
+      },
+      {
+        "path": "tools/semantic-motion-browser.mjs",
+        "kind": "added",
+        "bytes": 18687
+      }
+    ]
+  }
+}

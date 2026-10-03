@@ -1,0 +1,23 @@
+{
+  "mode": "driving",
+  "startedAt": "2026-10-03T03:39:45.552Z",
+  "checks": [
+    "salida real llega a RUNNING",
+    "pausa detiene física antes del reposo visual",
+    "cancelar reinicio conserva carrera pausada",
+    "pausa reducida conserva misma física y foco",
+    "regreso al taller cierra pausa y conserva vehículo",
+    "sin errores JS"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "pass"
+}

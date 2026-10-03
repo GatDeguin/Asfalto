@@ -101,8 +101,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 28708,
-      "sha256": "482151D524C436352B8814D93C5CE8AFF20FC70472CF7859E2D3CFB2466EA4F1"
+      "bytes": 28832,
+      "sha256": "976299566D867F4B802C6EE74C528F58BAFC2E8800B4526125C1FD33C13617EA"
     },
     {
       "path": "assets/audio/menu-1.mp3",
@@ -2061,8 +2061,8 @@
     },
     {
       "path": "assets/styles/loading-presentation.css",
-      "bytes": 7009,
-      "sha256": "EB9259E4B83B270FBCDA8CC6EC2E27D5F88282EF3C92C6F5C94EE194B0550AF4"
+      "bytes": 6967,
+      "sha256": "1DBCAE9A8F94601BF1FF73DB23682ABB4B9BF7AE104DB1EF27553BC40974B0AC"
     },
     {
       "path": "assets/styles/menu-presentation.css",
@@ -2098,6 +2098,11 @@
       "path": "assets/styles/race-pause-menu.css",
       "bytes": 6350,
       "sha256": "A09DDC01089517E3C09F65D4B15BF92644B7341016CB4815D5479036E28D1D27"
+    },
+    {
+      "path": "assets/styles/semantic-motion.css",
+      "bytes": 2536,
+      "sha256": "521B7F9F53618121AD127245B2BF25BE0FAC19B5AB5F26B0D67E045EF32C0A4F"
     },
     {
       "path": "assets/styles/v6-complete-style.css",
@@ -2555,6 +2560,131 @@
       "sha256": "238D68084323BE00494776D940BF281702418906ABC0F1B5893108482BD70CB0"
     },
     {
+      "path": "docs/motion-evidence/app/phone-landscape.png",
+      "bytes": 250603,
+      "sha256": "0C2E3DCADA38567692A3797239174368BFF9BDC5666D6C1C1369DCD033596E1D"
+    },
+    {
+      "path": "docs/motion-evidence/app/phone-portrait.png",
+      "bytes": 220979,
+      "sha256": "7F128F5203BCF8022D438F61869246D00A687838850F4D57A5E34BD33CBB52B9"
+    },
+    {
+      "path": "docs/motion-evidence/app/report.json",
+      "bytes": 1565,
+      "sha256": "78FD0EDB550433A5E38903B27BF4EA3C43CDD2E04E659BA71561A26647E94B32"
+    },
+    {
+      "path": "docs/motion-evidence/app/section-end.png",
+      "bytes": 589124,
+      "sha256": "BE1C17BD38A94E1A991F5B3B098C5FC0CED382D2E060051B2E6C3DA438CF88EB"
+    },
+    {
+      "path": "docs/motion-evidence/app/section-middle.png",
+      "bytes": 587673,
+      "sha256": "C111114857FDACCCE56EA3D2D1B69C1810F9FB586A3228D3E4B207E15BDEA004"
+    },
+    {
+      "path": "docs/motion-evidence/app/section-start.png",
+      "bytes": 587762,
+      "sha256": "907D3A0DFB03ED08E724751C972BDE2D7B425F9A8D448918A33DE252F404BC69"
+    },
+    {
+      "path": "docs/motion-evidence/baseline/home.png",
+      "bytes": 1088760,
+      "sha256": "F8C381FEDB69B44C6C7B74F0DD5C2FFA31749D1885E677506485BBC7FF18D3F8"
+    },
+    {
+      "path": "docs/motion-evidence/baseline/report.json",
+      "bytes": 832,
+      "sha256": "203E32B949664BB3A7862A2A150DB23DFA342B5D858C7A82916511A51545A7CB"
+    },
+    {
+      "path": "docs/motion-evidence/baseline/tests-stable.png",
+      "bytes": 702253,
+      "sha256": "DEF7504595F34E054198AB94B902516BDCF58591D34535F554ECF5600150DC99"
+    },
+    {
+      "path": "docs/motion-evidence/contracts-red.json",
+      "bytes": 698,
+      "sha256": "73BA206542D63D8C09EC23BB9EC18BA2025790B4A0E85E94587C2CDA4A63D29D"
+    },
+    {
+      "path": "docs/motion-evidence/contracts/report.json",
+      "bytes": 1161,
+      "sha256": "DF33EFE14887222D88B63E850258AFBD21C757705FF5CFAB4D355791082E373E"
+    },
+    {
+      "path": "docs/motion-evidence/css-red.json",
+      "bytes": 1015,
+      "sha256": "B2790038757F091C59E6813515903161D6FDB8C3FFDCC2C5F5BD4DB44728788A"
+    },
+    {
+      "path": "docs/motion-evidence/css/report.json",
+      "bytes": 704,
+      "sha256": "004C79113549F686018D6D5138E7FB8BB03C0AE9B31FED1547C4D0D8EB285082"
+    },
+    {
+      "path": "docs/motion-evidence/driving/race-pause.png",
+      "bytes": 223187,
+      "sha256": "AD38414364E5D6768BF02B8705D1E9961D8881CB138715D6F3088CF4F1645E10"
+    },
+    {
+      "path": "docs/motion-evidence/driving/report.json",
+      "bytes": 585,
+      "sha256": "2F93AEEEA8D07E90541780EA49134B7BA175BA18836B0FEB9F0B8970DC78515D"
+    },
+    {
+      "path": "docs/motion-evidence/navigation-red.json",
+      "bytes": 1400,
+      "sha256": "5A538F16833BDC5F7C17A3A6735E6EABB1F9AF306D57F9F15191F7E64CFB5E11"
+    },
+    {
+      "path": "docs/motion-evidence/publication-unit-suite.log",
+      "bytes": 42524,
+      "sha256": "C9136C90DB370EE9C18CBE3D771747E131817282F1623B5D0877E5E64944B6DF"
+    },
+    {
+      "path": "docs/motion-evidence/release-verification.json",
+      "bytes": 1460,
+      "sha256": "221BE04E1086960C1C455D7027B3749191BA57892C817490FBF92A1998ACE595"
+    },
+    {
+      "path": "docs/motion-evidence/summary.json",
+      "bytes": 2169,
+      "sha256": "D0D6F72DFBE7739D778E9DDEC0BBCA14DB01BE2B69F699856A8E92CE73043AB2"
+    },
+    {
+      "path": "docs/motion-evidence/touch/report.json",
+      "bytes": 479,
+      "sha256": "90E88F1C77C221EFB83977D0DB0D612E1E70E4A0C4DF478FEC7A453DDEAF2AA0"
+    },
+    {
+      "path": "docs/motion-evidence/touch/touch-preparation-landscape.png",
+      "bytes": 283152,
+      "sha256": "C15E8DB4CC796B3D0FC1E9C3B4DFA066E97695F4292B3D57C5E81C514B6ABF9F"
+    },
+    {
+      "path": "docs/motion-evidence/unit-suite.log",
+      "bytes": 41402,
+      "sha256": "DD445E4B1394A5CAECB52D13D358BC94D54A97426A653390B0A6984446D754A5"
+    },
+    {
+      "path": "docs/motion-evidence/unrelated-failures-audit.json",
+      "bytes": 1060,
+      "sha256": "D15A575B3212D8F584F1BD15C246E76335F43F709CFD1049B0C9CD6F7DA5D53E"
+    },
+    {
+      "path": "docs/motion-evidence/unrelated-failures.log",
+      "bytes": 13140,
+      "sha256": "3A790B45A336F8423C7133DA7A1F12A1DC5C8AD5FE38E1DD40DA165A0DC8EEBD"
+    },
+    {
+      "path": "docs/motion-semantico.md",
+      "bytes": 19482,
+      "sha256": "A24F24ABFEAD179DEE4161B81A2ABE6DD91F180DA6EA3FD260C6747EAD1A964E"
+    },
+    {
       "path": "docs/release-v8-stability.md",
       "bytes": 4449,
       "sha256": "2CC89D20C803445DC14CBF4630E2472E8D5DDD970BFC081660CC2AAA44AC6D66"
@@ -2566,8 +2696,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 82212,
-      "sha256": "8B4DE89947F8EC33C712500EADAEAE77988EBB1EE09F9AC925597410DBDBE2D7"
+      "bytes": 82295,
+      "sha256": "33AE34F61922B814376CFDA1949D04E66AA9A3B98EB13202973B0ED10495E5F0"
     },
     {
       "path": "release-version.json",
@@ -2991,8 +3121,8 @@
     },
     {
       "path": "src/menu/menu-presentation.mjs",
-      "bytes": 20645,
-      "sha256": "3FBA637B8BFCE8576345DCF9C38A57DF67371E12759EEA0596FF8D7F61E5C1B5"
+      "bytes": 21997,
+      "sha256": "A12076A3699CDAE6388420FC2D7A55191F7B2BEDD9D71E60328DDAB5AD6F85E7"
     },
     {
       "path": "src/menu/menu-refinement-state.mjs",
@@ -3006,8 +3136,8 @@
     },
     {
       "path": "src/menu/menu-sections.mjs",
-      "bytes": 12847,
-      "sha256": "ACFF770359E81271DE8A8BF67D7C485D89C4FEBE904C4FE6CD1CBE724ADB4608"
+      "bytes": 13267,
+      "sha256": "9E1441FEE0C01D24170BF497AFD11BF2BDBA4221E334434A4BF7D6AF97CD32C0"
     },
     {
       "path": "src/menu/menu-state.mjs",
@@ -3021,13 +3151,13 @@
     },
     {
       "path": "src/menu/race-pause-menu.mjs",
-      "bytes": 9320,
-      "sha256": "079B427BA2D909DE20502DF80B372E30932A315919C95FDBB907954DA7C35DF4"
+      "bytes": 9871,
+      "sha256": "842B5A04C7F1C87D3DE027708FA03B8D18BC4A2F58DD544D0EA05D6E74D10383"
     },
     {
       "path": "src/menu/race-session-presentation.mjs",
       "bytes": 5923,
-      "sha256": "6425CB72EC341489F6B98B38B48748261239424E6814D9A1DB735D16B74A7852"
+      "sha256": "634D27B5534B5122F71B7AC3ED1DBB21613C38761C1C26E0A32F93E78E1F6E3F"
     },
     {
       "path": "src/menu/roadtest-records.mjs",
@@ -3043,6 +3173,11 @@
       "path": "src/menu/selected-vehicle-labels.mjs",
       "bytes": 2077,
       "sha256": "188C52FAAD89546F623E3681A9364FEB5CA9DF880365F14A40254FEF3A51A974"
+    },
+    {
+      "path": "src/menu/semantic-motion.mjs",
+      "bytes": 2866,
+      "sha256": "2250587A2275CF0004B7DC8FC3655437E270F56064A17FE46D064C87A01D9768"
     },
     {
       "path": "src/menu/v7-championship-catalog.mjs",
@@ -4500,6 +4635,11 @@
       "sha256": "6AE2255D35A5EE3FDF2A99ED9F7E29F61196AAF4527F55E050FE5CC1F0A36BC0"
     },
     {
+      "path": "tools/semantic-motion-browser.mjs",
+      "bytes": 18687,
+      "sha256": "8C76FE03A9A096C3A8401D89681A50F969FA70F3AFFFE41B462BFBD76BCB27C7"
+    },
+    {
       "path": "tools/serve-local.mjs",
       "bytes": 178,
       "sha256": "4657B440E42A836BA4C89D8DF7B7446F1994D29D6A33073C9A88ECA987B6FA2E"
@@ -4950,7 +5090,7 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 975,
-  "totalBytes": 992352492,
-  "inventorySha256": "D703EF9FB67EEF563701407E50037D49C558B5D077A62250FB89516404F32B28"
+  "fileCount": 1003,
+  "totalBytes": 997042238,
+  "inventorySha256": "A05AA9FA68CBECA8495E6D2FFBF1D25EC1D5E2BF678993AA1FB653C6DAECB846"
 }

@@ -1,0 +1,25 @@
+{
+  "mode": "css",
+  "startedAt": "2026-10-03T03:39:02.684Z",
+  "checks": [
+    "objetivo quieto al presionar .v6-nav-btn",
+    "objetivo quieto al presionar .an-panel-back",
+    "pseudo-elemento estático con an-v7-reduce-motion",
+    "host de carga estático con an-v7-reduce-motion",
+    "pseudo-elemento estático con v6-reduce-motion",
+    "host de carga estático con v6-reduce-motion",
+    "pseudo-elemento estático con sistema",
+    "política CSS completa: "
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "pass"
+}

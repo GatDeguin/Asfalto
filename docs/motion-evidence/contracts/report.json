@@ -1,0 +1,35 @@
+{
+  "mode": "contracts",
+  "startedAt": "2026-10-03T03:39:02.677Z",
+  "checks": [
+    "entrada de pausa con transición activa",
+    "foco inmediato en Continuar",
+    "fondo inerte desde el primer frame",
+    "confirmación segura recibe foco",
+    "no reinicia por terminar animación",
+    "Escape invierte confirmación sin reanudar",
+    "Escape reanuda una sola vez y restaura foco",
+    "interrupción de pausa a 0",
+    "interrupción de pausa a 0.5",
+    "interrupción de pausa a 0.98",
+    "20 ciclos sin animaciones, callbacks ni duplicados",
+    "preferencia del sistema cancela durante entrada",
+    "entrada reducida estática y utilizable",
+    "preferencia de la aplicación cancela durante entrada",
+    "fallback sin WAAPI preserva controles",
+    "desmontaje limpia animación y restaura fondo",
+    "20 montajes y desmontajes sin diálogo ni animación residual",
+    "sin errores de promesas canceladas"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "pass"
+}

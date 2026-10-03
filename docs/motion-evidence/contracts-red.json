@@ -1,0 +1,17 @@
+{
+  "mode": "contracts",
+  "startedAt": "2026-10-03T03:19:51.543Z",
+  "checks": [],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "fail",
+  "failure": "AssertionError [ERR_ASSERTION]: entrada de pausa con transición activa\n    at check (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:24:40)\n    at contracts (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:38:3)\n    at async file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:127:28"
+}

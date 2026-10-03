@@ -1,0 +1,26 @@
+[
+  {
+    "path": "tools/lazy-rival.test.mjs",
+    "recorded": "45A110C9AB8245FDA1173B971A951B5E2719FB00F5BA78EC6926AEC993971D38",
+    "current": "45A110C9AB8245FDA1173B971A951B5E2719FB00F5BA78EC6926AEC993971D38",
+    "unchangedFromReceivedInventory": true
+  },
+  {
+    "path": "src/legacy/module-02.mjs",
+    "recorded": "D1B21145922BDB1202070CCBC1E95DF45AF417C5454EB5296DEDE3909DBC7E76",
+    "current": "D1B21145922BDB1202070CCBC1E95DF45AF417C5454EB5296DEDE3909DBC7E76",
+    "unchangedFromReceivedInventory": true
+  },
+  {
+    "path": "tools/render-preparation.test.mjs",
+    "recorded": "89A427501EF941B2A03068398BFEE02E27224BD1309ED42B7A6005249AA03C12",
+    "current": "89A427501EF941B2A03068398BFEE02E27224BD1309ED42B7A6005249AA03C12",
+    "unchangedFromReceivedInventory": true
+  },
+  {
+    "path": "src/render/screen-space-lighting.mjs",
+    "recorded": "B98E7CF485F1898C7534004D67B9ABE95E92FD0FBBAF5F59E2C9BD6CC1B5D4A8",
+    "current": "B98E7CF485F1898C7534004D67B9ABE95E92FD0FBBAF5F59E2C9BD6CC1B5D4A8",
+    "unchangedFromReceivedInventory": true
+  }
+]

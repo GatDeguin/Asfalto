@@ -1,0 +1,21 @@
+{
+  "mode": "css",
+  "startedAt": "2026-10-03T03:36:07.782Z",
+  "checks": [
+    "pseudo-elemento estático con v6-reduce-motion",
+    "host de carga estático con v6-reduce-motion",
+    "pseudo-elemento estático con sistema"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "fail",
+  "failure": "AssertionError [ERR_ASSERTION]: política CSS completa: objetivo quieto al presionar .v6-nav-btn, objetivo quieto al presionar .an-panel-back, pseudo-elemento estático con an-v7-reduce-motion, host de carga estático con an-v7-reduce-motion\n    at check (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:24:40)\n    at cssPolicy (file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:62:3)\n    at async file:///D:/2026/Chevy/Asfalto_Nacional_v8/tools/semantic-motion-browser.mjs:226:67"
+}

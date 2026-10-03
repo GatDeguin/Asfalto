@@ -1,0 +1,571 @@
+✔ deduplicates consumers, returns owned buffers and evicts by byte LRU (1.4424ms)
+✔ one cancelled consumer does not abort the shared transfer; last one does (4.013ms)
+✔ failures, oversized files and unversioned files are not retained; clear invalidates pending (0.9871ms)
+✔ arbitrary falsy abort reasons reject promptly and abort the last transfer (0.6642ms)
+Asset ownership, error cleanup, GLB transfer, partial construction cleanup and cooperative yield: PASS (CPU)
+✔ tools\asset-lifecycle.test.mjs (452.3082ms)
+✔ thunder reuses prepared PCM and does not synthesize during racing (37.1287ms)
+✔ ambient avoids duplicate automation and inactive updates (41.8576ms)
+✔ driving avoids duplicate automation and inactive updates (7.3505ms)
+✔ preserves original four ambient PCM banks and full durations (62.3281ms)
+✔ worker returns complete banks, constructors allocate no PCM, and preparation cache is reusable (101.854ms)
+✔ preparation rejects cancellation without creating nodes or keeping worker alive (1.5402ms)
+✔ forest wind sends only its final mixed target on repeated telemetry (18.8028ms)
+✔ dispose while banks are pending aborts and never creates late audio nodes (1.6151ms)
+✔ dispose while shared context authorization is pending never starts a worker (1.3557ms)
+✔ normal startup still creates its bus and coalesces concurrent calls (0.3073ms)
+✔ worker abort rejection after disposal resolves startup as false (0.257ms)
+✔ the real host invalidates camera interpolation on circuit transfer, rollback and restart without changing calibration (3.7355ms)
+✔ A1 session cancellation closes UI without awaiting a non-cooperative load (3.4863ms)
+✔ A1 timeout rejects startup even if loader ignores abort, retry owns final result (16.8017ms)
+✔ A1 immediate request after last cancel is not rejected by the old attempt (0.8809ms)
+✔ A1 manager forwards abort and never commits a late loaded adapter (1.6527ms)
+✔ A1 unload does not wait forever for an aborted pending adapter (0.6446ms)
+✔ A1 manager selection has a finite timeout and preserves active track (15.5792ms)
+✔ A1 active host and bootstrap forward the caller signal to track selection (5.8409ms)
+✔ A1 presentation exceptions cannot retain the active transaction (0.4004ms)
+✔ A1 readiness polling stops on abort and presentation-frame errors reject (13.5942ms)
+✔ slow frames cannot starve live mirrors behind water captures (1.5975ms)
+✔ return from a long pause services all views without an unlimited catch-up burst (0.7384ms)
+✔ pending variants deduplicate and stale completion cannot activate after invalidation or disposal (1.4005ms)
+✔ failed preparations stay in fallback and report once until invalidation (0.3129ms)
+✔ abort cannot publish readiness (0.175ms)
+✔ compile material traversal excludes hidden meshes and supplies actual scene lights (4.3269ms)
+✔ cube prepares six target faces with immediate target and XR restoration (6.5595ms)
+✔ water first capture prepares exact pass with immediate restoration and draws only after readiness (4.3932ms)
+✔ mirror preparation restores exclusions and targets while awaiting both feeds (17.6878ms)
+✔ warmup prepares only active tier and cache distinguishes active tier changes (1.4157ms)
+✔ cube restores temporary exclusions immediately and stops faces after cancellation (1.4018ms)
+✔ water compile failure restores state and never renders a failed variant (1.3666ms)
+✔ explicit transient batches are prepared before first emission without including hidden vehicle roots (0.4117ms)
+✔ mirror toggle retains the mapped shader and disabled preparation does not reactivate feeds (7.4909ms)
+✔ native compilation retains materials and renderer through concurrent cancellation/disposal (0.8205ms)
+✔ a later transmissive batch still prepares earlier opaque objects for the transmission target (19.5741ms)
+✔ binary codec preserves typed bytes, offsets and shared backing buffers (2.2798ms)
+✔ packed spatial lookup preserves null, negative coordinates, maxDistance and missing (1.5035ms)
+✔ rejects malformed binary header, metadata, descriptors and array bounds (1.1168ms)
+✔ all integer types and noncanonical NaN bits retain exact bytes (0.5362ms)
+✔ rejects corrupted spatial index instead of installing wrong lookup order (0.5689ms)
+✔ odd-length backing buffers preserve offset float views and all shared bytes (0.4874ms)
+✔ runtime never installs superseded or aborted worker data (3.5709ms)
+✔ worker error reports explicit fallback and capture mode still records computed queries (0.883ms)
+✔ abort terminates worker and overlap rejects old load without publishing stale result (2.4138ms)
+✔ worker creation error, message error and timeout reject so caller can compute fallback (6.268ms)
+✔ preparation submits bounded batches, yields with current state restored, and leaves foreground traversal whole (59.1964ms)
+✔ aborting a batch prevents later submission and releases retained scene materials (17.8257ms)
+✔ editor load pauses immediately and failed or cancelled load restores running state (1.8227ms)
+✔ near road cannot overwrite the lower cockpit, while internal depth and world lighting remain enabled (6.6723ms)
+✔ external views remain one render with no depth clear or changed masks (0.5977ms)
+✔ new interior meshes and lights are included without changing hidden objects or raycast layers (0.7853ms)
+✔ render failure in pass 1 restores all shared state (0.9194ms)
+✔ render failure in pass 2 restores all shared state (0.3536ms)
+✔ own road projectors illuminate the world only, while rival and cabin lighting remain in the interior pass (1.1017ms)
+✔ prepare compiles exact world then cabin lighting/material sets and restores immediately (7.3481ms)
+✔ prepare outside cockpit compiles only world and leaves overlays visible (0.7094ms)
+✔ prepare failure 1, synchronous=true, restores scene and stops (0.7489ms)
+✔ prepare failure 1, synchronous=false, restores scene and stops (0.5982ms)
+✔ prepare failure 2, synchronous=true, restores scene and stops (1.3405ms)
+✔ prepare failure 2, synchronous=false, restores scene and stops (0.7362ms)
+✔ cancelled world preparation never starts interior compile (0.9608ms)
+✔ steady cockpit frames reuse scene membership; new descendants invalidate the cache (0.5073ms)
+✔ quality preparation reapplies and restores state separately around world and cabin compilation (0.8944ms)
+✔ background compilation cannot downgrade quality; sustained driving overload still can (10.2016ms)
+✔ transport manifests identify exact bytes and cockpit decompresses losslessly (6786.8678ms)
+✔ first demand prefetches bytes; decode waits safe state and disposal cancels (6.2238ms)
+✔ only the displayed LOD keeps its lighting active through update and both views stay synchronized (2.1481ms)
+✔ stationary world leaves do not multiply static matrices every frame; dynamic child and moved world update (1.4514ms)
+✔ restores renderer and transform update policy when drawing throws, including manual scene matrices (0.4884ms)
+✔ freezing authored track preserves root moves and explicitly dynamic nodes (0.4599ms)
+✔ frenteGz desktop retains exact original materials, texture bytes and authored transforms (600.3986ms)
+✔ cabinaGz desktop retains exact original materials, texture bytes and authored transforms (726.6048ms)
+✔ tableroGz desktop retains exact original materials, texture bytes and authored transforms (252.5687ms)
+✔ volanteGz desktop retains exact original materials, texture bytes and authored transforms (407.0198ms)
+✔ pedalesGz desktop retains exact original materials, texture bytes and authored transforms (74.7707ms)
+✔ palancaGz desktop retains exact original materials, texture bytes and authored transforms (159.9589ms)
+✔ recovery requires thirty seconds of healthy windows at 60 FPS / 16ms (21.8883ms)
+✔ recovery requires thirty seconds of healthy windows at 30 FPS / 32ms (9.5173ms)
+✔ recovery requires thirty seconds of healthy windows at 60 FPS / 8ms (27.1806ms)
+✔ failed tier stays blocked across measurement and preparation windows (27.0962ms)
+✔ repeated brief improvements do not bounce low and balanced (27.0805ms)
+✔ emergency downgrade remains responsive (0.2558ms)
+✔ fixed quality records frames without silently lowering tier (3.4676ms)
+✔ target cadence change resets health evidence, not failed-tier cooldown (9.7716ms)
+✔ HDR capabilities are queried once per context, shared by requested tiers, and invalidated on restore (0.9431ms)
+✔ HDR cache refreshes before a persistent consumer on consecutive context restores (1.4323ms)
+✔ hydrology typed CPU output matches pre-worker reference 0 (11.9014ms)
+✔ hydrology typed CPU output matches pre-worker reference 1 (11.3286ms)
+✔ hydrology typed CPU output matches pre-worker reference 2 (0.8319ms)
+✔ hydrology typed CPU output matches pre-worker reference 3 (0.3947ms)
+✔ worker transfers its copy and cancel cannot disturb a later job (2.6377ms)
+✔ worker error rejects pending jobs and a new worker may recover (0.3318ms)
+✔ worker timeout is bounded and releases all jobs (10.694ms)
+✔ late hydrology results cannot resurrect a disposed water texture or road attribute (2.6354ms)
+✔ worker failure uses the exact synchronous water and road fallback (38.2448ms)
+✔ selection validates stored identity and defaults to the real selected car (0.7686ms)
+✔ already installed initial vehicle is not loaded twice (0.2156ms)
+✔ original load is atomic, cancellable and restores display after editing (1.016ms)
+✔ cancelled originals never become editable and are disposed (0.4699ms)
+✖ Falcon stays unloaded until requested, concurrent races and restarts reuse it (1.8999ms)
+✖ failed rival preparation cleans partial resources and can retry (1.5285ms)
+✖ shutdown during conversion disposes late model and never installs rival (3.4998ms)
+✖ shutdown during presentation disposes late presentation and roots (1.0089ms)
+✔ free drive bypasses rival; competition waits; cancellation cannot start race (1.4167ms)
+ℹ Error: Test "Falcon stays unloaded until requested, concurrent races and restarts reuse it" at tools\lazy-rival.test.mjs:15:1 generated asynchronous activity after the test ended. This activity created the error "ReferenceError: rivalAssetPipeline is not defined" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+ℹ Error: Test "Falcon stays unloaded until requested, concurrent races and restarts reuse it" at tools\lazy-rival.test.mjs:15:1 generated asynchronous activity after the test ended. This activity created the error "ReferenceError: rivalAssetPipeline is not defined" and would have caused the test to fail, but instead triggered an unhandledRejection event.
+✔ no world work behind v6-menu-open (1.4375ms)
+✔ no world work behind an-intro-open (0.5764ms)
+✔ selection and shaders must settle before race configuration can succeed (4.159ms)
+✔ failed selected car cannot configure route or compile (0.7766ms)
+✔ shader failure never reports ready (0.78ms)
+✔ cancel during compile aborts immediately and never reports ready after late completion (0.5837ms)
+✔ shader preparation serializes and checks shutdown after compile (1.0118ms)
+✔ actual drive flow waits for configuration and race start before exposing the scene (1.2013ms)
+✔ launch guard rejects overlapping preparations and releases on failure (0.3631ms)
+✔ phone render gate opens only after selected shaders complete successfully (1.9067ms)
+✔ primary readiness does not wait for secondary feeds; they prepare after world (0.5696ms)
+✔ a replaced variant never starts old mirror preparation after pending water completes (0.4951ms)
+✔ future quality restores current state during preparation and commits only when ready, abort=false (1.0577ms)
+✔ future quality restores current state during preparation and commits only when ready, abort=true (0.6742ms)
+✔ ordinary preparation followed by a staged tier cannot strand the pending guard (1.0664ms)
+✔ primary shaders await hydrology fields before becoming ready (0.4418ms)
+✔ staged tier awaits hydrology and rejects stale field revisions before compiling (0.8225ms)
+✔ combined matrix covers every selectable pair, both policies and five repetitions (2.3967ms)
+✔ frame statistics retain hitches and report observed cadence (0.2384ms)
+✔ valid observed coverage passes for fixed and adaptive policies (2.3202ms)
+✔ environment and adaptive settings are validated from samples (0.3988ms)
+✔ camera commands cannot substitute for observed camera segments (0.3897ms)
+✔ camera segment must match elapsed time, not just contain every camera (0.3948ms)
+✔ empty samples, nonfinite durations and progress, and invalid frame intervals are rejected (1.7935ms)
+✔ physics counters must start at zero for each measurement window (0.451ms)
+✔ pending quality requests exceeding 30 seconds cannot silently pass (0.975ms)
+✔ fixed quality drift and paused simulation invalidate coverage (0.4748ms)
+✔ resume environment comparison keeps stable hardware and browser version (0.6221ms)
+✔ Node watchdog terminates an unresolved phase and invokes browser cleanup (42.8307ms)
+✔ render interpolation never freezes or retains the mutable physics buffers (1.4387ms)
+node:fs:484
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open 'D:\2026\Chevy\Publicacion\Reports\Asfalto_Nacional_v8\runtime-gpu-2026-09-27\before\src\legacy\asfalto-v6-vehicle-model.js'
+    at Object.readFileSync (node:fs:484:20)
+    at file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/physics-runtime-scratch.test.mjs:10:102
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'D:\\2026\\Chevy\\Publicacion\\Reports\\Asfalto_Nacional_v8\\runtime-gpu-2026-09-27\\before\\src\\legacy\\asfalto-v6-vehicle-model.js'
+}
+
+Node.js v24.20.0
+✖ tools\physics-runtime-scratch.test.mjs (1181.2705ms)
+physics scratch: core numerical parity and buffer identity passed
+✔ tools\physics-scratch.test.mjs (133.8082ms)
+✔ race startup snapshots typed contact storage as independent immutable arrays (108.6105ms)
+✔ circuit selection preserves the original failure for the retry dialog (1.6989ms)
+✔ deduplicates concurrent builds, keeps dimensions and ref counts; idle LRU never evicts active leases (6.3461ms)
+✔ cold builds yield and failure is retryable (0.6495ms)
+✔ shutdown cancels queued work and disposes in-flight and active targets once (2.3363ms)
+✔ zero idle budget releases immediately (0.4575ms)
+✔ half-turn orientation metadata distinguishes unchanged-name panoramas (0.4386ms)
+✔ prepare returns ready with unresolved next and cancellation releases that source (14.4329ms)
+✔ release retains source until asynchronous build settles (3.3088ms)
+✔ CPU budget stops submission after an atomic unit crosses the deadline (3.3318ms)
+✔ one expensive native compile still progresses and yields immediately (0.521ms)
+✔ cheap work retains the sixteen-position cap (1.7298ms)
+✔ equivalent repeated objects share preparation but feature variants remain (1.1046ms)
+✔ custom shaders and distinct materials are never folded speculatively (0.4653ms)
+✔ invalid budget fails without entering native compilation (0.4685ms)
+✔ disposal waits for pending native passes before destroying transmission target (1.3537ms)
+✔ full-scene transmission detection stays linear under one-object batches (15.621ms)
+✔ quality state is installed once per budgeted turn and restored before yielding (0.4708ms)
+✔ new storage and zero balance remain unchanged (2.9491ms)
+✔ v7 only and identical profiles do not prompt (1.2973ms)
+✔ divergent profiles require a choice and preserve exact snapshots (2.36ms)
+✔ v8 only migrates even with old copy marker (0.6612ms)
+✔ overlapping intro and loading restore inert only after both release (9.9235ms)
+✔ failed profile copy cannot mark recovery complete or load defaults (1.0322ms)
+✔ Iguazu shipping assets satisfy restored locked adapter (555.259ms)
+✔ one context, inactive state/resize isolated, nested throw restores target face mip (3.2172ms)
+✔ async continuation does not retain global state or draw over active canvas (0.4659ms)
+✔ raw internal dispatch uses only owner patch with correct this and restores (0.2982ms)
+✔ lease disposal never disposes physical renderer; final shutdown waits native compile (11.2077ms)
+✔ context loss suspends frames and restore advances epoch without activate callback (0.4369ms)
+✔ restored Three internals are resolved dynamically by nested facades (0.2327ms)
+✖ prepare capture contexts match actual render, grading=false (9.139ms)
+✖ prepare capture contexts match actual render, grading=true (2.1335ms)
+✖ nested prepare restores all state on callback failure, async=false (1.6247ms)
+✖ nested prepare restores all state on callback failure, async=true (0.6923ms)
+✔ disabled effects and neutral grade prepare bypass all target allocations (0.9537ms)
+✖ fog topology survives quality changes without double extinction, exponential=false (1.6515ms)
+✖ fog topology survives quality changes without double extinction, exponential=true (0.7259ms)
+Runtime control/lifecycle/spring focused checks PASS
+✔ tools\runtime-control-lifecycle.test.mjs (482.5328ms)
+✔ static HTTP revalidates mutable files, streams ranges and respects HEAD (174.7294ms)
+✔ distributed spatial query results retain exact doubles and nulls; stale inputs miss (2.4816ms)
+✔ refinement bake preserves every geometry/index/normal value, ownership and transforms (11.1849ms)
+✔ curvature bake equals full precision original and respects vertex budgets (5.4771ms)
+✔ loader unsupported-worker fallback and already-aborted signal preserve cache safety (2.7644ms)
+✔ binary artifact encoding round-trips float bits, indices and spatial doubles (2.4343ms)
+✔ curvature bakes distinguish interleaved views sharing the same storage (2.0253ms)
+✔ refinement helper-only edits invalidate distributed results (18.7202ms)
+✔ enrollment and accepted stage preserve club history and duplicate result is immutable (3.3896ms)
+✔ failed persistence keeps live awards unchanged; retry publishes once (2.8972ms)
+✔ memory-only facade and stale revision cannot claim persistent success (0.3174ms)
+✔ canceled attempt cannot accept a late physical receipt (0.5397ms)
+✔ uncertain disk success is recovered idempotently without publishing duplicate rewards (0.9402ms)
+✔ corrupted accepted receipt is rejected before opening another stage (0.576ms)
+✔ photo references require saved arrival, carry no pixels and never grant another award (9.4544ms)
+✔ physical final maps authoritative fields, preserving penalties and scores (2.1351ms)
+✔ QA/debug/pending/mismatched setup never becomes an award receipt (0.4846ms)
+✔ configuration hash ignores key ordering but detects one changed assist (6.4162ms)
+✔ configuration finishes before physical enable/start; arrival persists one stage (5.8381ms)
+✔ cancel while scene is loading prevents a late start and returns saved attempt to ready (2.8891ms)
+✔ changed setup blocks attempt; final save error publishes no success and preserves retry (1.1497ms)
+✔ cancel during persistent begin never enters the scene transaction afterwards (1.211ms)
+✔ capture failure never turns a valid sport result into a failed stage (0.8235ms)
+✔ cancel while awaiting a real photo prevents accepting its late result (1.2676ms)
+✔ catalog covers 5/10/15 canonical stages, distinct revisits and 20 unique physical awards (1.5098ms)
+✔ cancel/resume preserve stage selection and cannot grant points from stale completion (1.4752ms)
+✔ invalid, timeout, QA, config mismatch and missing authoritative clock never advance (0.5016ms)
+✔ penalized official time determines points, duplicate receipt is idempotent (0.6614ms)
+✔ five valid victories grant five route trophies and one cup only at completion (1.7173ms)
+✔ exact ties split stage points and final complete tie is explicitly shared (0.5861ms)
+✔ later championships require actual completed predecessor and retain snapshot across save (0.2468ms)
+✔ restoring persisted results recomputes points and rejects edited stage cursor or missing arrival (0.438ms)
+✔ new local installation uses public calibrated defaults without creating a personal file (3.589ms)
+✔ new static and local installations resolve the same calibration (1.5521ms)
+✔ an older browser edit wins over a newer bundled seed and keeps missing calibrated targets (1.0573ms)
+✔ a browser edit without a timestamp is still a user edit, not a factory reset (1.0339ms)
+✔ newer disk edits beat older browser edits, while missing targets get defaults (1.6443ms)
+✔ newer browser recovery beats disk without auto-saving over it (1.2041ms)
+✔ disconnected API preserves browser edits and new users still get calibrated defaults (1.4236ms)
+✔ missing static seed does not erase browser edits or leave a fresh cockpit unassembled (1.2672ms)
+✔ invalid saved input falls back to factory rather than accepting an array as layout (0.7043ms)
+✔ explicit reset uses the same factory for every target and camera, then saves that result (3.1413ms)
+✔ a target reset can restore the reviewed factory rather than the user startup value (0.3366ms)
+✔ explicit save keeps the edited layout and never silently replaces it with defaults (0.9048ms)
+✔ legacy radian layouts preserve rotations when missing targets receive defaults (0.8523ms)
+✔ a partial saved transform keeps missing calibrated components (0.6685ms)
+✔ real local endpoint: empty directory, explicit edit, reload and later server disconnect (276.868ms)
+✔ undated browser recovery does not acquire the factory timestamp and outrank a dated disk edit (2.1666ms)
+✔ reader ignores legacy trophies counters photos and sheets without mutating profile (1.5168ms)
+✔ reader reconstructs valid arrivals, deduplicates20IDs and skips corrupted runs (4.4985ms)
+✔ actual host empty home synchronization never imports collection or prepares geometry (0.9154ms)
+✔ actual camera focus handles preparation failure without stealing later camera pose (3.5885ms)
+✔ actual menu resynchronization preserves the pending collection details request (1.0401ms)
+✔ image metadata must match a validated persisted finish and actual frame (4.411ms)
+✔ failed image persistence cannot mutate sport receipts; repeated save uses one stable image ID (2.5486ms)
+✔ all profile writers share revision and reject another tab, preserving disk (3.4203ms)
+✔ physical host consumes all substeps and completes once without RAF scoring (4.7803ms)
+✔ paused ticks never create active time and resume stays contiguous (2.7201ms)
+✔ gaps, QA, recovery, lifecycle and rebase invalidate and detach without publication (1.0937ms)
+✔ displayed speedometer sample maps physicalTick to instrument sampleTick (5.5525ms)
+✔ receipt reader rejects old valid sheets and malformed physical thresholds (1.8249ms)
+✔ receipt persistence requires exact readback and never publishes on dropped/corrupt writes (3.1944ms)
+✔ persistent receipt is idempotent, frozen and earns only its catalog medal (4.2751ms)
+✔ unknown successful write retries same receipt once; changed duplicate and revision conflicts fail (3.7725ms)
+✔ waiting disk lock cannot commit a canceled session (5.6412ms)
+✔ legitimate rigid rebase preserves physical progress and observer identity (0.5201ms)
+✔ all twelve validator receipts replay to twelve distinct catalog medals and corrupt evidence cannot add one (154.7653ms)
+✔ two tabs sharing one lock cannot overwrite another accepted physical receipt (3.4743ms)
+✔ canceling a queued failed save clears retry state even when the lock completes later (2.1716ms)
+✔ only a persisted physical receipt grants progression and duplicate retries grant none (6.3956ms)
+✔ selectable chevy completes, persists and retains its presentation identity (1.7066ms)
+✔ selectable chevy_400_1957 completes, persists and retains its presentation identity (1.2733ms)
+✔ selectable chevrolet_1969 completes, persists and retains its presentation identity (1.2834ms)
+✔ receipt rejects nonselectable vehicle unknown-vehicle (1.0742ms)
+✔ receipt rejects nonselectable vehicle falcon (0.7169ms)
+✔ receipt rejects nonselectable vehicle toString (0.6913ms)
+✔ receipt clock-throws ends observably invalid with no escaped exception or publication (1.4919ms)
+✔ receipt invalid-date ends observably invalid with no escaped exception or publication (1.3756ms)
+✔ receipt empty-result-id ends observably invalid with no escaped exception or publication (1.1355ms)
+✔ receipt receipt-validation ends observably invalid with no escaped exception or publication (1.1947ms)
+✔ late earlier image cannot replace newest selection and object URLs are released (1.5958ms)
+✔ missing exact combination clears previous photograph (0.2255ms)
+✔ same selection refresh does not download or publish again (0.1895ms)
+✔ suspending a hidden preview repeatedly releases once and makes no extra UI work (0.2674ms)
+✔ legacy condition migrates into selected car only and new cars are independent (1.3308ms)
+✔ real impact persists mechanical detail and never heals on pristine snapshot (2.5135ms)
+✔ washing removes dirt only, paint repair leaves dents, panel repair leaves paint damage (0.2515ms)
+✔ engine repair clears fire/cooling/fuel leak and preserves chassis damage (0.5541ms)
+✔ terminal health thresholds cover native damage floors and zero fuel (0.8067ms)
+✔ fuel is consumed by physical120Hz engine work once, not by render or paused samples (1.9338ms)
+✔ rollover needs sustained low-motion inversion; jumps and banking do not trigger (1.8611ms)
+✔ paused time cannot advance rollover confirmation (0.3163ms)
+✔ native wheel damage survives reload without spreading to healthy wheels (0.3417ms)
+✔ maintenance round-trip restores actual damage and repairing one car leaves another untouched (2.852ms)
+✔ terminal breakdown prevents restart and zero-balance essential service avoids softlock (0.7741ms)
+✔ diegetic signal follows countdown and pauses without a competing physics clock (0.1657ms)
+✔ 360 second cycles preserve completed loops and real active time across a duration change (1.1447ms)
+✔ pause, countdown, inactive and fixed modes cannot advance either clock counter (0.2464ms)
+✔ six minute selection is persisted and sent to the controller with enabled state (1.0724ms)
+✔ legacy cycle and unavailable storage load a twelve minute cycle (0.1662ms)
+✔ 120 Hz active updates cross the exact six minute boundary without losing a full cycle (31.5014ms)
+✔ first cycle holds selected rain; second cycle starts at the same intensity and changes gradually (2.0635ms)
+✔ regional walks are reproducible, never select forbidden snow, and avoid clear-to-storm jumps (3.7115ms)
+✔ host canon permission and fixed mode keep selected conditions across arbitrary cycles (0.3953ms)
+✔ day palette accepts evolving weather without resetting day clock or mutating the regional source (1.4485ms)
+✔ traction transitions continuously with wetness instead of retaining dry grip until a categorical switch (0.8553ms)
+✔ canceled real async load cannot start session or retain a presentation (2.4674ms)
+✔ failed attempt remains retryable and resumes same start promise once (3.839ms)
+✔ superseding queued request rejects stale success before commit (0.4621ms)
+✔ physical telemetry takes gear and speed from snapshot and alerts from engine/race state (0.3213ms)
+✔ official competition time is not counted twice with penalties (0.2265ms)
+✔ a newer request during exit transition prevents the old caller from starting (2.4492ms)
+✔ critical engine faults remain visible ahead of race warnings (0.2523ms)
+✔ startup stays dormant until demand and shares one preparation (4.5388ms)
+✔ canceling one consumer leaves shared preparation intact (1.1981ms)
+✔ last cancel aborts transport and a later request retries without duplicate runtime (1.3137ms)
+✔ transport failure is reviewable and a new user retry prepares same runtime (0.8857ms)
+✔ stalled requested transport times out as retryable error (10.2342ms)
+✔ diagnosis presents authoritative terminal faults and makes assistance actionable (0.8799ms)
+✔ wash meter uses service cleanliness and never changes body diagnostics (0.2283ms)
+✔ busy or unaffordable services cannot submit, while unsupported service data is not invented (0.9367ms)
+✔ off low high retain projector and shadow shader counts while preserving filament fade (11.2378ms)
+✔ dark headlights retain shadow map but skip shadow rendering and resume on ignition (3.5185ms)
+✔ inactive calibration eco and dispose keep their intended shadow and lifecycle controls (2.4031ms)
+✔ disposing a lit rig removes lights and reports no visible beams (2.0224ms)
+✔ dedup exact GPU identity while all nodes/materials/userData remain private; last release once (1.6278ms)
+✔ cancelled consumer cannot cancel shared decode; native pin retains last resources (2.4338ms)
+✔ late decode after all abort is disposed, never published or kept idle (2.9524ms)
+✔ phone transition pin preserves identity across release and reacquire (0.5718ms)
+✔ surface keys exactly group the four generated GLSL variants across vehicle and atlas names (3.4198ms)
+✔ shared shaders retain independent uniforms and authoring matrices (0.5891ms)
+✔ prior hooks and their declared shader identities remain isolated (0.3654ms)
+✔ bounds reference and clones exactly reproduce legacy normalization at race and workshop scales (128.96ms)
+✔ tier changes settle water shaders immediately and newly streamed water inherits the tier (17.0501ms)
+✔ governor applies shader tier before resize can start asynchronous preparation (4.4602ms)
+ℹ tests 317
+ℹ suites 0
+ℹ pass 306
+ℹ fail 11
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7283.4643
+
+✖ failing tests:
+
+test at tools\lazy-rival.test.mjs:15:1
+✖ Falcon stays unloaded until requested, concurrent races and restarts reuse it (1.8999ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:16:131)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\lazy-rival.test.mjs:18:1
+✖ failed rival preparation cleans partial resources and can retry (1.5285ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /load failed/. Input:
+  
+  'ReferenceError: rivalAssetPipeline is not defined'
+  
+      at async TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:19:121)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ReferenceError: rivalAssetPipeline is not defined
+        at eval (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+        at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+        at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:19:144)
+        at Test.runInAsyncScope (node:async_hooks:227:14)
+        at Test.run (node:internal/test_runner/test:1397:25)
+        at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+        at Test.postRun (node:internal/test_runner/test:1537:19)
+        at Test.run (node:internal/test_runner/test:1462:12)
+        at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3),
+    expected: /load failed/,
+    operator: 'rejects',
+    diff: 'simple'
+  }
+
+test at tools\lazy-rival.test.mjs:21:1
+✖ shutdown during conversion disposes late model and never installs rival (3.4998ms)
+  ReferenceError: rivalAssetPipeline is not defined
+      at eval (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+      at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:22:119)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at tools\lazy-rival.test.mjs:24:1
+✖ shutdown during presentation disposes late presentation and roots (1.0089ms)
+  ReferenceError: rivalAssetPipeline is not defined
+      at eval (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:12:20)
+      at Object.ensureRivalVisual [as ensure] (eval at fixture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:12:15), <anonymous>:27:7)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/lazy-rival.test.mjs:25:119)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7)
+
+test at tools\physics-runtime-scratch.test.mjs:1:1
+✖ tools\physics-runtime-scratch.test.mjs (1181.2705ms)
+  'test failed'
+
+test at tools\render-preparation.test.mjs:17:34
+✖ prepare capture contexts match actual render, grading=false (9.139ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(captured.length>=4)
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:24:32)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.start (node:internal/test_runner/test:1257:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:17:34
+✖ prepare capture contexts match actual render, grading=true (2.1335ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(captured.length>=4)
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:24:32)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:29:40
+✖ nested prepare restores all state on callback failure, async=false (1.6247ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /compile failed/. Input:
+  
+  'AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n' +
+    '\n' +
+    '1 !== 2000\n'
+  
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:32:44)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+    
+    1 !== 2000
+    
+        at file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:95
+        at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+        at file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:43
+        at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/race-color-grade.mjs?v=292e6ddd31bddd0e:133:17)
+        at run (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:24)
+        at getActual (node:assert:611:5)
+        at strict.throws (node:assert:759:24)
+        at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:32:44)
+        at async Test.run (node:internal/test_runner/test:1404:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:969:7),
+    expected: /compile failed/,
+    operator: 'throws',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:29:40
+✖ nested prepare restores all state on callback failure, async=true (0.6923ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 2000
+  
+      at file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:95
+      at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:43
+      at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/race-color-grade.mjs?v=292e6ddd31bddd0e:133:17)
+      at run (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:31:24)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:32:26)
+      at async Test.run (node:internal/test_runner/test:1404:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2000,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:39:39
+✖ fog topology survives quality changes without double extinction, exponential=false (1.6515ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   4,
+  +   80
+  -   2000,
+  -   4000
+    ]
+  
+      at capture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:43:145)
+      at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:44:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 4, 80 ],
+    expected: [ 2000, 4000 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tools\render-preparation.test.mjs:39:39
+✖ fog topology survives quality changes without double extinction, exponential=true (0.7259ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   0.012
+  -   0
+    ]
+  
+      at capture (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:43:145)
+      at Object.prepare (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68:136:94)
+      at TestContext.<anonymous> (file:///D:/2026/Chevy/Publicacion/asfalto-nacional-pages/tools/render-preparation.test.mjs:44:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:969:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 0.012 ],
+    expected: [ 0 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

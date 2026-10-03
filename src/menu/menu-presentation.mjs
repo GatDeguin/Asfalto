@@ -3,10 +3,11 @@ import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=f36bc97c0e56d
 import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
 import { initialMenuState, reduceMenu } from './menu-state.mjs?v=56c7046fc4b119fb';
 import { createIntroSession } from './intro-player.mjs?v=bf81b1e13c8d583d';
-import { mountMenuSections } from './menu-sections.mjs?v=7d9a87466cab5f31';
+import { mountMenuSections } from './menu-sections.mjs?v=9e1441fee0c01d24';
 import { mountMenuRefinements } from './menu-refinements.mjs?v=cd7f60f1ad4905b3';
 import { mountWorkshopService } from './workshop-service.mjs?v=5703aaf5208743b2';
 import { fitMenuCar } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 const ICONS = {
   drive: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M3 10h6m6 0h6m-9 4v7"/>',
@@ -28,6 +29,8 @@ function mount() {
   window.addEventListener('pagehide',()=>routePrefetch.dispose(),{once:true});
   globalThis.__asfaltoRoutePrefetch=routePrefetch;
   const content = root.querySelector('#v6-menu-content');
+  const motion = createMotionScope();
+  let presentedContext = null, disposed = false, resizeFrame = 0, focusFrame = 0;
   const brand = root.querySelector('.v6-brand');
   const nav = [...root.querySelectorAll('.v6-nav-btn')];
   let state = initialMenuState();
@@ -95,6 +98,7 @@ function mount() {
   const service = mountWorkshopService({root,game});
   const refinements = mountMenuRefinements({root,game});
   function sync() {
+    if (disposed) return;
     vehicleLabels.refresh();
     root.dataset.anView = state.view;
     root.dataset.anPanel = state.panel;
@@ -116,7 +120,17 @@ function mount() {
     homePlate.hidden = section && !modes;
     nav.forEach(button => button.setAttribute('aria-expanded', String(section && button.dataset.v6Panel === state.panel)));
     // The existing renderer remains the only workshop scene.
-    requestAnimationFrame(() => game.workshop.resize());
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => {if (!disposed) game.workshop.resize();});
+    const tab = root.querySelector('.v6-workshop-tab.v6-active');
+    const context = [state.view, state.panel, root.dataset.anStep, state.panel === 'workshop' ? tab?.dataset.workshopPage : ''].join(':');
+    if (context !== presentedContext) {
+      sections?.cancelMotion();
+      const target = !section ? homePlate : modes ? root.querySelector('.an-mode-selection') : state.panel === 'workshop' ? tab : content.querySelector('.v6-panel.v6-active');
+      if (presentedContext !== null && state.view !== 'closed' && document.body.classList.contains('v6-menu-open')) motion.enter(target, {returning:state.view === 'home' || modes});
+      else motion.cancel();
+      presentedContext = context;
+    }
   }
   function dispatch(event) { state = reduceMenu(state, event); sync(); }
   function onBack() {
@@ -137,20 +151,24 @@ function mount() {
     }
   }
   function onPanel(panel) {
+    if (disposed) return;
     if(panel==='workshop')root.querySelector('[data-workshop-tab=condition]')?.click();
     sectionStep = 'modes';
     sections?.refresh();
     if (panel === 'tests') sections?.ensureTestSelected();
     dispatch({ type: 'panel', panel });
     content.scrollTop = 0;
-    requestAnimationFrame(() => {
+    cancelAnimationFrame(focusFrame);
+    focusFrame = requestAnimationFrame(() => {
+      if (disposed || state.view !== 'section' || state.panel !== panel) return;
       if (root.dataset.anStep === 'modes') sections.focusModes();
       else (root.dataset.anPhoto === 'true' ? root.querySelector('#v6-photo-focus') : content.querySelector('.v6-active h2'))?.focus({ preventScroll: true });
     });
   }
   function onWorkshopTab() {
     sync(); content.scrollTop = 0;
-    if (root.dataset.anPhoto === 'true') requestAnimationFrame(() => root.querySelector('#v6-photo-focus')?.focus({ preventScroll: true }));
+    cancelAnimationFrame(focusFrame);
+    if (root.dataset.anPhoto === 'true') focusFrame = requestAnimationFrame(() => {if (!disposed && root.dataset.anPhoto === 'true') root.querySelector('#v6-photo-focus')?.focus({ preventScroll: true });});
   }
   function onMenu(open) {
     if (!open) closeIntro('menu-close');
@@ -288,7 +306,7 @@ function mount() {
     else void session?.resume();
   });
 
-  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; }, dispose() { vehicleLabels.dispose(); sections?.dispose(); refinements.dispose(); service.dispose(); } };
+  const api = { onPanel, onWorkshopTab, onMenu, onBack, playIntro, configureWorkshop, frameWorkshop, getState: () => ({ ...state }), get introPlaying() { return !intro.hidden; }, dispose() { disposed = true; motion.dispose(); cancelAnimationFrame(resizeFrame); cancelAnimationFrame(focusFrame); vehicleLabels.dispose(); sections?.dispose(); refinements.dispose(); service.dispose(); } };
   globalThis.__asfaltoMenuPresentation = api;
   configureWorkshop(game.workshop);
   window.addEventListener('resize', () => { if (state.view === 'home') configureWorkshop(game.workshop); });

@@ -1,4 +1,5 @@
 import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
+import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 let instanceCount = 0;
 
@@ -22,7 +23,8 @@ export function reduceRacePauseState(view, event) {
  * Create once; the caller pauses simulation/audio before show().
  * Callbacks fire after the dialog hides. Settings keeps simulation paused and
  * transfers focus to the caller's settings UI. hide()/dispose() fire no callback.
- * Include assets/styles/race-pause-menu.css in the host document.
+ * Include assets/styles/race-pause-menu.css in the host document, and
+ * semantic-motion.css for optional transitions (missing tokens stay static).
  */
 export function createRacePauseMenu({
   document: doc = globalThis.document,
@@ -55,6 +57,7 @@ export function createRacePauseMenu({
     <p class="an-pause-motto">La recta te llama. La curva te mide.</p>
   </div>`;
   doc.body.append(overlay);
+  const motion = createMotionScope({document:doc});
   const vehicleLabels = bindSelectedVehicleLabels({ root: overlay, events: vehicleEvents, getVehicleId });
   const heading = overlay.querySelector(`#${id}-title`);
   const session = overlay.querySelector(`#${id}-session`);
@@ -66,6 +69,7 @@ export function createRacePauseMenu({
   const callbacks = { resume:onResume, restart:onRestart, settings:onSettings, workshop:onReturnToWorkshop };
   let view = 'closed', disposed = false, previousFocus = null, background = [], focusReturnTarget = null;
   let bodyHadPauseClass = false;
+  let presentedView = 'closed';
 
   function focusDefault() { (view === 'confirm-restart' ? button('cancel') : button('resume')).focus({ preventScroll:true }); }
   function renderView() {
@@ -74,9 +78,14 @@ export function createRacePauseMenu({
     overlay.dataset.pauseView = view;
     overlay.setAttribute('aria-labelledby', confirming ? `${id}-confirm-title` : `${id}-title`);
     focusDefault();
+    if (presentedView !== view) {
+      motion.enter(presentedView === 'closed' ? overlay.querySelector('.an-pause-card') : confirming ? confirmation : menu, {local:presentedView !== 'closed', vertical:true});
+      presentedView = view;
+    }
   }
   function hide({ restoreFocus = true } = {}) {
     if (view === 'closed') return false;
+    motion.cancel(); presentedView = 'closed';
     view = 'closed'; overlay.hidden = true; overlay.dataset.pauseView = 'closed';
     for (const [element, inert] of background) element.inert = inert;
     background = [];
@@ -142,6 +151,7 @@ export function createRacePauseMenu({
     dispose() {
       if (disposed) return;
       hide(); disposed = true;
+      motion.dispose();
       vehicleLabels.dispose();
       overlay.removeEventListener('click', onClick);
       doc.removeEventListener('keydown', onKeyDown, true);

@@ -67,15 +67,15 @@ body.v6-reduce-motion .an-cinema-loading,body.v6-reduce-motion .an-cinema-film v
 .an-cinema-loading .an-loading-tachometer i {
   position: absolute; left: 31px; bottom: 5px; width: 26px; height: 2px;
   background: #d89962; transform-origin: 0 50%; transform: rotate(-160deg);
-  will-change: transform; animation: an-loading-tacho 2.6s ease-in-out infinite;
-  animation-play-state: paused;
+  will-change: auto;
 }
 .an-cinema-loading .an-loading-tachometer b {
   position: absolute; inset: auto 0 1px; text-align: center;
   font: 7px/1.2 monospace; letter-spacing: 1px;
 }
 .an-cinema-loading[data-needle-running="true"] .an-loading-tachometer i {
-  animation-play-state: running;
+  animation: an-loading-tacho 2.6s ease-in-out infinite;
+  will-change: transform;
 }
 @keyframes an-loading-tacho {
   0%,100% { transform: rotate(-160deg); }

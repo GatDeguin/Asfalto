@@ -1,6 +1,7 @@
 import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
 import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=680bf8ce08be7252';
 import { testPresentationState } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 const scene = name => new URL(`../../assets/menu/game-captures/${name === 'competencia' ? 'viaje-v7.webp' : `${name}.jpg`}`, import.meta.url).href;
 const TEST_ORDER = ['accel100', 'm500', 'm1000', 'brake100', 'vmax', 'recovery', 'accel160', 'slalom', 'turn', 'wet', 'speedo', 'consumption'];
@@ -65,6 +66,8 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
   detail.querySelector('img').src = scene('pruebas');
   const vehicleLabels = bindSelectedVehicleLabels({ root: detail, events: vehicleEvents, getVehicleId: () => game.workshop?.vehicleId });
   let disposed = false;
+  let presentedTest = null;
+  const motion = createMotionScope({document:root.ownerDocument});
   const protocol = document.createElement('details'); protocol.className = 'an-test-protocol';
   protocol.innerHTML = '<summary>Preparación y validez de la prueba</summary>';
   protocol.append(root.querySelector('#v6-test-protocol'));
@@ -129,6 +132,10 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
     text('#an-test-conditions', `${route} · ${chips[2] || 'Seca'} · ${chips[0] || ''}`);
     const completed = new Set((profile.sheets || []).filter(sheet => sheet.valid === true && sheet.class === currentClass && availableCards.some(card => card.dataset.testId === sheet.testId)).map(sheet => sheet.testId)).size;
     text('#an-test-progress', `${completed} / ${availableCards.length} pruebas con ficha válida`);
+    if (presentedTest !== display.dataset.testId) {
+      if (presentedTest !== null) motion.enter(detail.querySelector('.an-test-info'), {local:true});
+      presentedTest = display.dataset.testId;
+    }
     for (const card of driveCards.children) card.setAttribute('aria-selected', String(card.dataset.driveMode === profile.selectedDrive));
   }
   // Delegation survives renderAll() replacing the legacy card nodes on imports/results.
@@ -140,12 +147,13 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
   refresh();
   return {
     refresh,
+    cancelMotion:motion.cancel,
     setModes(visible) { modes.hidden = !visible; },
     focusModes() { modes.querySelector('h2').focus({ preventScroll:true }); },
     ensureTestSelected() {
       if (!testCards.querySelector('[aria-selected="true"]:not(.v6-locked)')) (testCards.querySelector('[data-test-id="accel100"]:not(.v6-locked)') || testCards.querySelector('.v6-card:not(.v6-locked)'))?.click();
       refresh();
     },
-    dispose() { if (disposed) return; disposed = true; vehicleLabels.dispose(); observer.disconnect(); root.removeEventListener('click', onChoice); root.removeEventListener('change', refresh); },
+    dispose() { if (disposed) return; disposed = true; motion.dispose(); vehicleLabels.dispose(); observer.disconnect(); root.removeEventListener('click', onChoice); root.removeEventListener('change', refresh); },
   };
 }

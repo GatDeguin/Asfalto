@@ -1,0 +1,61 @@
+{
+  "mode": "app",
+  "startedAt": "2026-10-03T03:39:02.712Z",
+  "checks": [
+    "entrada integrada conservó el perfil",
+    "última intención mantiene sección correcta",
+    "transición de sección conectada a evento real",
+    "detalle corresponde a selección real",
+    "navegar cancela detalle saliente",
+    "política reducida cancela WAAPI integrada",
+    "recorrido reducido drive",
+    "recorrido reducido tests",
+    "recorrido reducido competition",
+    "recorrido reducido workshop",
+    "recorrido reducido collection",
+    "recorrido reducido settings",
+    "20 idas y vueltas sin recursos visuales activos",
+    "sin desborde horizontal del documento",
+    "teclado conserva foco visible",
+    "sin errores JS"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [
+    {
+      "label": "full-game-menu",
+      "viewport": [
+        1280,
+        800
+      ],
+      "sceneActive": true,
+      "durationMs": 2509.199999809265,
+      "frames": 142,
+      "frameP50Ms": 16.69999999999891,
+      "frameP95Ms": 16.80000000000109,
+      "maxFrameMs": 133.39999999999964,
+      "framesOver34Ms": 1,
+      "longTasks": 0,
+      "longTaskMs": 0,
+      "synchronousClickMaxMs": 19.399999856948853
+    }
+  ],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "stack": {
+    "three": "180",
+    "vehicle": "chevrolet_1969",
+    "tests": 12,
+    "nav": 6
+  },
+  "finalMenuState": {
+    "view": "home",
+    "panel": "tests"
+  },
+  "status": "pass"
+}
