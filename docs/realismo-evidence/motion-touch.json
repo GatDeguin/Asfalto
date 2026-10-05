@@ -1,0 +1,22 @@
+{
+  "mode": "touch",
+  "startedAt": "2026-10-05T02:58:30.552Z",
+  "checks": [
+    "entrada táctil emulada",
+    "tacto selecciona datos correctos",
+    "tacto llega a preparación de salida",
+    "tacto regresa al menú",
+    "sin errores JS"
+  ],
+  "pageErrors": [],
+  "externalRequests": [],
+  "measurements": [],
+  "environment": {
+    "node": "v24.20.0",
+    "browser": "154.0.8037.95",
+    "os": "win32",
+    "headless": true,
+    "angle": "d3d11"
+  },
+  "status": "pass"
+}

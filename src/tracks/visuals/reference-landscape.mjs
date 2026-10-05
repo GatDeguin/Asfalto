@@ -2,18 +2,18 @@ import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=0582cef83086d
 import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=ba691f7996493921';
-import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=24cd5d52423b7125';
+import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=bbbf571860026333';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=62f0becb9afde65a';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=9d7ddd559b41734b';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=66db38fcb568b36c';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=4609405f4653e18e';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
-import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=b66ea68fdcd8a34c';
+import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=d4ae5f01abe81cd9';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=9535a171be7c3c52';
 import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs?v=b7edee06e0b828be';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs?v=7782bd35eb4862d7';

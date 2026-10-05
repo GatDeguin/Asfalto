@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=d92a588a8957657c';
+import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=4dc1dfe6ae29fbad';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();

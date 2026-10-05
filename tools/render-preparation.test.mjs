@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=1714c9c6d22ccd68';
-import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=292e6ddd31bddd0e';
-import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=d92a588a8957657c';
+import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=86108a480a3a8a84';
+import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=0bea085bd170c35b';
+import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=4dc1dfe6ae29fbad';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 function fixture(){
  let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');
- const r={compileAsync:()=>Promise.resolve(),draws:0,clears:0,autoClear:false,info:{autoReset:true},capabilities:{maxSamples:0},shadowMap:{autoUpdate:true,needsUpdate:true},toneMapping:T.ACESFilmicToneMapping,toneMappingExposure:1,outputColorSpace:T.SRGBColorSpace,
+ const r={extensions:{has:name=>name==='EXT_color_buffer_float'},compileAsync:()=>Promise.resolve(),draws:0,clears:0,autoClear:false,info:{autoReset:true},capabilities:{maxSamples:0},shadowMap:{autoUpdate:true,needsUpdate:true},toneMapping:T.ACESFilmicToneMapping,toneMappingExposure:1,outputColorSpace:T.SRGBColorSpace,
  getRenderTarget:()=>target,getActiveCubeFace:()=>face,getActiveMipmapLevel:()=>mip,setRenderTarget(t,f=0,m=0){target=t;face=f;mip=m;viewport.copy(t?.viewport||new T.Vector4(0,0,128,96));box.copy(t?.scissor||new T.Vector4(0,0,128,96));scissor=t?.scissorTest||false;},getDrawingBufferSize:v=>v.set(128,96),getViewport:v=>v.copy(viewport),setViewport:v=>viewport.copy(v),getCurrentViewport:v=>v.copy(viewport),state:{viewport:v=>viewport.copy(v)},getScissor:v=>v.copy(box),setScissor:v=>box.copy(v),getScissorTest:()=>scissor,setScissorTest:v=>scissor=v,getClearColor:v=>v.copy(color),getClearAlpha:()=>alpha,setClearColor(c,a){color.set(c);alpha=a;},getContext:()=>({isContextLost:()=>false}),render(){r.draws++;},clear(){r.clears++;},clearDepth(){r.clears++;}};
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(),fog=new T.Fog('blue',1,100);scene.fog=fog;
  const grade=createRaceColorGrade({THREE:T,renderer:r});

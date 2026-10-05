@@ -1,4 +1,4 @@
-import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=258173b4dba723d7';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';
@@ -8,7 +8,7 @@ import { hdrLoaderClass } from './hdr-loader-factory.mjs?v=a130e3899f731e73';
 import { createChevyPaintController } from './chevy-paint-controller.mjs?v=491e881b58b262ea';
 import { createWorkshopDetailPass, applyPatina } from './workshop-detail-pass.mjs?v=662675a5f6d0562e';
 import { createWorkshopStaticBatches } from './workshop-static-batches.mjs?v=99fa32fcf6b82496';
-import { configureSurfaceRelief, prepareSurfaceReliefGeometry, installSurfaceRelief, surfaceReliefDiagnostics } from '../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
+import { configureSurfaceRelief, prepareSurfaceReliefGeometry, installSurfaceRelief, surfaceReliefDiagnostics } from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
 import { createWorkshopVertexGeometry } from './workshop-vertex-colors.mjs?v=23d898e420566e5c';
 
 const SURFACES = Object.freeze({

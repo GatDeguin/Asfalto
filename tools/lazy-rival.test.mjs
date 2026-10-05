@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=0829275cb66296a1',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=36eb3680346dbde7',import.meta.url),'utf8');
 const block=source.match(/  let rivalVisualPromise=null;[\s\S]*?    return rivalVisualPromise;\r?\n  }/)[0];
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 function fixture({decode,convert,present}={}){
@@ -9,7 +9,7 @@ function fixture({decode,convert,present}={}){
  const globalThis={AsfaltoV5PayloadCore:{async decodePayloadById(){stats.decode++;return decode?decode():new Uint8Array();}},AsfaltoV5GlbCore:{async completeGlbToObject(){stats.convert++;return convert?convert():{name:'source'};}},AsfaltoV6Falcon:{createFalconVisualRig(){stats.rig++;return{root:{name:'rig'}};}}};
  const window={__asfaltoVehiclePresentations:{chevy:{},falcon:null}};
  const modularHostInitialization={signal:new AbortController().signal,assertActive(){if(stats.shutdown)throw Error('shutdown');}};
- const ensure=new Function('globalThis','window','document','modularHostInitialization','createVehiclePresentation','raceWorld','disposeTrackObjectRoot',`const THREE={},gunzipBase64=()=>{},trackGlbHelpers={},scene={},lightingEditor=null,modularRuntimeShutdown=null;${block};return ensureRivalVisual;`)(globalThis,window,{getElementById:()=>({textContent:'{}'})},modularHostInitialization,async()=>{stats.present++;return present?present():{dispose(){stats.disposed.push('presentation');}};},{setFalconVisualRig(){stats.installed++;},setFalconPresentation(){}},root=>{if(root)stats.disposed.push(root.name);});
+ const ensure=new Function('globalThis','window','document','modularHostInitialization','createVehiclePresentation','raceWorld','disposeTrackObjectRoot','rivalAssetPipeline',`const THREE={},gunzipBase64=()=>{},trackGlbHelpers={},scene={},lightingEditor=null,modularRuntimeShutdown=null;${block};return ensureRivalVisual;`)(globalThis,window,{getElementById:()=>({textContent:'{}',dataset:{externalUrl:'fixture.glb',sha256:'fixture',bytes:'1'}})},modularHostInitialization,async()=>{stats.present++;return present?present():{dispose(){stats.disposed.push('presentation');}};},{setFalconVisualRig(){stats.installed++;},setFalconPresentation(){}},root=>{if(root)stats.disposed.push(root.name);},{async enqueue(){await globalThis.AsfaltoV5PayloadCore.decodePayloadById();return{scene:await globalThis.AsfaltoV5GlbCore.completeGlbToObject()};}});
  return{ensure,stats,window};
 }
 test('Falcon stays unloaded until requested, concurrent races and restarts reuse it',async()=>{

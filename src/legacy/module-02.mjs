@@ -1,113 +1,114 @@
-import {decodeGlbInWorker} from '../runtime/glb-decode-client.mjs?v=91a1751f8f15975f';
-import {smoothAnalog} from '../render/cockpit-animator.mjs?v=1e70e16a21a9b8b3';
-import {AssetPipeline,createAssetLifecycleManager,disposeAssets} from '../runtime/asset-lifecycle.mjs?v=a4c55886c0272d57';
-import {createEngineControlRing,createEngineControlReader} from '../audio/engine-control-ring.mjs?v=1004f2bad30c31a3';
-import {getRenderHost} from '../runtime/render-host.mjs?v=529634b49006a89f';
-import {getVehicleResourcePool,isBorrowedVehicleResource,releaseVehicleModel} from '../render/vehicle-resource-pool.mjs?v=b5d99705e208d46d';
-import {isRenderPreparationPending,getRenderPreparationDiagnostics} from '../render/pass-preparation.mjs?v=2481e701be72bf1c';
-import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=10dbdf3e21c982ac';
-import {createVehicleTemplateReference} from '../render/vehicle-template-reference.mjs?v=3045a31dc1e41520';
-import {vehicleTemplateReference} from '../runtime/vehicle-template-reference.mjs?v=a2e37619eaa3c18d';
-import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=61c610d9fab7d4bf';
-import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
-import {createLazyCockpitOriginals,createCockpitEditorActivation} from '../render/lazy-cockpit-originals.mjs?v=821260e7b7654109';
-import {resolveRenderBudget} from '../render/render-budget.mjs?v=6d1203c83e12e6ba';
-import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?v=45cae02f43885377';
-import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=5ba37f6b7223e2cb';
-import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=db912e338dc25bdb';
-import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=d31feed9609eedea';
-import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=dc15731994b4a377';
-import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=284dfdbf6002963b';
+import {decodeGlbInWorker} from '../runtime/glb-decode-client.mjs?v=c745e4689be5365d';
+import {smoothAnalog} from '../render/cockpit-animator.mjs?v=ee8c18d00412ad91';
+import {AssetPipeline,createAssetLifecycleManager,disposeAssets} from '../runtime/asset-lifecycle.mjs?v=7cd121116512953b';
+import {createEngineControlRing,createEngineControlReader} from '../audio/engine-control-ring.mjs?v=3116f68b8c4c5bb5';
+import {getRenderHost} from '../runtime/render-host.mjs?v=59a89ed6c25fba10';
+import {getVehicleResourcePool,isBorrowedVehicleResource,releaseVehicleModel} from '../render/vehicle-resource-pool.mjs?v=564628ad31eed1e7';
+import {isRenderPreparationPending,getRenderPreparationDiagnostics} from '../render/pass-preparation.mjs?v=258173b4dba723d7';
+import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=5e689f9c17d50329';
+import {createVehicleTemplateReference} from '../render/vehicle-template-reference.mjs?v=713b9fc276b6e3ef';
+import {vehicleTemplateReference} from '../runtime/vehicle-template-reference.mjs?v=f8e39a699ce36cce';
+import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=77b2d654849ff0e7';
+import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=a89bf393617af8a7';
+import {createLazyCockpitOriginals,createCockpitEditorActivation} from '../render/lazy-cockpit-originals.mjs?v=17231b23f171e518';
+import {resolveRenderBudget} from '../render/render-budget.mjs?v=19c7400d32eaa34a';
+import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?v=e01eabd8e4d9be52';
+import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
+import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
+import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=be8f9072d68dd739';
+import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=006379522815e967';
 globalThis.__asfaltoBuildSelectedVehicleSpec=buildVehiclePhysicsSpec;
-import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=f121798153e0087e';
-import {createAuxiliaryCaptureSchedule} from '../render/auxiliary-capture-schedule.mjs?v=f03a5f52446e9baf';
-import {installEmptyInstanceDrawGuard} from '../render/empty-instance-draw-guard.mjs?v=7709e0d0cc6afa58';
-import {createOpaqueTransmissionReuse} from '../render/opaque-transmission-reuse.mjs?v=ffea8a1e8a60133c';
-import {prepareSoundscapeBanks} from '../audio/prepare-soundscape-banks.mjs?v=1f384c94ad27b37c';
-import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=44a0f13e4afdfe4b';
-import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs?v=92c0ec4b627c9559';
-import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=245b55478acd5ee7';
-import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=361c3449ac80a066';
+import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
+import {createAuxiliaryCaptureSchedule} from '../render/auxiliary-capture-schedule.mjs?v=35131d35093dabfc';
+import {installEmptyInstanceDrawGuard} from '../render/empty-instance-draw-guard.mjs?v=41a3cf08442da55f';
+import {createOpaqueTransmissionReuse} from '../render/opaque-transmission-reuse.mjs?v=be99bbdde1c974b1';
+import {prepareSoundscapeBanks} from '../audio/prepare-soundscape-banks.mjs?v=ec1a7e1a73d04d30';
+import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=6238a1d93547777f';
+import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs?v=d4d0fda34cf3cf8e';
+import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
+import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 const phoneTextureQueue=createSerialTextureQueue();
-import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=7122ee2d4cd720dc';
-import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=d32f2235b16f78e7';
-import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs?v=9061e7de37f317d9';
-import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs?v=2516c5bf5d442d85';
-import {detectDeviceProfile,deviceGraphicsQuality,devicePixelRatioLimit,automaticTextureLimit} from '../performance/mobile-device-profile.mjs?v=f090574cb3e87b2d';
-import {createPhoneCockpitTextureSelector} from '../performance/phone-cockpit-texture-pack.mjs?v=d7d90ba74e239463';
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
+import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c4baaeb1f89d1b0c';
+import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs?v=e3741fd151e9f46f';
+import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs?v=f96bb5c406d469ba';
+import {detectDeviceProfile,deviceGraphicsQuality,devicePixelRatioLimit,automaticTextureLimit} from '../performance/mobile-device-profile.mjs?v=b745e14ff9bd217b';
+import {createPhoneCockpitTextureSelector} from '../performance/phone-cockpit-texture-pack.mjs?v=a311219f1540e0d2';
 const runtimeDeviceProfile=detectDeviceProfile();
 document.body.classList.toggle('an-phone-device',runtimeDeviceProfile.phone);
 let mobileTextureQuality='auto';
 const phoneCockpitTextureSelector=createPhoneCockpitTextureSelector({getProfile:()=>runtimeDeviceProfile,getQuality:()=>mobileTextureQuality});
-import {prepareRaceStart} from '../game/race-start-preparation.mjs?v=a3c853ada0df5ea6';
-import {createRoadTestCoursePresentation} from '../render/road-test-course.mjs?v=b2092657baf7e1a5';
-import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs?v=91937b992a2962b8';
-import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=ae78b625f42d9dd9';
-import {startupDemand} from '../runtime/startup-demand.mjs?v=d7f04a8f3c4b6613';
-import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=2451a6adbe22e7d9';
-import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=99991606f91ab6f2';
-import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=15e8f09e2eadaf19';
-import {createFramePacer} from '../performance/frame-pacer.mjs?v=29ce1359ddeca000';
-import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs?v=938a78863582c3c2';
-import {prepareRenderPolicies,prewarmStableScene,prewarmViews,createRenderPreparationCache,renderPreparationKey} from '../performance/render-warmup.mjs?v=cbabfcdb7b1f34d2';
-import {renderPixelRatio} from '../render/render-resolution.mjs?v=8517adbdd01bbfef';
-import {withFrameMatrices} from '../render/frame-matrices.mjs?v=ca094c8344437cf8';
-import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=6a956910f5908350';
-import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=7f95058a7b9fc2c7';
-import {createPmremCache} from '../render/pmrem-cache.mjs?v=c042c9baa6b51abe';
-import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
-import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=58acc62683bb4eac';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=2c38d39f9fd1ea14';
-import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=778703e2dae501e6';
-import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=faddc4d7745bf11f';
-import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=eead7222493ddf39';
-import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=cb4421d5b87d806c';
-import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1276b85e67c42976';
-import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=bc7bf5b2d6806a8a';
-import { enableCustomLogarithmicDepth } from '../render/logarithmic-depth.mjs?v=b106b53188041997';
-import { createPhysicalRenderBridge } from '../game/physical-render-bridge.mjs?v=3bfbde2ea40b338a';
-import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs?v=953e830bf733a7ab';
-import { createRaceCameraEntrance } from '../game/race-camera-entrance.mjs?v=9c2541ec2c0fc94e';
-import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=91536e58ba4745bc';
-import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=c169f74bff564db6';
-import { createRaceOpening } from '../game/race-opening.mjs?v=8211392789cad055';
-import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=6178e38252dbfb9e';
-import {createLightingEditor} from '../menu/lighting-editor.mjs?v=e4535be24a4eafe4';
-import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=292e6ddd31bddd0e';
-import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=879b08aa5b4f0b13';
-import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=bef28e3d64640e6d';
-import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=a2ccd04ee211ccf4';
-import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=c1775e5ac0ca65c0';
-import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=6eb33370562f7d1a';
-import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=ad9cf23a91b437ab';
-import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=d92a588a8957657c';
-import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=491e881b58b262ea';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=82bd4492d14bfcf7';
-import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=f0d5b72ad6716b19';
-import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=b680ab5421ec92f2';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aef1d67d0250fcce';
-import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=1ad94b3ee1a81d73';
-import {engineMix} from '../audio/v7-audio-state.mjs?v=e6720400866e4cbf';
-import { drivingAudioState } from '../audio/race-driving-state.mjs?v=84ddd7aeddea355c';
-import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=46da8d8e8b960aa3';
-import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=060380e1ea06849a';
-import { createCameraBoomCollisionQuery } from '../game/camera-boom-collision.mjs?v=32104ba795e573bb';
-import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=ad69325cb9e55730';
-import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=4fc607c2ef677836';
-import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironment } from '../environment/environment-profiles.mjs?v=315916d6c7fab528';
-import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=801e455862a54ff2';
+import {prepareRaceStart} from '../game/race-start-preparation.mjs?v=f8f1e372f0f51012';
+import {createRoadTestCoursePresentation} from '../render/road-test-course.mjs?v=700df530dd58a604';
+import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs?v=738af66c8796838d';
+import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=b43d93f1161c6526';
+import {startupDemand} from '../runtime/startup-demand.mjs?v=4532aaf2ce6a3d38';
+import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=78be56c6974baa83';
+import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=10fea583284d52b0';
+import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=5a4f657d52211b79';
+import {createFramePacer} from '../performance/frame-pacer.mjs?v=a3ed1a05db9caf08';
+import {installFramePacingSettings} from '../render/frame-pacing-settings.mjs?v=20baa671a3157593';
+import {prepareRenderPolicies,prewarmStableScene,prewarmViews,createRenderPreparationCache,renderPreparationKey} from '../performance/render-warmup.mjs?v=9cc7c0b15618b827';
+import {renderPixelRatio} from '../render/render-resolution.mjs?v=790d07ac82043ca9';
+import {withFrameMatrices} from '../render/frame-matrices.mjs?v=a717fe32f4658fd0';
+import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=df2820ccf465dfcf';
+import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=ec10ff29633a1e47';
+import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
+import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=639ddc5e384ba6e0';
+import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=565d632af4225240';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=2f2edd67801ce28c';
+import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
+import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
+import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=00700c3321d75a24';
+import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
+import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
+import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
+import { enableCustomLogarithmicDepth } from '../render/logarithmic-depth.mjs?v=2992f7be06b44f28';
+import {createVehicleContactOcclusion} from '../render/vehicle-contact-occlusion.mjs?v=c70113c41f7973bf';
+import { createPhysicalRenderBridge } from '../game/physical-render-bridge.mjs?v=932c11e8c56f4d42';
+import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs?v=e5e935965b241a2e';
+import { createRaceCameraEntrance } from '../game/race-camera-entrance.mjs?v=b1f9387839bda0ea';
+import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=8489d143ec0504d3';
+import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=24f25fcf48eeb844';
+import { createRaceOpening } from '../game/race-opening.mjs?v=9237574ae1559f13';
+import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=91598c822caef3be';
+import {createLightingEditor} from '../menu/lighting-editor.mjs?v=d15c0c71e5784bcd';
+import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=0bea085bd170c35b';
+import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=85bccac21887c8d5';
+import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=34bee52b3be4e653';
+import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=710bd8d9f6760059';
+import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=844ffa3df7eb34e1';
+import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=513e97fd2ac59740';
+import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=cd3b096c06d47fea';
+import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=4dc1dfe6ae29fbad';
+import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=295045616495eb7e';
+import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
+import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=e74b08c0fa52f74a';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=020a8b96523578b8';
+import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=8b41e09c7f4012b5';
+import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
+import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
+import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
+import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=8fde600cbc04fd1d';
+import { createCameraBoomCollisionQuery } from '../game/camera-boom-collision.mjs?v=d809a788e1c11c70';
+import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=9789fe512594b28a';
+import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=d168eb0d52e16134';
+import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironment } from '../environment/environment-profiles.mjs?v=10029cc9ad1b0d80';
+import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=2cf0ac07a334fc63';
 import { resolveRaceLighting, applyRaceLightingSupport, orientHdriRows } from '../environment/race-lighting.mjs';
-import { createTrackMaterialController } from '../environment/track-material-controller.mjs?v=f0941494f843e94b';
-import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-day-cycle.mjs?v=7e778f2f4e357b6f';
-import {createHdriTransition} from '../render/hdri-transition.mjs?v=04b4461330c3a53f';
-import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=5f87a759443055e0';
-import {createRaceStartSignal} from '../render/race-start-signal.mjs?v=fc9c40c043869086';
-import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=98d02c4ab5b936e1';
-import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=5e9c1e4343b15d6c';
-import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=605a38aac4871749';
-import { TRACK_RENDER_POLICIES, createTrackPerformanceGovernor, maximumTierForGraphicsQuality } from '../performance/track-performance-governor.mjs?v=c2943f0c1c9be48f';
-import { MeshoptDecoder } from '../../assets/vendor/meshopt/meshopt_decoder.module.js?v=01e7383c646e4326';
+import { createTrackMaterialController } from '../environment/track-material-controller.mjs?v=c6ecbe61ca1d0924';
+import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-day-cycle.mjs?v=99c8ee62b1e3818f';
+import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
+import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
+import {createRaceStartSignal} from '../render/race-start-signal.mjs?v=ad234b87f19b1844';
+import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
+import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
+import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
+import { TRACK_RENDER_POLICIES, createTrackPerformanceGovernor, maximumTierForGraphicsQuality } from '../performance/track-performance-governor.mjs?v=32f2c06cd03b8801';
+import { MeshoptDecoder } from '../../assets/vendor/meshopt/meshopt_decoder.module.js?v=97901fb3d2d296ee';
 
 'use strict';
 
@@ -5555,6 +5556,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   const onInputCaptureRelease = typeof options.onInputCaptureRelease === 'function' ? options.onInputCaptureRelease : () => {};
   const onRenderingScaleChanged = typeof options.onRenderingScaleChanged === 'function' ? options.onRenderingScaleChanged : () => {};
   const playerVisualBody = options.playerVisualBody || null;
+  const playerContactOcclusion = createVehicleContactOcclusion(THREE,{scene,renderer});
   const playerWheelVisualRig = options.playerWheelVisualRig || null;
   const storage = (() => { try { return globalThis.__asfaltoV7Storage; } catch { return null; } })();
 
@@ -6190,7 +6192,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       }
       : null;
     physicalRenderBridge = createPhysicalRenderBridge({
-      player: { body: playerVisualBody, applyWheels(...args){playerWheelVisualRig?.applyWheels?.(...args);updateExterior(options.getPlayerPresentation?.(),args[3]);} },
+      player: { body: playerVisualBody, applyWheels(...args){playerWheelVisualRig?.applyWheels?.(...args);playerContactOcclusion.update(args[0],args[1],args[2]);updateExterior(options.getPlayerPresentation?.(),args[3]);} },
       falcon,
       trackRoots: [visualRoot, collisionRoot],
     });
@@ -8185,6 +8187,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     environmentHostDisposal = (async () => {
     clearRoadTestGates();roadTestCourse.dispose();
     falconPresentation?.dispose();falconPresentation=null;
+    playerContactOcclusion.dispose();
     raceWeatherEffects.dispose();
     releaseRaceDayCycle();raceSkyTransition?.dispose();startSignalSubscription?.();startSignal.dispose();
     environmentController.dispose();
@@ -8224,7 +8227,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     update,getInput,getControlGate,start,pause,resume,togglePause,recover,selectCircuit,setSettings,setSettingsOpen,getState,getCameraMotion,
     getForwardGearCount:()=>v6InputAdapter.profile.gearCount,
     ...(isAsfaltoV5Qa ? { debugSetRaceState, debugDrivePhysicalRoute, debugTeleportPhysicalVehicle } : {}),
-    resetPerformanceMeasurement:()=>simulation.resetPerformanceMeasurement(),debugSetPerformanceAdaptive:value=>performanceGovernor.setAdaptive(value),beginPerformanceWindow:phase=>performanceGovernor.beginWindow(phase),renderRearview,attachRearview,setAuthoredTrackVisuals,setFalconVisualRig,setFalconPresentation:controller=>{falconPresentation=controller;},getFalconVisualRoot:()=>falconVisualRig?.root||null,getRenderFrame:()=>simulation.getRenderFrame(),invalidateVehiclePhysics:()=>simulation.disposePhysicalStack(),getV6Diagnostics:()=>({...simulation.getDiagnostics(),driving:driverControlPipeline.diagnostics(),renderBridge:physicalRenderBridge?.diagnostics?.()||null,playerWheelVisuals:playerWheelVisualRig?.getDiagnostics?.()||null,playerVisualYawOffsetRad:raceChevyV3.rotation.y,falconVisualInstalled:!!falconVisualRig,falconVisualVisible:!!falconPhysicalBody?.visible,falconVisualMeshes:falconVisualRig?countMeshes(falconVisualRig.root):0}),updateActiveTrackScene,getAuthoredSceneDiagnostics,syncEnvironment,selectEnvironmentPreset,applyWorkshopEnvironment,getEnvironmentDiagnostics,getEnvironmentPerformance:()=>({shaderPrograms:renderer.info.programs?.length||0,builds:[...environmentBuildTimings],cache:environmentPmremCache?.diagnostics()}),resize,reportFrame,getPerformanceScale,getPerformanceTier,withPerformanceTier,setPerformanceQuality,getPerformanceDiagnostics,isPreparing:()=>pendingRacePreparations>0,getResourceLifetimeDiagnostics,clearInputs,releaseTouchCaptures,dispose,
+    resetPerformanceMeasurement:()=>simulation.resetPerformanceMeasurement(),debugSetPerformanceAdaptive:value=>performanceGovernor.setAdaptive(value),beginPerformanceWindow:phase=>performanceGovernor.beginWindow(phase),renderRearview,attachRearview,setAuthoredTrackVisuals,setFalconVisualRig,setFalconPresentation:controller=>{falconPresentation=controller;},getFalconVisualRoot:()=>falconVisualRig?.root||null,getRenderFrame:()=>simulation.getRenderFrame(),invalidateVehiclePhysics:()=>simulation.disposePhysicalStack(),getV6Diagnostics:()=>({...simulation.getDiagnostics(),vehicleContactOcclusion:playerContactOcclusion.diagnostics(),driving:driverControlPipeline.diagnostics(),renderBridge:physicalRenderBridge?.diagnostics?.()||null,playerWheelVisuals:playerWheelVisualRig?.getDiagnostics?.()||null,playerVisualYawOffsetRad:raceChevyV3.rotation.y,falconVisualInstalled:!!falconVisualRig,falconVisualVisible:!!falconPhysicalBody?.visible,falconVisualMeshes:falconVisualRig?countMeshes(falconVisualRig.root):0}),updateActiveTrackScene,getAuthoredSceneDiagnostics,syncEnvironment,selectEnvironmentPreset,applyWorkshopEnvironment,getEnvironmentDiagnostics,getEnvironmentPerformance:()=>({shaderPrograms:renderer.info.programs?.length||0,builds:[...environmentBuildTimings],cache:environmentPmremCache?.diagnostics()}),resize,reportFrame,getPerformanceScale,getPerformanceTier,withPerformanceTier,setPerformanceQuality,getPerformanceDiagnostics,isPreparing:()=>pendingRacePreparations>0,getResourceLifetimeDiagnostics,clearInputs,releaseTouchCaptures,dispose,
     getAdvancedGraphicsEnvironment:()=>({...getRaceRenderEnvironment(),skyId:raceDayActive?raceDayClock.state.skyId:settings.skyId,weather:raceDayActive?raceDayEnvironment?.weatherId:settings.weather,keyLightDirection:keyLight.position.toArray(),keyLightColor:'#'+keyLight.color.getHexString(),sunIntensity:keyLight.visible?keyLight.intensity:0}),
     subscribePhysicalSteps:observer=>simulation.subscribePhysicalSteps(observer),
     getPhysicalObservationState:()=>simulation.getPhysicalObservationState(),
@@ -9782,7 +9785,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   globalThis.__asfaltoAdvancedGraphics={getMasterQuality:()=>gameSettings.graphicsQuality,refreshStatus:()=>graphicsSettings?.refresh(),getSettings:()=>graphicsSettings.getSettings(),setSettings:value=>graphicsSettings.setSettings(value),setMode:value=>graphicsSettings.setMode(value),diagnostics:()=>(globalThis.__chevyV6Complete?.workshop?.active?globalThis.__chevyV6Complete.workshop.advancedGraphics:advancedGraphics)?.diagnostics(),refresh:()=>{advancedGraphics?.refresh();globalThis.__chevyV6Complete?.workshop?.advancedGraphics?.refresh();}};
   framePacingSettings=installFramePacingSettings();
   cockpitViewPreset=installDrivingViewPreset({THREE,mount:cockpitViewMount});
-  cockpitRenderPass = createCockpitRenderPass({ renderer, scene, camera, cockpit, prepareWorld:compile=>colorGrading.prepare(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{return advancedGraphics.prepare(compile);}finally{restore?.();}}), prepareInterior:compile=>colorGrading.prepare(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{return compile();}finally{restore?.();}}), overlays:compositionEditor?.renderOverlays || [],renderWorld:()=>advancedGraphics.render(()=>{const restore=scene.fog?raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()}):null;try{renderer.render(scene,camera);}finally{restore?.();}}) });
+  cockpitRenderPass = createCockpitRenderPass({ renderer, scene, camera, cockpit, prepareWorld:compile=>colorGrading.prepare(()=>advancedGraphics.prepareOutput(()=>{const restore=raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()});try{return advancedGraphics.prepare(compile);}finally{restore?.();}})), prepareInterior:compile=>colorGrading.prepare(()=>advancedGraphics.prepareOutput(()=>{const restore=raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()});try{return compile();}finally{restore?.();}})), overlays:compositionEditor?.renderOverlays || [],renderWorld:()=>advancedGraphics.render(()=>{const restore=scene.fog?raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()}):null;try{renderer.render(scene,camera);}finally{restore?.();}}) });
   raceAudioActivation=installRaceAudioActivation({getState:()=>engineSound.getState(),isEnabled:()=>gameSettings.soundEnabled,isDriving:()=>!document.hidden&&document.body.classList.contains('v6-driving')&&!document.body.classList.contains('v6-menu-open')&&!document.body.classList.contains('an-race-paused')&&!globalThis.__asfaltoRacePresentationHeld,activate:()=>raceWorld.activateAudio()});
   setLoading('Preparando compositor de color…');
   colorGrading=createRaceColorGrade({THREE,renderer,phone:runtimeDeviceProfile.phone,getQuality:()=>raceWorld.getPerformanceTier(),samples:runtimeDeviceProfile.phone?0:2,onStage:markFirstFrame});lightingEditor?.reapply();
@@ -9913,7 +9916,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     markFirstFrame('Primer cuadro: espejos');
     cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:raceCameraState.current==='cockpit', cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null, enabled:raceWorld.rearviewEnabled, quality:captureQuality, variantKey:shaderVariant, nowMs:captureNow, captureSchedule });
     markFirstFrame('Primer cuadro: render del mundo y cockpit');
-    colorGrading.render(({linearOutput=false}={})=>{const restore=raceWorld.prepareFogRender({linearOutput});try{cockpitRenderPass.render();}finally{restore?.();}});
+    colorGrading.render(()=>advancedGraphics.renderOutput(()=>{const restore=raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()});try{cockpitRenderPass.render();}finally{restore?.();}}));
     });publishPresentedRacePhoto();actualSceneFrames++;actualSceneTimestampMs=performance.now();markFirstFrame('Cuadro enviado a GPU');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}
   }
 
@@ -9923,7 +9926,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const width = Math.max(1, viewport.clientWidth);
     const height = Math.max(1, viewport.clientHeight);
     const aspect = width / height;
-    currentFrameBudget=resolveRenderBudget({width,height,pixelRatio:renderPixelRatio({devicePixelRatio:window.devicePixelRatio||1,qualityLimit:qualityPixelRatioLimit(width),renderScale:raceWorld.getPerformanceScale()}),quality:raceWorld.getPerformanceTier(),phone:runtimeDeviceProfile.phone});
+    currentFrameBudget=resolveRenderBudget({width,height,pixelRatio:renderPixelRatio({devicePixelRatio:window.devicePixelRatio||1,qualityLimit:qualityPixelRatioLimit(width),renderScale:raceWorld.getPerformanceScale()}),quality:raceWorld.getPerformanceTier(),phone:runtimeDeviceProfile.phone,spatialResolve:!runtimeDeviceProfile.phone});
     renderer.setPixelRatio(currentFrameBudget.pixelRatio);
     renderer.setSize(width, height, false);
     camera.aspect = aspect;

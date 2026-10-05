@@ -1,4 +1,4 @@
-import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from './surface-curvature.mjs?v=38c4cf791d4cbb40';
+import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from './surface-curvature.mjs?v=b65bd00ab81d3d27';
 
 const materialOwners=new WeakMap(),geometryOwners=new WeakMap(),texturePools=new WeakMap();
 const geometrySignature=geometry=>[geometry.attributes.position,geometry.attributes.position.version,geometry.index,geometry.index?.version];
@@ -210,7 +210,7 @@ export function createAdvancedMaterials(T,{root,scope='world',quality='high'}={}
   }
   function diagnostics(){const roles={};for(const entry of materials.values())roles[entry.role]=(roles[entry.role]||0)+1;return {scope,quality:owner.quality,disposed,materials:materials.size,roles,geometries:geometries.size,curvatureGeometries:[...geometries.values()].filter(value=>!value.reason).length,skippedGeometry,processedVertices,refreshes,
     compileCount:[...materials.values()].reduce((sum,entry)=>sum+entry.compileCount,0),incompatibleShaders:[...materials.values()].reduce((sum,entry)=>sum+entry.incompatibleShaders,0),ownedTextures:materials.size?1:0,
-    materialIdentityPreserved:true,detailFilter:owner.quality==='cinematic'?'metric footprint + authored mipmaps':'authored mipmaps',scatteringModel:'thin-surface single-scattering approximation',curvatureModel:'signed seam-welded one-ring convexity',physicalDeltaM:0};}
+    materialIdentityPreserved:true,detailFilter:'metric footprint + authored mipmaps in all tiers',scatteringModel:'thin-surface single-scattering approximation',curvatureModel:'signed seam-welded one-ring convexity',physicalDeltaM:0};}
   function dispose(){if(disposed)return false;disposed=true;for(const entry of materials.values())releaseMaterial(entry,owner);for(const geometry of geometries.keys())releaseGeometry(geometry,owner);materials.clear();geometries.clear();return true;}
   refresh();return {refresh,setQuality,update,diagnostics,dispose};
 }
@@ -242,7 +242,7 @@ varying vec3 vAnAMLocalPosition,vAnAMLocalNormal,vAnAMBrushDirection;`;
 const DETAIL_SAMPLE=`float anAMSurfaceMask=AN_AM_SURFACE_MASK;
 // Texels per pixel, not frame history: stable during motion and camera cuts.
 float anAMFootprint=max(length(dFdx(vAnAMLocalPosition)),length(dFdy(vAnAMLocalPosition)))*anAMFrequency*64.;
-float anAMDetailWeight=mix(1.,1.-smoothstep(1.,4.,anAMFootprint),anAMCinematic);
+float anAMDetailWeight=1.-smoothstep(1.,4.,anAMFootprint);
 float anAMLocalQuality=anAMQuality*anAMDetailWeight*anAMSurfaceMask;
 vec4 anAMSample=vec4(.5);
 if(anAMQuality>.01){

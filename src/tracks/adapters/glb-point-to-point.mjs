@@ -1,11 +1,11 @@
 import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
-import {freezeStaticTrackTransforms} from '../../render/frame-matrices.mjs?v=ca094c8344437cf8';
+import {freezeStaticTrackTransforms} from '../../render/frame-matrices.mjs?v=a717fe32f4658fd0';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=aed8b70de9a3efd9';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=a20f4e298d765c72';
 const ENV = new Set(['clear','overcast','golden','sunset','moonrise','night']);
 const freeze = (v,seen=new Set()) => { if (!v || typeof v !== 'object' || Object.isFrozen(v) || seen.has(v)) return v; seen.add(v); Object.values(v).forEach(child=>freeze(child,seen)); return Object.freeze(v); };
 const abortError = () => Object.assign(new Error('operation aborted'), { name: 'AbortError' });

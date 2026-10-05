@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';import {compileVisiblePass,prepareBatchedPass,registerRenderPreparation,isRenderPreparationPending,disposeRenderPreparation} from '../src/render/pass-preparation.mjs?v=2481e701be72bf1c';
+import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';import {compileVisiblePass,prepareBatchedPass,registerRenderPreparation,isRenderPreparationPending,disposeRenderPreparation} from '../src/render/pass-preparation.mjs?v=258173b4dba723d7';
 test('preparation submits bounded batches, yields with current state restored, and leaves foreground traversal whole',async()=>{
  const scene=new T.Scene(),camera=new T.Camera(),seen=[],sizes=[];let tier='high',foreground=0;
  for(let i=0;i<7;i++){const m=new T.Mesh();m.name=String(i);scene.add(m);}

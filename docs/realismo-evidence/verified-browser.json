@@ -1,0 +1,2687 @@
+{
+  "label": "verified",
+  "checks": [
+    "taller listo",
+    "conducción con input real conserva avance",
+    "capacidad WebGPU distingue adaptador del backend",
+    "AA y mip filtering activos en Equilibrado",
+    "apoyo visual sigue contactos reales con un dibujo",
+    "pausa disponible",
+    "HDRI overcast usable",
+    "HDRI golden-hour usable",
+    "HDRI sunset usable",
+    "HDRI moonrise usable",
+    "HDRI night usable",
+    "HDRI clear usable",
+    "clima rain usable",
+    "clima fog usable",
+    "clima clear usable",
+    "20 cambios no acumulan targets",
+    "resize renderiza y ajusta target",
+    "pausa y foco con movimiento reducido",
+    "Bajo libera AA y conserva carrera",
+    "retorno al taller restaura render y menú",
+    "sin errores JS",
+    "sin errores de shader/WebGL",
+    "sin peticiones externas"
+  ],
+  "errors": [],
+  "consoleErrors": [],
+  "externalRequests": [],
+  "measurements": [
+    {
+      "name": "standing-clear",
+      "p50": 33.299999999995634,
+      "p95": 33.400000000001455,
+      "p99": 50,
+      "max": 66.69999999999709,
+      "render": {
+        "actualSceneFrames": 1478,
+        "actualSceneTimestampMs": 62732.39999985695,
+        "preparation": {
+          "batch": {
+            "budgetMs": 4,
+            "maxPositionsPerTurn": 16,
+            "sourceObjects": 1824,
+            "uniqueObjects": 1823,
+            "submittedPositions": 1823,
+            "turns": 186,
+            "totalSyncMs": 763.9999992847443,
+            "maxSubmissionMs": 5.099999904632568,
+            "overBudgetUnits": 0,
+            "pending": 0
+          },
+          "tier": null,
+          "renderingPending": 0
+        },
+        "sharedHost": {
+          "activeView": "race",
+          "contextEpoch": 0,
+          "lost": false,
+          "pending": 0,
+          "views": [
+            "workshop",
+            "race"
+          ],
+          "physicalRenderers": 1,
+          "contextAttributes": {
+            "alpha": true,
+            "antialias": true,
+            "depth": true,
+            "desynchronized": false,
+            "failIfMajorPerformanceCaveat": false,
+            "powerPreference": "high-performance",
+            "premultipliedAlpha": true,
+            "preserveDrawingBuffer": true,
+            "stencil": false,
+            "xrCompatible": false
+          }
+        },
+        "vehiclePool": {
+          "decodes": 1,
+          "hits": 1,
+          "entries": [
+            {
+              "key": "http://127.0.0.1:52361/assets/vehicles/chevrolet_1969-lod0.glb?v=669d129c22f5e88850c75ac7a45756a37b54caedb7200cc9880645167a0f93a6|texture-limit-2048|uv1-v1",
+              "refs": 2,
+              "pins": 0,
+              "waiters": 0,
+              "geometries": 106,
+              "textures": 19
+            }
+          ]
+        },
+        "frameBudget": {
+          "quality": "high",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1884940,
+          "maxPostBytes": 167772160,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "gpu": {
+          "available": true,
+          "source": "EXT_disjoint_timer_query_webgl2",
+          "samples": 300,
+          "p50GpuMs": 20.103168,
+          "p95GpuMs": 26.496,
+          "p99GpuMs": 27.749376,
+          "maxGpuMs": 38.892544,
+          "pending": 1,
+          "discarded": 0
+        },
+        "render": {
+          "frame": 16356,
+          "calls": 498,
+          "triangles": 2775966,
+          "points": 0,
+          "lines": 190
+        },
+        "resources": {
+          "geometries": 817,
+          "textures": 230
+        },
+        "deviceBudget": {
+          "phone": false,
+          "textureDecodeLimit": 2048,
+          "antialias": true,
+          "transmissionScale": 1
+        },
+        "camera": {
+          "position": [
+            8.558303086833885,
+            35.13442390350605,
+            -0.3399999939358825
+          ],
+          "quaternion": [
+            -0.014305254676104627,
+            -0.7069620655180071,
+            -0.014305232875244576,
+            0.7069620625744708
+          ],
+          "fov": 64.01077299467885,
+          "near": 0.02,
+          "far": 32000
+        },
+        "drawingBuffer": [
+          1280,
+          800
+        ],
+        "exposure": 1.0464311226597818
+      },
+      "graphics": {
+        "scope": "world",
+        "preparation": {
+          "ready": true,
+          "pending": false,
+          "error": null
+        },
+        "settings": {
+          "quality": "balanced",
+          "materials": true,
+          "gtao": true,
+          "ssgi": true,
+          "dfao": true,
+          "volumetrics": true,
+          "sky": true,
+          "pivotPainter": true,
+          "pdo": true
+        },
+        "requestedQuality": "balanced",
+        "effectiveQuality": "balanced",
+        "governedQuality": "high",
+        "reductionReason": null,
+        "performance": {
+          "tier": "high",
+          "maximumTier": "high",
+          "targetFps": 60,
+          "phase": "driving",
+          "adaptive": false,
+          "recoveryHealthyMs": 0,
+          "upgradeRetryRemainingMs": 0,
+          "p50FrameMs": 33.299999999995634,
+          "p95FrameMs": 33.400000000001455,
+          "p99FrameMs": 50,
+          "maxFrameIntervalMs": 66.69999999999709,
+          "hitchesOver100Ms": 0,
+          "p50FrameWorkMs": 26.40000009536743,
+          "p95FrameWorkMs": 33.59999990463257,
+          "p99FrameWorkMs": 39.90000009536743,
+          "maxFrameWorkMs": 55.09999990463257,
+          "samples": 302,
+          "capacity": 600,
+          "consecutiveSlow": 0,
+          "consecutiveHealthy": 0,
+          "severeElapsedMs": 0,
+          "severeSamples": 0,
+          "transitions": 0,
+          "transitionReason": "initial",
+          "lastTransitionMs": 0,
+          "renderPolicy": {
+            "resolutionScale": 1,
+            "shadows": true,
+            "vegetationLod": "high",
+            "mirrorHz": 30,
+            "sectorPreloadRadius": 2
+          },
+          "resources": {
+            "heapBytes": 494103026,
+            "gpuTextures": 230,
+            "gpuGeometries": 817
+          },
+          "thresholds": {
+            "highMaxFrameMs": 20,
+            "balancedMaxFrameMs": 25,
+            "downgradeSamples": 240,
+            "upgradeSamples": 600,
+            "recoveryHealthyMs": 30000,
+            "failedTierRetryMs": 90000,
+            "emergencyMs": 1500,
+            "emergencyMinSamples": 8
+          },
+          "surfaceRelief": {
+            "enabled": true,
+            "maxSteps": 24,
+            "pixelDepthOffset": true,
+            "depthEncoding": "perspective-and-logarithmic",
+            "fadeEndM": 95,
+            "silhouette": "adjacency-metric-mean-curvature",
+            "physicalDeltaM": 0
+          },
+          "warmup": {
+            "prepared": [
+              "high"
+            ],
+            "durationMs": 99.5,
+            "cached": false
+          },
+          "warmupCache": {
+            "entries": 1,
+            "limit": 4,
+            "generation": 0,
+            "hits": 0,
+            "misses": 1
+          },
+          "preparation": {
+            "status": "ready",
+            "startedAtMs": 22702.799999952316,
+            "durationMs": 2768.2000000476837,
+            "stages": [
+              {
+                "id": "environment",
+                "status": "ready",
+                "startedAtMs": 22702.799999952316,
+                "durationMs": 0.7999999523162842
+              },
+              {
+                "id": "day-cycle",
+                "status": "ready",
+                "startedAtMs": 22703.699999809265,
+                "durationMs": 68.40000009536743
+              },
+              {
+                "id": "physics",
+                "status": "ready",
+                "startedAtMs": 22772.099999904633,
+                "durationMs": 2584.7000000476837
+              },
+              {
+                "id": "graphics",
+                "status": "ready",
+                "startedAtMs": 25356.799999952316,
+                "durationMs": 106.20000004768372
+              },
+              {
+                "id": "audio",
+                "status": "ready",
+                "startedAtMs": 25463,
+                "durationMs": 8
+              }
+            ]
+          }
+        },
+        "rendererBudget": null,
+        "measurementScope": "race governor",
+        "capabilities": {
+          "backend": "webgl2",
+          "webgl": {
+            "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+            "contextLost": false,
+            "hdr": true,
+            "timerQuery": true,
+            "maxTextureSize": 16384,
+            "maxRenderbufferSize": 16384,
+            "maxTextureUnits": 16,
+            "maxVertexAttributes": 16,
+            "maxUniformBlockBytes": 65536,
+            "maxArrayLayers": 2048,
+            "maxSamples": 8,
+            "maxAnisotropy": 16,
+            "compression": [
+              "bc"
+            ]
+          },
+          "webgpu": {
+            "status": "available",
+            "rendererCompatible": false,
+            "reason": "The shipped renderer, GLSL material patches and capture passes require WebGL2.",
+            "features": [
+              "depth32float-stencil8",
+              "rg11b10ufloat-renderable",
+              "texture-formats-tier1",
+              "bgra8unorm-storage",
+              "texture-compression-bc",
+              "dual-source-blending",
+              "core-features-and-limits",
+              "float32-filterable",
+              "indirect-first-instance",
+              "float32-blendable",
+              "depth-clip-control",
+              "texture-compression-bc-sliced-3d",
+              "shader-f16",
+              "texture-formats-tier2",
+              "timestamp-query",
+              "clip-distances",
+              "primitive-index",
+              "texture-component-swizzle",
+              "subgroups"
+            ],
+            "limits": {
+              "maxTextureDimension2D": 16384,
+              "maxBufferSize": 2147483648,
+              "maxStorageBufferBindingSize": 2147483644
+            }
+          },
+          "memory": {
+            "systemGiBHint": 32,
+            "scope": "browser system-memory hint; not VRAM"
+          },
+          "disposed": false
+        },
+        "antialias": {
+          "enabled": true,
+          "quality": "balanced",
+          "phone": false,
+          "hdrSupported": true,
+          "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+          "frames": 1478,
+          "targets": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "allocation": {
+            "name": "ASFALTO_SPATIAL_AA_HDR",
+            "width": 1280,
+            "height": 800,
+            "samples": 0,
+            "colorFormat": "RGBA16F",
+            "depth": true,
+            "nominalBytes": 12288000
+          },
+          "budget": {
+            "quality": "balanced",
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "requestedPixelRatio": 1,
+            "maxPixels": 1135177,
+            "maxPostBytes": 100663296,
+            "passCount": 2,
+            "spatialResolve": true,
+            "samples": 2,
+            "nominalPostBytes": 90112000,
+            "limited": false,
+            "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+          },
+          "disposed": false
+        },
+        "filtering": {
+          "quality": "balanced",
+          "maximumAnisotropy": 8,
+          "borrowedTextures": 133,
+          "ownedTextures": 0,
+          "disposed": false
+        },
+        "frames": 1526,
+        "materials": {
+          "scope": "world",
+          "quality": "balanced",
+          "disposed": false,
+          "materials": 669,
+          "roles": {
+            "paint": 11,
+            "brushed-metal": 14,
+            "vinyl": 1,
+            "fabric": 2,
+            "rubber": 5,
+            "wax": 2,
+            "mineral": 6,
+            "foliage": 306,
+            "asphalt": 322
+          },
+          "geometries": 660,
+          "curvatureGeometries": 657,
+          "skippedGeometry": 3,
+          "processedVertices": 0,
+          "refreshes": 24,
+          "compileCount": 1302,
+          "incompatibleShaders": 14,
+          "ownedTextures": 1,
+          "materialIdentityPreserved": true,
+          "detailFilter": "metric footprint + authored mipmaps in all tiers",
+          "scatteringModel": "thin-surface single-scattering approximation",
+          "curvatureModel": "signed seam-welded one-ring convexity",
+          "physicalDeltaM": 0
+        },
+        "pivotPainter": {
+          "permitted": true,
+          "enabled": true,
+          "tier": "balanced",
+          "hierarchyLevels": 3,
+          "representation": "component-derived root / branch / leaf pivot rotations",
+          "meshes": 591,
+          "geometries": 13,
+          "materials": 1773,
+          "components": 9601,
+          "time": 62.69679999995232,
+          "windSpeed": 1.2,
+          "windDirection": [
+            0.8944271909999157,
+            0,
+            0.44721359549995787
+          ],
+          "shadows": "matching depth and point-light distance deformation with alpha masks",
+          "disposed": false
+        },
+        "dfao": {
+          "enabled": true,
+          "tier": "balanced",
+          "representation": "analytic-signed-distance-OBB-proxies",
+          "approximation": "opaque local bounding boxes; broad merged wall envelopes, terrain slabs, foliage and vehicles omitted",
+          "proxyCount": 8,
+          "candidates": 15,
+          "capacity": 64,
+          "cachedProxies": 1259,
+          "cachedOwners": 482,
+          "instanceVisits": 1997,
+          "proxyBuilds": 2718,
+          "queryVisits": 15,
+          "spatialCells": 755,
+          "rangeM": 25,
+          "rays": 2,
+          "steps": 3,
+          "proxies": [
+            {
+              "name": "Chrome mirror shell",
+              "index": -1,
+              "center": [
+                10.781423784610393,
+                35.530343357626755,
+                0.06739999799535625
+              ],
+              "halfExtent": [
+                0.30314189767456057,
+                0.10144512106704714,
+                0.02506291055059434
+              ],
+              "rotation": [
+                -0.04120866094329983,
+                -0.7059049865658367,
+                -0.041208641470047665,
+                0.7059049823261904
+              ],
+              "distanceM": 1.9739105226289277
+            },
+            {
+              "name": "Burnished dark leather edge_mesh_Primitive_0",
+              "index": -1,
+              "center": [
+                10.612119194153683,
+                34.479326195004425,
+                -0.3839014847791923
+              ],
+              "halfExtent": [
+                0.02562730905007852,
+                0.04989453961851261,
+                0.0024515347805425997
+              ],
+              "rotation": [
+                0.038100944910052954,
+                -0.6697522516467909,
+                -0.07678194968924201,
+                0.7376210216723311
+              ],
+              "distanceM": 2.100065097889618
+            },
+            {
+              "name": "Ignition mirror outer rolled edge_mesh_Primitive_0",
+              "index": -1,
+              "center": [
+                10.662594262043973,
+                34.56681264270066,
+                -0.368199975698618
+              ],
+              "halfExtent": [
+                0.04164434857405723,
+                0.04164434857405722,
+                0.003544200168340468
+              ],
+              "rotation": [
+                -0.014088796795415153,
+                -0.7069664126025138,
+                -0.01408877717380838,
+                0.7069664091132878
+              ],
+              "distanceM": 2.1206827143229923
+            },
+            {
+              "name": "Ignition annular matte face_mesh_Primitive_0",
+              "index": -1,
+              "center": [
+                10.661000638844362,
+                34.56687619161386,
+                -0.3681999757073684
+              ],
+              "halfExtent": [
+                0.0393406191866845,
+                0.039340625788271424,
+                0.0007088400336680936
+              ],
+              "rotation": [
+                -0.014088796795415153,
+                -0.7069664126025138,
+                -0.01408877717380838,
+                0.7069664091132878
+              ],
+              "distanceM": 2.12248768496515
+            },
+            {
+              "name": "Milled artistic ignition blade_mesh_Primitive_0",
+              "index": -1,
+              "center": [
+                10.662771598816871,
+                34.56681227841562,
+                -0.3681939358641711
+              ],
+              "halfExtent": [
+                0.02037915003960953,
+                0.0021265201010042803,
+                0.04873274973593653
+              ],
+              "rotation": [
+                0.24032194828600167,
+                -0.6649687172923475,
+                -0.26674748235134976,
+                0.6549104876651516
+              ],
+              "distanceM": 2.1269894417040485
+            },
+            {
+              "name": "Rotor brushed face_mesh_Primitive_0",
+              "index": -1,
+              "center": [
+                10.661177707100295,
+                34.56686912309318,
+                -0.36819997128907206
+              ],
+              "halfExtent": [
+                0.029416859540529555,
+                0.029416862841323024,
+                0.0028353601346723743
+              ],
+              "rotation": [
+                0.24020107876066354,
+                -0.6650589782157849,
+                -0.2665071090340808,
+                0.6549610355518001
+              ],
+              "distanceM": 2.1366027866160873
+            },
+            {
+              "name": "Windshield mirror support",
+              "index": -1,
+              "center": [
+                10.836580262712884,
+                35.66267034576428,
+                0.0673999945527354
+              ],
+              "halfExtent": [
+                0.010741247537612917,
+                0.061394245491027837,
+                0.01074124753761292
+              ],
+              "rotation": [
+                -0.1377943821029987,
+                -0.6935508024697156,
+                -0.13779436339681872,
+                0.6935507955950537
+              ],
+              "distanceM": 2.3106891263541365
+            },
+            {
+              "name": "Windshield support foot",
+              "index": -1,
+              "center": [
+                10.861929129178439,
+                35.7251897070286,
+                0.06739999292311866
+              ],
+              "halfExtent": [
+                0.053706242134094244,
+                0.025062911662101752,
+                0.013128191373109823
+              ],
+              "rotation": [
+                -0.04120866094329983,
+                -0.7059049865658367,
+                -0.041208641470047665,
+                0.7059049823261904
+              ],
+              "distanceM": 2.3521110667661715
+            }
+          ],
+          "disposed": false
+        },
+        "atmosphere": {
+          "scope": "world",
+          "quality": "balanced",
+          "disposed": false,
+          "enabled": true,
+          "skyVisible": true,
+          "skyId": "clear",
+          "night": false,
+          "skyModel": "spherical-single-scattering-rayleigh-mie",
+          "volumeModel": "height-density-beer-lambert",
+          "screenSpaceOcclusion": true,
+          "offscreenOcclusion": false,
+          "skySteps": 10,
+          "volumeSteps": 8,
+          "lightSteps": 3,
+          "density": 0.0001016459696449338,
+          "baseHeight": 0,
+          "heightFalloff": 0.0025,
+          "sunIntensity": 14.889820787365073,
+          "skyBlend": 0.14841079178411845,
+          "sharedEnvironmentPreserved": true,
+          "legacyFogManagedByCaller": true,
+          "zenithRadiance": [
+            0.055031322649498185,
+            0.10768194178101834,
+            0.2029756590318257
+          ],
+          "ownedGeometries": 1,
+          "ownedMaterials": 1,
+          "ownedTextures": 1,
+          "volumeSampling": "8 stratified void-and-cluster blue-noise"
+        },
+        "screenSpace": {
+          "enabled": true,
+          "policy": {
+            "enabled": true,
+            "maxWidth": 576,
+            "maxPixels": 331776,
+            "scale": 0.5,
+            "aoSamples": 12,
+            "giRays": 3,
+            "giSteps": 8,
+            "dfao": true,
+            "volume": true
+          },
+          "frames": 1478,
+          "requestedSamples": 2,
+          "supportedSamples": 2,
+          "allocationBudget": {
+            "quality": "balanced",
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "requestedPixelRatio": 1,
+            "maxPixels": 1135177,
+            "maxPostBytes": 100663296,
+            "passCount": 2,
+            "spatialResolve": true,
+            "samples": 2,
+            "nominalPostBytes": 90112000,
+            "limited": false,
+            "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+          },
+          "allocations": [
+            {
+              "name": "ASFALTO_INDIRECT_SOURCE",
+              "width": 1280,
+              "height": 800,
+              "samples": 2,
+              "colorFormat": "RGBA16F",
+              "depth": true,
+              "nominalBytes": 36864000
+            },
+            {
+              "name": "ASFALTO_GTAO_R8",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_GI_RGB_AO_A",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_METADATA_0",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_METADATA_1",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_RAW",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_HISTORY_0",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_HISTORY_1",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            }
+          ],
+          "hdrSupported": true,
+          "spatialOnly": false,
+          "fogHistoryValid": true,
+          "targets": 8,
+          "samples": 2,
+          "size": [
+            1280,
+            800
+          ],
+          "effectSize": [
+            576,
+            360
+          ],
+          "techniques": {
+            "gtao": "Three r180 horizon integration",
+            "ssgi": "half-resolution RGB GI + A AO, symmetric plane/depth/normal bilateral",
+            "fog": "8 blue-noise strata with reprojected clamped history",
+            "dfao": true,
+            "volumetric": true
+          },
+          "lastError": null,
+          "disposed": false
+        },
+        "pdo": {
+          "enabled": true,
+          "maxSteps": 24,
+          "pixelDepthOffset": true,
+          "depthEncoding": "perspective-and-logarithmic",
+          "fadeEndM": 95,
+          "silhouette": "adjacency-metric-mean-curvature",
+          "physicalDeltaM": 0
+        },
+        "disposed": false
+      },
+      "contact": {
+        "approximation": "observed-wheel-plane soft occlusion; not directional shadow or GI",
+        "patches": 5,
+        "steadyDrawCalls": 1,
+        "triangles": 10,
+        "targets": 0,
+        "textures": 0,
+        "updates": 2106,
+        "disposed": false
+      },
+      "state": {
+        "status": "RUNNING",
+        "raceProgress": 8.287047494563012,
+        "speedMps": -0.0002873916528187692,
+        "performance": {
+          "dynamicResolution": true,
+          "performanceScale": 1,
+          "qualityTier": "high",
+          "averageFrameMs": 26.945840813755453,
+          "p50FrameMs": 33.299999999995634,
+          "p95FrameMs": 33.400000000001455,
+          "p50FrameWorkMs": 26.40000009536743,
+          "p95FrameWorkMs": 33.09999990463257,
+          "lastScaleChange": 0,
+          "targetFps": 60
+        },
+        "wheelContacts": [
+          {
+            "id": "frontLeft",
+            "contact": true,
+            "point": [
+              9.584022531697897,
+              34.07667351688838,
+              0.7400000312715442
+            ],
+            "normal": [
+              -0.00799992686763606,
+              0.9999680000730585,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "frontRight",
+            "contact": true,
+            "point": [
+              9.5840225706,
+              34.07667347454241,
+              -0.7399999763516009
+            ],
+            "normal": [
+              -0.00799992686763606,
+              0.9999680000730585,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "rearLeft",
+            "contact": true,
+            "point": [
+              6.765112372223216,
+              34.05412397150708,
+              0.7349999577953493
+            ],
+            "normal": [
+              -0.007999927798899038,
+              0.9999680000656083,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "rearRight",
+            "contact": true,
+            "point": [
+              6.765112410862469,
+              34.054123929447236,
+              -0.7350000497762883
+            ],
+            "normal": [
+              -0.007999927798899038,
+              0.9999680000656083,
+              0
+            ],
+            "surface": "asphalt"
+          }
+        ]
+      }
+    },
+    {
+      "name": "driving-clear",
+      "p50": 16.69999999999709,
+      "p95": 33.30000000000291,
+      "p99": 33.39999999999418,
+      "max": 33.40000000000873,
+      "render": {
+        "actualSceneFrames": 4202,
+        "actualSceneTimestampMs": 116477.29999995232,
+        "preparation": {
+          "batch": {
+            "budgetMs": 4,
+            "maxPositionsPerTurn": 16,
+            "sourceObjects": 1824,
+            "uniqueObjects": 1823,
+            "submittedPositions": 1823,
+            "turns": 183,
+            "totalSyncMs": 751.8000004291534,
+            "maxSubmissionMs": 4.400000095367432,
+            "overBudgetUnits": 0,
+            "pending": 0
+          },
+          "tier": null,
+          "renderingPending": 0
+        },
+        "sharedHost": {
+          "activeView": "race",
+          "contextEpoch": 0,
+          "lost": false,
+          "pending": 0,
+          "views": [
+            "workshop",
+            "race"
+          ],
+          "physicalRenderers": 1,
+          "contextAttributes": {
+            "alpha": true,
+            "antialias": true,
+            "depth": true,
+            "desynchronized": false,
+            "failIfMajorPerformanceCaveat": false,
+            "powerPreference": "high-performance",
+            "premultipliedAlpha": true,
+            "preserveDrawingBuffer": true,
+            "stencil": false,
+            "xrCompatible": false
+          }
+        },
+        "vehiclePool": {
+          "decodes": 1,
+          "hits": 1,
+          "entries": [
+            {
+              "key": "http://127.0.0.1:52361/assets/vehicles/chevrolet_1969-lod0.glb?v=669d129c22f5e88850c75ac7a45756a37b54caedb7200cc9880645167a0f93a6|texture-limit-2048|uv1-v1",
+              "refs": 2,
+              "pins": 0,
+              "waiters": 0,
+              "geometries": 106,
+              "textures": 19
+            }
+          ]
+        },
+        "frameBudget": {
+          "quality": "high",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1884940,
+          "maxPostBytes": 167772160,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "gpu": {
+          "available": true,
+          "source": "EXT_disjoint_timer_query_webgl2",
+          "samples": 300,
+          "p50GpuMs": 15.318016,
+          "p95GpuMs": 20.810752,
+          "p99GpuMs": 21.66784,
+          "maxGpuMs": 22.566912,
+          "pending": 2,
+          "discarded": 0
+        },
+        "render": {
+          "frame": 42875,
+          "calls": 514,
+          "triangles": 2644124,
+          "points": 0,
+          "lines": 190
+        },
+        "resources": {
+          "geometries": 817,
+          "textures": 230
+        },
+        "deviceBudget": {
+          "phone": false,
+          "textureDecodeLimit": 2048,
+          "antialias": true,
+          "transmissionScale": 1
+        },
+        "camera": {
+          "position": [
+            95.87523201199659,
+            36.75755886218634,
+            -0.000003281450887976816
+          ],
+          "quaternion": [
+            -0.04305255685762197,
+            -0.7057949272547973,
+            -0.0430526970308037,
+            0.7057949158840623
+          ],
+          "fov": 38.99626618987282,
+          "near": 0.02,
+          "far": 32000
+        },
+        "drawingBuffer": [
+          1280,
+          800
+        ],
+        "exposure": 1.2387667761234256
+      },
+      "graphics": {
+        "scope": "world",
+        "preparation": {
+          "ready": true,
+          "pending": false,
+          "error": null
+        },
+        "settings": {
+          "quality": "balanced",
+          "materials": true,
+          "gtao": true,
+          "ssgi": true,
+          "dfao": true,
+          "volumetrics": true,
+          "sky": true,
+          "pivotPainter": true,
+          "pdo": true
+        },
+        "requestedQuality": "balanced",
+        "effectiveQuality": "balanced",
+        "governedQuality": "high",
+        "reductionReason": null,
+        "performance": {
+          "tier": "high",
+          "maximumTier": "high",
+          "targetFps": 60,
+          "phase": "driving",
+          "adaptive": false,
+          "recoveryHealthyMs": 0,
+          "upgradeRetryRemainingMs": 0,
+          "p50FrameMs": 16.69999999999709,
+          "p95FrameMs": 33.30000000000291,
+          "p99FrameMs": 33.39999999999418,
+          "maxFrameIntervalMs": 33.40000000000873,
+          "hitchesOver100Ms": 0,
+          "p50FrameWorkMs": 14.399999856948853,
+          "p95FrameWorkMs": 21.90000009536743,
+          "p99FrameWorkMs": 24,
+          "maxFrameWorkMs": 28.299999952316284,
+          "samples": 302,
+          "capacity": 600,
+          "consecutiveSlow": 0,
+          "consecutiveHealthy": 0,
+          "severeElapsedMs": 0,
+          "severeSamples": 0,
+          "transitions": 0,
+          "transitionReason": "initial",
+          "lastTransitionMs": 0,
+          "renderPolicy": {
+            "resolutionScale": 1,
+            "shadows": true,
+            "vegetationLod": "high",
+            "mirrorHz": 30,
+            "sectorPreloadRadius": 2
+          },
+          "resources": {
+            "heapBytes": 510329818,
+            "gpuTextures": 230,
+            "gpuGeometries": 817
+          },
+          "thresholds": {
+            "highMaxFrameMs": 20,
+            "balancedMaxFrameMs": 25,
+            "downgradeSamples": 240,
+            "upgradeSamples": 600,
+            "recoveryHealthyMs": 30000,
+            "failedTierRetryMs": 90000,
+            "emergencyMs": 1500,
+            "emergencyMinSamples": 8
+          },
+          "surfaceRelief": {
+            "enabled": true,
+            "maxSteps": 24,
+            "pixelDepthOffset": true,
+            "depthEncoding": "perspective-and-logarithmic",
+            "fadeEndM": 95,
+            "silhouette": "adjacency-metric-mean-curvature",
+            "physicalDeltaM": 0
+          },
+          "warmup": {
+            "prepared": [
+              "high"
+            ],
+            "durationMs": 99.5,
+            "cached": false
+          },
+          "warmupCache": {
+            "entries": 1,
+            "limit": 4,
+            "generation": 0,
+            "hits": 0,
+            "misses": 1
+          },
+          "preparation": {
+            "status": "ready",
+            "startedAtMs": 22702.799999952316,
+            "durationMs": 2768.2000000476837,
+            "stages": [
+              {
+                "id": "environment",
+                "status": "ready",
+                "startedAtMs": 22702.799999952316,
+                "durationMs": 0.7999999523162842
+              },
+              {
+                "id": "day-cycle",
+                "status": "ready",
+                "startedAtMs": 22703.699999809265,
+                "durationMs": 68.40000009536743
+              },
+              {
+                "id": "physics",
+                "status": "ready",
+                "startedAtMs": 22772.099999904633,
+                "durationMs": 2584.7000000476837
+              },
+              {
+                "id": "graphics",
+                "status": "ready",
+                "startedAtMs": 25356.799999952316,
+                "durationMs": 106.20000004768372
+              },
+              {
+                "id": "audio",
+                "status": "ready",
+                "startedAtMs": 25463,
+                "durationMs": 8
+              }
+            ]
+          }
+        },
+        "rendererBudget": null,
+        "measurementScope": "race governor",
+        "capabilities": {
+          "backend": "webgl2",
+          "webgl": {
+            "version": "WebGL 2.0 (OpenGL ES 3.0 Chromium)",
+            "contextLost": false,
+            "hdr": true,
+            "timerQuery": true,
+            "maxTextureSize": 16384,
+            "maxRenderbufferSize": 16384,
+            "maxTextureUnits": 16,
+            "maxVertexAttributes": 16,
+            "maxUniformBlockBytes": 65536,
+            "maxArrayLayers": 2048,
+            "maxSamples": 8,
+            "maxAnisotropy": 16,
+            "compression": [
+              "bc"
+            ]
+          },
+          "webgpu": {
+            "status": "available",
+            "rendererCompatible": false,
+            "reason": "The shipped renderer, GLSL material patches and capture passes require WebGL2.",
+            "features": [
+              "depth32float-stencil8",
+              "rg11b10ufloat-renderable",
+              "texture-formats-tier1",
+              "bgra8unorm-storage",
+              "texture-compression-bc",
+              "dual-source-blending",
+              "core-features-and-limits",
+              "float32-filterable",
+              "indirect-first-instance",
+              "float32-blendable",
+              "depth-clip-control",
+              "texture-compression-bc-sliced-3d",
+              "shader-f16",
+              "texture-formats-tier2",
+              "timestamp-query",
+              "clip-distances",
+              "primitive-index",
+              "texture-component-swizzle",
+              "subgroups"
+            ],
+            "limits": {
+              "maxTextureDimension2D": 16384,
+              "maxBufferSize": 2147483648,
+              "maxStorageBufferBindingSize": 2147483644
+            }
+          },
+          "memory": {
+            "systemGiBHint": 32,
+            "scope": "browser system-memory hint; not VRAM"
+          },
+          "disposed": false
+        },
+        "antialias": {
+          "enabled": true,
+          "quality": "balanced",
+          "phone": false,
+          "hdrSupported": true,
+          "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+          "frames": 4202,
+          "targets": 1,
+          "size": [
+            1280,
+            800
+          ],
+          "allocation": {
+            "name": "ASFALTO_SPATIAL_AA_HDR",
+            "width": 1280,
+            "height": 800,
+            "samples": 0,
+            "colorFormat": "RGBA16F",
+            "depth": true,
+            "nominalBytes": 12288000
+          },
+          "budget": {
+            "quality": "balanced",
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "requestedPixelRatio": 1,
+            "maxPixels": 1135177,
+            "maxPostBytes": 100663296,
+            "passCount": 2,
+            "spatialResolve": true,
+            "samples": 2,
+            "nominalPostBytes": 90112000,
+            "limited": false,
+            "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+          },
+          "disposed": false
+        },
+        "filtering": {
+          "quality": "balanced",
+          "maximumAnisotropy": 8,
+          "borrowedTextures": 133,
+          "ownedTextures": 0,
+          "disposed": false
+        },
+        "frames": 4254,
+        "materials": {
+          "scope": "world",
+          "quality": "balanced",
+          "disposed": false,
+          "materials": 669,
+          "roles": {
+            "paint": 11,
+            "brushed-metal": 14,
+            "vinyl": 1,
+            "fabric": 2,
+            "rubber": 5,
+            "wax": 2,
+            "mineral": 6,
+            "foliage": 306,
+            "asphalt": 322
+          },
+          "geometries": 660,
+          "curvatureGeometries": 657,
+          "skippedGeometry": 3,
+          "processedVertices": 0,
+          "refreshes": 50,
+          "compileCount": 1302,
+          "incompatibleShaders": 14,
+          "ownedTextures": 1,
+          "materialIdentityPreserved": true,
+          "detailFilter": "metric footprint + authored mipmaps in all tiers",
+          "scatteringModel": "thin-surface single-scattering approximation",
+          "curvatureModel": "signed seam-welded one-ring convexity",
+          "physicalDeltaM": 0
+        },
+        "pivotPainter": {
+          "permitted": true,
+          "enabled": true,
+          "tier": "balanced",
+          "hierarchyLevels": 3,
+          "representation": "component-derived root / branch / leaf pivot rotations",
+          "meshes": 591,
+          "geometries": 13,
+          "materials": 1773,
+          "components": 9601,
+          "time": 116.46619999980926,
+          "windSpeed": 1.2,
+          "windDirection": [
+            0.8944271909999157,
+            0,
+            0.44721359549995787
+          ],
+          "shadows": "matching depth and point-light distance deformation with alpha masks",
+          "disposed": false
+        },
+        "dfao": {
+          "enabled": true,
+          "tier": "balanced",
+          "representation": "analytic-signed-distance-OBB-proxies",
+          "approximation": "opaque local bounding boxes; broad merged wall envelopes, terrain slabs, foliage and vehicles omitted",
+          "proxyCount": 1,
+          "candidates": 1,
+          "capacity": 64,
+          "cachedProxies": 1253,
+          "cachedOwners": 467,
+          "instanceVisits": 2025,
+          "proxyBuilds": 2746,
+          "queryVisits": 5,
+          "spatialCells": 760,
+          "rangeM": 25,
+          "rays": 2,
+          "steps": 3,
+          "proxies": [
+            {
+              "name": "ASFALTO_DETAIL_rock_0:0",
+              "index": 0,
+              "center": [
+                90.03855569576405,
+                32.95455665882462,
+                19.499064072743774
+              ],
+              "halfExtent": [
+                0.2334709095636332,
+                0.1374024236800775,
+                0.1574378071529967
+              ],
+              "rotation": [
+                0,
+                0.855280562905502,
+                0,
+                0.5181651847780276
+              ],
+              "distanceM": 19.74260184072543
+            }
+          ],
+          "disposed": false
+        },
+        "atmosphere": {
+          "scope": "world",
+          "quality": "balanced",
+          "disposed": false,
+          "enabled": true,
+          "skyVisible": true,
+          "skyId": "overcast",
+          "night": false,
+          "skyModel": "spherical-single-scattering-rayleigh-mie",
+          "volumeModel": "height-density-beer-lambert",
+          "screenSpaceOcclusion": true,
+          "offscreenOcclusion": false,
+          "skySteps": 10,
+          "volumeSteps": 8,
+          "lightSteps": 3,
+          "density": 0.00033629546687057894,
+          "baseHeight": 0,
+          "heightFalloff": 0.0025,
+          "sunIntensity": 1.6993894549243265,
+          "skyBlend": 0.10040381267959303,
+          "sharedEnvironmentPreserved": true,
+          "legacyFogManagedByCaller": true,
+          "zenithRadiance": [
+            0.007683805453901313,
+            0.013994956600636235,
+            0.02559134969679021
+          ],
+          "ownedGeometries": 1,
+          "ownedMaterials": 1,
+          "ownedTextures": 1,
+          "volumeSampling": "8 stratified void-and-cluster blue-noise"
+        },
+        "screenSpace": {
+          "enabled": true,
+          "policy": {
+            "enabled": true,
+            "maxWidth": 576,
+            "maxPixels": 331776,
+            "scale": 0.5,
+            "aoSamples": 12,
+            "giRays": 3,
+            "giSteps": 8,
+            "dfao": true,
+            "volume": true
+          },
+          "frames": 4202,
+          "requestedSamples": 2,
+          "supportedSamples": 2,
+          "allocationBudget": {
+            "quality": "balanced",
+            "width": 1280,
+            "height": 800,
+            "pixelRatio": 1,
+            "requestedPixelRatio": 1,
+            "maxPixels": 1135177,
+            "maxPostBytes": 100663296,
+            "passCount": 2,
+            "spatialResolve": true,
+            "samples": 2,
+            "nominalPostBytes": 90112000,
+            "limited": false,
+            "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+          },
+          "allocations": [
+            {
+              "name": "ASFALTO_INDIRECT_SOURCE",
+              "width": 1280,
+              "height": 800,
+              "samples": 2,
+              "colorFormat": "RGBA16F",
+              "depth": true,
+              "nominalBytes": 36864000
+            },
+            {
+              "name": "ASFALTO_GTAO_R8",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_GI_RGB_AO_A",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_METADATA_0",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_METADATA_1",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_RAW",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_HISTORY_0",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            },
+            {
+              "name": "ASFALTO_FOG_HISTORY_1",
+              "width": 576,
+              "height": 360,
+              "samples": 0,
+              "colorFormat": "RGBA16F",
+              "depth": false,
+              "nominalBytes": 1658880
+            }
+          ],
+          "hdrSupported": true,
+          "spatialOnly": false,
+          "fogHistoryValid": true,
+          "targets": 8,
+          "samples": 2,
+          "size": [
+            1280,
+            800
+          ],
+          "effectSize": [
+            576,
+            360
+          ],
+          "techniques": {
+            "gtao": "Three r180 horizon integration",
+            "ssgi": "half-resolution RGB GI + A AO, symmetric plane/depth/normal bilateral",
+            "fog": "8 blue-noise strata with reprojected clamped history",
+            "dfao": true,
+            "volumetric": true
+          },
+          "lastError": null,
+          "disposed": false
+        },
+        "pdo": {
+          "enabled": true,
+          "maxSteps": 24,
+          "pixelDepthOffset": true,
+          "depthEncoding": "perspective-and-logarithmic",
+          "fadeEndM": 95,
+          "silhouette": "adjacency-metric-mean-curvature",
+          "physicalDeltaM": 0
+        },
+        "disposed": false
+      },
+      "contact": {
+        "approximation": "observed-wheel-plane soft occlusion; not directional shadow or GI",
+        "patches": 5,
+        "steadyDrawCalls": 1,
+        "triangles": 10,
+        "targets": 0,
+        "textures": 0,
+        "updates": 5328,
+        "disposed": false
+      },
+      "state": {
+        "status": "RUNNING",
+        "raceProgress": 105.26281106216993,
+        "speedMps": 10.657662391662598,
+        "performance": {
+          "dynamicResolution": true,
+          "performanceScale": 1,
+          "qualityTier": "high",
+          "averageFrameMs": 18.50762933830794,
+          "p50FrameMs": 16.69999999999709,
+          "p95FrameMs": 33.30000000000291,
+          "p50FrameWorkMs": 14.400000095367432,
+          "p95FrameWorkMs": 21.90000009536743,
+          "lastScaleChange": 0,
+          "targetFps": 60
+        },
+        "wheelContacts": [
+          {
+            "id": "frontLeft",
+            "contact": true,
+            "point": [
+              106.47083311810349,
+              34.85176752148253,
+              0.7399967151475326
+            ],
+            "normal": [
+              -0.007999927322081468,
+              0.999968000069423,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "frontRight",
+            "contact": true,
+            "point": [
+              106.47083306616445,
+              34.85176743945847,
+              -0.7400034648848038
+            ],
+            "normal": [
+              -0.007999927322081468,
+              0.999968000069423,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "rearLeft",
+            "contact": true,
+            "point": [
+              103.65192290810403,
+              34.82921339589871,
+              0.7349968147159662
+            ],
+            "normal": [
+              -0.007999927322081468,
+              0.999968000069423,
+              0
+            ],
+            "surface": "asphalt"
+          },
+          {
+            "id": "rearRight",
+            "contact": true,
+            "point": [
+              103.65192282501384,
+              34.82921712899606,
+              -0.735003364100146
+            ],
+            "normal": [
+              -0.007999927322081468,
+              0.999968000069423,
+              0
+            ],
+            "surface": "asphalt"
+          }
+        ]
+      }
+    }
+  ],
+  "environments": [
+    {
+      "skyId": "overcast",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "overcast",
+        "weatherId": "clear",
+        "skyId": "overcast",
+        "exposure": 1.2063110030006845,
+        "sun": {
+          "azimuthDeg": 93.53406480706988,
+          "elevationDeg": 35.030420895459265,
+          "lux": 21982.51985282693,
+          "color": {
+            "isColor": true,
+            "r": 0.7414389302147336,
+            "g": 0.779894915288547,
+            "b": 0.7785592021805707
+          }
+        },
+        "ambient": {
+          "intensity": 0.9063110030006846,
+          "color": {
+            "isColor": true,
+            "r": 0.646886763221807,
+            "g": 0.7279952160789336,
+            "b": 0.7898963484376783
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.5035812620202448,
+            "g": 0.6179089245812,
+            "b": 0.6547675624591772
+          },
+          "density": 0.00029669942366083524,
+          "near": 50,
+          "far": 12000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "available",
+        "temperatureC": 10,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 0,
+          "cloudiness": 0.49514640720164305,
+          "hour": 13.53222222222223,
+          "phase": "day",
+          "atmosphereSunIntensity": 4.64075419115235
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 10
+        },
+        "sunIntensity": 0.23203770955761754,
+        "keyLightDirection": [
+          0.8172902106530455,
+          0.5740112799921503,
+          -0.050475360449169136
+        ],
+        "keyLightColor": "#dfe5e4"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 4879,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "skyId": "golden-hour",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "golden-hour",
+        "weatherId": "clear",
+        "skyId": "golden-hour",
+        "exposure": 1.1459332071076573,
+        "sun": {
+          "azimuthDeg": 53.96484579882646,
+          "elevationDeg": 16.78081050939172,
+          "lux": 49531.47272139178,
+          "color": {
+            "isColor": true,
+            "r": 1,
+            "g": 0.5972286029624435,
+            "b": 0.29952887776454123
+          }
+        },
+        "ambient": {
+          "intensity": 0.6887654191667929,
+          "color": {
+            "isColor": true,
+            "r": 0.6292056443842723,
+            "g": 0.41288750454552636,
+            "b": 0.2653086343148348
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.527231277588714,
+            "g": 0.3463462737533413,
+            "b": 0.20418441341867047
+          },
+          "density": 0.00012042122225473857,
+          "near": 100,
+          "far": 28000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "available",
+        "temperatureC": 12,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 0.05511984852918895,
+          "cloudiness": 0.07,
+          "hour": 17.41055555555556,
+          "phase": "sunset",
+          "atmosphereSunIntensity": 10.456644241182708
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 12
+        },
+        "sunIntensity": 0.5228322120591354,
+        "keyLightDirection": [
+          0.7742205860702998,
+          0.28871115549208654,
+          0.5632302839863866
+        ],
+        "keyLightColor": "#ffcb95"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 5274,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "skyId": "sunset",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "sunset",
+        "weatherId": "clear",
+        "skyId": "sunset",
+        "exposure": 1.35,
+        "sun": {
+          "azimuthDeg": 53.96486761891067,
+          "elevationDeg": 8.060509501091934,
+          "lux": 12981.01671359454,
+          "color": {
+            "isColor": true,
+            "r": 0.8362788151754373,
+            "g": 0.43305959897633267,
+            "b": 0.32332399085022556
+          }
+        },
+        "ambient": {
+          "intensity": 0.4758997294619696,
+          "color": {
+            "isColor": true,
+            "r": 0.2662548104897234,
+            "g": 0.17958102380476967,
+            "b": 0.23765453949824936
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.2156253251488286,
+            "g": 0.14098469997484792,
+            "b": 0.19019017252953074
+          },
+          "density": 0.00028764995491032823,
+          "near": 50,
+          "far": 12000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "available",
+        "temperatureC": 9,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 0.4729006312554043,
+          "cloudiness": 0.07,
+          "hour": 18.98611111111112,
+          "phase": "sunset",
+          "atmosphereSunIntensity": 2.7137607643651562
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 9
+        },
+        "sunIntensity": 0.13702184308794235,
+        "keyLightDirection": [
+          0.800667335583575,
+          0.1402188353812594,
+          0.5824693090059099
+        ],
+        "keyLightColor": "#ecb09a"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 5936,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "skyId": "moonrise",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "moonrise",
+        "weatherId": "clear",
+        "skyId": "moonrise",
+        "exposure": 1.3326559068434687,
+        "sun": {
+          "azimuthDeg": 53.96486361007808,
+          "elevationDeg": 20.902378884690982,
+          "lux": 502.6960680384075,
+          "color": {
+            "isColor": true,
+            "r": 0.3165585109359624,
+            "g": 0.45146295524072466,
+            "b": 0.6812587195278499
+          }
+        },
+        "ambient": {
+          "intensity": 0.23496845259767282,
+          "color": {
+            "isColor": true,
+            "r": 0.03208395611412002,
+            "g": 0.05211225420235393,
+            "b": 0.10133589630841236
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.03208395611412002,
+            "g": 0.05211225420235393,
+            "b": 0.10133589630841236
+          },
+          "density": 0.00024190608986028538,
+          "near": 40,
+          "far": 10000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "required",
+        "temperatureC": 5,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 1,
+          "cloudiness": 0.07,
+          "hour": 20.635555555555563,
+          "phase": "night",
+          "atmosphereSunIntensity": 0.01061247254747749
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 5
+        },
+        "sunIntensity": 0.005306236273738745,
+        "keyLightDirection": [
+          0.7554384354276084,
+          0.3567767865937139,
+          0.5495662788295429
+        ],
+        "keyLightColor": "#99b3d7"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 6694,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "skyId": "night",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "night",
+        "weatherId": "clear",
+        "skyId": "night",
+        "exposure": 1.2,
+        "sun": {
+          "azimuthDeg": 0,
+          "elevationDeg": 90,
+          "lux": 0,
+          "color": {
+            "isColor": true,
+            "r": 0.15896083506088038,
+            "g": 0.238397573812271,
+            "b": 0.4178850708481375
+          }
+        },
+        "ambient": {
+          "intensity": 0.12,
+          "color": {
+            "isColor": true,
+            "r": 0.005181516700061659,
+            "g": 0.008568125615105716,
+            "b": 0.02028856305209031
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.005181516700061659,
+            "g": 0.008568125615105716,
+            "b": 0.02028856305209031
+          },
+          "density": 0.00018,
+          "near": 30,
+          "far": 9000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "required",
+        "temperatureC": 4,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 1,
+          "cloudiness": 0.07,
+          "hour": 1.3038888888888565,
+          "phase": "night",
+          "atmosphereSunIntensity": 0
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 4
+        },
+        "sunIntensity": 0,
+        "keyLightDirection": [
+          0,
+          1,
+          0
+        ],
+        "keyLightColor": "#6f86ad"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 7813,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "skyId": "clear",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "clear",
+        "weatherId": "clear",
+        "skyId": "clear",
+        "exposure": 1.028582884173526,
+        "sun": {
+          "azimuthDeg": 58.72120144341114,
+          "elevationDeg": 30.460118140423692,
+          "lux": 80576.67439668594,
+          "color": {
+            "isColor": true,
+            "r": 0.9641782503018962,
+            "g": 0.8586943127491327,
+            "b": 0.6630554212208601
+          }
+        },
+        "ambient": {
+          "intensity": 0.728582884173526,
+          "color": {
+            "isColor": true,
+            "r": 0.7125025575910378,
+            "g": 0.8373980460556053,
+            "b": 0.9708916720402896
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.5785604194020403,
+            "g": 0.7021461609655523,
+            "b": 0.7524426788433825
+          },
+          "density": 0.00007987111869170178,
+          "near": 150,
+          "far": 40000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "off",
+        "temperatureC": 16,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 0,
+          "cloudiness": 0.07,
+          "hour": 10.631666666666675,
+          "phase": "day",
+          "atmosphereSunIntensity": 17.010631261522583
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 16
+        },
+        "sunIntensity": 0.8505315630761292,
+        "keyLightDirection": [
+          0.7366939883276697,
+          0.5069384860504995,
+          0.4475436726429039
+        ],
+        "keyLightColor": "#fbeed5"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 8541,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "weather": "rain",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "clear",
+        "weatherId": "rain",
+        "skyId": "clear",
+        "exposure": 1.0233470324677394,
+        "sun": {
+          "azimuthDeg": 57.821945136652005,
+          "elevationDeg": 30.201044101465527,
+          "lux": 82302.8520327411,
+          "color": {
+            "isColor": true,
+            "r": 0.9707401272672307,
+            "g": 0.8610157347184396,
+            "b": 0.6596526919703984
+          }
+        },
+        "ambient": {
+          "intensity": 0.7233470324677392,
+          "color": {
+            "isColor": true,
+            "r": 0.7144355919985464,
+            "g": 0.8406210419311669,
+            "b": 0.9762237752554582
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.5807692975000396,
+            "g": 0.70462778109817,
+            "b": 0.7553201775088048
+          },
+          "density": 0.006,
+          "near": 150,
+          "far": 40000
+        },
+        "precipitation": "rain",
+        "surfaceState": "wet",
+        "headlightPolicy": "available",
+        "temperatureC": 16,
+        "precipitationIntensity": 0.65,
+        "roadWetness": 0.7,
+        "weatherCycle": {
+          "clouds": 0.5,
+          "mist": 0.1,
+          "wind": 3.5,
+          "opticalFogDensity": 0.0013
+        },
+        "dayCycle": {
+          "nightFactor": 0,
+          "cloudiness": 0.5,
+          "hour": 10.56611111111112,
+          "phase": "day",
+          "atmosphereSunIntensity": 17.375046540245343
+        },
+        "weather": "rain",
+        "surfaceCondition": {
+          "state": "wet",
+          "gripMultiplier": 0.8,
+          "rollingResistanceMultiplier": 1.14,
+          "looseSurfaceDepthM": 0.008,
+          "aquaplaningEnabled": true,
+          "frictionMu": 0.8,
+          "baseSurface": "asphalt",
+          "temperatureC": 16
+        },
+        "sunIntensity": 0.8687523270122671,
+        "keyLightDirection": [
+          0.7315120168648871,
+          0.5030356962336012,
+          0.46026650703374167
+        ],
+        "keyLightColor": "#fcefd4"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 9215,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "weather": "fog",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "clear",
+        "weatherId": "fog",
+        "skyId": "clear",
+        "exposure": 1.021016335648149,
+        "sun": {
+          "azimuthDeg": 57.4256213405236,
+          "elevationDeg": 30.08447228552116,
+          "lux": 83071.24597368395,
+          "color": {
+            "isColor": true,
+            "r": 0.9736610934505825,
+            "g": 0.8620490968350197,
+            "b": 0.6581379947085921
+          }
+        },
+        "ambient": {
+          "intensity": 0.7210163356481489,
+          "color": {
+            "isColor": true,
+            "r": 0.7152960665495655,
+            "g": 0.8420557323423606,
+            "b": 0.9785973176519295
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.5817525616272837,
+            "g": 0.7057324541247441,
+            "b": 0.7566010726457818
+          },
+          "density": 0.018,
+          "near": 150,
+          "far": 40000
+        },
+        "precipitation": "none",
+        "surfaceState": "damp",
+        "headlightPolicy": "required",
+        "temperatureC": 16,
+        "precipitationIntensity": 0,
+        "roadWetness": 0.35,
+        "weatherCycle": {
+          "clouds": 0.24,
+          "mist": 0.42,
+          "wind": 1.2,
+          "opticalFogDensity": 0.0075
+        },
+        "dayCycle": {
+          "nightFactor": 0,
+          "cloudiness": 0.24,
+          "hour": 10.53500000000001,
+          "phase": "day",
+          "atmosphereSunIntensity": 17.537263038888835
+        },
+        "weather": "fog",
+        "surfaceCondition": {
+          "state": "damp",
+          "gripMultiplier": 0.91,
+          "rollingResistanceMultiplier": 1.08,
+          "looseSurfaceDepthM": 0.002,
+          "aquaplaningEnabled": false,
+          "frictionMu": 0.91,
+          "baseSurface": "asphalt",
+          "temperatureC": 16
+        },
+        "sunIntensity": 0.8768631519444416,
+        "keyLightDirection": [
+          0.7291717597082341,
+          0.5012762542811636,
+          0.46586549747523015
+        ],
+        "keyLightColor": "#fcefd4"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 9875,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    },
+    {
+      "weather": "clear",
+      "environment": {
+        "trackId": "dos_lagos",
+        "presetId": "clear",
+        "weatherId": "clear",
+        "skyId": "clear",
+        "exposure": 1.0164123546207393,
+        "sun": {
+          "azimuthDeg": 56.65000601975552,
+          "elevationDeg": 29.85209002061077,
+          "lux": 84589.10582398364,
+          "color": {
+            "isColor": true,
+            "r": 0.979431072959209,
+            "g": 0.8640903660121986,
+            "b": 0.6551459120846281
+          }
+        },
+        "ambient": {
+          "intensity": 0.7164123546207393,
+          "color": {
+            "isColor": true,
+            "r": 0.7169958193763432,
+            "g": 0.8448897720929718,
+            "b": 0.9832859344077658
+          }
+        },
+        "fog": {
+          "color": {
+            "isColor": true,
+            "r": 0.5836948689015348,
+            "g": 0.7079145885032221,
+            "b": 0.7591313103237051
+          },
+          "density": 0.00006502307263730198,
+          "near": 150,
+          "far": 40000
+        },
+        "precipitation": "none",
+        "surfaceState": "dry",
+        "headlightPolicy": "off",
+        "temperatureC": 16,
+        "precipitationIntensity": 0,
+        "roadWetness": 0,
+        "weatherCycle": {
+          "clouds": 0.07,
+          "mist": 0,
+          "wind": 1.2,
+          "opticalFogDensity": null
+        },
+        "dayCycle": {
+          "nightFactor": 0,
+          "cloudiness": 0.07,
+          "hour": 10.468888888888898,
+          "phase": "day",
+          "atmosphereSunIntensity": 17.857700118396544
+        },
+        "weather": "clear",
+        "surfaceCondition": {
+          "state": "dry",
+          "gripMultiplier": 1,
+          "rollingResistanceMultiplier": 1,
+          "looseSurfaceDepthM": 0,
+          "aquaplaningEnabled": false,
+          "frictionMu": 1,
+          "baseSurface": "asphalt",
+          "temperatureC": 16
+        },
+        "sunIntensity": 0.8928850059198272,
+        "keyLightDirection": [
+          0.7244910528683761,
+          0.4977626778728546,
+          0.476807121203655
+        ],
+        "keyLightColor": "#fdefd4"
+      },
+      "aa": {
+        "enabled": true,
+        "quality": "balanced",
+        "phone": false,
+        "hdrSupported": true,
+        "algorithm": "Three r180 spatial FXAA; perceptual edge luma, linear HDR color; no temporal history",
+        "frames": 10493,
+        "targets": 1,
+        "size": [
+          1280,
+          800
+        ],
+        "allocation": {
+          "name": "ASFALTO_SPATIAL_AA_HDR",
+          "width": 1280,
+          "height": 800,
+          "samples": 0,
+          "colorFormat": "RGBA16F",
+          "depth": true,
+          "nominalBytes": 12288000
+        },
+        "budget": {
+          "quality": "balanced",
+          "width": 1280,
+          "height": 800,
+          "pixelRatio": 1,
+          "requestedPixelRatio": 1,
+          "maxPixels": 1135177,
+          "maxPostBytes": 100663296,
+          "passCount": 2,
+          "spatialResolve": true,
+          "samples": 2,
+          "nominalPostBytes": 90112000,
+          "limited": false,
+          "scope": "concurrent postprocessing allocations; excludes assets, canvas and driver overhead"
+        },
+        "disposed": false
+      },
+      "fault": null
+    }
+  ],
+  "environment": {
+    "browser": "154.0.8037.95",
+    "angle": "D3D11",
+    "headless": true,
+    "viewport": [
+      1280,
+      800
+    ],
+    "fixedRenderTier": "high",
+    "advancedQuality": "balanced",
+    "cadence": "60Hz rAF; not a device certification"
+  },
+  "cycles": {
+    "resourcesBefore": {
+      "geometries": 854,
+      "textures": 233
+    },
+    "resourcesAfter": {
+      "geometries": 854,
+      "textures": 223
+    }
+  }
+}

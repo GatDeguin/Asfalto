@@ -1,0 +1,52 @@
+{
+  "browser": "154.0.8037.95",
+  "errors": [],
+  "consoleMessages": [
+    "warning: THREE.WebGLProgram: Program Info Log: (207,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(207,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(454,1): warning X4000: use of potentially uninitialized variable (f_ApplyFXAA)",
+    "warning: THREE.WebGLProgram: Program Info Log: (202,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(202,12-86): warning X3595: gradient instruction used in a loop with varying iteration; partial derivatives may have undefined value\n(431,1): warning X4000: use of potentially uninitialized variable (f_ApplyFXAA)",
+    "log: THREE.WebGLRenderer: Context Lost.",
+    "log: THREE.WebGLRenderer: Context Restored."
+  ],
+  "result": {
+    "missing": false,
+    "tests": {
+      "diagonalFiltered": true,
+      "contactHiddenPrepared": true,
+      "contactSingleDraw": true,
+      "contactSoftSupport": true,
+      "contactLossRestoresFloor": true,
+      "gradingSingleToneMapping": true,
+      "independentInteriorDepth": true,
+      "singleToneMapping": true,
+      "hdrRetained": true,
+      "errorPreserved": true,
+      "stateRestored": true,
+      "noTextureGrowth": true,
+      "resize": true,
+      "restoreInvalidates": true,
+      "actualContextRecovery": true,
+      "offReleases": true,
+      "disposeReleases": true,
+      "phoneFallback": true,
+      "noHdrFallback": true
+    },
+    "glError": 0,
+    "diagonal": {
+      "original": 0,
+      "filtered": 72
+    },
+    "hdr": [
+      4,
+      2,
+      1,
+      1
+    ],
+    "recovery": {
+      "status": "restored",
+      "before": 0,
+      "afterRestore": 0,
+      "plainRender": 0,
+      "filteredRender": 0
+    }
+  }
+}

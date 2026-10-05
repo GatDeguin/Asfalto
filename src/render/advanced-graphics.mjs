@@ -1,15 +1,17 @@
-import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=2481e701be72bf1c';
-import {createWorkshopRenderBudget} from './render-budget.mjs?v=6d1203c83e12e6ba';
-import {createTextureFiltering} from './texture-filtering.mjs?v=2166f1881bcc67b5';
-import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=c2943f0c1c9be48f';
-import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=778703e2dae501e6';
-import {createAdvancedMaterials}from'./advanced-materials.mjs?v=24cbd52ef66a026e';
-import {createPivotPainter}from'./pivot-painter.mjs?v=315aaac8b0cc5a18';
-import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=d9af1b27a4c5741d';
-import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=d751a8fc1ba0a957';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=1714c9c6d22ccd68';
-import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=faddc4d7745bf11f';
-import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=24cd5d52423b7125';
+import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=258173b4dba723d7';
+import {createWorkshopRenderBudget} from './render-budget.mjs?v=19c7400d32eaa34a';
+import {createTextureFiltering} from './texture-filtering.mjs?v=dd00a75cbd9c1e71';
+import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=32f2c06cd03b8801';
+import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=263cf7ae8c411df4';
+import {createAdvancedMaterials}from'./advanced-materials.mjs?v=cabe0d716ed24daa';
+import {createPivotPainter}from'./pivot-painter.mjs?v=51fc8374f2d1160e';
+import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=20a8f9064089448f';
+import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=85d450c23e36764c';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=86108a480a3a8a84';
+import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
+import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
+import {createSpatialAntialias} from './spatial-antialias.mjs?v=7fc668e4ef289850';
+import {createRenderCapabilities} from './render-capabilities.mjs?v=db7746f3deffab55';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
  registerRenderPreparation(renderer,T);
  let structureRevision=0,structureDirty=true,preparedSignature=null,preparingSignature=null,prepareError=null;
@@ -23,21 +25,22 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  function preparationSignature(){indexWorkshop();return JSON.stringify([renderer.__renderHost?.diagnostics().contextEpoch,quality,settings,structureRevision,workshopLights.map(light=>{let visible=light.visible;for(let parent=light.parent;visible&&parent;parent=parent.parent)visible=parent.visible;return[visible,light.layers.mask,light.castShadow,!!light.map];})]);}
  function prepare(compile=()=>compileVisiblePass(renderer,scene,camera)){
   const signature=scope==='workshop'?preparationSignature():null;
-  const work=post.prepare(compile);
+  const work=scope==='workshop'?outputAA.prepare(()=>post.prepare(compile)):post.prepare(compile);
   return Promise.resolve(work).then(result=>{if(!disposed&&scope==='workshop'&&signature===preparationSignature()){preparedSignature=signature;prepareError=null;}return result;});
  }
  let settings=readAdvancedGraphics(),disposed=false,lastRefresh=-10,lastSignature='',lastField=-10,frames=0;
  // Reuse the same governor for the workshop's own frame intervals. Never feed
  // animation-clamped dt or synthetic FPS into it; the race keeps its existing owner.
- const rendererBudget=scope==='workshop'?createWorkshopRenderBudget(T,{renderer,phone}):null;
+ const rendererBudget=scope==='workshop'?createWorkshopRenderBudget(T,{renderer,phone,spatialResolve:!phone}):null;
  const maximum=()=>maximumTierForGraphicsQuality(getMaximumQuality(),settings.quality);
  const performanceGovernor=scope==='workshop'&&!getQuality?createTrackPerformanceGovernor({initialTier:maximum(),maximumTier:maximum(),onTierChange:transition=>rendererBudget?.apply(transition.tier)}):null;
  const governed=()=>getQuality?.()??performanceGovernor?.tier()??'high';
  let quality=effectiveGraphicsQuality(settings,governed()),frameTime=null,lastFrameTime=null,pendingFrame=false,lastLimitCheck=-Infinity;
  const filtering=createTextureFiltering(T,{root:scene,renderer,quality});
- const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,phone,framePassCount:scope==='workshop'?1:2,onStage:onRenderStage});
+ const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,phone,framePassCount:scope==='workshop'?1:2,spatialResolve:!phone,onStage:onRenderStage});
+ const outputAA=createSpatialAntialias(T,{renderer,quality,phone,passCount:scope==='workshop'?1:2}),capabilities=createRenderCapabilities({renderer});
  function configure(){
-  performanceGovernor?.setMaximumTier(maximum());rendererBudget?.apply(governed());quality=effectiveGraphicsQuality(settings,governed());filtering.setQuality(quality);const budget=screenLightingPolicy(quality);
+  performanceGovernor?.setMaximumTier(maximum());rendererBudget?.apply(governed());quality=effectiveGraphicsQuality(settings,governed());filtering.setQuality(quality);outputAA.setQuality(quality);const budget=screenLightingPolicy(quality);
   materials.setQuality(settings.materials?quality:'off');pivot.setQuality(settings.pivotPainter?quality:'off');field.setQuality(settings.dfao?quality:'off');
   atmosphere.setQuality(settings.volumetrics||settings.sky?quality:'off');post.setQuality(quality);post.setFeatures(settings);
   setSurfaceReliefPDO(settings.pdo&&quality!=='off'&&quality!=='low');
@@ -65,7 +68,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
    if(settings.dfao&&screenLightingPolicy(quality).dfao&&time-lastField>.6){field.refresh({camera});lastField=time;}
    frames++;
   },
-  prepare,
+  prepare,prepareOutput:compile=>outputAA.prepare(compile),renderOutput:draw=>outputAA.render(draw),
   syncPreparationQuality(){if(!disposed&&effectiveGraphicsQuality(settings,governed())!==quality)configure();},
   render(draw=()=>renderer.render(scene,camera)){
    if(scope==='workshop'){
@@ -76,7 +79,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
      return;
     }
    }
-   const started=performance.now();try{post.render(draw);}finally{
+   const started=performance.now();try{if(scope==='workshop')outputAA.render(()=>post.render(draw));else post.render(draw);}finally{
     if(performanceGovernor&&pendingFrame&&!disposed){
      const interval=lastFrameTime===null?0:frameTime-lastFrameTime;
      if(interval>0)performanceGovernor.sample({preparing:isRenderPreparationPending(renderer),frameMs:interval,frameWorkMs:Math.max(0,performance.now()-started),heapBytes:performance.memory?.usedJSHeapSize||0,gpuTextures:renderer.info.memory.textures||0,gpuGeometries:renderer.info.memory.geometries||0,targetFps:60});
@@ -85,7 +88,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
     }
    }
   },
-  diagnostics:()=>({scope,preparation:{ready:scope!=='workshop'||preparedSignature===preparationSignature(),pending:!!preparingSignature,error:prepareError?.message||null},settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),rendererBudget:rendererBudget?.diagnostics()||null,measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
-  dispose(){if(disposed)return;disposed=true;for(const node of observed){node.removeEventListener('childadded',structureChanged);node.removeEventListener('childremoved',structureChanged);}observed.clear();globalThis.removeEventListener?.('asfalto:advanced-graphics',change);post.dispose();disposeRenderPreparation(renderer);rendererBudget?.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
+  diagnostics:()=>({scope,preparation:{ready:scope!=='workshop'||preparedSignature===preparationSignature(),pending:!!preparingSignature,error:prepareError?.message||null},settings:{...settings},requestedQuality:settings.quality,effectiveQuality:quality,governedQuality:governed(),reductionReason:quality!==settings.quality&&settings.quality!=='auto'?'Limitado a '+GRAPHICS_QUALITY_LABELS[quality]+' por el presupuesto gráfico':null,performance:performanceGovernor?.diagnostics()||getQualityDiagnostics(),rendererBudget:rendererBudget?.diagnostics()||null,measurementScope:performanceGovernor?'workshop frame intervals; advanced render CPU submission only':'race governor',capabilities:capabilities.diagnostics(),antialias:outputAA.diagnostics(),filtering:filtering.diagnostics(),frames,materials:materials.diagnostics(),pivotPainter:pivot.diagnostics(),dfao:field.diagnostics(),atmosphere:atmosphere.diagnostics(),screenSpace:post.diagnostics(),pdo:surfaceReliefDiagnostics(),disposed}),
+  dispose(){if(disposed)return;disposed=true;for(const node of observed){node.removeEventListener('childadded',structureChanged);node.removeEventListener('childremoved',structureChanged);}observed.clear();globalThis.removeEventListener?.('asfalto:advanced-graphics',change);outputAA.dispose();capabilities.dispose();post.dispose();disposeRenderPreparation(renderer);rendererBudget?.dispose();filtering.dispose();materials.dispose();pivot.dispose();field.dispose();atmosphere.dispose();}
  };
 }

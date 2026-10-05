@@ -1,4 +1,4 @@
-import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=24cd5d52423b7125';
+import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=87374a99c604ce32';
 import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
 // Blender-authored, local-metre meshes. All instances are visual and have no collision role.

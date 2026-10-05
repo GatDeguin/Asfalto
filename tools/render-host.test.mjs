@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {getRenderHost} from '../src/runtime/render-host.mjs?v=529634b49006a89f';
+import test from 'node:test';import assert from 'node:assert/strict';import {getRenderHost} from '../src/runtime/render-host.mjs?v=59a89ed6c25fba10';
 class Vector{constructor(x=0,y=0,z=0,w=0){Object.assign(this,{x,y,z,w});}clone(){return new Vector().copy(this);}copy(v){Object.assign(this,v);return this;}multiplyScalar(n){this.x*=n;this.y*=n;return this;}floor(){this.x=Math.floor(this.x);this.y=Math.floor(this.y);return this;}}
 class Color{constructor(value=0){this.value=value;}clone(){return new Color(this.value);}copy(v){this.value=v.value;return this;}}
 function fixture(compile=()=>Promise.resolve()){const events={},canvas={dataset:{},classList:{remove(){}},addEventListener:(k,v)=>events[k]=v,removeEventListener:k=>delete events[k]},calls=[];let color=new Color(),alpha=1,size=new Vector(200,100),dpr=1,target=null,face=0,mip=0,viewport=new Vector(0,0,200,100),scissor=viewport.clone(),test=false,physical=viewport.clone(),disposed=0;

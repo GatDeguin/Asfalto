@@ -15,7 +15,7 @@ const reference=referenceFlag<0?null:path.resolve(process.argv[referenceFlag+1])
 if(reference)fs.mkdirSync(reference,{recursive:true});
 const out=path.join(root,'assets/tracks/offline-bake');fs.mkdirSync(out,{recursive:true});
 const manifest={schema:BAKE_SCHEMA,tracks:{},inputs:{}};
-for(const file of ['src/tracks/visuals/closure-terrain.mjs?v=4dcccce8e97601ca','src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be','src/tracks/visuals/forest-terrain-detail.mjs?v=9535a171be7c3c52','src/render/surface-curvature.mjs?v=38c4cf791d4cbb40'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+for(const file of ['src/tracks/visuals/closure-terrain.mjs?v=8a73d5a808c0fba5','src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be','src/tracks/visuals/forest-terrain-detail.mjs?v=9535a171be7c3c52','src/render/surface-curvature.mjs?v=b65bd00ab81d3d27'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
 for(const e of JSON.parse(fs.readFileSync(path.join(root,'tracks/registry.json'))).tracks){const file=path.join('tracks',e.manifest);if(fs.existsSync(path.join(root,file)))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');}
 const server=await startServer({root});let browser;
 try{

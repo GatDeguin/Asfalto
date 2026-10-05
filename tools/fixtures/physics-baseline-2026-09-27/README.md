@@ -1,0 +1,1 @@
+Historical project-owned physics files captured before the 2026-09-27 scratch-buffer optimization. Used only by physics-runtime-scratch.test.mjs to compare real Rapier ticks, impact aggregation and snapshots. These files are test fixtures, never loaded by the application.

@@ -1,5 +1,5 @@
 import {DECLARATIONS,TRACE,DEPTH,VERTEX} from './surface-relief.glsl.mjs?v=7675ec5a7a7b8227';
-import {computeReliefCurvature} from '../../render/surface-curvature.mjs?v=38c4cf791d4cbb40';
+import {computeReliefCurvature} from '../../render/surface-curvature.mjs?v=b65bd00ab81d3d27';
 import {isHighGraphicsQuality} from '../../render/graphics-quality-policy.mjs?v=778703e2dae501e6';
 
 // Inward relief with local quadratic convex silhouette tracing. The curvature

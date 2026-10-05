@@ -1,4 +1,4 @@
-import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=258173b4dba723d7';
 import {AUXILIARY_CAPTURE_RATES} from './auxiliary-capture-schedule.mjs?v=f03a5f52446e9baf';
 // One nearby water plane captures the actual bank/terrain. It supplements the
 // physical HDR environment; out-of-capture pixels keep that continuous fallback.

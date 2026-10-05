@@ -10,11 +10,12 @@ export function createTextureFiltering(T,{root,renderer,quality='balanced'}={}){
  function release(texture,entry){entry.requests.delete(token);apply(entry);if(!entry.requests.size)owners.delete(texture);textures.delete(texture);}
  function refresh(){
   if(disposed)return;const seen=new Set();
-  if(quality==='cinematic')root.traverse(object=>{for(const material of Array.isArray(object.material)?object.material:[object.material]){
+  const requested=Math.min(maximum,{balanced:2,high:4,cinematic:8}[quality]||1);
+  if(requested>1)root.traverse(object=>{for(const material of Array.isArray(object.material)?object.material:[object.material]){
    if(!material)continue;for(const key of MAPS){const texture=material[key];
     if(!texture?.isTexture||texture.isRenderTargetTexture||texture.isVideoTexture||texture.isCubeTexture||!mipFilters.has(texture.minFilter)||!texture.generateMipmaps&&!(texture.mipmaps?.length>1))continue;
     seen.add(texture);let entry=owners.get(texture);if(!entry){entry={texture,original:texture.anisotropy,requests:new Map()};owners.set(texture,entry);}
-    entry.requests.set(token,maximum);textures.set(texture,entry);apply(entry);
+    entry.requests.set(token,requested);textures.set(texture,entry);apply(entry);
    }
   }});
   for(const [texture,entry]of textures)if(!seen.has(texture))release(texture,entry);

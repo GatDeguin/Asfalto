@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {compileVisiblePass,prepareBatchedPass,registerRenderPreparation,getRenderPreparationDiagnostics,disposeRenderPreparation} from '../src/render/pass-preparation.mjs?v=2481e701be72bf1c';
+import {compileVisiblePass,prepareBatchedPass,registerRenderPreparation,getRenderPreparationDiagnostics,disposeRenderPreparation} from '../src/render/pass-preparation.mjs?v=258173b4dba723d7';
 function fixture(count,{cost=0}={}){
  let time=0;const scene=new T.Scene(),camera=new T.Camera(),turns=[],seen=[];
  for(let i=0;i<count;i++){const mesh=new T.Mesh();mesh.name=String(i);scene.add(mesh);}

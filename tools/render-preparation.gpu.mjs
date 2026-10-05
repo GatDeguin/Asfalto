@@ -10,7 +10,7 @@ const root=new URL('../',import.meta.url);
 const payload=JSON.parse(fs.readFileSync(new URL('assets/manifests/workshop-bootstrap.json?v=71e24e64d3ef5ec5',root)));
 const core='data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64');
 const source=gunzipSync(Buffer.from(payload.threeModuleGz,'base64')).toString().replaceAll('./three.core.min.js',core);
-const helper=fs.readFileSync(new URL('src/render/pass-preparation.mjs?v=2481e701be72bf1c',root),'utf8');
+const helper=fs.readFileSync(new URL('src/render/pass-preparation.mjs?v=258173b4dba723d7',root),'utf8');
 const browser=await chromium.launch({headless:true,...(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{}),args:process.platform==='win32'?['--use-angle=d3d11']:[]});
 try{
  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));

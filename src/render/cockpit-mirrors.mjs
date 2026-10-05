@@ -1,4 +1,4 @@
-import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=2481e701be72bf1c';
+import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=258173b4dba723d7';
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=3bfbde2ea40b338a';
 
 const QUALITY = Object.freeze({

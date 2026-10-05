@@ -7,7 +7,7 @@ const context=vm.createContext({console,WebAssembly,TextDecoder,TextEncoder,atob
 for(const name of ['asfalto-v6-rapier.js','asfalto-v6-vehicle-model.js','asfalto-v6-physics-runtime.js'])vm.runInContext(fs.readFileSync(new URL('src/legacy/'+name,root),'utf8'),context);
 context.AsfaltoV6Chassis=chassis;
 const old=vm.createContext({});
-for(const name of ['asfalto-v6-vehicle-model.js','asfalto-v6-physics-runtime.js'])vm.runInContext(fs.readFileSync(new URL('../Reports/Asfalto_Nacional_v8/runtime-gpu-2026-09-27/before/src/legacy/'+name,root),'utf8'),old);
+for(const name of ['asfalto-v6-vehicle-model.js','asfalto-v6-physics-runtime.js'])vm.runInContext(fs.readFileSync(new URL('tools/fixtures/physics-baseline-2026-09-27/'+name,root),'utf8'),old);
 old.AsfaltoV6Chassis=chassis;
 const R=context.AsfaltoV6Rapier;await R.init();
 function session(ctx,height,configured){const world=new R.World({x:0,y:-9.81,z:0});world.createCollider(R.ColliderDesc.cuboid(100,.1,100).setTranslation(0,-.1,0));world.step();const result=new ctx.AsfaltoV6Physics.VehiclePhysicsSession({RAPIER:R,world,core:ctx.AsfaltoV6VehicleCore,spec:ctx.AsfaltoV6VehicleCore.CHEVY_ORIGINAL_SPEC,spawn:{x:0,y:height,z:0},mutableSnapshots:true,chassisConfig:configured?{abs:true,tire:2,kit:1}:null});result.reset({spawn:{x:0,y:height,z:0},initialGear:1});return result;}

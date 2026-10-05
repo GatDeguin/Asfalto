@@ -1,9 +1,9 @@
-import {createScreenSpaceTarget,supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=40515a8a242d2631';
-import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLSL,compositeMain,volumeMain,historyMain} from './screen-space-lighting.glsl.mjs?v=b5205d6a5b490b64';
-import {compileVisiblePass} from './pass-preparation.mjs?v=2481e701be72bf1c';
-import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=6d1203c83e12e6ba';
-import {supportedHdrSamples} from './render-target-capabilities.mjs?v=d75829b876d7c18d';
-import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=e2765b113440f785';
+import {createScreenSpaceTarget,supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=6da4d0d78fe83c9e';
+import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLSL,compositeMain,volumeMain,historyMain} from './screen-space-lighting.glsl.mjs?v=4f83a6d6ad3191fe';
+import {compileVisiblePass} from './pass-preparation.mjs?v=258173b4dba723d7';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=19c7400d32eaa34a';
+import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
+import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=b7634bbada9ccfa0';
 const policies=Object.freeze({
  cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.5,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
  high:Object.freeze({enabled:true,maxWidth:768,maxPixels:589824,scale:.5,aoSamples:24,giRays:6,giSteps:12,dfao:true,volume:true}),
@@ -15,7 +15,7 @@ export const screenLightingPolicy=tier=>policies[tier]||policies.balanced;
 export function depthToViewDistance(depth,near,far,logarithmic=false){return logarithmic?Math.expm1(Math.log1p(far)*depth):near*far/(far-depth*(far-near));}
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
-export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,onStage=null}={}){
+export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,spatialResolve=false,onStage=null}={}){
  let disposed=false,rendering=false,frames=0,targets=null,historyValid=false,historyIndex=0,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
  const hdrSupported=supportsScreenSpaceHDR(renderer);
  const previousWorld=new T.Matrix4(),previousView=new T.Matrix4(),previousProjection=new T.Matrix4();
@@ -81,7 +81,7 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  function ensureTargets(){
   const destination=renderer.getRenderTarget();
   if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);
-  allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples});
+  allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,passCount:framePassCount,samples:targetSamples,spatialResolve});
   const width=allocationBudget.width,height=allocationBudget.height;
   const scale=Math.min(.5,policy.scale,policy.maxWidth/width,Math.sqrt((policy.maxPixels??Infinity)/(width*height)));
   const ew=Math.max(1,Math.floor(width*scale)),eh=Math.max(1,Math.floor(height*scale));

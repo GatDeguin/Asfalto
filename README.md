@@ -8,6 +8,8 @@ Correcciones de estabilidad y mediciones: [informe v8](docs/release-v8-stability
 
 Movimiento integrado del menú, pruebas y pausa: [matriz de 16 técnicas, contratos y evidencia](docs/motion-semantico.md).
 
+Estabilidad de imagen, contacto y filtrado: [diagnóstico, decisiones y evidencia](docs/realismo-web.md).
+
 ## Integración de vehículos y cockpits — 19/09/2026
 
 Esta carpeta es la base v8. Incluye Chevy 250, Chevy 250 SS Serie 2, Chevrolet 400, Bel Air 1957 y Chevrolet 3100. Se conservaron los exteriores actualizados de la v8 del Chevy/400; el interior detallado del 400 se extrajo por separado del trabajo anterior.

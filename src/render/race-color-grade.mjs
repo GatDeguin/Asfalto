@@ -1,7 +1,7 @@
-import {compileVisiblePass} from './pass-preparation.mjs?v=2481e701be72bf1c';
-import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=6d1203c83e12e6ba';
-import {supportedHdrSamples} from './render-target-capabilities.mjs?v=d75829b876d7c18d';
-import {parseCubeLut,sampleCubeLut} from './cube-lut.mjs?v=45e678cbc6cf67ba';
+import {compileVisiblePass} from './pass-preparation.mjs?v=258173b4dba723d7';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=19c7400d32eaa34a';
+import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
+import {parseCubeLut,sampleCubeLut} from './cube-lut.mjs?v=e5e0d02b6152ffb9';
 
 export const DEFAULT_COLOR_GRADE_SETTINGS=Object.freeze({lutId:'none',intensity:1,contrast:1,saturation:1,temperature:0,tint:0});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -100,7 +100,7 @@ export function createRaceColorGrade({THREE:T,renderer,manifest:initialManifest=
   const destination=renderer.getRenderTarget();if(destination)size.set(destination.width,destination.height);else renderer.getDrawingBufferSize(size);
   const quality=getQuality(),wanted=Math.min(requestedSamples,renderSampleLimit(quality,phone));
   if(sampleKey!==wanted){sampleKey=wanted;effectiveSamples=supportedHdrSamples(renderer,wanted);}
-  allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,samples:effectiveSamples});const width=allocationBudget.width,height=allocationBudget.height;
+  allocationBudget=resolveRenderBudget({width:size.x,height:size.y,quality,phone,samples:effectiveSamples,spatialResolve:!phone});const width=allocationBudget.width,height=allocationBudget.height;
   if(pass){if(!prepareOnly){if(pass.target.samples!==effectiveSamples){pass.target.dispose();pass.target.samples=effectiveSamples;}if(pass.target.width!==width||pass.target.height!==height)pass.target.setSize(width,height);}return;}
   const target=new T.WebGLRenderTarget(width,height,{type:T.HalfFloatType,format:T.RGBAFormat,minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:true,stencilBuffer:false});
   target.texture.name='ASFALTO_COLOR_HDR';target.texture.colorSpace=T.LinearSRGBColorSpace;target.samples=effectiveSamples;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {prepareBatchedPass,registerRenderPreparation,createPassPreparation,compileVisiblePass,prepareCubeCamera} from '../src/render/pass-preparation.mjs?v=2481e701be72bf1c';
+import {prepareBatchedPass,registerRenderPreparation,createPassPreparation,compileVisiblePass,prepareCubeCamera} from '../src/render/pass-preparation.mjs?v=258173b4dba723d7';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 test('pending variants deduplicate and stale completion cannot activate after invalidation or disposal',async()=>{
  const gate=createPassPreparation(),first=deferred();let calls=0;
@@ -25,8 +25,8 @@ test('cube prepares six target faces with immediate target and XR restoration',a
  for(let i=0;i<6;i++){assert.equal(gates.length,i+1);gates[i].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(target,'original');}
  await p;assert.deepEqual(faces,[0,1,2,3,4,5]);cube.dispose();
 });
-import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=f4d6d8707816c8ab';
-import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=879b08aa5b4f0b13';
+import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=0d0d50d032823ba5';
+import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=85bccac21887c8d5';
 function captureFixture(){let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');const compiled=[],drawn=[],pending=[];
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(70,1,.1,100);camera.position.set(0,4,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const state=c=>({target,tone:r.toneMapping,clipping:r.clippingPlanes.length,layers:c.layers.mask,visible:scene.children.filter(o=>o.visible).map(o=>o.uuid),xr:r.xr.enabled,shadow:r.shadowMap.autoUpdate});

@@ -1,4 +1,4 @@
-import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=b5d99705e208d46d';
+import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
