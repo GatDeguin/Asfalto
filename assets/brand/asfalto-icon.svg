@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+<title id="title">Asfalto Nacional — icono</title>
+<desc id="desc">Emblema de asfalto y velocidad: una A plateada que se transforma en ruta, con marcas de carril y acentos celestes de Argentina sobre fondo oscuro.</desc>
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#263645"/><stop offset=".42" stop-color="#121B27"/><stop offset="1" stop-color="#070A10"/></linearGradient>
+  <radialGradient id="halo"><stop stop-color="#36738B" stop-opacity=".4"/><stop offset=".58" stop-color="#22425A" stop-opacity=".08"/><stop offset="1" stop-color="#0B1220" stop-opacity="0"/></radialGradient>
+  <linearGradient id="steel" x1=".05" y1=".08" x2=".95" y2=".85"><stop stop-color="#FFFFFF"/><stop offset=".22" stop-color="#DCEEF1"/><stop offset=".5" stop-color="#8EA5B2"/><stop offset=".66" stop-color="#EAF5F8"/><stop offset="1" stop-color="#9DAAB2"/></linearGradient>
+  <linearGradient id="rightsteel" x1=".15" y1=".1" x2=".85" y2="1"><stop stop-color="#F8FBF9"/><stop offset=".4" stop-color="#C4D9DC"/><stop offset=".73" stop-color="#788E9D"/><stop offset="1" stop-color="#E8F2F5"/></linearGradient>
+  <linearGradient id="asphalt" x1=".5" y1="0" x2=".5" y2="1"><stop stop-color="#202B34"/><stop offset="1" stop-color="#0B1117"/></linearGradient>
+  <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFF3BE"/><stop offset=".44" stop-color="#FFBD53"/><stop offset="1" stop-color="#EE6D2E"/></linearGradient>
+  <linearGradient id="sky" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#45D1FA" stop-opacity="0"/><stop offset=".23" stop-color="#42C8ED"/><stop offset=".52" stop-color="#B4E9FA"/><stop offset=".8" stop-color="#43BCE6"/><stop offset="1" stop-color="#43C9F1" stop-opacity="0"/></linearGradient>
+  <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="17"/></filter>
+  <clipPath id="rounded"><rect x="0" y="0" width="1024" height="1024" rx="218"/></clipPath>
+</defs>
+<g clip-path="url(#rounded)">
+ <rect width="1024" height="1024" fill="url(#bg)"/>
+ <ellipse cx="510" cy="394" rx="510" ry="505" fill="url(#halo)"/>
+ <path d="M0 765 240 650 510 614 796 666 1024 780V1024H0Z" fill="#080D14" opacity=".36"/>
+ <path d="M84 501H940" stroke="#75A5C0" stroke-width="2" opacity=".09"/>
+ <g fill="none" stroke-linecap="round">
+  <path d="M167 602A368 368 0 0 1 856 594" stroke="#66BAD7" stroke-width="7" opacity=".16"/>
+  <path d="M231 513A302 302 0 0 1 795 504" stroke="#C5D9DF" stroke-width="2.5" opacity=".11"/>
+  <path d="M234 440H789" stroke="url(#sky)" stroke-width="8" opacity=".92"/>
+  <path d="M274 464H751" stroke="url(#sky)" stroke-width="3" opacity=".35"/>
+ </g>
+ <circle cx="512" cy="324" r="79" fill="#F6A13C" opacity=".24" filter="url(#glow)"/>
+ <circle cx="512" cy="324" r="34" fill="url(#orange)" opacity=".97"/>
+ <path d="M173 780 430 242Q463 181 512 176L522 302Q493 321 483 347L290 780Z" fill="url(#steel)"/>
+ <path d="M512 176Q565 181 599 242L851 780H735L537 347Q527 324 501 305Z" fill="url(#rightsteel)"/>
+ <path d="M193 772 446 253Q468 219 490 205" fill="none" stroke="#FFFFFF" stroke-width="11" opacity=".88"/>
+ <path d="M578 252 832 775" fill="none" stroke="#DFFAFF" stroke-width="8" opacity=".72"/>
+ <path d="M296 754 466 363" fill="none" stroke="#4A6A7A" stroke-width="9" opacity=".25"/>
+ <path d="M722 744 559 371" fill="none" stroke="#223544" stroke-width="8" opacity=".22"/>
+ <path d="M340 607H680L719 685H303Z" fill="#223745" opacity=".7"/>
+ <path d="M337 590H688L728 659H297Z" fill="url(#steel)"/>
+ <path d="M336 600H689" stroke="#FFFFFF" stroke-width="8" opacity=".88"/>
+ <path d="M315 655H710" stroke="#506474" stroke-width="6" opacity=".4"/>
+ <path d="M459 688H564L713 961H311Z" fill="url(#asphalt)"/>
+ <path d="M449 688 310 962" stroke="#C0DBE4" stroke-width="11" opacity=".9"/>
+ <path d="M572 688 712 962" stroke="#93B8C9" stroke-width="11" opacity=".9"/>
+ <path d="M511 704 504 735 519 735 511 704Z" fill="url(#orange)"/>
+ <path d="M501 765 523 765 529 814 494 814Z" fill="url(#orange)"/>
+ <path d="M489 849H536L546 928H478Z" fill="url(#orange)"/>
+ <path d="M300 930H438" stroke="#65C8EF" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <path d="M300 947H438" stroke="#F3F6F4" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <path d="M300 964H438" stroke="#65C8EF" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <path d="M582 930H720" stroke="#65C8EF" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <path d="M582 947H720" stroke="#F3F6F4" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <path d="M582 964H720" stroke="#65C8EF" stroke-width="9" stroke-linecap="round" opacity=".95"/>
+ <rect x="15" y="15" width="994" height="994" rx="207" fill="none" stroke="#A9D8E2" stroke-width="8" opacity=".12"/>
+</g>
+</svg>
