@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=1e7fc063e5dbe9bc';
+import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=914d2aed50024dc4';
 import {bindSharedInstanceWindows} from '../src/tracks/seam-copy-factory.mjs?v=97bbf38e4233d892';
 
 test('Iguazú shares one draw per geometry, material and range across visible spatial cells',()=>{

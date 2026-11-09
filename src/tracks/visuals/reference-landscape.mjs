@@ -319,7 +319,7 @@ export function createForestPlacements({ id, query, heightAt, maxTrees = 12000, 
   return trees;
 }
 
-export function terrainHeightSampler(THREE, root) {
+export function terrainHeightSampler(THREE, root, includeSurface = () => false) {
   // A spatial triangle grid makes thousands of vertical placements cheap and deterministic.
   const grid = new Map(), water = [], size = 80, bounds = new THREE.Box3();
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
@@ -327,7 +327,7 @@ export function terrainHeightSampler(THREE, root) {
   root.traverse(mesh => {
     if (mesh.isMesh && /^(WATER_|LAGO_ESCONDIDO)/.test(mesh.name)) water.push(new THREE.Box3().setFromObject(mesh));
     if (!mesh.isMesh || mesh.userData.asfaltoReplacedTerrain || /^(COLLISION_)|SOURCE_OWNER/i.test(mesh.name) || (!/(ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION|^TERRAIN_)/.test(mesh.name)
-      && !/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(mesh.material?.name || ''))) return;
+      && !/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(mesh.material?.name || '') && !includeSurface(mesh))) return;
     const p = mesh.geometry.attributes.position, index = mesh.geometry.index;
     const count = index?.count || p.count;
     for (let i = 0; i < count; i += 3) {

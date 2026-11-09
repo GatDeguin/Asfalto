@@ -208,11 +208,9 @@ function openMenu(panel=profile.lastPanel||'drive'){
  globalThis.__asfaltoVehicleMaintenance?.flush({end:true});globalThis.__asfaltoVehicleAssistance?.hide();
  championshipResultsVisible=false;void leaveChampionship();cancelRoadTest('return-to-workshop');
  sessionRequestRunner?.cancel('menu');window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
- const returnFilm=document.body.classList.contains('v6-driving')?globalThis.__asfaltoLoading?.begin('De vuelta al taller','Abriendo el taller…',{scene:'return'}):null;
  setSessionPaused(true);sessionLoop.stop();window.__cockpit?.raceWorld?.pause?.({reason:'menu'});globalThis.__asfaltoRacePresentation?.closePause();
  silenceLegacyV5();workshop.restoreAfterRace();lastFocused=document.activeElement;document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');q('#v6-main-menu').classList.remove('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','false');openPanel(panel,false);workshop.setActive(true);setTimeout(()=>q(`.v6-nav-btn[data-v6-panel="${panel}"]`)?.focus(),30);ambient.start();
  globalThis.__asfaltoMenuPresentation?.onMenu(true);if(panel==='workshop')globalThis.__asfaltoMenuPresentation?.onPanel(panel);void syncWorkshopCollection();
- if(returnFilm)void returnFilm.painted.then(()=>returnFilm.end());
 }
 function closeMenu(){silenceLegacyV5();document.body.classList.remove('v6-menu-open');document.body.classList.add('v6-driving');q('#v6-main-menu').classList.add('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','true');workshop.setActive(false);globalThis.__asfaltoRaceRenderView?.activate();ambient.stop();globalThis.__asfaltoMenuPresentation?.onMenu(false);globalThis.__asfaltoNacionalV41?.radio?.setKeyboardArmed?.(false);const playfield=q('#viewport canvas');if(playfield){playfield.tabIndex=-1;playfield.focus({preventScroll:true})}else document.activeElement?.blur?.();}
 function trapFocus(e,root){if(e.key!=='Tab')return;const list=qa('button:not([disabled]),select:not([disabled]),input:not([disabled]),[tabindex="0"]',root).filter(x=>x.offsetParent!==null);if(!list.length)return;const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}

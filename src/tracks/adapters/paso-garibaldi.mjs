@@ -1,4 +1,4 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=fcf61189a1d2447e';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=4da80d3ae849f741';
 
 const MANIFEST = Object.freeze({
   schema: 'asfalto-track/v1',
