@@ -1,3 +1,30 @@
+/** Each vehicle owns its materials. Record only the lenses affected by this tier. */
+export function createVehicleRefractionPolicy(materials) {
+ const lenses=[];
+ for(const material of materials){
+  const {name,transmission,opacity,transparent,depthWrite,forceSinglePass}=material;
+  if(!material.isMeshPhysicalMaterial||!(transmission>0)||!/Glass|Vidrio|Headlamp/i.test(name))continue;
+  lenses.push({
+   material,
+   authored:{transmission,opacity,transparent,depthWrite,forceSinglePass},
+   reduced:{transmission:0,opacity:opacity*Math.max(.12,1-transmission),transparent:true,depthWrite:false,forceSinglePass:true},
+  });
+ }
+ let reduced=false;
+ return {
+  setReduced(value){
+   const next=Boolean(value);
+   if(reduced===next)return false;
+   for(const lens of lenses){
+    Object.assign(lens.material,next?lens.reduced:lens.authored);
+    lens.material.needsUpdate=true;
+   }
+   reduced=next;
+   return true;
+  }
+ };
+}
+
 // Close only the open glazing planes from the original presentation derivatives.
 // Supplied alternative cars already contain authored optical skins and keep them.
 export function thickenVehicleGlass(T,object,model,{thicknessM=.0045}={}){

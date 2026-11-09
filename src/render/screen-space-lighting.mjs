@@ -1,7 +1,7 @@
 import {createScreenSpaceTarget,supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=6da4d0d78fe83c9e';
 import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLSL,compositeMain,volumeMain,historyMain} from './screen-space-lighting.glsl.mjs?v=4f83a6d6ad3191fe';
 import {compileVisiblePass} from './pass-preparation.mjs?v=258173b4dba723d7';
-import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=19c7400d32eaa34a';
+import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
 import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=b7634bbada9ccfa0';
 const policies=Object.freeze({

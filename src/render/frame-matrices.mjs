@@ -1,6 +1,7 @@
 // Update transforms once after simulation/streaming and before mirrors/world/cabin.
 // A stationary Scene must not force every static track node to multiply matrices.
 const previousMatrices = new WeakMap();
+const trackedTrackRoots = new WeakSet();
 export function withFrameMatrices(scene, draw) {
   const worldAuto = scene.matrixWorldAutoUpdate, localAuto = scene.matrixAutoUpdate;
   try {
@@ -31,6 +32,19 @@ export function withFrameMatrices(scene, draw) {
 export function freezeStaticTrackTransforms(root) {
   if (!root?.isObject3D) return 0;
   root.updateMatrixWorld(true);
+  if (!trackedTrackRoots.has(root)) {
+    const update = root.updateMatrix, previous = root.matrix.clone();
+    let parent = root.parent;
+    root.updateMatrix = function () {
+      const dirty = this.matrixWorldNeedsUpdate;
+      update.call(this);
+      // An unchanged root must not force a world-matrix product for every mesh.
+      this.matrixWorldNeedsUpdate = dirty || parent !== this.parent || !previous.equals(this.matrix);
+      previous.copy(this.matrix);
+      parent = this.parent;
+    };
+    trackedTrackRoots.add(root);
+  }
   let frozen = 0;
   root.traverse(node => {
     if (node === root || node.isSkinnedMesh || node.isBone || node.morphTargetInfluences || node.userData?.asfaltoDynamicTransform) return;

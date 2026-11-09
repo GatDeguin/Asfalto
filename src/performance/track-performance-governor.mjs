@@ -14,7 +14,17 @@ const POLICIES=Object.freeze({
 const checked=(v,field)=>{if(!Number.isFinite(v)||v<0)throw new TypeError(field+' must be a finite non-negative number');return v;};
 function stats(values){const sorted=values.sort((a,b)=>a-b),p=q=>sorted.length?sorted[Math.max(0,Math.ceil(sorted.length*q)-1)]:0;return {p50:p(.5),p95:p(.95),p99:p(.99),max:sorted.at(-1)||0,hitches:sorted.filter(n=>n>100).length};}
 export const maximumTierForGraphicsQuality=(quality,advancedQuality='auto')=>quality==='eco'?'low':quality==='balanced'?'balanced':advancedQuality==='cinematic'?'cinematic':'high';
-export function createTrackPerformanceGovernor({initialTier,onTierChange,maximumTier='high'}){
+export function initialRacePerformanceTier({quality,maximumTier,hardwareTier,targetFps}){
+ if(quality!=='auto'||maximumTier==='cinematic')return maximumTier;
+ return targetFps===30?hardwareTier:'low';
+}
+export function hasRaceRecoveryHeadroom(timing,targetFps,frameMs,workMs){
+ const budget=1000/targetFps;
+ // Check cadence separately from CPU submission and reserve GPU time for the next tier.
+ return frameMs<=budget*1.05&&workMs<=budget*.8
+  &&timing?.samples>=120&&Number.isFinite(timing.p95GpuMs)&&timing.p95GpuMs<=budget*.75;
+}
+export function createTrackPerformanceGovernor({initialTier,onTierChange,maximumTier='high',canRecoverTier=()=>true}){
  if(!TIERS.includes(initialTier))throw new RangeError('Invalid performance tier: '+initialTier);
  if(!TIERS.includes(maximumTier))throw new RangeError('Invalid maximum performance tier: '+maximumTier);
  initialTier=TIERS[Math.max(TIERS.indexOf(initialTier),TIERS.indexOf(maximumTier))];
@@ -60,7 +70,7 @@ export function createTrackPerformanceGovernor({initialTier,onTierChange,maximum
    refresh();
    // p95 tolerates isolated hitches. Require consecutive healthy windows and
    // elapsed time as well as samples, so a fast monitor cannot rush recovery.
-   if(count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary)recoveryHealthyMs+=statsElapsedMs;
+   if(count>=UPGRADE_SAMPLES&&frameStats.p95<=healthyBoundary&&canRecoverTier(targetFps,frameStats.p95,workStats.p95))recoveryHealthyMs+=statsElapsedMs;
    else recoveryHealthyMs=0;
    statsElapsedMs=0;
    if(sinceTransition>=DOWNGRADE_SAMPLES&&count>=DOWNGRADE_SAMPLES){

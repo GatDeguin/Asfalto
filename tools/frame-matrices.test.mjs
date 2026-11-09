@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {withFrameMatrices} from '../src/render/frame-matrices.mjs?v=a717fe32f4658fd0';
+import {freezeStaticTrackTransforms,withFrameMatrices} from '../src/render/frame-matrices.mjs?v=711167562fad7c51';
 
 test('stationary world leaves do not multiply static matrices every frame; dynamic child and moved world update',()=>{
  const scene=new T.Scene(),staticRoot=new T.Group(),fixed=new T.Object3D(),dynamic=new T.Object3D();scene.add(staticRoot,dynamic);staticRoot.add(fixed);fixed.position.x=4;staticRoot.position.z=5;
@@ -14,9 +14,17 @@ test('restores renderer and transform update policy when drawing throws, includi
  const scene=new T.Scene();scene.matrixAutoUpdate=false;scene.matrixWorldAutoUpdate=false;scene.matrix.makeTranslation(9,0,0);scene.matrixWorldNeedsUpdate=true;
  assert.throws(()=>withFrameMatrices(scene,()=>{throw new Error('draw');}),/draw/);assert.equal(scene.matrixAutoUpdate,false);assert.equal(scene.matrixWorldAutoUpdate,false);assert.equal(scene.matrixWorld.elements[12],0);
 });
-test('freezing authored track preserves root moves and explicitly dynamic nodes',async()=>{
- const {freezeStaticTrackTransforms}=await import('../src/render/frame-matrices.mjs?v=a717fe32f4658fd0');
+test('stationary authored track skips matrix products and still reacts to root moves and reparenting',()=>{
  const root=new T.Group(),fixed=new T.Object3D(),dynamic=new T.Object3D();root.add(fixed,dynamic);fixed.position.x=3;dynamic.userData.asfaltoDynamicTransform=true;
  assert.equal(freezeStaticTrackTransforms(root),1);assert.equal(root.matrixAutoUpdate,true);assert.equal(fixed.matrixAutoUpdate,false);assert.equal(dynamic.matrixAutoUpdate,true);
+ root.updateMatrixWorld();
+ let products=0;const multiply=fixed.matrixWorld.multiplyMatrices;
+ fixed.matrixWorld.multiplyMatrices=function(...args){products++;return multiply.apply(this,args);};
+ root.updateMatrixWorld();assert.equal(products,0);
  root.position.z=8;dynamic.position.y=6;root.updateMatrixWorld();assert.equal(fixed.matrixWorld.elements[14],8);assert.equal(dynamic.matrixWorld.elements[13],6);
+ assert.equal(products,1);
+ const translated=new T.Group();translated.position.x=7;translated.updateMatrixWorld();translated.add(root);
+ translated.matrixAutoUpdate=false;translated.updateMatrixWorld();
+ assert.equal(fixed.matrixWorld.elements[12],10);
+ assert.equal(products,2);
 });

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=86108a480a3a8a84';
-import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=0bea085bd170c35b';
+import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=9b1f600bfec508ef';
+import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=46f93c06d3ef0012';
 import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=4dc1dfe6ae29fbad';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 function fixture(){

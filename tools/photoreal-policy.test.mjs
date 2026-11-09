@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createTextureFiltering} from '../src/render/texture-filtering.mjs?v=dd00a75cbd9c1e71';
-import {resolveRenderBudget} from '../src/render/render-budget.mjs?v=19c7400d32eaa34a';
+import {resolveRenderBudget} from '../src/render/render-budget.mjs?v=cbd3e7911fbec8e0';
 const T={LinearMipmapLinearFilter:1,LinearMipmapNearestFilter:2,NearestMipmapLinearFilter:3,NearestMipmapNearestFilter:4};
 const texture=(extra={})=>({isTexture:true,minFilter:1,generateMipmaps:true,anisotropy:1,...extra});
 const root=maps=>({traverse(fn){for(const map of maps)fn({material:{map}});}});

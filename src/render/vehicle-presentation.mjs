@@ -4,7 +4,7 @@ import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe5356
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
 import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=50dd4e15c3f46e8d';
 import {createVehicleConditionAppearance} from './vehicle-condition-appearance.mjs?v=b72eee12bc990a95';
-import {thickenVehicleGlass} from './vehicle-glass.mjs?v=c333c48cb1235db7';
+import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
 import {createVehicleLighting} from './vehicle-lighting.mjs?v=cbf59234f390cc3e';
@@ -201,6 +201,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const interiorRig=installVehicleInteriorRig(T,{root,vehicle,lods});
   // Include newly installed instrument/trim materials and upholstery clones in environment updates.
   root.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])if(material)materials.add(material);});
+  const refraction=createVehicleRefractionPolicy(materials);
   const controller={
     root,
     getSteeringTargets:()=>interiorRig.getSteeringTargets(),
@@ -211,6 +212,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     setChassisInspection(value){chassisInspection=value;},
     setPaintColor(hex){if(disposed||typeof hex!=='string'||!/^#[a-f\d]{6}$/i.test(hex))return false;uniforms.vehiclePaint.value.set(hex);return true;},
     setEnvironment(texture){if(disposed||(texture!==null&&!texture?.isTexture))return false;chassis.setEnvironment(texture);for(const material of materials){if(material.envMap===texture)continue;material.envMap=texture;material.needsUpdate=true;}return true;},
+    setReducedRefraction(value){return !disposed&&refraction.setReduced(value);},
     setPersistentCondition(condition){if(disposed)return false;appearance.set(condition);const c=appearance.diagnostics().condition;state.setPersistentCondition(c);instrumentFuel=c.fuel/100;uniforms.vehicleDirt.value=c.dirt/100;uniforms.vehiclePaintWear.value=1-c.paint/100;uniforms.vehicleBodyWear.value=1-c.body/100;uniforms.vehicleDamageFrontRear.value.set(c.damageZones.front,c.damageZones.rear);uniforms.vehicleDamageSidesRoof.value.set(c.damageZones.left,c.damageZones.right,c.damageZones.roof);return true;},
     setCondition(condition){const result=state.setCondition(condition);const now=state.diagnostics();uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;return result;},
     resetCondition(){if(disposed)return false;state.reset();uniforms.vehicleDirt.value=uniforms.vehicleWet.value=0;restCompression.clear();for(const item of flexible)item.object.rotation.copy(item.rotation);return true;},

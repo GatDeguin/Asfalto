@@ -34,7 +34,7 @@ body.an-phone-hud #chevy-hud-navigation-mode{right:10px;bottom:7px;font-size:7px
  body.an-phone-hud #chevy-hud-gear{font-size:24px}
  body.an-phone-hud #chevy-hud-gear-label{left:37px;font-size:9px}
  body.an-phone-hud #chevy-hud-rpm{right:8px;font-size:11px}
- body.an-phone-hud #chevy-hud-statuses{font-size:8px;bottom:7px;gap:4px}
+ body.an-phone-hud #chevy-hud-statuses{font-size:8px;line-height:1;bottom:6px;gap:2px;flex-direction:column;align-items:flex-start}
  body.an-phone-hud #v6-game-shell #v6-return-menu{top:calc(max(8px,env(safe-area-inset-top)) + 136px)!important}
 }
 @media(orientation:portrait){body.an-phone-hud #modular-race-cue[data-spawn-parking-hold=true]{top:calc(max(8px,env(safe-area-inset-top)) + 184px)!important;max-width:calc(100vw - 112px)}}

@@ -128,9 +128,16 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   setQuality(quality);
 
   const key=options=>[options.renderer,options.scene,options.quality||currentQuality,options.variantKey||''];
+  function cancelPendingPreparation(){
+    if(preparation.diagnostics().status==='pending')preparation.invalidate();
+  }
   function prepare(options={}){
     if(disposed)return Promise.resolve(false);
-    setEnabled(options.enabled!==false);if(options.enabled===false)return Promise.resolve(false);
+    setEnabled(options.enabled!==false);
+    if(options.enabled===false||options.cockpitVisible===false){
+      cancelPendingPreparation();
+      return Promise.resolve(false);
+    }
     if(!options.renderer||!options.scene||!((typeof options.cameraPoses==='function'?options.cameraPoses():options.cameraPoses)||mirrorCameraPoses(THREE,options.carPose)))return Promise.resolve(false);
     setQuality(options.quality||currentQuality);
     return preparation.prepare(key(options),async isCurrent=>{for(const id of ['center','left']){if(!isCurrent())return;await prepareBatchedPass(options.renderer,()=>update({...options,prepareOnly:id,force:true,cockpitVisible:true,enabled:true}),{signal:options.signal,isCurrent});}},{signal:options.signal});
@@ -139,7 +146,11 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     const {renderer,scene,carPose,cameraPoses=null,cockpitVisible=true,enabled=true,quality:nextQuality=currentQuality,nowMs=globalThis.performance?.now?.()||Date.now(),force=false,captureSchedule=null,prepareOnly=null}=options;
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
-    if (!renderer || !scene || !cockpitVisible || !enabled || renderer.getContext?.().isContextLost?.()) return 0;
+    if (!cockpitVisible || !enabled) {
+      cancelPendingPreparation();
+      return 0;
+    }
+    if (!renderer || !scene || renderer.getContext?.().isContextLost?.()) return 0;
     setQuality(nextQuality);
     if(!prepareOnly&&!preparation.ready(key({...options,quality:currentQuality}))){void prepare(options);return 0;}
     const due = (prepareOnly?[prepareOnly]:['center', 'left']).filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
@@ -198,7 +209,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       { id: 'rearview-mirror', label: 'Retrovisor interior', object: mounts.center, capabilities: { position: true, rotation: true, scale: true, lens: false } },
       { id: 'left-door-mirror', label: 'Espejo lateral izquierdo', object: mounts.left, capabilities: { position: true, rotation: true, scale: true, lens: false } },
     ]),
-    feeds: Object.freeze(feeds), update, prepare, invalidate:()=>preparation.invalidate(), dispose,
+    feeds: Object.freeze(feeds), update, prepare, cancelPendingPreparation, invalidate:()=>preparation.invalidate(), dispose,
     diagnostics: () => ({ preparation:preparation.diagnostics(), disposed, rendering, quality: currentQuality, enabled: feedsEnabled, centerFrames: feeds.center.frames, leftFrames: feeds.left.frames, centerSize: [feeds.center.target.width, feeds.center.target.height], leftSize: [feeds.left.target.width, feeds.left.target.height] }),
   });
 }

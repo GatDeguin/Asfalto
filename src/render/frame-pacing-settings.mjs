@@ -1,6 +1,9 @@
 const KEY='asfalto-v7-presentation-fps';
+export function readFramePacingTarget(storage=globalThis.__asfaltoV7Storage){
+ try{return Number(storage?.getItem(KEY))===30?30:60;}catch{return 60;}
+}
 export function installFramePacingSettings({root=document,storage=globalThis.__asfaltoV7Storage}={}){
- let fps=60;try{fps=Number(storage?.getItem(KEY))===30?30:60;}catch{}
+ let fps=readFramePacingTarget(storage);
  const rows=[];
  for(const group of new Set([...root.querySelectorAll('[data-advanced-graphics-quality]')].map(s=>s.closest('.v6-setting-group')||s.parentElement?.parentElement).filter(Boolean))){
   const label=root.createElement('label');label.className='v6-tech-row';label.textContent='Fluidez';

@@ -1,4 +1,4 @@
-import {TRACK_RENDER_POLICIES} from '../performance/track-performance-governor.mjs?v=32f2c06cd03b8801';
+import {TRACK_RENDER_POLICIES} from '../performance/track-performance-governor.mjs?v=5c4adbaec0014be9';
 const MiB=1024*1024;
 const budgets=Object.freeze({
  cinematic:{maxPixels:2560*1440,maxPostBytes:256*MiB,samples:4,effectPixels:518400,effectScale:.625},

@@ -1,16 +1,16 @@
 import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=258173b4dba723d7';
-import {createWorkshopRenderBudget} from './render-budget.mjs?v=19c7400d32eaa34a';
+import {createWorkshopRenderBudget} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {createTextureFiltering} from './texture-filtering.mjs?v=dd00a75cbd9c1e71';
-import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=32f2c06cd03b8801';
+import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=5c4adbaec0014be9';
 import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {createAdvancedMaterials}from'./advanced-materials.mjs?v=cabe0d716ed24daa';
 import {createPivotPainter}from'./pivot-painter.mjs?v=51fc8374f2d1160e';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=20a8f9064089448f';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=85d450c23e36764c';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=86108a480a3a8a84';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=9b1f600bfec508ef';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import {createSpatialAntialias} from './spatial-antialias.mjs?v=7fc668e4ef289850';
+import {createSpatialAntialias} from './spatial-antialias.mjs?v=1bc8465d768361f2';
 import {createRenderCapabilities} from './render-capabilities.mjs?v=db7746f3deffab55';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
  registerRenderPreparation(renderer,T);

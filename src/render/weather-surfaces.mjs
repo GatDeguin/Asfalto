@@ -4,6 +4,7 @@ import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=0d0d50d
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
 import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=02f1a8ed11382fce';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
+const WATER_IOR=1.333;
 const SURFACE_SHADER = `
 ${WEATHER_NORMAL_HELPERS}
 varying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;
@@ -72,7 +73,12 @@ vec4 anWeatherGradient=vec4(dFdx(anHeight),dFdy(anHeight),0.,0.);
 ${ground?'':'normal=anPerturbWeatherNormal(normal,anDx,anDy,anWeatherGradient.xy);'}
 ${ground?'roughnessFactor=mix(roughnessFactor,max(.4,roughnessFactor*.84),anWorldWetness*.75);':''}
 ${water?`vec2 anWaterUV=(vAnFxSurface.xz-uAnWaterBounds.xy)/uAnWaterBounds.zw;vec2 anDepthShore=texture2D(uAnWaterField,anWaterUV).rg;
-float anAbsorption=1.-exp(-anDepthShore.x*uAnWaterAbsorption);
+// Hydrology stores vertical depth. Snell's law gives the refracted path
+// through that depth using the horizontal water plane, independent of ripples.
+float anIncidentCos=clamp(abs(inverseTransformDirection(vViewPosition,viewMatrix).y),0.,1.);
+const float anEta=1./${WATER_IOR};
+float anOpticalDepth=anDepthShore.x*inversesqrt(1.-(1.-anIncidentCos*anIncidentCos)*anEta*anEta);
+float anAbsorption=1.-exp(-anOpticalDepth*uAnWaterAbsorption);
 diffuseColor.rgb=mix(uAnWaterShallow,uAnWaterDeep,anAbsorption);
 float anContactFoam=(1.-smoothstep(.1,uAnWaterShoreWidth,anDepthShore.y))*smoothstep(.003,.04,anHeight)*(.3+.7*uAnFxRain);
 diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.65,.7,.67),min(.24,anContactFoam*.24));
@@ -154,7 +160,7 @@ anFogColor=linearToOutputTexel(vec4(anSkyColor,1.)).rgb;
 gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 #endif`);
   };
-  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
+  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+(water?'-optical-depth':'')+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
   material.needsUpdate=true;
   return()=>{if(priorAssetUniforms)Object.defineProperty(material.userData,'assetUniforms',priorAssetUniforms);else delete material.userData.assetUniforms;material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
 }
@@ -187,7 +193,7 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
         changed=true;
         const river=/RIVER/.test(material.name)||['river','drain'].includes(mesh.userData.asfaltoWater?.kind);
         const optics=resolveWaterOptics(mesh.userData.asfaltoWater,river);
-        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:'#ffffff',roughness:optics.roughness,metalness:0,ior:1.333,transmission:requestedTransmission,thickness:river?.65:2.8,attenuationColor:optics.deepColor,attenuationDistance:optics.attenuationDistanceM,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
+        const water=new THREE.MeshPhysicalMaterial({name:material.name,color:'#ffffff',roughness:optics.roughness,metalness:0,ior:WATER_IOR,transmission:requestedTransmission,thickness:river?.65:2.8,attenuationColor:optics.deepColor,attenuationDistance:optics.attenuationDistanceM,envMapIntensity:1,clearcoat:0,side:THREE.DoubleSide});
         // Authored silhouettes remain unchanged. Metric waves replace baked flat blue
         // maps; refraction uses Three's physical transmission pass, reflection its HDRI.
         water.userData={...material.userData,asfaltoWaterEffects:true,v7WaterOptics:optics};

@@ -2086,7 +2086,6 @@
 
       let ruleFeedback;
       if (statusBefore === 'RUNNING') {
-        const ghostCountBefore = this._rules.state.ghostSamples.length;
         const eventCountBefore = this._rules.state.events.length;
         this._rules.debugSet({
           s: previous.s,
@@ -2118,22 +2117,7 @@
           throttle: input.throttle,
           brake: input.brake,
           handbrake: input.handbrake,
-        });
-        if (this._rules.state.ghostSamples.length > ghostCountBefore) {
-          const ghostSamples = this._rules.state.ghostSamples.map((sample, index) => (
-            index < ghostCountBefore
-              ? sample
-              : {
-                ...sample,
-                s: current.raceProgress,
-                lateral: current.lateral,
-                speed: current.speedAlongRouteMps,
-                heading: current.headingError,
-                slip: current.slip,
-              }
-          ));
-          this._rules.debugSet({ ghostSamples }, { publish: false });
-        }
+        }, current);
         const crossingWasProcessed = this._rules.state.events
           .slice(eventCountBefore)
           .some((event) => (
@@ -2533,7 +2517,9 @@
     }
 
     _publish(projection, snapshot, projectionRejected) {
-      const rulesState = this._rules.getState();
+      const rulesState = this._rules.getState({includeGhostSamples:false});
+      const recording = this._rules.state.ghostSamples;
+      const sampleCount = recording.length;
       const publicSettings = this._publicSettings();
       const state = {
         ...rulesState,
@@ -2560,7 +2546,18 @@
         state.finishReason = classification.complete ? 'completed' : null;
       }
       this.settings = publicSettings;
-      return cloneState(state);
+      const published = cloneState(state);
+      let ghostSamples;
+      // Reading telemetry does not need a copy of every sample at 120 Hz.
+      // The recorder only appends or replaces the array, so this prefix also
+      // stays correct when a caller retains a frame beyond a lap or restart.
+      return Object.defineProperty(published, 'ghostSamples', {
+        enumerable: true,
+        configurable: true,
+        get() {
+          return ghostSamples ??= Array.from({length:sampleCount}, (_,i)=>({...recording[i]}));
+        },
+      });
     }
 
     _mergeFeedback(ruleFeedback, projection, snapshot, projectionRejected) {

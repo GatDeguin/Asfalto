@@ -1,4 +1,4 @@
-import { createReturnLandscape } from './closure-terrain.mjs?v=8a73d5a808c0fba5';
+import { createReturnLandscape } from './closure-terrain.mjs?v=6bebee0b8640b23d';
 // Procedural game-fiction return corridor. Original canonical samples are never modified.
 // Closing is physical: the last position and frame coincide with the original start.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

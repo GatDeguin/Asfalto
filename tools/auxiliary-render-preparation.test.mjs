@@ -26,7 +26,7 @@ test('cube prepares six target faces with immediate target and XR restoration',a
  await p;assert.deepEqual(faces,[0,1,2,3,4,5]);cube.dispose();
 });
 import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=0d0d50d032823ba5';
-import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=85bccac21887c8d5';
+import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=96bcbdd9426d53df';
 function captureFixture(){let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');const compiled=[],drawn=[],pending=[];
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(70,1,.1,100);camera.position.set(0,4,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const state=c=>({target,tone:r.toneMapping,clipping:r.clippingPlanes.length,layers:c.layers.mask,visible:scene.children.filter(o=>o.visible).map(o=>o.uuid),xr:r.xr.enabled,shadow:r.shadowMap.autoUpdate});
@@ -44,6 +44,21 @@ test('mirror preparation restores exclusions and targets while awaiting both fee
  const f=captureFixture(),cockpit=new T.Group();f.scene.add(cockpit);const mirror=createCockpitMirrors({THREE:T,cockpitRoot:cockpit});const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};
  assert.equal(mirror.update(options),0);assert.equal(f.drawn.length,0);assert.equal(cockpit.visible,true);assert.equal(f.r.getRenderTarget(),null);const p=mirror.prepare(options);
  f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,2);assert.equal(cockpit.visible,true);f.pending[1].resolve();await p;assert.equal(mirror.update(options),2);assert.deepEqual(f.drawn,f.compiled);mirror.dispose();
+});
+test('leaving the cockpit cancels the outstanding mirror variant and skips hidden preparation',async()=>{
+ const f=captureFixture(),mirrors=createCockpitMirrors({THREE:T});
+ const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},variantKey:'cockpit'};
+ const preparing=mirrors.prepare(options);
+ assert.equal(f.compiled.length,1);
+ const hidden={...options,cockpitVisible:false,variantKey:'chase'};
+ assert.equal(mirrors.update(hidden),0);
+ f.pending[0].resolve();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.compiled.length,1);
+ assert.equal(await preparing,false);
+ assert.equal(await mirrors.prepare(hidden),false);
+ assert.equal(f.compiled.length,1);
+ mirrors.dispose();
 });
 import {prepareRenderPolicies,createRenderPreparationCache} from '../src/performance/render-warmup.mjs?v=cbabfcdb7b1f34d2';
 test('warmup prepares only active tier and cache distinguishes active tier changes',async()=>{

@@ -458,21 +458,14 @@
       throw new TypeError('indice y posicion de ruta requeridos');
     }
     const position = [finite(worldPosition[0], 0), finite(worldPosition[1], 0), finite(worldPosition[2], 0)];
-    const cellX = Math.floor(position[0] / index.cellSizeM);
-    const cellZ = Math.floor(position[2] / index.cellSizeM);
-    const candidates = new Set();
-    for (let radius = 0; radius <= 5 && candidates.size === 0; radius += 1) {
-      for (let gx = cellX - radius; gx <= cellX + radius; gx += 1) {
-        for (let gz = cellZ - radius; gz <= cellZ + radius; gz += 1) {
-          for (const segment of index.cells.get(gx + ':' + gz) || []) candidates.add(segment);
-        }
-      }
-    }
-    if (candidates.size === 0) {
-      for (let segment = 0; segment < index.samples.length - 1; segment += 1) candidates.add(segment);
-    }
+    const cellSize = index.cellSizeM;
+    const cellX = Math.floor(position[0] / cellSize);
+    const cellZ = Math.floor(position[2] / cellSize);
+    const visited = new Set();
     let best;
-    for (const segment of candidates) {
+    function consider(segment) {
+      if (visited.has(segment)) return;
+      visited.add(segment);
       const candidate = closestOnSegment(
         index.samples[segment],
         index.samples[segment + 1],
@@ -480,6 +473,30 @@
         segment,
       );
       if (!best || candidate.distanceSquared < best.distanceSquared) best = candidate;
+    }
+    let nearestConfirmed = false;
+    for (let radius = 0; radius <= 5; radius += 1) {
+      const left = cellX - radius, right = cellX + radius;
+      const near = cellZ - radius, far = cellZ + radius;
+      for (let gx = left; gx <= right; gx += 1) {
+        for (let gz = near; gz <= far; gz += 1) {
+          if (gx !== left && gx !== right && gz !== near && gz !== far) continue;
+          const bucket = index.cells.get(gx + ':' + gz);
+          if (bucket) for (const segment of bucket) consider(segment);
+        }
+      }
+      // A segment in the current cell can be farther than a road beside its border.
+      const clearance = Math.min(
+        position[0] - left * cellSize, (right + 1) * cellSize - position[0],
+        position[2] - near * cellSize, (far + 1) * cellSize - position[2],
+      );
+      if (best && clearance * clearance > best.distanceSquared) {
+        nearestConfirmed = true;
+        break;
+      }
+    }
+    if (!nearestConfirmed) {
+      for (let segment = 0; segment < index.samples.length - 1; segment += 1) consider(segment);
     }
     const prior = finite(previousS, best.s);
     const allowedTeleport = teleportToken && TELEPORT_TOKENS.has(teleportToken);
