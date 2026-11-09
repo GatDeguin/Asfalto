@@ -5,8 +5,8 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=8792e3dcfc28e5b8';
-import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=df05fe3cc25cfdd4';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=1877fbe8d19b298a';
+import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=f855db52f6535e49';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({
@@ -952,7 +952,7 @@ export function createDosLagosAdapter(dependencies) {
       transaction.collisionParsed = true;
       cumulative.created.collisionRoots += 1;
       try {
-        if (closure) { const roots=attachClosedRouteRoots(closure, transaction.visualRoot, transaction.collisionRoot);await prepareReturnScenery(roots.visualRoot,{id:'dos_lagos',query:transaction.routeQuery,lengthM:transaction.normalizedRoute.lengthM,startM:sourceCanonical.lengthM,signal});addDosLagosPostSupport(globalThis.__chevyV6Three||globalThis.THREE,transaction.visualRoot,transaction.routeQuery,transaction.normalizedRoute.lengthM); }
+        if (closure) { const roots=attachClosedRouteRoots(closure, transaction.visualRoot, transaction.collisionRoot);await prepareReturnScenery(roots.visualRoot,{id:'dos_lagos',query:transaction.routeQuery,lengthM:transaction.normalizedRoute.lengthM,startM:sourceCanonical.lengthM,signal,sourceRoot:transaction.visualRoot});addDosLagosPostSupport(globalThis.__chevyV6Three||globalThis.THREE,transaction.visualRoot,transaction.routeQuery,transaction.normalizedRoute.lengthM); }
       } finally {
         // A malformed optional closure can already have attached one root.
         // Count both owners before rollback so every allocated resource is released.

@@ -26,7 +26,7 @@ test('low race glass drops the transmission prepass and restores the authored ma
 });
 
 test('a vehicle staged before a tier change uses the live tier when committed',async()=>{
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=4b220ed4b01db6f9',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=87a1086e00966594',import.meta.url),'utf8');
  const start=source.indexOf('  async function preparePlayerVehicle(');
  const end=source.indexOf("  setLoading('Preparando vegetación",start);
  let tier='balanced';

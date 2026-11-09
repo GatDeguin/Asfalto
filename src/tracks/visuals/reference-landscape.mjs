@@ -542,6 +542,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   }
   const keeper = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
   keeper.name = 'ASFALTO_VISUAL_RESOURCE_OWNER'; keeper.visible = false;
+  if(id==='dos_lagos'&&!sceneryOnly)keeper.asfaltoSurfaceTextures={...textures};
   for (let i = 0; i < owned.length; i++) keeper.material['asfaltoOwnedTexture' + i] = owned[i];
   // Make decoded model buffers reachable before any CPU decoration can throw.
   for (const [name, geometry] of templates || []) {
@@ -591,10 +592,13 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   return stats;
 }
 
-export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,THREE=globalThis.__chevyV6Three||globalThis.THREE}={}){
+export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,sourceRoot,THREE=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!THREE?.TextureLoader||typeof document==='undefined')return null;
   const detailRange={startM:startM+60,endM:lengthM-60};
-  const {textures,owned}=await loadSurfaceTextures(THREE,id,signal,false);
+  // The return is a child of the original visual root and borrows its maps.
+  // A separate descriptor keeps per-segment metadata out of the shared bundle.
+  const sourceTextures=id==='dos_lagos'?sourceRoot?.getObjectByName('ASFALTO_VISUAL_RESOURCE_OWNER')?.asfaltoSurfaceTextures:null;
+  const {textures,owned}=sourceTextures?{textures:{...sourceTextures},owned:[]}:await loadSurfaceTextures(THREE,id,signal,false);
   let templates;try{templates=await loadRoadsideTemplates(THREE,signal,id);}catch(error){for(const texture of owned)texture.dispose();throw error;}
   const keeper=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());keeper.name='ASFALTO_RETURN_SCENERY_RESOURCE_OWNER';keeper.visible=false;
   owned.forEach((texture,i)=>keeper.material['asfaltoOwnedTexture'+i]=texture);for(const[name,geometry]of templates){const owner=new THREE.Mesh(geometry,keeper.material);owner.name='Return detail template '+name;keeper.add(owner);}root.add(keeper);

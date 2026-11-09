@@ -1,4 +1,4 @@
-import {terrainHeightSampler} from './reference-landscape.mjs?v=8792e3dcfc28e5b8';
+import {terrainHeightSampler} from './reference-landscape.mjs?v=1877fbe8d19b298a';
 
 const NATIVE_POST=/^(PROP_(Guardrail_Posts|SignPosts)|DETAIL_Roadside_Posts)_Primitive_/;
 const INSTANCE_POST=/^ASFALTO_DETAIL_(guard-post|sign-post|kilometre-post)_/;

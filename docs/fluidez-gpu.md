@@ -65,6 +65,14 @@ En Dos Lagos, una pasada anterior en Alto fijo dio 34,52 FPS en cabina y 41,79 F
 
 Se ejecutó RenderDoc 1.47 con un Chrome aislado en ANGLE/D3D11. La variante de GPU en proceso cerró el objetivo y la de proceso separado perdió la conexión de depuración antes de capturar. El equipo carecía de Nsight Graphics. Las mediciones registradas proceden de Chrome DevTools Protocol, contadores del motor y consultas de tiempo WebGL2. [RenderDoc 1.47](https://github.com/baldurk/renderdoc/releases/tag/v1.47) · [Captura de ANGLE con RenderDoc](https://github.com/google/angle/blob/main/doc/DebuggingTips.md#running-angle-under-renderdoc) · [Nsight Graphics](https://docs.nvidia.com/nsight-graphics/UserGuide/)
 
+## Perfilado del Sprint de Dos Lagos
+
+Nsight Systems 2026.6.1 registró 2.232 llamadas a `Present1` y 1.108 a `D3DCompile` durante la sesión de Chrome sobre D3D11. Son eventos de API en la línea temporal. Windows deshabilitó WDDM por permisos y el controlador denegó acceso a contadores de hardware. Otra prueba de RenderDoc con ANGLE/OpenGL perdió la conexión antes de capturar un cuadro del juego. [Nsight Systems para Windows](https://docs.nvidia.com/nsight-systems/UserGuide/#system-wide-api-trace-on-windows) · [Permisos de contadores NVIDIA](https://developer.nvidia.com/ERR_NVGPUCTRPERM)
+
+La instrumentación WebGL encontró cuatro mapas de roca y dos de vegetación subidos en el mismo cuadro cerca del metro 57. La precarga de los seis mapas trasladó las subidas a la pantalla de carga y produjo resultados de cadencia dispares. La solución integrada comparte los 21 mapas de la ida con el tramo de regreso. La raíz visual del circuito conserva la propiedad de las texturas y cada tramo mantiene sus propios metadatos. [Gestión de recursos y bucle de juego en la tercera edición de Jason Gregory](https://www.oreilly.com/library/view/game-engine-architecture/9781351974271/) · [Datos de mallas de Stefan Reinalter](https://blog.molecular-matters.com/2011/11/03/adventures-in-data-oriented-design-part-1-mesh-data-3/)
+
+La auditoría de la escena confirmó que los propietarios pasaron de 42 a 21 objetos de textura. El navegador pidió los mismos 21 archivos en ambos casos. En ventanas de 18 s sin perfilador, los tres controles registraron saltos de 133–150 ms. Las dos pasadas con mapas compartidos quedaron por debajo de 75 ms. La cadencia varió de 41,7 a 52,7 FPS en los controles y de 44,0 a 52,8 FPS con la corrección.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.
