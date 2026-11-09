@@ -23,6 +23,11 @@ try{
  report.browser=browser.version();
  const page=await browser.newPage({viewport:{width:1280,height:800},deviceScaleFactor:1,reducedMotion:'reduce'});
  page.setDefaultTimeout(180_000);
+ const sceneRequests=[];
+ page.on('request',request=>{
+  const pathname=new URL(request.url()).pathname;
+  if(/^\/tracks\/[^/]+\/scene\.glb$/.test(pathname))sceneRequests.push(pathname);
+ });
  page.on('pageerror',error=>report.errors.push(error.message));
  page.on('console',message=>{if(message.type()==='error')report.errors.push(message.text());});
  page.on('response',r=>{if(r.status()>=400)report.httpErrors.push([r.status(),new URL(r.url()).pathname]);});
@@ -44,10 +49,13 @@ try{
    await page.locator('[data-an-mode=drive]').click();
    await page.locator('#v6-drive-route').selectOption(id);
    await page.locator('#v6-drive-weather').selectOption(weather);
+   const firstSceneRequest=sceneRequests.length;
    const started=performance.now();
    await page.locator('#v6-drive-start').click();
    await page.waitForFunction(id=>globalThis.__cockpit?.raceWorld?.track.id===id&&__cockpit.raceWorld.state.status==='RUNNING'&&document.body.classList.contains('v6-driving'),id);
    row.entryMs=performance.now()-started;
+   row.sceneRequests=sceneRequests.slice(firstSceneRequest);
+   if(selected)assert.deepEqual(row.sceneRequests,[`/tracks/${id.replaceAll('_','-')}/scene.glb`],'La primera salida debe cargar directamente la escena elegida.');
    const before=await page.evaluate(()=>{__cockpit.raceSetCamera('chase');return __cockpit.v7Presentation.diagnostics().actualSceneFrames;});
    await page.waitForFunction(before=>__cockpit.v7Presentation.diagnostics().actualSceneFrames>before+10,before,{timeout:25_000});
    await page.keyboard.down('w');

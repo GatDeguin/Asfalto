@@ -49,7 +49,7 @@ Auto a 60 FPS empieza en Bajo y recupera detalle tras 30 s de ventanas sanas con
 
 Cada pasada mide diez segundos de conducción real con teclado, cámara exterior y Auto en Bajo. En la última ventana, el p95 de `requestAnimationFrame` fue 16,8 ms, con un máximo aislado de 66,7 ms. El tiempo de entrada varió entre pasadas y quedó fuera de esas ventanas. Las capturas de la misma zona muestran las líneas de la calzada, la vegetación y el relieve presentes tras la agrupación.
 
-El paquete de publicación se probó por separado en los cinco circuitos, con movimiento reducido. En cada uno se condujo, pausó, reanudó y regresó al taller. El p95 de cadencia fue de 16,8 ms en los cinco y no se registraron tareas largas en las ventanas de medición. La entrada desde el taller tardó entre 17,15 y 28,46 segundos en esa pasada local.
+El paquete de render se probó en una pasada secuencial por los cinco circuitos, con movimiento reducido. En cada uno se condujo, pausó, reanudó y regresó al taller. El p95 de cadencia fue de 16,8 ms en los cinco y no se registraron tareas largas en las ventanas de medición. La entrada desde el taller tardó entre 17,15 y 28,46 segundos en esa pasada local.
 
 | Circuito y clima | FPS de escena | GPU p95 | Peor intervalo rAF |
 | --- | ---: | ---: | ---: |
@@ -59,20 +59,23 @@ El paquete de publicación se probó por separado en los cinco circuitos, con mo
 | Paso Garibaldi, nieve ligera | 58,35 | 10,44 ms | 33,5 ms |
 | Cataratas del Iguazú, lluvia | 60,13 | 7,67 ms | 16,9 ms |
 
+En salidas en frío independientes a Aconcagua, la versión anterior tardó 44,68 s hasta poder conducir y promedió 43,85 FPS en los primeros diez segundos medidos. Con el arranque directo, dos repeticiones tardaron 36,58 y 39,17 s y dieron 46,55 y 58,79 FPS. La variación en frío queda fuera de las cifras de la pasada secuencial.
+
 En Dos Lagos, una pasada anterior en Alto fijo dio 34,52 FPS en cabina y 41,79 FPS en persecución al conducir. Con Auto y la variante de vidrio, otra pasada alcanzó 59,57 FPS en cabina, 60,17 en persecución en movimiento y 59,64 con lluvia nocturna. La comparación entre estas dos configuraciones incluye un cambio de resolución y de calidad. En un corte de seis cuadros de persecución con el mismo nivel, el pase de transmisión pasó de 2.822 llamadas adicionales a cero y el p95 de GPU bajó de 11,74 a 9,64 ms.
 
 Se ejecutó RenderDoc 1.47 con un Chrome aislado en ANGLE/D3D11. La variante de GPU en proceso cerró el objetivo y la de proceso separado perdió la conexión de depuración antes de capturar. El equipo carecía de Nsight Graphics. Las mediciones registradas proceden de Chrome DevTools Protocol, contadores del motor y consultas de tiempo WebGL2. [RenderDoc 1.47](https://github.com/baldurk/renderdoc/releases/tag/v1.47) · [Captura de ANGLE con RenderDoc](https://github.com/google/angle/blob/main/doc/DebuggingTips.md#running-angle-under-renderdoc) · [Nsight Graphics](https://docs.nvidia.com/nsight-graphics/UserGuide/)
 
 ## Regresiones corregidas
 
+- En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.
 - La proyección física en Dos Lagos saltaba a un segmento incorrecto junto a un límite de la rejilla. La búsqueda ahora amplía el perímetro hasta demostrar cuál es el tramo más cercano. El 0–100 completó la medición con teclado y guardó un único recibo a 120 Hz. La ficha muestra la marca oficial de 14,508 s y distingue la duración del intento. El recibo reapareció tras recargar.
 - En el HUD vertical del móvil, el estado de aceite y la temperatura ocupaban una fila que recortaba el segundo valor. Ahora se muestran en dos líneas. En la emulación de iPhone 13 en Chromium se comprobaron ambos valores visibles, la liberación del pedal tras cancelar el toque y veinte ciclos de pausa y reanudación.
 
 ## Comprobaciones reproducibles
 
-- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 350 pruebas locales, incluidas proyección física, historial, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
+- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 351 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
 - Configurar `PLAYWRIGHT_PACKAGE` si Playwright está fuera de la raíz y `CHROME_PATH` para indicar el Chrome de prueba. Ejecutar `node tools/roadtest-browser.mjs <directorio-de-evidencia>`. El 0–100 usa teclado, movimiento reducido y un perfil aislado. Verifica pausa, resultado y persistencia tras recargar.
-- Ejecutar `node tools/track-drive-browser.mjs <directorio-de-evidencia> [circuito] [--draw-detail]` con el mismo entorno. Abre los circuitos desde el taller y comprueba aceleración, pausa, reanudación y regreso. Guarda cadencia, GPU, tareas largas, preparación de shaders y capturas.
+- Ejecutar `node tools/track-drive-browser.mjs <directorio-de-evidencia> [circuito] [--draw-detail]` con el mismo entorno. Abre los circuitos desde el taller y comprueba aceleración, pausa, reanudación y regreso. Al elegir un circuito, comprueba también que su escena sea la única solicitada en la primera salida. Guarda cadencia, GPU, tareas largas, preparación de shaders y capturas.
 - Ejecutar `node tools/water-optics.gpu.mjs <archivo-json>`. La prueba lee la absorción del fragmento en WebGL. A 2 m obtiene 0,275 perpendicular y 0,380 rasante, con cero en la orilla de profundidad cero y una llamada de dibujo en cada muestra.
 
 El benchmark separa cuadros de escena enviados, intervalos de `requestAnimationFrame`, consultas de tiempo de GPU y tareas del hilo principal. La validación cubre este equipo y los tramos recorridos. Quedan por medir vueltas completas, otros motores de navegador y dispositivos físicos.

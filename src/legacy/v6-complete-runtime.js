@@ -9,7 +9,7 @@ let experienceTools=null,sessionRequestRunner=null,lastExperienceUiTime=-Infinit
 let collectionReaderPromise=null,collectionSyncVersion=0;
 let roadTestSession=null,roadTestTools=null,roadTestToolsPromise=null,roadTestReceiptStore=null,roadTestConfigVersion=0;
 const phoneMemoryReady=import(new URL('src/runtime/phone-start-memory.mjs?v=7122ee2d4cd720dc',document.baseURI));
-const startupDemandReady=import(new URL('src/runtime/startup-demand.mjs?v=d7f04a8f3c4b6613',document.baseURI));
+const startupDemandReady=import(new URL('src/runtime/startup-demand.mjs?v=cdc80b4586de6db3',document.baseURI));
 const experienceToolsReady=import(new URL('src/menu/v7-session-runtime.mjs?v=4964050ed6c0f11e',document.baseURI)).then(module=>(experienceTools=module));
 const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -270,11 +270,11 @@ function setValue(selectors,value){for(const s of selectors){const el=q(s);if(!e
 function reflectValue(selectors,value){for(const s of selectors){const el=q(s);if(el){el.value=String(value);return true}}return false}
 function clickFirst(selectors){for(const s of selectors){const el=q(s);if(el){el.click();return true}}return false}
 function normalizeTrack(id){const value=String(id||'');if(PLAYABLE_TRACK_IDS.has(value))return value;throw new Error((value||'circuito desconocido')+' · NO DISPONIBLE')}
-async function waitForExistingGameReady(timeoutMs=180000,{signal,onStage}={}){
+async function waitForExistingGameReady(timeoutMs=180000,{signal,onStage,initialTrackId}={}){
  const {startupDemand,waitForSignal,waitForCondition}=await startupDemandReady;
  signal?.throwIfAborted();
  if(workshop.deviceProfile?.phone){onStage?.('Liberando el taller antes de cargar la pista…');await waitForSignal((await phoneMemoryReady).releasePhoneWorkshopForRace(workshop,{signal}),signal);}
- await startupDemand.request({signal,onStage});signal?.throwIfAborted();
+ await startupDemand.request({signal,onStage,initialTrackId});signal?.throwIfAborted();
  if(window.__cockpit?.ready===true)return window.__cockpit;
  toast('PREPARANDO JUEGO...','info');
  return waitForCondition(()=>{const cockpit=window.__cockpit;if(cockpit?.error)throw new Error(cockpit.error);return cockpit?.ready===true?cockpit:false;},{signal,timeoutMs});
@@ -312,7 +312,8 @@ async function prepareExistingGame(options){
 async function configureExistingGameReady({track,weather,skyId=profile.lastSky||'clear',mode,laps,difficulty},transaction){
  const check=()=>{if(!transaction.isCurrent())throw new DOMException('Carga cancelada','AbortError');};check();transaction.stage('Esperando al cockpit…');
  if(['light-snow','heavy-snow'].includes(weather)&&!['cuesta_lipan','paso_garibaldi'].includes(track)){toast('La nieve está disponible en Garibaldi y Lipán. Elegí otro clima para esta ruta.','warn');return false}
- const cockpit=await transaction.wait(waitForExistingGameReady(180000,{signal:transaction.signal,onStage:transaction.stage}));check();if(!cockpit)throw new Error('El cockpit no está listo. Podés reintentar.');
+ const initialTrackId=PLAYABLE_TRACK_IDS.has(track)?track:undefined;
+ const cockpit=await transaction.wait(waitForExistingGameReady(180000,{signal:transaction.signal,onStage:transaction.stage,initialTrackId}));check();if(!cockpit)throw new Error('El cockpit no está listo. Podés reintentar.');
  transaction.stage('Preparando exterior del auto seleccionado…');
  await workshop.raceVehicleSelection?.ensureApplied(cockpit,{signal:transaction.signal});check();
  transaction.stage('Auto seleccionado listo; preparando circuito…');

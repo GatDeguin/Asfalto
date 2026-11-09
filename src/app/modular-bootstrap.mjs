@@ -37,7 +37,27 @@ function reportFailure(error,phase){const message=String(error?.message||error);
 function createManager(){return createTrackManager({registry,createAdapter(id,entry){if(!runtimeBoundary)throw new Error("modular runtime boundary is not connected");const factory=id==="dos_lagos"?createDosLagosAdapter:id==="aconcagua_horcones"?createAconcaguaHorconesAdapter:id==="cuesta_lipan"?createCuestaLipanAdapter:id==="paso_garibaldi"?createPasoGaribaldiAdapter:id==="cataratas_iguazu"?createIguazuAdapter:null;if(!factory)throw new RangeError("no adapter factory for track: "+id);return factory({...runtimeBoundary,releaseRootUrl,registryUrl,manifestUrl:entry.manifest})}})}
 async function ensureBoot(){if(bootPromise)return bootPromise;bootStatus="loading";bootPromise=Promise.all([fetchJson(registryUrl,"track registry",{signal:lifecycleAbort.signal}),fetchJson(releaseManifestUrl,"release manifest",{signal:lifecycleAbort.signal})]).then(([nextRegistry,nextManifest])=>{if(shutdownRequested)throw new Error("modular host shutdown during boot");registry=deepFreeze(nextRegistry);releaseManifest=deepFreeze(nextManifest);trackManager=createManager();bootStatus="ready";return Object.freeze({registry,releaseManifest,trackManager})}).catch(error=>{reportFailure(error,"boot");rejectReady(error);throw error});bootPromise.catch(()=>{});return bootPromise}
 
-export function connectModularHost(boundary){if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));if(connectPromise)return connectPromise;runtimeBoundary=Object.freeze({...boundary});connectPromise=ensureBoot().then(({registry:loadedRegistry,trackManager:manager})=>{const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;return manager.select(selectedId)}).then(adapter=>{if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");resolveReady(adapter);return adapter});connectPromise.catch(()=>{});return connectPromise}
+export function connectModularHost(boundary){
+ if(!boundary||typeof boundary!=="object")return Promise.reject(new TypeError("modular runtime boundary is required"));
+ if(runtimeBoundary&&runtimeBoundary!==boundary)return Promise.reject(new Error("modular runtime boundary is already connected"));
+ if(connectPromise)return connectPromise;
+ runtimeBoundary=Object.freeze({...boundary});
+ connectPromise=ensureBoot().then(async({registry:loadedRegistry,trackManager:manager})=>{
+  const selectedId=boundary.trackId||loadedRegistry.tracks.find(entry=>entry.status==="ready")?.id;
+  const signal=lifecycleAbort.signal;
+  try{return await manager.select(selectedId,{signal});}
+  catch(error){
+   signal.throwIfAborted();
+   const fallbackId=boundary.fallbackTrackId;
+   if(!fallbackId||fallbackId===selectedId)throw error;
+   return manager.select(fallbackId,{signal});
+  }
+ }).then(adapter=>{
+  if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");
+  resolveReady(adapter);return adapter;
+ });
+ connectPromise.catch(()=>{});return connectPromise;
+}
 
 async function selectTrack(id,{signal,timeoutMs}={}){signal?.throwIfAborted();if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");const {trackManager:manager}=await waitForSignal(ensureBoot(),signal);const adapter=await manager.select(id,{signal,timeoutMs});if(shutdownRequested||lifecycleAbort.signal.aborted)throw lifecycleAbort.signal.reason||new Error("modular host shutdown during selection");if(adapter?.ready!==true)throw new Error("selected track did not become ready: "+id);return adapter}
 function beginHostInitialization(){

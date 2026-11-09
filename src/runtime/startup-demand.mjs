@@ -11,13 +11,13 @@ export function createStartupDemand({prepareTimeoutMs=180000}={}) {
     consumer.signal?.removeEventListener('abort',consumer.abort);
     if (failure) consumer.reject(failure); else consumer.resolve(true);
   }
-  function request({signal,onStage}={}) {
+  function request({signal,onStage,initialTrackId}={}) {
     if(signal?.aborted)return Promise.reject(signal.reason||abortError());
     if(phase==='prepared')return Promise.resolve(true);
     return new Promise((resolve,reject)=>{
       // A new caller must not join a canceled attempt whose catch has not run yet.
       const attempt=phase==='loading'&&!controller?.signal.aborted?attempts:attempts+1;
-      const consumer={resolve,reject,signal,onStage,attempt};
+      const consumer={resolve,reject,signal,onStage,initialTrackId,attempt};
       consumer.abort=()=>{
         settle(consumer,signal.reason||abortError());
         if(phase==='loading'&&![...consumers].some(c=>c.attempt===attempts))controller?.abort(abortError());
@@ -39,7 +39,8 @@ export function createStartupDemand({prepareTimeoutMs=180000}={}) {
       try {
         const operation=Promise.resolve().then(()=>{
           signal.throwIfAborted();
-          return load({signal,stage:(...args)=>{
+          const initialTrackId=[...consumers].find(c=>c.attempt===attempt&&c.initialTrackId)?.initialTrackId;
+          return load({signal,initialTrackId,stage:(...args)=>{
             if(controller!==owned||signal.aborted)return;
             for(const c of consumers)if(c.attempt===attempt)c.onStage?.(...args);
           }});

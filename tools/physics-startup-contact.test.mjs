@@ -32,13 +32,13 @@ test('race startup snapshots typed contact storage as independent immutable arra
 
 
 test('circuit selection preserves the original failure for the retry dialog', async () => {
-  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=75c25059308ac568',import.meta.url),'utf8');
+  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=98f62752df95440b',import.meta.url),'utf8');
   const start=source.indexOf('async function configureExistingGameReady('),end=source.indexOf('\nfunction persistPlayableRoute',start);
   assert.ok(start>=0&&end>start);
   const error=new Error('physics contact initialization failed');
   const cockpit={raceGetState:()=>({track:{id:'dos_lagos'}}),raceSelectCircuit:async()=>{throw error;}};
-  const context={profile:{lastSky:'clear'},workshop:{},DOMException,
-    waitForExistingGameReady:async()=>cockpit,persistedTrack:id=>id,normalizeTrack:id=>id,
+  const context={profile:{lastSky:'clear'},PLAYABLE_TRACK_IDS:new Set(['cuesta_lipan']),workshop:{},DOMException,
+    waitForExistingGameReady:async(_timeout,{initialTrackId})=>{assert.equal(initialTrackId,'cuesta_lipan');return cockpit;},persistedTrack:id=>id,normalizeTrack:id=>id,
     reflectValue(){},toast(){}};
   const configure=vm.runInNewContext(source.slice(start,end)+'\nconfigureExistingGameReady;',context);
   const tx={isCurrent:()=>true,stage(){},wait:promise=>promise,signal:new AbortController().signal};

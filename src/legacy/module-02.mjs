@@ -43,7 +43,7 @@ import {prepareRaceStart} from '../game/race-start-preparation.mjs?v=f8f1e372f0f
 import {createRoadTestCoursePresentation} from '../render/road-test-course.mjs?v=700df530dd58a604';
 import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs?v=738af66c8796838d';
 import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=b43d93f1161c6526';
-import {startupDemand} from '../runtime/startup-demand.mjs?v=4532aaf2ce6a3d38';
+import {startupDemand} from '../runtime/startup-demand.mjs?v=cdc80b4586de6db3';
 import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=78be56c6974baa83';
 import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=10fea583284d52b0';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=5a4f657d52211b79';
@@ -62,7 +62,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=daeee784
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=eaa33091f82665eb';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=e5cf608f3f52dc96';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -4600,7 +4600,7 @@ try {
   window.__chevyThreeLoadError = null;
   window.dispatchEvent(new CustomEvent('chevy-three-ready', { detail: THREE }));
   // Publish the exact shared Three/template for home before any cockpit/race preparation.
-  const deferredStartupAssets = await startupDemand.run(async ({signal,stage}) => {
+  const deferredStartupAssets = await startupDemand.run(async ({signal,stage,initialTrackId}) => {
     stage('Cargando recursos del cockpit…',0,2);
     const fullPayload = {}; // Editor originals are loaded only by the activation gate.
     stage('Cargando trazado inicial…',1,2);
@@ -4609,7 +4609,7 @@ try {
     if(signal.aborted)throw signal.reason;
     const route=JSON.parse(new TextDecoder().decode(routeBytes));
     stage('Construyendo cockpit y preparando controles…');
-    return {fullPayload,route};
+    return {fullPayload,route,initialTrackId};
   });
   Object.assign(payload,deferredStartupAssets.fullPayload);
   delete payload.threeCoreGz;delete payload.threeModuleGz;delete payload.backgroundPngDataUrl;delete payload.rearviewPngDataUrl;
@@ -8367,8 +8367,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
   bootFailureDisposer = () => modularRuntimeDisposalHandle();
   modularHostInitialization = globalThis.__asfaltoV6Modular.beginHostInitialization();
   await modularHostInitialization.own(async () => {
+  const fallbackTrackId=document.getElementById('race-circuit')?.value || 'dos_lagos';
   const activeTrackAdapter = await modularHostInitialization.waitFor(connectModularHost({
-    trackId: document.getElementById('race-circuit')?.value || 'dos_lagos',
+    trackId: deferredStartupAssets.initialTrackId||fallbackTrackId,
+    fallbackTrackId,
     prepareClosedRoute(sourceRoute,{id}={}){const closure=createClosedRoute(sourceRoute,{id});return {...closure,createRoots(materials={}){return closure.createRoots(THREE,materials);}};},
     async fetchBytes(url, { signal } = {}) {
       const response = await fetch(url, { signal, credentials: 'same-origin' });
