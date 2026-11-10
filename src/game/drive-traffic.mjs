@@ -19,6 +19,7 @@ export function createDriveTrafficPlan({lengthM, seed, canPark = () => true}) {
       roster.push({kind:'regular', model, direction:i === sameDirection ? 1 : -1,
         color:PAINTS[(base + i * 3) % PAINTS.length], rim:(base + i) % 3,
         tire:(base + i * 2) % 3, brake:(base + i) % 3,
+        driver:(base + i) % 6,
         speedMps:MAX_REGULAR_SPEED * (.74 + .26 * random())});
     }
   }
@@ -29,7 +30,7 @@ export function createDriveTrafficPlan({lengthM, seed, canPark = () => true}) {
   const special = (kind, speedMps) => ({
     kind, speedMps, direction:1, model:MODELS[Math.floor(random() * MODELS.length)],
     color:PAINTS[Math.floor(random() * PAINTS.length)], rim:Math.floor(random() * 3),
-    tire:Math.floor(random() * 3), brake:Math.floor(random() * 3),
+    tire:Math.floor(random() * 3), brake:Math.floor(random() * 3), driver:Math.floor(random() * 6),
   });
   const slotCount = roster.length + 2;
   const margin = Math.min(480, lengthM * .08);

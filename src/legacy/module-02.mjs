@@ -105,8 +105,8 @@ import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-d
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
-import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=d873f6fcca11410e';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=4b2d0e2999f09780';
+import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=3cce59e8724fc388';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=a5ba690433ebf38f';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -6104,7 +6104,7 @@ async function prepareDriveTraffic(mode,signal){
   const row=track.sample(progress);
   return row.width>=5&&Math.abs(row.curvature||0)<.008&&Math.abs(row.bank||0)<.10;
  }});
- const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel});
+ const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel,prepareTexture:texture=>renderer.initTexture(texture)});
  const session={view,traffic:createDriveTraffic(plan,{lengthM:track.length}),route:null,...(isAsfaltoV5Qa?{plan}:{})};
  driveTraffic=session;
  try{await view.prepare(plan,signal);signal?.throwIfAborted();}
@@ -6124,7 +6124,7 @@ function updateRoutePresentation(dt, renderFrame){
  const projection=renderFrame.projection || lastState.projection || lastState;
  const cars=driveTraffic.traffic.update({progressM:progress,speedMps:Math.abs(feedback.speedMps||0),
   lateralM:projection.lateral||0,dt,passingAllowed:()=>Math.abs(track.sample(progress).curvature||0)<.008});
- driveTraffic.view.update(cars,driveTraffic.route.sample);
+ driveTraffic.view.update(cars,driveTraffic.route.sample,progress);
 }
 const roadTestCourse=createRoadTestCoursePresentation(THREE,{scene});
 let roadTestCourseUnsubscribe=null;
@@ -8016,8 +8016,11 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const trafficPreparation=driving?prepareDriveTraffic(driveMode,signal).then(()=>{trafficReady=true;}):null;
     const raceStartPreparation=prepareRaceStart({signal,onStage,onUpdate:state=>{racePreparation=state;},paint:()=>new Promise(resolve=>requestAnimationFrame(resolve)),
       environment:()=>syncEnvironment({prepareCycle:false}),dayCycle:()=>prepareRaceDayCycle(),physics:()=>simulation.prepare(),
-      graphics:()=>prepareVisualPolicies(signal),audio:()=>Promise.allSettled([ensureAudioStarted(),raceAudio.ensureStarted()])});
-    await Promise.all([trafficPreparation,raceStartPreparation.then(()=>{if(!trafficReady)onStage('Preparando los autos del camino…');})]);
+      graphics:async()=>{
+       if(!trafficReady){onStage('Preparando los autos del camino…');await trafficPreparation;onStage('Preparando la vista de conducción…');}
+       await prepareVisualPolicies(signal);
+      },audio:()=>Promise.allSettled([ensureAudioStarted(),raceAudio.ensureStarted()])});
+    await Promise.all([trafficPreparation,raceStartPreparation]);
     signal?.throwIfAborted();
     if(request!==raceStartRequest)throw new DOMException('Otra largada reemplazó esta preparación','AbortError');
     finishDriveLap=driving;

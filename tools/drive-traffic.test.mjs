@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=d873f6fcca11410e';
+import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=3cce59e8724fc388';
 
 test('a trip gives each model two or three varied encounters, with one parking and one passing event', () => {
   const plan = createDriveTrafficPlan({lengthM: 22717, seed: 42});
@@ -12,7 +12,7 @@ test('a trip gives each model two or three varied encounters, with one parking a
   for (const model of models) {
     const rows = regular.filter(event => event.model === model);
     assert.ok(rows.length >= 2 && rows.length <= 3);
-    for (const key of ['color', 'rim', 'tire', 'brake']) {
+    for (const key of ['color', 'rim', 'tire', 'brake', 'driver']) {
       assert.equal(new Set(rows.map(row => row[key])).size, rows.length);
     }
   }

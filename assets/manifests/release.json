@@ -2747,7 +2747,7 @@
     {
       "path": "index.html",
       "bytes": 82297,
-      "sha256": "9D608E7629FE043118C5019CE66F9EC778F95740DA115CF6AE036CDEEFB71645"
+      "sha256": "707250B050F1DA6231978F70F7159AD8AF08DD63AE644C5992686E1CD3084850"
     },
     {
       "path": "release-version.json",
@@ -2926,8 +2926,8 @@
     },
     {
       "path": "src/game/drive-traffic.mjs",
-      "bytes": 4830,
-      "sha256": "D873F6FCCA11410E837F0B075D634B18BC0CC6152BDA0196C95BADA915CB2D31"
+      "bytes": 4894,
+      "sha256": "3CCE59E8724FC38842FEA2F70D166980181F465F7E600742BA2F37DAACF17DFF"
     },
     {
       "path": "src/game/driver-control-pipeline.mjs",
@@ -3136,8 +3136,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 585430,
-      "sha256": "AC45C0F7EEC14261832C69F7AF12650F9802E90CDB4FDC2C832F66759D8D6F29"
+      "bytes": 585593,
+      "sha256": "8FB7F0C643FD14E805B1274161BB64007CD5B3FCD64465DDFE14CCB2CFE2575F"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3496,8 +3496,8 @@
     },
     {
       "path": "src/render/drive-traffic-view.mjs",
-      "bytes": 9041,
-      "sha256": "4B2D0E2999F0978012D7ADEFBB91DC74139963712F922F7939735DAA4B104600"
+      "bytes": 11846,
+      "sha256": "A5BA690433EBF38F1C16BE6E8E5333C3A46D40BEC9FE5505527251DF3D898EAC"
     },
     {
       "path": "src/render/empty-instance-draw-guard.mjs",
@@ -3768,6 +3768,11 @@
       "path": "src/render/texture-filtering.mjs",
       "bytes": 2338,
       "sha256": "DD00A75CBD9C1E71B96066CF5F46FA7A8B62024E22A40593920C658E13A4FECC"
+    },
+    {
+      "path": "src/render/traffic-driver.mjs",
+      "bytes": 4911,
+      "sha256": "42860607F9E38D277FBFBEA7E5988FB3F7F15D6254944EBE682C26DB5830A3AC"
     },
     {
       "path": "src/render/vehicle-catalog.mjs",
@@ -4482,17 +4487,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "D2E813A509521294BDEC866F8D3570DE3078D41399BE4E69CB721BB42B23CFA0"
+      "sha256": "C9832689391A83FD9987B1909D4E667242CAA020775ED070B0A0FA8C0DBD2189"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "8DB6DC016AACDC40233A36C785A34717C8B9D05A1825ADB3AD54E64E822833B3"
+      "sha256": "1DC02454B63220302361CEBB033633D40EEFB07329FFB4344F3A34D72349978C"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "9C1E023898B9BF647A47487E7FF8CF636B651C35A42825830453C2197E9C6063"
+      "sha256": "DC768DD18F075CFE5E83D0139F2D5BF543B7DEF1D9DD9681DBB202C2D3F6EE1B"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4601,8 +4606,8 @@
     },
     {
       "path": "tools/drive-traffic.test.mjs",
-      "bytes": 2786,
-      "sha256": "44AA31C08944B5F0108C9F8B57C0178217CF6FA11797181575576072A73A90FB"
+      "bytes": 2796,
+      "sha256": "89DCCF427AF88CB8E893FE56FBB4173E75DEF69943BE5ACF053BDA70A42F7E69"
     },
     {
       "path": "tools/fixtures/hydrology-reference.json",
@@ -4697,12 +4702,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "BD2DC6ACB1B92D6E9EE7B32E258F159F3F80CC7215523ED0FEBBE2EB6D92F55B"
+      "sha256": "0FBAD9B25B9676F8C11032DBDF5F4728CCDFECE4EC0591A6BE4527ECA37EE201"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "C5EE74597A3DDA7E35F7A9390A44CF28657799443709E3BC95313A190142EB1A"
+      "sha256": "F17BD21159AC37195BD3A776A608C9C0E6368B88AD881FA093EE2811EC837816"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4855,6 +4860,11 @@
       "sha256": "3874FDFBAD9E3F5C840B2F54273823D2E2548A40FA9ADCC24585F1D76B7FA4D4"
     },
     {
+      "path": "tools/traffic-driver.test.mjs",
+      "bytes": 1171,
+      "sha256": "5867357E65D83885394EECC268800DF3FB0A8A47FCED4B53FF597E145D682D24"
+    },
+    {
       "path": "tools/v7-championship-profile.test.mjs",
       "bytes": 6339,
       "sha256": "96D6E68C0332C3E8D90663E7989CBD5266231B6971B64CCB29D85E3AB61CCE3A"
@@ -4957,7 +4967,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 2980,
-      "sha256": "8B14CC24D555480166F4E5497D5F12B34C8CC86AA7E543998D71FE5472D550E1"
+      "sha256": "7F09A97F9C114BAB42015EF869CED085C07CA2C1BA478DA8836B5B9F70C0A793"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -4992,7 +5002,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "9BAB25A75DD60C2C0A8EB1F27277F8DFC8C0027EC5833EFFD12D1FC20EA63315"
+      "sha256": "F5556E51AB8E9748779C0C24FE9AE502B2100301AAFB01800810A29FCF6B9001"
     },
     {
       "path": "tracks/aconcagua-horcones/distant-aconcagua-dem.LICENSE.txt",
@@ -5295,7 +5305,7 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 1044,
-  "totalBytes": 998700712,
-  "inventorySha256": "343F014B25CB065804E4A0CB2E468A61C5B6B863CDA6DE96C0A54E0E6A104A3F"
+  "fileCount": 1046,
+  "totalBytes": 998709836,
+  "inventorySha256": "E24780BE0ABF903CCED145562E3EBE7FE775749DADC569C5DAAF0E12718F1FA1"
 }

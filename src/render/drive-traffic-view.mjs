@@ -3,6 +3,7 @@ import { VEHICLE_VISUAL_CALIBRATION } from './vehicle-physical-calibration.mjs?v
 import { releaseVehicleModel } from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
 import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
+import { createTrafficDriver } from './traffic-driver.mjs?v=42860607f9e38d27';
 
 function release(model) {
   const materials = new Set();
@@ -16,12 +17,12 @@ function release(model) {
   releaseVehicleModel(model);
 }
 
-export function createDriveTrafficView(T, {scene, loadGlb}) {
+export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () => {}}) {
   const root = new T.Group();
   root.name = 'DriveTraffic';
   root.userData.visualOnly = true;
   scene.add(root);
-  const entries = new Map(), errors = [];
+  const entries = new Map(), errors = [], warmedTextures = new Set();
   const controller = new AbortController();
   let disposed = false;
   const x = new T.Vector3(), y = new T.Vector3(), z = new T.Vector3(), left = new T.Vector3(), basis = new T.Matrix4();
@@ -46,10 +47,12 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
     hub:new T.CircleGeometry(.21, 18),
     caliper:new T.BoxGeometry(.10, .20, .09),
     lamp:new T.BoxGeometry(.07, .09, .22),
+    steering:new T.TorusGeometry(.16,.012,6,22),
   };
   const spokeStyles = [4,5,8].map(spokeGeometry);
   const rotor = new T.MeshStandardMaterial({color:0x727472, metalness:.65, side:T.DoubleSide});
   const amber = new T.MeshBasicMaterial({color:0xffa21d, toneMapped:false});
+  const steeringMaterial = new T.MeshStandardMaterial({color:0x302821,roughness:.76});
   const tires = [0x171819, 0x262628, 0x15181c].map(color => new T.MeshStandardMaterial({color, roughness:.92}));
   const rims = [0xd3d1c6, 0x494b4c, 0xbc934f].map(color => new T.MeshStandardMaterial({color, metalness:.72, roughness:.27, side:T.DoubleSide}));
   const brakes = [0x851a17, 0xb39b63, 0x3a3d47].map(color => new T.MeshStandardMaterial({color, roughness:.48}));
@@ -59,8 +62,11 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
     const scale = 1 / (def.sourceScale || .4), ground = spec.sourceWheelY * scale - spec.radiusM;
     const group = new T.Group(), lamps = new T.Group(), wheelViews = [];
     const paint = new Set(), materials = new Set(), hidden = [];
+    const replacedGlass = new Set();
+    let cabinGlass = null, authoredWheel = false;
     group.name = 'DriveTraffic_' + id;
     group.visible = false;
+    group.userData.asfaltoPrewarm = true;
     model.scale.multiplyScalar(scale);
     model.position.y -= ground;
     model.traverse(node => {
@@ -82,7 +88,45 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
     });
     for (const node of hidden) node.visible = false;
     createVehicleRefractionPolicy(materials).setReduced(true);
+    model.traverseVisible(node => {
+      authoredWheel ||= !!node.userData?.steeringWheel || /steering.?wheel|volante/i.test(node.name);
+      if (!node.isMesh) return;
+      const substitute = material => {
+        if (!material) return material;
+        if (/(?:^|_)Glass(?:$|_)/i.test(material.name) && !/Gauge/i.test(material.name)) {
+          cabinGlass ||= new T.MeshBasicMaterial({color:0x85999b,transparent:true,opacity:.14,
+            depthWrite:false,side:T.DoubleSide,forceSinglePass:true,toneMapped:false});
+          replacedGlass.add(material);
+          return cabinGlass;
+        }
+        for (const value of Object.values(material)) {
+          if (!value?.isTexture || value.isRenderTargetTexture || warmedTextures.has(value)) continue;
+          prepareTexture(value);
+          warmedTextures.add(value);
+        }
+        return material;
+      };
+      node.material=Array.isArray(node.material)?node.material.map(substitute):substitute(node.material);
+    });
+    // The same cloned lens can also belong to a culled node. Keep one owner.
+    if(replacedGlass.size)model.traverse(node=>{
+      if(!node.isMesh)return;
+      const replace = material=>replacedGlass.has(material)?cabinGlass:material;
+      node.material=Array.isArray(node.material)?node.material.map(replace):replace(node.material);
+    });
+    replacedGlass.forEach(material=>material.dispose());
     group.add(model, lamps);
+    const sourceAnchor = (point) => [point[0]*scale,point[1]*scale-ground,point[2]*scale];
+    const eye = def.cockpitEyeSource ? sourceAnchor(def.cockpitEyeSource) : [.39,spec.heightM-.245,.40];
+    const wheel = def.steeringCenterSource ? sourceAnchor(def.steeringCenterSource) : [eye[0]-.46,eye[1]-.29,eye[2]];
+    const driver=createTrafficDriver(T,{eye,wheel,roofM:spec.heightM});
+    group.add(driver.root);
+    if(!authoredWheel){
+      const steering=new T.Mesh(geometries.steering,steeringMaterial);
+      steering.position.fromArray(wheel);
+      steering.rotation.y=Math.PI/2;
+      driver.root.add(steering);
+    }
     const halfLength = (def.sourceBoundsM?.size[0] || def.physicsEstimate?.dimensionsM.length || 4.85) / 2;
     for (const end of [-1, 1]) for (const side of [-1, 1]) {
       const light = new T.Mesh(geometries.lamp, amber);
@@ -114,11 +158,13 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
       wheelViews.push({spin, tire, lip, hub, spokes, caliper, radius});
     }
     root.add(group);
-    return {model, group, paint, lamps, wheelViews, lastId:null, drawn:false};
+    return {model, group, paint, lamps, driver, wheelViews, lastId:null, drawn:false};
   }
 
   function applyVariant(entry, car) {
     for (const material of entry.paint) material.color.set(car.color);
+    entry.driver.setVariant(car.driver);
+    entry.driver.setParked(car.kind==='parked');
     for (const {tire,lip,hub,spokes,caliper} of entry.wheelViews) {
       tire.material = tires[car.tire];
       tire.scale.z = [1.4, 1.67, 1.96][car.tire];
@@ -154,7 +200,7 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
     }
   }
 
-  function update(cars, sample) {
+  function update(cars, sample, playerProgress) {
     for (const entry of entries.values()) entry.drawn = false;
     for (const car of cars) {
       const entry = entries.get(car.model);
@@ -173,6 +219,7 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
       group.position.addScaledVector(y, .03);
       if (entry.lastId !== car.id) applyVariant(entry, car);
       lamps.visible = !!car.hazards;
+      entry.driver.root.visible=Math.abs(car.progressM-playerProgress)<82;
       for (const {spin, radius} of wheelViews) {
         spin.rotation.z = car.kind === 'parked' ? 0 : (-car.progressM * car.direction / radius) % (2 * Math.PI);
       }
@@ -183,17 +230,19 @@ export function createDriveTrafficView(T, {scene, loadGlb}) {
 
   return {
     prepare, update,
-    diagnostics:() => ({models:[...entries.keys()], drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id), errors:[...errors]}),
+    diagnostics:() => ({models:[...entries.keys()], drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id),
+      drivers:[...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id])=>id), texturesWarmed:warmedTextures.size, errors:[...errors]}),
     dispose() {
       if (disposed) return;
       disposed = true;
       controller.abort();
       root.removeFromParent();
-      for (const entry of entries.values()) release(entry.model);
+      for (const entry of entries.values()) {entry.driver.dispose();release(entry.model);}
       entries.clear();
+      warmedTextures.clear();
       root.clear();
       [...Object.values(geometries), ...spokeStyles].forEach(geometry => geometry.dispose());
-      [amber, rotor, ...tires, ...rims, ...brakes].forEach(material => material.dispose());
+      [amber, rotor, steeringMaterial, ...tires, ...rims, ...brakes].forEach(material => material.dispose());
     },
   };
 }
