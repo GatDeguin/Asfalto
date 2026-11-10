@@ -1,5 +1,6 @@
 // One physical context; view facades own all mutable renderer state. No transaction crosses await.
 import {retainVehicleResources} from '../render/vehicle-resource-pool.mjs?v=564628ad31eed1e7';
+import {compileRendererPrograms} from '../render/pass-preparation.mjs?v=5e96c4931974c8ab';
 const hosts=new WeakMap();
 const scalar=['autoClear','autoClearColor','autoClearDepth','autoClearStencil','outputColorSpace','toneMapping','toneMappingExposure','localClippingEnabled','clippingPlanes','transmissionResolutionScale','sortObjects'];
 const nested={shadowMap:['enabled','type','autoUpdate','needsUpdate'],xr:['enabled'],info:['autoReset']};
@@ -33,7 +34,7 @@ export function getRenderHost(T,{canvas,rendererFactory=options=>new T.WebGLRend
     if(key==='getDrawingBufferSize')return args[0].copy(view.state.size).multiplyScalar(view.state.dpr).floor();
     if(key==='getPixelRatio')return active===view?raw.getPixelRatio():view.state.dpr;
     if(key==='setSize'||key==='setPixelRatio'){if(key==='setSize')view.state.size=new T.Vector2(args[0],args[1]);else view.state.dpr=args[0];view.state.viewport=new T.Vector4(0,0,view.state.size.x,view.state.size.y);if(active===view&&!current)return invoke(key,key==='setSize'?[args[0],args[1],false]:args);return;}
-    if(key==='compileAsync'){const startedEpoch=epoch;const release=retainVehicleResources(args[0]);pending++;view.pending++;let result;try{result=run(view,()=>invoke(key,args));}catch(error){release();pending--;view.pending--;throw error;}return Promise.resolve(result).then(value=>{if(startedEpoch!==epoch)throw new DOMException('Context epoch changed','AbortError');return value;}).finally(()=>{release();pending--;view.pending--;cleanup(view);});}
+    if(key==='compileAsync'){const startedEpoch=epoch;const release=retainVehicleResources(args[0]);pending++;view.pending++;let result;try{result=run(view,()=>compileRendererPrograms(raw,...args));}catch(error){release();pending--;view.pending--;throw error;}return Promise.resolve(result).then(value=>{if(startedEpoch!==epoch)throw new DOMException('Context epoch changed','AbortError');return value;}).finally(()=>{release();pending--;view.pending--;cleanup(view);});}
     return run(view,()=>{
      // Inactive PMREM/probe/priming continuations are allowed, but never touch the visible backbuffer.
      if(['render','clear','clearColor','clearDepth','clearStencil'].includes(key)&&active!==view&&!raw.getRenderTarget()){

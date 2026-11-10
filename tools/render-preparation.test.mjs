@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=9b1f600bfec508ef';
-import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=46f93c06d3ef0012';
-import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=759eba2a6de85a5f';
+import {createScreenSpaceLighting} from '../src/render/screen-space-lighting.mjs?v=8323c5f9d777ad62';
+import {createRaceColorGrade} from '../src/render/race-color-grade.mjs?v=a299ea81213424be';
+import {createCockpitRenderPass} from '../src/render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};
 function fixture(){
  let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');

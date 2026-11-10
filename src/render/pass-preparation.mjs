@@ -31,22 +31,85 @@ function retainMaterials(view,renderer){
  }};view.traverse(retain);retain({material:renderer});
  return ()=>{for(const material of held){const lease=materialLeases.get(material);if(--lease.count)continue;materialLeases.delete(material);if(material.dispose===lease.wrapper){if(lease.own)Object.defineProperty(material,'dispose',lease.own);else delete material.dispose;}if(lease.requested)lease.original.call(material);}};
 }
-function waitPrograms(renderer,pending,programs){
- if(!renderer.isWebGLRenderer||!renderer.extensions.has('KHR_parallel_shader_compile'))return pending;
- // Poll only unfinished actual programs, not mutable material.currentProgram.
- const unfinished=programs.filter(program=>program.program&&!program.isReady());if(!unfinished.length)return pending;
- return Promise.all([pending,new Promise(resolve=>{const check=()=>{const live=new Set(renderer.info.programs);if(unfinished.every(program=>!live.has(program)||!program.program||program.isReady()))resolve();else setTimeout(check,10);};check();})]);
+const programPolls=new WeakMap();
+const programPollIntervalMs=16;
+const programPollBudgetMs=4;
+const maxProgramChecksPerTurn=64;
+
+function scheduleProgramPoll(renderer,state){
+ if(!state.pending.size||state.timer!==null)return;
+ state.timer=setTimeout(()=>{
+  state.timer=null;
+  if(state.programs!==renderer.info.programs||state.gl.isContextLost()){
+   const error=new DOMException('Shader preparation context changed','AbortError');
+   for(const entry of state.pending.values())entry.reject(error);
+   state.pending.clear();
+   if(programPolls.get(renderer)===state)programPolls.delete(renderer);
+   return;
+  }
+  const started=performance.now(),limit=Math.min(state.pending.size,maxProgramChecksPerTurn);
+  for(let i=0;i<limit;i++){
+   const [program,entry]=state.pending.entries().next().value;
+   state.pending.delete(program);
+   try{
+    if(!program.program||program.isReady()){
+     state.ready.add(program);entry.resolve();
+    }else state.pending.set(program,entry);
+   }catch(error){entry.reject(error);}
+   // A native query can itself block. Yield before querying the next program.
+   if(performance.now()-started>=programPollBudgetMs)break;
+  }
+  scheduleProgramPoll(renderer,state);
+ },programPollIntervalMs);
+}
+
+export function compileRendererPrograms(renderer,view,camera,scene){
+ if(!renderer.isWebGLRenderer||!renderer.extensions.has('KHR_parallel_shader_compile')||
+    !renderer.properties?.get||typeof renderer.compile!=='function')return renderer.compileAsync(view,camera,scene);
+ const gl=renderer.getContext();
+ if(gl.isContextLost())return Promise.reject(new DOMException('Shader preparation context lost','AbortError'));
+ const materials=renderer.compile(view,camera,scene);
+ const programs=renderer.info.programs;
+ let state=programPolls.get(renderer);
+ if(state?.programs!==programs){
+  state={programs,gl,pending:new Map(),ready:new WeakSet(),timer:null};
+  programPolls.set(renderer,state);
+ }
+ // Three r180 caches each material's variants here, including both sides of
+ // translucent meshes and variants reused by another pass. Capture the actual
+ // programs synchronously, before another compile can change currentProgram.
+ const dependencies=new Set();
+ for(const material of materials){
+  const {programs:variants,currentProgram}=renderer.properties.get(material);
+  if(variants)for(const program of variants.values())dependencies.add(program);
+  else if(currentProgram)dependencies.add(currentProgram);
+ }
+ const waits=[];
+ for(const program of dependencies){
+  if(!program.program||state.ready.has(program))continue;
+  let entry=state.pending.get(program);
+  if(!entry){
+   let resolve,reject;
+   const promise=new Promise((accept,fail)=>{resolve=accept;reject=fail;});
+   entry={promise,resolve,reject};
+   state.pending.set(program,entry);
+  }
+  waits.push(entry.promise);
+ }
+ scheduleProgramPoll(renderer,state);
+ return Promise.all(waits).then(()=>view);
 }
 function compileNative(renderer,view,scene,camera){
  const release=retainMaterials(view,renderer),context=contexts.get(renderer);if(context)context.pending++;let pending;
- try{primePassClipping(renderer,scene,camera);pending=renderer.compileAsync(view,camera,scene);
+ try{primePassClipping(renderer,scene,camera);
+  pending=renderer.__renderView?renderer.compileAsync(view,camera,scene):compileRendererPrograms(renderer,view,camera,scene);
   // compile() replaces material.currentProgram even when its version and light
   // counts stay unchanged. Foreground draws must select their current-tier
   // program again instead of accidentally drawing with an unfinished future one.
   if(context?.batch){const materials=new Set();view.traverse(node=>{for(const material of Array.isArray(node.material)?node.material:[node.material])if(material)materials.add(material);});for(const material of materials)material.needsUpdate=true;}
  }
  catch(error){if(context){context.pending--;releaseContext(renderer,context);}release();throw error;}
- return Promise.resolve(waitPrograms(renderer,pending,[...(renderer.info?.programs||[])])).finally(()=>{if(context){context.pending--;releaseContext(renderer,context);}release();});
+ return Promise.resolve(pending).finally(()=>{if(context){context.pending--;releaseContext(renderer,context);}release();});
 }
 function compileMaterials(renderer,view,scene,camera){
  if(!renderer.localClippingEnabled)return compileNative(renderer,view,scene,camera);
@@ -60,7 +123,8 @@ function compileMaterials(renderer,view,scene,camera){
   renderer.clippingPlanes=planes;
   const filtered={traverse(visit){view.traverse(node=>{if(!node.material)return;const original=node.material,selected=(Array.isArray(original)?original:[original]).filter(m=>materials.has(m));if(!selected.length)return;try{node.material=Array.isArray(original)?selected:selected[0];visit(node);}finally{node.material=original;}});},traverseVisible(){}};
   pending.push(compileNative(renderer,filtered,scene,camera));
- }}finally{renderer.clippingPlanes=globalPlanes;}
+ }}catch(error){for(const work of pending)void work.catch(()=>{});throw error;}
+ finally{renderer.clippingPlanes=globalPlanes;}
  return Promise.all(pending);
 }
 // Only fold objects with the same resource identities and native shader features.

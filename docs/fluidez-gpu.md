@@ -128,6 +128,26 @@ La etapa de Dos Lagos recorrió 22.717 m en unos 18 min 36 s de pared, sin adela
 
 La pasada registró cerca de 52 FPS hasta la llegada y 33 ms p95 de presentación. De los 19 saltos por encima de 75 ms, 17 se concentraron en las muestras entre los km 20,2 y 22,7. El mayor fue de 1,37 s. El piloto de prueba también solicitó una copia completa del estado con cada comando. Para localizar el coste se repetirá ese tramo sin esa lectura y con desglose por fase de renderizado.
 
+### Primera salida del taller y primer cuadro de carrera
+
+En Three r180, varios pases consultaban por separado el estado de los mismos programas. La espera se comparte por contexto físico y programa WebGL. Se conservan las variantes de los materiales de cada pase, incluidas las caras del vidrio y la transmisión. El sondeo cede el hilo después de 4 ms o 64 consultas, y termina cuando se vacía la cola o se pierde el contexto. Los navegadores sin la extensión siguen usando la preparación asíncrona de Three. [Código de WebGLRenderer r180](https://github.com/mrdoob/three.js/blob/r180/src/renderers/WebGLRenderer.js) · [KHR_parallel_shader_compile](https://registry.khronos.org/webgl/extensions/KHR_parallel_shader_compile/)
+
+En Viaje y Conducción libre, la largada prepara el mundo con el tráfico ya cargado. En el relevo al circuito, el cargador espera que se envíe un cuadro nuevo antes de comenzar su salida. La apertura de cámara conserva su tiempo completo y se inicia al quedar visible la escena. En movimiento reducido la secuencia de cámara se omite y el relevo también espera el cuadro nuevo.
+
+El control fue el commit `41d96cb` con el arte recuperado en Blender. Se midió Dos Lagos a 1280 × 800, escala de dispositivo 1, Chrome 157.0.8103.50 con ANGLE D3D11 y RTX 3060 Ti. Se usaron hora dorada, clima despejado, ciclo de seis minutos, el Chevrolet 1969 y la cinemática normal. Cada ejecución abrió un perfil de navegador limpio con caché de shaders en disco desactivada y repitió la salida en ese mismo proceso.
+
+| Medición | Control | Candidata |
+| --- | ---: | ---: |
+| Primera salida hasta controles activos | 38,44 s | 33,13 s |
+| Segunda salida hasta controles activos | 23,69 s | 24,14 s |
+| Mayor tarea del hilo principal en la primera salida | 2.412 ms | 1.535 ms |
+
+En una pasada separada, instrumentada con CDP y WebGL, sólo el sondeo compartido redujo las consultas de finalización de 603.499 a 30.287. El tiempo acumulado de esas consultas pasó de 2.424 a 31 ms. En la candidata completa el primer cuadro se observó a los 20,03 s y el cargador se ocultó a los 20,51 s. La repetición de Paso Garibaldi con nieve ligera y movimiento reducido llegó a conducción después de cancelar durante la preparación de shaders y volver al taller.
+
+Nsight Systems 2026.6.1 registró 1.055 llamadas a `D3DCompile` y 1.424 presentaciones `Present1` en una salida fría aislada con D3D11. La compilación más larga duró 3.406,8 ms. Los intervalos de compilación corresponden a llamadas de CPU que pueden solaparse. La captura se hizo con el trazado de API. La ocupación, el ancho de banda y la duración por pasada de GPU quedan pendientes de una captura con contadores de hardware. [Guía de trazado de Nsight Systems](https://docs.nvidia.com/nsight-systems/UserGuide/index.html#system-wide-api-trace-on-windows)
+
+La comprobación de conducción recorrió 710 m durante 75 s en Dos Lagos, con el ciclo de cielo acelerado para recorrer seis HDRI. La sesión se mantuvo en conducción, con 59,83 FPS de escena, 18,4 ms p95, un intervalo máximo de 108,6 ms y 9,66 ms p95 en la consulta GPU. También se probó la reversa automática con `R` hacia el tramo detrás de la largada y el regreso al taller en 369 ms. La medida cubre ese tramo y esa configuración.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.

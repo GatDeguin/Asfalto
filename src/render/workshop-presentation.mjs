@@ -1,4 +1,4 @@
-import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=258173b4dba723d7';
+import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=5e96c4931974c8ab';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=3197d396b128f4f7';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';

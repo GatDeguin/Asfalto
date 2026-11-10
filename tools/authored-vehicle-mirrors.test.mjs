@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {attachAuthoredMirrors} from '../src/render/authored-vehicle-mirrors.mjs?v=2c508a9c35caef1c';
+import {attachAuthoredMirrors} from '../src/render/authored-vehicle-mirrors.mjs?v=a7ac4f412067e413';
 
 test('the 400 live reflection is a round disc seated in the angled chrome housing', () => {
   const root = new T.Group();
