@@ -2,7 +2,7 @@ import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=5539b087de767880';
-import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=5834aed01a3c9f7f';
+import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=f67b304abe73b633';
 import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=c2ea69acda3ee7c3';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';

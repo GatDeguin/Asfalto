@@ -37,7 +37,7 @@
 }
 #an-session-loading[data-departure=true] :is(.an-cinema-chapter,.an-loading-tachometer){display:none}
 #an-session-loading[data-departure=true] .an-cinema-rule{width:25px}
-#an-session-loading[data-departure-phase=gate] .an-cinema-rule,#an-session-loading[data-departure-phase=exit] .an-cinema-rule{
+#an-session-loading:is([data-departure-phase=gate],[data-departure-phase=exit],[data-departure-phase=night]) .an-cinema-rule{
  background:linear-gradient(90deg,#bcd7e4,#e4eaf322);
 }
 #an-session-loading[data-departure=true] .an-loading-stage{
@@ -45,9 +45,8 @@
  color:#f6eddc;font:600 11px/1.35 system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;text-shadow:0 1px 8px #030405;
 }
 #an-session-loading[data-departure=true]::after{
- content:'';position:absolute;inset:0;background:var(--an-load-ink);opacity:0;transition:opacity .18s linear;pointer-events:none;
+ content:'';position:absolute;inset:0;background:#000;opacity:var(--an-departure-fade,0);pointer-events:none;
 }
-#an-session-loading[data-departure-fade=true]::after{opacity:1}
 body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu :is(#v6-menu-sidebar,#v6-menu-content,.an-menu-footer,.an-vehicle-plate){visibility:hidden}
 body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-stage::before{background:none}
 body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-stage{

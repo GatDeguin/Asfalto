@@ -1,14 +1,19 @@
-import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=3a496d07b10b1b49';
+import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=55fb7202cdfb2f7b';
+import {prepareDepartureDoor} from './workshop-departure-door.mjs?v=47519597b1833cf9';
 
-const LIGHTS=1.24, GATE=2.17, GATE_OPEN=3.91, ROLL=3.80, EXIT=3.98;
-const THRESHOLD_Z=6.50, TURN_Z=9.55, TURN_RADIUS=4.80, STREET_RUN=2.8;
+const DOOR_LATCH=.74, IGNITION=1.02, HEADLAMPS=2.08, LIGHTS=2.94;
+const GATE=3.78, GATE_OPEN=5.54, ROLL=5.65, EXIT=5.68, NIGHT=9.44;
+const THRESHOLD_Z=6.50, TURN_Z=9.55, TURN_RADIUS=4.80, STREET_RUN=26;
 const TURN_LENGTH=TURN_RADIUS*Math.PI/2;
-const ROLL_END=8.55, FADE=8.58, END=8.88;
+const ROLL_END=12.48, FADE=11.40, BLACK=12.64, END=12.84;
 const phases=[
-  [0,'ignition','Arrancando el motor…'],
+  [0,'door','Cerrando la puerta…'],
+  [IGNITION,'ignition','Arrancando el motor…'],
+  [HEADLAMPS,'headlamps','Encendiendo los faros…'],
   [LIGHTS,'lights','Apagando las luces del taller…'],
   [GATE,'gate','Levantando la cortina…'],
   [EXIT,'exit','Saliendo del taller…'],
+  [NIGHT,'night','En la calle…'],
 ];
 const lerp=(a,b,t)=>a+(b-a)*t;
 const clamp=value=>Math.max(0,Math.min(1,value));
@@ -18,33 +23,48 @@ function smooth(value){
 }
 
 function frameCamera(camera,car,elapsed,straightProgress,streetProgress,shot){
-  if(shot===0){
-    // A low front quarter shows the grille and the filaments coming up.
-    const push=smooth(elapsed/LIGHTS);
-    camera.position.set(car.x+lerp(3.27,2.88,push),lerp(1.09,.89,push),car.z+lerp(3.94,3.76,push));
-    camera.lookAt(car.x-.16,.96,car.z+1.06);
-    camera.fov=lerp(43,41,push);
-  }else if(shot===1){
+  if(shot==='door'){
+    const push=smooth(elapsed/IGNITION);
+    camera.position.set(car.x+lerp(3.10,2.94,push),1.13,car.z-1.67);
+    camera.lookAt(car.x+.79,.99,car.z+.05);
+    camera.fov=34;
+  }else if(shot==='ignition'){
+    const push=smooth((elapsed-IGNITION)/(HEADLAMPS-IGNITION));
+    camera.position.set(car.x-lerp(3.21,2.94,push),lerp(.85,.77,push),car.z+3.55);
+    camera.lookAt(car.x,.89,car.z+.76);
+    camera.fov=42;
+  }else if(shot==='headlamps'){
+    const push=smooth((elapsed-HEADLAMPS)/(LIGHTS-HEADLAMPS));
+    camera.position.set(car.x+lerp(.78,.57,push),lerp(.70,.63,push),car.z+lerp(4.19,3.91,push));
+    camera.lookAt(car.x,.80,car.z+1.52);
+    camera.fov=40;
+  }else if(shot==='lights'){
     // The fluorescent tubes go out over the rear quarter. The tail lights stay lit.
     const drift=smooth((elapsed-LIGHTS)/(GATE-LIGHTS));
     camera.position.set(lerp(2.82,2.54,drift),lerp(1.04,.88,drift),lerp(-3.98,-3.70,drift));
     camera.lookAt(car.x+.10,.92,car.z-.95);
     camera.fov=lerp(42,41,drift);
-  }else if(shot===2){
+  }else if(shot==='gate'){
     // Pull out to show the full opening and the light reaching the floor.
     const reveal=smooth((elapsed-GATE)/(EXIT-GATE));
     camera.position.set(lerp(4.10,3.64,reveal),lerp(1.39,1.58,reveal),lerp(-4.10,-3.73,reveal));
     camera.lookAt(.09,1.56,lerp(2.60,3.47,reveal));
     camera.fov=54;
+  }else if(shot==='night'){
+    // Let the car shrink into the unlit stretch with the stars held in frame.
+    const drift=smooth((elapsed-NIGHT)/(END-NIGHT));
+    camera.position.set(lerp(3.35,2.65,drift),lerp(2.35,2.57,drift),17.1);
+    camera.lookAt(-23,4.36,14.42);
+    camera.fov=43;
   }else if(streetProgress===0){
     camera.position.set(lerp(2.80,1.83,straightProgress),lerp(1.14,1.59,straightProgress),-4.34+5.94*straightProgress);
     camera.lookAt(car.x*.35,lerp(1.03,1.33,straightProgress),car.z+.62);
     camera.fov=lerp(48,46,straightProgress);
   }else{
-    // Cut to the sidewalk once the rear has cleared the jamb. Lead the car down the street.
-    camera.position.set(lerp(3.85,-1.6,streetProgress),lerp(1.62,1.96,streetProgress),lerp(8.48,10.3,streetProgress));
-    camera.lookAt(car.x-.72*streetProgress,1.22,car.z+.55*(1-streetProgress));
-    camera.fov=lerp(51,46,streetProgress);
+    // The outside cut follows the right turn from the near sidewalk.
+    camera.position.set(lerp(3.85,2.92,streetProgress),lerp(1.62,1.96,streetProgress),lerp(8.48,10.3,streetProgress));
+    camera.lookAt(car.x-.35*streetProgress,1.30,car.z+.55*(1-streetProgress));
+    camera.fov=lerp(51,48,streetProgress);
   }
   camera.updateProjectionMatrix();
 }
@@ -76,8 +96,16 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
   const contact=scene?.getObjectByName('Workshop_Vehicle_Contact');
   const contactPosition=contact?.position.clone(),contactRotation=contact?.quaternion.clone();
   const vehicleCue=vehiclePresentation?.beginDepartureCue?.();
+  let door=prepareDepartureDoor(workshop.T,vehiclePresentation?.root,workshop.vehicleId);
+  door?.setOpen(1);
+  const reflections=new Map();
+  vehiclePresentation?.root?.traverse(object=>{
+    for(const material of Array.isArray(object.material)?object.material:[object.material]){
+      if(Number.isFinite(material?.envMapIntensity))reflections.set(material,material.envMapIntensity);
+    }
+  });
   const sound=createWorkshopDepartureAudio(settings);
-  let raf=0,lastFrame=null,elapsed=0,phaseIndex=-1,finished=false,lastGate=gate,lastDistance=0,lastTurn=0,ending=false;
+  let raf=0,lastFrame=null,elapsed=0,phaseIndex=-1,finished=false,lastGate=gate,lastDistance=0,lastTurn=0,latch=false;
   const departureYaw=Math.PI/2-(vehiclePresentation?.root?.rotation.y||0);
   const straightDistance=Math.max(0,TURN_Z-position.z);
   const streetDistance=TURN_LENGTH+STREET_RUN;
@@ -107,6 +135,8 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
       if(fillPosition)fill.position.copy(fillPosition);
       if(fillColor)fill.color.copy(fillColor);
       if(lastGate!==gate)presentation.setDepartureGate(gate);
+      door?.restore();
+      for(const [material,intensity] of reflections)material.envMapIntensity=intensity;
       vehicleCue?.restore();
       resolve();
     }
@@ -121,34 +151,42 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         if(elapsed>=(phases[phaseIndex+1]?.[0]??Infinity)){
           const [,id,label]=phases[++phaseIndex];onPhase(label,id);
           if(finished)return;
-          if(id!=='gate'||gate<1)sound.phase(id);
+          if(id!=='door'&&(id!=='gate'||gate<1))sound.phase(id);
+        }
+        if(!latch){
+          door?.setOpen(1-smooth((elapsed-.13)/(DOOR_LATCH-.13)));
+          if(elapsed>=DOOR_LATCH){latch=true;door?.restore();door=null;sound.phase('door');}
         }
         const dark=smooth((elapsed-LIGHTS)/.33);
         const opening=smooth((elapsed-GATE)/(GATE_OPEN-GATE)),nextGate=lerp(gate,1,opening);
         const spill=smooth((nextGate-.04)/.72);
+        const rollout=clamp((elapsed-ROLL)/(ROLL_END-ROLL));
+        const distance=(straightDistance+streetDistance)*rollout*rollout*(1.85-.85*rollout);
+        const straightProgress=straightDistance>0?clamp(distance/straightDistance):1;
+        const streetTravel=Math.max(0,distance-straightDistance);
+        const night=smooth((streetTravel-TURN_LENGTH-1.1)/18);
+        for(const [material,intensity] of reflections)material.envMapIntensity=intensity*(1-.89*night);
         if(key)key.intensity=roomLights.get(key)*(1-dark);
-        if(hemi)hemi.intensity=roomLights.get(hemi)*(1-.80*dark)+.12*spill;
+        if(hemi)hemi.intensity=(roomLights.get(hemi)*(1-.80*dark)+.12*spill)*(1-.89*night);
         if(warm)warm.intensity=roomLights.get(warm)*(1-.93*dark);
         for(const [i,[light,intensity]] of practicalLights.entries())light.intensity=intensity*(1-smooth((elapsed-LIGHTS-i*.06)/.18));
         let tube=0;
         for(const [material,intensity] of fluorescents)material.emissiveIntensity=intensity*(1-smooth((elapsed-LIGHTS-(tube++%3)*.06)/.18));
         if(fill){
-          fill.intensity=roomLights.get(fill)*(1-dark)+2.78*spill;
+          fill.intensity=(roomLights.get(fill)*(1-dark)+2.78*spill)*(1-.93*night);
           if(fillPosition)fill.position.set(lerp(fillPosition.x,1.05,dark),lerp(fillPosition.y,4.55,dark),lerp(fillPosition.z,9.0,dark));
           if(fillColor)fill.color.copy(fillColor).lerp(outsideColor,dark);
         }
         const gateDelta=nextGate-lastGate;lastGate=nextGate;
         if(gateDelta)presentation.setDepartureGate(nextGate);
         if(gateDelta>0&&nextGate===1)sound.phase('gate-stop');
-        const rollout=clamp((elapsed-ROLL)/(ROLL_END-ROLL));
-        const distance=(straightDistance+streetDistance)*rollout*rollout*(1.85-.85*rollout);
-        const straightProgress=straightDistance>0?clamp(distance/straightDistance):1;
-        const streetTravel=Math.max(0,distance-straightDistance);
         const turn=Math.min(Math.PI/2,streetTravel/TURN_RADIUS);
         // The car leaves along +Z, so its right is world -X.
         car.position.x=position.x*(1-straightProgress)-TURN_RADIUS*(1-Math.cos(turn))-Math.max(0,streetTravel-TURN_LENGTH);
         car.position.z=position.z+Math.min(distance,straightDistance)+TURN_RADIUS*Math.sin(turn);
         car.rotation.y=departureYaw-turn;
+        const cranking=elapsed-IGNITION;
+        car.rotation.z=cranking>0&&cranking<.66?Math.sin(cranking*51)*.006*smooth(cranking/.12)*(1-smooth(cranking/.66)):0;
         if(position.z+lastDistance<THRESHOLD_Z&&car.position.z>=THRESHOLD_Z)sound.phase('threshold');
         if(contact){
           contact.position.set(contactPosition.x+car.position.x-position.x,contactPosition.y,contactPosition.z+car.position.z-position.z);
@@ -156,14 +194,14 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         }
         lastTurn=turn;
         const steer=.46*smooth((distance-straightDistance+.55)/1.1)*(1-smooth((streetTravel-TURN_LENGTH+.55)/1.1));
-        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps:smooth((elapsed-.51)/.29),brake:1-smooth((elapsed-ROLL)/.26)});
-        frameCamera(camera,car.position,elapsed,straightProgress,clamp(streetTravel/streetDistance),phaseIndex);
-        const fade=smooth((elapsed-FADE)/(END-FADE));
-        if(elapsed>=FADE&&!ending){ending=true;onFade();}
+        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps:smooth((elapsed-HEADLAMPS)/.33),brake:1-smooth((elapsed-ROLL)/.26)});
+        frameCamera(camera,car.position,elapsed,straightProgress,clamp(streetTravel/TURN_LENGTH),phases[phaseIndex][1]);
+        const fade=smooth((elapsed-FADE)/(BLACK-FADE));
+        if(fade>0)onFade(fade);
         if(finished)return;
         const clutch=smooth((elapsed-ROLL+.34)/.34)*(1-smooth((elapsed-ROLL)/.39));
         const throttle=clutch*.47+smooth(rollout*2)*.46;
-        sound.update({elapsed,gate:nextGate,speed:(distance-lastDistance)/Math.max(.001,dt),gateSpeed:gateDelta/Math.max(.001,dt),throttle,fade});
+        sound.update({cranking,gate:nextGate,speed:(distance-lastDistance)/Math.max(.001,dt),gateSpeed:gateDelta/Math.max(.001,dt),throttle,distanceFade:night,fade});
         lastDistance=distance;
         workshop.renderView.frame(()=>advancedGraphics?advancedGraphics.render():renderer.render(scene,camera));
       }catch(error){

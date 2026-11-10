@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=d21cd95e25016d6e';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=a10017b2e2c64441';
-import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=e487a58aa1bf61ed';
+import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=bcddf03d5ca9eb7d';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=6a79200613bc5413';
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=3197d396b128f4f7';
 
 const vector=(x=0,y=0,z=0)=>({x,y,z,set(x,y,z){Object.assign(this,{x,y,z});},clone(){return vector(this.x,this.y,this.z);},copy(v){this.set(v.x,v.y,v.z);}});
 function fixture(t){
@@ -34,7 +34,7 @@ function fixture(t){
       beginDepartureCue:()=>({setFrame(values){lamp=values.headlamps;spin=values.wheelRotationRad;},restore(){lamp=spin=0;}})},
     advancedGraphics:{render:()=>draws.push({phase:phases.at(-1),gate,x:workshop.car.position.x,z:workshop.car.position.z,yaw:workshop.car.rotation.y,key:workshop.key.intensity,mode,lamp,spin,fade,position:workshop.camera.position.clone(),fov:workshop.camera.fov,fill:workshop.fill.intensity,practical:practical.intensity,tube:tube.emissiveIntensity,exterior:exterior.visible})}};
   const step=delta=>{time+=delta;const batch=[...frames.values()];frames.clear();for(const fn of batch)fn(time);};
-  const play=(signal,settings={soundEnabled:false})=>playWorkshopDeparture(workshop,{signal,settings,onPhase:name=>phases.push(name),onFade:()=>fade++});
+  const play=(signal,settings={soundEnabled:false})=>playWorkshopDeparture(workshop,{signal,settings,onPhase:name=>phases.push(name),onFade:amount=>{fade=amount;}});
   const assertRestored=()=>{
     assert.equal(frames.size,0);assert.equal(gate,0);assert.equal(mode,'off');
     assert.equal(workshop.car.position.z,0);assert.equal(workshop.key.intensity,2);assert.equal(workshop.camera.fov,46);
@@ -59,35 +59,39 @@ test('the route uses its loading fallback until the workshop has rendered a fram
 test('a stalled frame preserves each phase and shows the car past the open gate',async t=>{
   const f=fixture(t),done=f.play();
   f.step(16);f.step(8200);
-  assert.deepEqual(f.phases,['Arrancando el motor…']);
-  for(let i=0;i<110&&f.frames.size;i++)f.step(90);
+  assert.deepEqual(f.phases,['Cerrando la puerta…']);
+  for(let i=0;i<165&&f.frames.size;i++)f.step(90);
   await done;
-  assert.deepEqual(f.phases,['Arrancando el motor…','Apagando las luces del taller…','Levantando la cortina…','Saliendo del taller…']);
+  assert.deepEqual(f.phases,['Cerrando la puerta…','Arrancando el motor…','Encendiendo los faros…','Apagando las luces del taller…','Levantando la cortina…','Saliendo del taller…','En la calle…']);
   assert.ok(f.draws.some(row=>row.gate===1&&row.z>6.5&&row.key===0&&row.lamp>.8&&row.spin<-10&&row.practical===0&&row.tube===0));
   f.assertRestored();
 });
 
 test('the car clears the gate and completes a right turn before the fade',async t=>{
   const f=fixture(t),done=f.play();
-  for(let frame=0;frame<570&&f.frames.size;frame++)f.step(16.667);
+  for(let frame=0;frame<840&&f.frames.size;frame++)f.step(16.667);
   await done;
   const shots=f.phases.map(phase=>f.draws.filter(row=>row.phase===phase));
-  const [ignition,lights,gate,exit]=shots;
-  assert.ok(ignition.length>=60&&lights.length>=40&&gate.length>=90&&exit.length>=130);
+  const [door,ignition,headlamps,lights,gate,exit,night]=shots;
+  assert.ok(door.length>=40&&ignition.length>=40&&lights.length>=40&&gate.length>=90&&exit.length>=130&&night.length>=120);
+  assert.ok(door[0].position.x>2&&door[0].fov<38);
   assert.ok(ignition[0].position.z>2&&ignition[0].position.y<1.35&&ignition[0].fov<49);
+  assert.ok(ignition.every(row=>row.lamp===0)&&headlamps.some(row=>row.lamp===1));
   assert.ok(lights.every(row=>row.gate===0&&row.position.z<-2));
   assert.ok(lights.some(row=>row.practical===0&&row.lamp===1));
   assert.ok(gate.some(row=>row.gate>.1&&row.gate<.8&&row.fov>lights.at(-1).fov+8&&row.fill>.5));
   assert.ok(exit.at(-1).position.z>exit[0].position.z+5);
   assert.ok(exit.some(row=>row.fade===0&&row.gate===1&&row.z>=9));
-  assert.ok([...gate,...exit].every(row=>row.exterior));
-  const turn=exit.filter(row=>row.yaw<Math.PI/2);
+  assert.ok([...gate,...exit,...night].every(row=>row.exterior));
+  const turn=[...exit,...night].filter(row=>row.yaw<Math.PI/2);
   assert.ok(turn.every(row=>row.z>=9.55&&row.gate===1&&row.x<0));
-  const fadeStart=f.draws.find(row=>row.fade===1);
+  const fadeStart=f.draws.find(row=>row.fade>0);
   assert.equal(fadeStart.yaw,0);
-  assert.ok(fadeStart.x<=-7&&fadeStart.z>=14&&fadeStart.z<15);
+  assert.ok(fadeStart.x<=-15&&fadeStart.z>=14&&fadeStart.z<15);
+  assert.ok(night.at(-1).x<fadeStart.x-3&&night.at(-1).fill<fadeStart.fill);
+  assert.ok(f.draws.filter(row=>row.fade>0&&row.fade<1).length>=48);
   assert.equal(f.draws.at(-1).fade,1);
-  assert.ok(f.draws.length>=510&&f.draws.length<=550);
+  assert.ok(f.draws.length>=730&&f.draws.length<=810);
   f.assertRestored();
 });
 
@@ -95,7 +99,7 @@ test('canceling or enabling reduced motion restores the workshop even mid-depart
   const f=fixture(t);
   for(let i=0;i<20;i++){
     const controller=new AbortController(),done=f.play(controller.signal);
-    f.step(16);for(let frame=0;frame<(i===19?79:6+i*4);frame++)f.step(100);
+    f.step(16);for(let frame=0;frame<(i===19?119:6+i*6);frame++)f.step(100);
     if(i===19){f.motion.matches=true;f.motion.dispatchEvent(new Event('change'));}
     else controller.abort();
     await done;
@@ -137,8 +141,10 @@ test('procedural voices start with the matching visible beats and close after ab
   const audio=contexts[0];
   assert.ok(audio.voices[0].value>0&&audio.voices[0].value<=.25);
   f.step(16);f.step(8200);
+  assert.ok(!audio.voices.some(voice=>voice.events.some(e=>e.phase==='Cerrando la puerta…'&&e.value>0&&voice!==audio.voices[0]&&e.value<1)));
+  for(let i=0;i<104;i++)f.step(90);
+  assert.ok(audio.clicks.some(cue=>cue.frequency===96&&cue.phase==='Cerrando la puerta…'));
   assert.ok(audio.voices.some(voice=>voice.events.some(e=>e.phase==='Arrancando el motor…'&&e.value>0)));
-  for(let i=0;i<68;i++)f.step(90);
   assert.ok(audio.clicks.some(cue=>cue.frequency===220&&cue.phase==='Apagando las luces del taller…'));
   assert.ok(audio.clicks.some(cue=>cue.frequency===308&&cue.phase==='Levantando la cortina…'&&cue.gate<1));
   assert.ok(audio.clicks.some(cue=>cue.frequency===148&&cue.gate===1));
@@ -176,7 +182,7 @@ test('the prepared vehicle animates lamps and wheels without advancing driving s
   view.dispose();
 });
 
-test('the departure exterior is one prepared draw, with continuous ground under the exit',async()=>{
+test('the departure exterior has continuous ground and a single static star draw',async()=>{
   const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
   const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
   const scene=new T.Scene(),workshopRoot=new T.Group();scene.add(workshopRoot);
@@ -198,6 +204,12 @@ test('the departure exterior is one prepared draw, with continuous ground under 
   const alongStreet=new T.Raycaster(new T.Vector3(-7,2,14.35),new T.Vector3(-1,0,0)).intersectObject(exterior)[0];
   assert.ok(alongStreet&&alongStreet.point.x===-64);
   let disposed=0;exterior.geometry.addEventListener('dispose',()=>disposed++);
+  const stars=exterior.getObjectByName('E31_DepartureStars');
+  assert.ok(stars?.isPoints);
+  assert.equal(exterior.children.length,1);
+  assert.ok(stars.geometry.attributes.position.count>=350);
+  assert.equal(stars.geometry.attributes.color.count,stars.geometry.attributes.position.count);
+  stars.geometry.addEventListener('dispose',()=>disposed++);
   architecture.dispose();
-  assert.equal(disposed,1);
+  assert.equal(disposed,2);
 });

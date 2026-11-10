@@ -16,7 +16,12 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  registerRenderPreparation(renderer,T);
  let structureRevision=0,structureDirty=true,preparedSignature=null,preparingSignature=null,prepareError=null;
  const observed=new Set(),workshopLights=[];
- const structureChanged=()=>{structureDirty=true;structureRevision++;};
+ const structureChanged=({child})=>{
+  // The short door shot uses existing, prepared materials and vertex layouts.
+  // Its temporary meshes cannot change light counts or shader variants.
+  if(child?.userData.workshopPreparedMeshCopy)return;
+  structureDirty=true;structureRevision++;
+ };
  function indexWorkshop(){
   if(scope!=='workshop'||!structureDirty)return;
   for(const node of observed){node.removeEventListener('childadded',structureChanged);node.removeEventListener('childremoved',structureChanged);}observed.clear();workshopLights.length=0;

@@ -119,10 +119,12 @@
     const scene=[...values].reverse().find(v=>v.scene)?.scene || 'separator';
     if(latest.departure){
       overlay.dataset.departure='true';
-      overlay.dataset.departurePhase=latest.departurePhase||'ignition';
+      overlay.dataset.departurePhase=latest.departurePhase||'door';
       if(latest.departureFade)overlay.dataset.departureFade='true';else delete overlay.dataset.departureFade;
+      overlay.style.setProperty('--an-departure-fade',latest.departureFade||0);
     }else{
       delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
+      overlay.style.removeProperty('--an-departure-fade');
     }
     sessionSurface.set(scene); sessionSurface.stage(latest.departureStage||latest.stage);
     overlay.setAttribute('aria-label',latest.title);
@@ -136,6 +138,7 @@
   function restore() {
     overlay.hidden=true;overlay.setAttribute('aria-busy','false');
     delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
+    overlay.style.removeProperty('--an-departure-fade');
     sessionSurface.stop();document.body.classList.remove('an-loading-open');
     if(typeof background==='function')background();
     background=[];exiting=false;overlay.classList.remove('an-cinema-exit');
@@ -171,7 +174,15 @@
       painted,
       stage(text) {const task=pending.get(key);if(task){task.stage=text;sync();}},
       departureStage(text,phase){const task=pending.get(key);if(task?.departure){task.departureStage=text;task.departurePhase=phase;sync();}},
-      fadeDeparture(){const task=pending.get(key);if(task?.departure){task.departureFade=true;sync();}},
+      fadeDeparture(opacity){
+        const task=pending.get(key);
+        if(!task?.departure)return;
+        task.departureFade=opacity;
+        if([...pending.keys()].at(-1)===key){
+          overlay.dataset.departureFade='true';
+          overlay.style.setProperty('--an-departure-fade',opacity);
+        }
+      },
       end() {
         if(!pending.delete(key))return Promise.resolve();
         if(pending.size){sync();return Promise.resolve();}

@@ -161,6 +161,20 @@ function fitPickupPedals(T,frame,group,floor,add,metal,rubber){
  return pedals;
 }
 
+function belAirToeBoard(T){
+ // Tie the forward edge of the floor pan to the lower dash. The wider
+ // section reaches the inside of both sills beside the narrow firewall.
+ const profile=[[-.224,.037,.334],[-.213,-.061,.339],[-.151,-.157,.344],[-.113,-.159,.344]];
+ const positions=[],indices=[];
+ for(const [x,y,halfWidth] of profile)positions.push(x,y,-halfWidth,x,y,halfWidth);
+ for(let i=0;i<positions.length/3-2;i+=2)indices.push(i,i+1,i+2,i+1,i+3,i+2);
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+ geometry.setIndex(indices);
+ geometry.computeVertexNormals();
+ return geometry;
+}
+
 export function installClassicCabinSurfaces(T,model,vehicle){
  const style=finishes[vehicle],ss400=vehicle==='chevy_400_1957',pickup=vehicle==='pickup_3100';
  const frame=ss400?model.getObjectByName('SS250_PhysicalInterior_R53'):model;
@@ -174,6 +188,8 @@ export function installClassicCabinSurfaces(T,model,vehicle){
   mesh.name=name;mesh.receiveShadow=true;parent.add(mesh);
   return mesh;
  };
+ if(vehicle==='belair_1957')add(group,'BelAir_ToeBoard',belAirToeBoard(T),
+  new T.MeshStandardMaterial({name:'Bel Air footwell lining',color:style.floor.dark,roughness:.92}));
  function addSurface(kind,donor,profile){
   const geometry=fittedSurface(T,frame,targetsBelow(donor),{...profile,ss400});
   if(!geometry)return;
