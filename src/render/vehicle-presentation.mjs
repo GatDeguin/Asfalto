@@ -2,7 +2,7 @@ import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
-import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=50dd4e15c3f46e8d';
+import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=71aab1ecb5885c37';
 import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
@@ -276,7 +276,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
         },
       };
     },
-    setHeadlights(on){return lighting.setMode(on?'low':'off');},
+    setHeadlights(on){interiorRig.setLights(on);return lighting.setMode(on?'low':'off');},
     setLightMode(mode){interiorRig.setLights(mode!=='off');return lighting.setMode(mode);},
     setLightingCalibration:value=>lighting.setCalibration(value),getLightingCalibration:()=>lighting.getCalibration(),getLightingDiagnostics:()=>lighting.diagnostics(),
     getRoadLightRig:()=>lighting.getRig(),
@@ -285,7 +285,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       if(disposed)return false;
       const snapshot=sample.snapshot||chassisInspection||{},controls=snapshot.controls||snapshot.input||{};
       state.update({...sample,speedMps:finite(sample.speedMps,finite(snapshot.speedMps,finite(snapshot.chassis?.speedMps))),rpm:finite(sample.rpm,finite(snapshot.engine?.rpm)),brake:finite(sample.brake,finite(controls.brake))});
-      interiorRig.update(sample);
+      interiorRig.update(sample,instrumentFuel);
       for(const node of staticWiperNodes)node.visible=!physicalCalibration||sample.cameraMode!=='cockpit';
       if(sample.paused)return true;
       const now=state.diagnostics();uniforms.vehicleDirt.value=now.dirt;uniforms.vehicleWet.value=now.wetness;

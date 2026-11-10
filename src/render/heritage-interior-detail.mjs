@@ -15,28 +15,89 @@ const layouts={
 };
 const clamp=v=>Math.min(1,Math.max(0,v));
 const angle=ratio=>(225-270*ratio)*Math.PI/180;
-function faceTexture(T,spec){
+const instrumentFinishes={
+ pickup_3100:{edge:'#a89673',center:'#e4d7b9',border:'#625745',ink:'#272923',secondary:'#544937',needle:0xa52b1e,bezel:0xaaa49a,roughness:.35,fallback:0xd6c7a5,font:'Arial, sans-serif'},
+ belair_1957:{edge:'#14252b',center:'#31494a',border:'#b5a572',ink:'#f5ecd5',secondary:'#d7c59b',needle:0xf49d54,bezel:0xc8c9c1,roughness:.21,fallback:0x283c40,font:'Georgia, serif'},
+};
+const upholsteryFinishes={
+ C3100_Upholstery_Turquoise:{color:0x4d9694,roughness:.79,grain:.9},
+ BA57_Upholstery_Ivory:{color:0xe6d7b9,roughness:.69,grain:.85},
+ BA57_Upholstery_Turquoise:{color:0x459492,roughness:.66,grain:.85},
+};
+function faceTexture(T,spec,finish){
  const canvas=globalThis.document?.createElement?.('canvas');if(!canvas)return null;
  canvas.width=canvas.height=512;const c=canvas.getContext('2d');if(!c)return null;
  const cx=256,cy=256,polar=(r,a)=>[cx+r*Math.cos(a),cy-r*Math.sin(a)];
- c.fillStyle='#101a19';c.fillRect(0,0,512,512);
- const grad=c.createRadialGradient(210,170,20,256,256,250);grad.addColorStop(0,'#24332e');grad.addColorStop(1,'#0c1212');c.fillStyle=grad;c.fillRect(0,0,512,512);
- c.strokeStyle='#829184';c.lineWidth=2;c.beginPath();c.arc(cx,cy,238,0,Math.PI*2);c.stroke();
+ const grad=c.createRadialGradient(224,202,20,256,256,250);
+ grad.addColorStop(0,finish.center);grad.addColorStop(1,finish.edge);c.fillStyle=grad;c.fillRect(0,0,512,512);
+ c.strokeStyle=finish.border;c.lineWidth=3;c.beginPath();c.arc(cx,cy,239,0,Math.PI*2);c.stroke();
+ c.lineWidth=1.5;c.beginPath();c.arc(cx,cy,231,0,Math.PI*2);c.stroke();
  const min=spec.min||0,major=Math.round((spec.max-min)/spec.step),divisions=major*5;
  for(let i=0;i<=divisions;i++){
   const a=angle(i/divisions),p=polar(i%5===0?199:212,a),q=polar(228,a);
-  c.strokeStyle='#ece5c7';c.lineWidth=i%5===0?4:2;c.beginPath();c.moveTo(...p);c.lineTo(...q);c.stroke();
+  c.strokeStyle=i%5===0?finish.ink:finish.secondary;c.lineWidth=i%5===0?6:2.5;c.beginPath();c.moveTo(...p);c.lineTo(...q);c.stroke();
  }
- c.fillStyle='#f5ebcb';c.textAlign='center';c.textBaseline='middle';c.font=`${spec.channel==='fuel'?35:30}px Georgia, serif`;
+ c.fillStyle=finish.ink;c.textAlign='center';c.textBaseline='middle';c.font=`bold ${spec.channel==='fuel'?42:39}px ${finish.font}`;
  for(let i=0;i<=major;i++){
   const value=min+i*spec.step,p=polar(171,angle(i/major));
   const label=spec.channel==='fuel'?['E','½','F'][i]:String(spec.channel==='rpm'?value/1000:value);
   c.fillText(label,...p);
  }
- c.font='22px Georgia, serif';c.fillStyle='#c7c6ad';c.fillText(spec.label,256,337);
- if(spec.radius>.05){c.font='15px sans-serif';c.fillStyle='#969f8c';c.fillText('CHEVROLET',256,375);}
+ c.font=`bold 28px ${finish.font}`;c.fillStyle=finish.ink;c.fillText(spec.label,256,341);
+ if(spec.radius>.05){c.font='bold 19px Arial, sans-serif';c.fillStyle=finish.secondary;c.fillText('CHEVROLET',256,386);}
  const texture=new T.CanvasTexture(canvas);if(T.SRGBColorSpace)texture.colorSpace=T.SRGBColorSpace;else if(T.sRGBEncoding)texture.encoding=T.sRGBEncoding;
  texture.anisotropy=4;return texture;
+}
+
+// Override only the named cabin materials. The meshes, texture channels and
+// donor materials stay available to the rest of the presentation lifecycle.
+function installCabinFinishes(root,finishes){
+ const clones=new Map(),bindings=[];
+ const replace=source=>{
+  const finish=Object.hasOwn(finishes,source?.name)?finishes[source.name]:null;
+  if(!finish||!source.isMeshStandardMaterial)return source;
+  if(!clones.has(source)){
+   const {color,grain,backlight,fill,...surface}=finish;
+   const clone=source.clone();
+   Object.assign(clone,surface);
+   if(color!==undefined)clone.color.setHex(color);
+   if(grain!==undefined)clone.normalScale.multiplyScalar(grain);
+   if(backlight!==undefined){clone.emissive.copy(clone.color);clone.emissiveIntensity=fill;}
+   clones.set(source,{clone,backlight,fill});
+  }
+  return clones.get(source).clone;
+ };
+ root.traverse(node=>{
+  if(!node.isMesh)return;
+  const original=node.material,slots=Array.isArray(original)?original:[original],next=slots.map(replace);
+  if(next.some((material,i)=>material!==slots[i])){
+   const installed=Array.isArray(original)?next:next[0];
+   node.material=installed;bindings.push({node,original,installed});
+  }
+ });
+ return {
+  setLights(on){for(const {clone,backlight,fill} of clones.values())if(backlight!==undefined)clone.emissiveIntensity=on?backlight:fill;},
+  diagnostics:()=>({materials:clones.size,meshes:bindings.length}),
+  dispose(){
+   for(const {node,original,installed} of bindings)if(node.material===installed)node.material=original;
+   for(const {clone} of clones.values())clone.dispose();
+   bindings.length=0;clones.clear();
+  },
+ };
+}
+
+export function installChevrolet400Finish(root){
+ return installCabinFinishes(root,{
+  SS250_DialFace:{color:0x222525,roughness:.78},
+  SS250_DialPrint:{color:0xf2dfb7,fill:.17,backlight:.58},
+  SS250_AuxScalePrint:{color:0xf2dfb7,fill:.19,backlight:.58},
+  SS250_NeedleIvory:{color:0xffdf9e,fill:.22,backlight:.68},
+  SS250_DashCrownGrainedVinyl:{color:0x34312e,roughness:.74},
+  SS250_ConsoleGrainedVinyl:{color:0x2b2925,roughness:.76},
+  SS250_SeatVinyl:{color:0x42403b,roughness:.67},
+  SS250_SeatWelt:{color:0x696258,roughness:.59},
+  SS250_SatinSpokes:{color:0xb9b6ad,roughness:.42},
+ });
 }
 function installInteriorMicrorelief(T,root){
  const clones=new Map(),assignments=[];let texture=null;
@@ -156,22 +217,24 @@ function addFasciaDetail(T,{root,group,vehicle,mesh,material,chrome,interiorMicr
 
 export function installHeritageInteriorDetail(T,{root,vehicle}={}){
  const specs=layouts[vehicle];if(!specs||!root?.add)throw new TypeError('Heritage instruments require a supported vehicle and presentation root');
+ const finish=instrumentFinishes[vehicle];
  const interiorMicrorelief=installInteriorMicrorelief(T,root);
+ const cabinFinish=installCabinFinishes(root,upholsteryFinishes);
  const group=new T.Group();group.name=`${vehicle}_FunctionalInstrumentDetail`;
  const geometries=new Set(),materials=new Set(),textures=new Set(),replaced=[],gauges=[];
  const material=(Ctor,props)=>{const m=new Ctor(props);materials.add(m);return m;};
  const mesh=(geometry,mat,parent,name)=>{geometries.add(geometry);const m=new T.Mesh(geometry,mat);m.name=name;m.castShadow=false;parent.add(m);return m;};
  root.traverse(o=>{if(o.userData?.instrumentType){replaced.push([o,o.visible]);o.visible=false;}});
- const chrome=material(T.MeshStandardMaterial,{color:0xb4b9ad,metalness:.92,roughness:.24});
+ const chrome=material(T.MeshStandardMaterial,{color:finish.bezel,metalness:.92,roughness:finish.roughness});
  const seatingRubber=material(T.MeshStandardMaterial,{color:0x101714,roughness:.94,metalness:0});
- const needleMaterial=material(T.MeshBasicMaterial,{color:0xe95537});
+ const needleMaterial=material(T.MeshBasicMaterial,{color:finish.needle});
  const glassMaterial=material(T.MeshStandardMaterial,{color:0xd0e4db,metalness:0,roughness:.12,transparent:true,opacity:.045,depthWrite:false});
  for(const spec of specs){
   const dial=new T.Group();dial.name=`${vehicle}_${spec.channel}_Dial`;
   dial.position.set(spec.center[0]*SCALE,spec.center[1]*SCALE+SHIFT,spec.center[2]*SCALE);
   dial.rotation.y=Math.PI/2;group.add(dial);const radius=spec.radius*SCALE;
-  const texture=faceTexture(T,spec);if(texture)textures.add(texture);
-  const face=material(T.MeshBasicMaterial,{color:texture?0xffffff:0x18231e,map:texture});
+  const texture=faceTexture(T,spec,finish);if(texture)textures.add(texture);
+  const face=material(T.MeshBasicMaterial,{color:texture?0xffffff:finish.fallback,map:texture});
   mesh(new T.CircleGeometry(radius,64),face,dial,'RecessedPrintedFace');
   // Narrow real rubber joint behind the chrome lip, not a painted AO halo.
   mesh(new T.RingGeometry(radius*.99,radius*1.07,64),seatingRubber,dial,'InstrumentSeatingGasket').position.z=-.00012;
@@ -182,23 +245,25 @@ export function installHeritageInteriorDetail(T,{root,vehicle}={}){
   mesh(new T.CircleGeometry(radius*.065,24),chrome,dial,'NeedleHub').position.z=.00085;
   const glass=mesh(new T.CircleGeometry(radius*.985,64),glassMaterial,dial,'InstrumentGlass');glass.position.z=.0011;glass.renderOrder=2;
   const initial=spec.channel==='temperatureC'?40:0;
-  gauges.push({spec,pivot,face,position:dial.position.toArray(),value:initial,ratio:0});pivot.rotation.z=angle(0);
+  gauges.push({spec,pivot,face,dayColor:face.color.clone(),position:dial.position.toArray(),value:initial,ratio:0});pivot.rotation.z=angle(0);
  }
  const fasciaDetail=addFasciaDetail(T,{root,group,vehicle,mesh,material,chrome,interiorMicrorelief});
+ const warmLight=new T.Color(0xffdf9c);
  root.add(group);let disposed=false,lights=false;
  return {
   update(sample={}){
    if(disposed)return false;
-   lights=typeof sample.lights==='boolean'?sample.lights:lights;
+   if(typeof sample.lights==='boolean'&&sample.lights!==lights){
+    lights=sample.lights;
+    for(const gauge of gauges){gauge.face.color.copy(gauge.dayColor);if(lights)gauge.face.color.multiply(warmLight);}
+   }
    for(const gauge of gauges){const v=sample[gauge.spec.channel];if(Number.isFinite(v))gauge.value=v;
     const min=gauge.spec.min||0;gauge.ratio=clamp((gauge.value-min)/(gauge.spec.max-min));gauge.pivot.rotation.z=angle(gauge.ratio);
-    // Printed faces remain readable in daylight; nighttime backlight is warm.
-    gauge.face.color.setHex(lights?0xffdf9c:0xffffff);
    }return true;
   },
-  diagnostics:()=>({vehicle,disposed,lights,source:'authored donor recesses; r12 control relocation',gauges:gauges.map(g=>({channel:g.spec.channel,value:g.value,ratio:g.ratio,angle:g.pivot.rotation.z,position:[...g.position]})),replacedNeedles:replaced.length,textureCount:textures.size,interiorMicrorelief:interiorMicrorelief.diagnostics(),fasciaDetail}),
+  diagnostics:()=>({vehicle,disposed,lights,source:'authored donor recesses; r12 control relocation',gauges:gauges.map(g=>({channel:g.spec.channel,value:g.value,ratio:g.ratio,angle:g.pivot.rotation.z,position:[...g.position]})),replacedNeedles:replaced.length,textureCount:textures.size,interiorMicrorelief:interiorMicrorelief.diagnostics(),cabinFinish:cabinFinish.diagnostics(),fasciaDetail}),
   getInteractionTargets:()=>[],
-  dispose(){if(disposed)return;disposed=true;interiorMicrorelief.dispose();root.remove(group);for(const [o,visible]of replaced)o.visible=visible;for(const x of geometries)x.dispose();for(const x of materials)x.dispose();for(const x of textures)x.dispose();},
+  dispose(){if(disposed)return;disposed=true;cabinFinish.dispose();interiorMicrorelief.dispose();root.remove(group);for(const [o,visible]of replaced)o.visible=visible;for(const x of geometries)x.dispose();for(const x of materials)x.dispose();for(const x of textures)x.dispose();},
  };
 }
 

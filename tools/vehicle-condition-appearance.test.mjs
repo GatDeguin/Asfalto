@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=5edc5e39f9584ccc';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=af98ead548191be7';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
@@ -86,6 +86,19 @@ test('an actual running impact is published to the active vehicle appearance bet
  assert.ok(rendered[0].condition.damageZones.front>0);
  assert.ok(rendered[0].condition.dirt>0);
  assert.equal(changes.length,1);
+});
+
+test('Bel Air fuel gauge follows the current car’s persistent fuel, including empty and refueled',()=>{
+ const view=installVehiclePresentation(T,{vehicle:'belair_1957',modelRoot:new T.Group(),lods:[new T.Group()]});
+ try{
+  const gauge=()=>view.getInteriorDiagnostics().detail.gauges.find(g=>g.channel==='fuel');
+  for(const fuel of [100,38,0,100]){
+   view.setPersistentCondition({fuel});
+   view.update({paused:true,snapshot:{engine:{rpm:825}}});
+   assert.equal(gauge().value,fuel/100);
+   assert.equal(gauge().ratio,fuel/100);
+  }
+ }finally{view.dispose();}
 });
 
 test('physical dirt responds to driving distance on the contacted surface',()=>{
