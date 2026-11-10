@@ -6,7 +6,8 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=25294b25c4b5a598';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=71055b87ba957724';
+import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=f7b5dadf80bbf238';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -401,13 +402,26 @@ export function createCuestaLipanAdapter(dependencies) {
           setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
           root.visible = false;
           tx.visualRoot.add(root);
-          const detailRange={startM:sector.startM,endM:sector.endM};
-          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
-          tx.closureRoots?.carveSourceTerrain?.(root);
-          prepareScenicSector(root,{id:'cuesta_lipan',query:routeQuery,lengthM:sourceRoute.lengthM,detailRange});
-          current(tx);
-          await dependencies.applyVisualEnvironment(root, tx.environment, { signal });
-          return root;
+          try {
+            const detailRange={startM:sector.startM,endM:sector.endM};
+            await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
+            tx.closureRoots?.carveSourceTerrain?.(root);
+            // S05 uses its highest-detail ground whenever it is the driving sector, even at low quality.
+            const pilot = sector.id === 'S05' && lod === 0 && await loadLipanPilot({
+              sectorRoot: root, releaseRoot, signal,
+              fetchLocked: (url, lock, label) => fetchLocked(url, lock, label, tx, signal),
+              loadGlb: dependencies.completeGlbToObject, dispose: asset => disposeOnce(tx, asset),
+            });
+            if (!pilot) prepareScenicSector(root,{id:'cuesta_lipan',query:routeQuery,lengthM:sourceRoute.lengthM,detailRange});
+            current(tx);
+            await dependencies.applyVisualEnvironment(root, tx.environment, { signal });
+            signal.throwIfAborted();
+            return root;
+          } catch (error) {
+            root.removeFromParent?.();
+            disposeOnce(tx, root);
+            throw error;
+          }
         },
         loadCollision({ sector }) {
           const root = tx.collisionById.get(sector.id);

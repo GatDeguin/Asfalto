@@ -1,4 +1,4 @@
-// Porous branch-tip foliage and tapering trunks in metres. No alpha blending or physics.
+// Porous branch-tip foliage and tapering trunks in metres.
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
 function random(seed){let s=seed;return()=>((s=Math.imul(s,1664525)+1013904223>>>0)/4294967296);}
 function merge(THREE,parts){
@@ -16,7 +16,12 @@ export function createRegionalTreeTemplates(THREE,{id="dos_lagos"}={}){
   const result=new Map();
   for(let variant=0;variant<3;variant++){
     const rng=random(217+variant*191),bark=[],leaf=[],lean=(variant-1)*(austral?1.35:.65);
-    bark.push(branch(THREE,[[0,-.18,0],[lean*.3,2.5,.13],[lean,6,.1],[lean+.3,10,.5],[lean+.45,13.6,.7]],.43,.035));
+    const trunk=branch(THREE,[[0,-.18,0],[lean*.3,2.5,.13],[lean,6,.1],[lean+.3,10,.5],[lean+.45,13.6,.7]],.43,.035);
+    // The two lowest rings cover the chassis at the root, using the same bark surface.
+    const sides=trunk.parameters.radialSegments;
+    const trunkCollider={vertices:Array.from(trunk.attributes.position.array.subarray(0,(sides+1)*6)),
+      indices:Array.from(trunk.index.array.subarray(0,sides*6))};
+    bark.push(trunk);
     for(let k=0;k<5;k++){const a=k*2.399+variant*.6,l=.85+rng()*.7;bark.push(branch(THREE,[[0,.3,0],[Math.cos(a)*l*.6,.04,Math.sin(a)*l*.6],[Math.cos(a)*l,-.12,Math.sin(a)*l]],.2,.015));}
     const lobes=[];
     for(let k=0;k<(austral?12:10);k++){
@@ -50,7 +55,12 @@ export function createRegionalTreeTemplates(THREE,{id="dos_lagos"}={}){
       }
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));g.setIndex(indices);g.computeVertexNormals();leaf.push(g);
     }
-    for(const [part,parts]of [['bark',bark],['leaf',leaf]]){const g=merge(THREE,parts);g.userData={region:id,variant,form:austral?'forked-austral':'layered-andean'};result.set('tree-'+variant+'-'+part,g);}
+    for(const [part,parts]of [['bark',bark],['leaf',leaf]]){
+      const geometry=merge(THREE,parts);
+      geometry.userData={region:id,variant,form:austral?'forked-austral':'layered-andean'};
+      if(part==='bark')geometry.userData.asfaltoTrunkCollider=trunkCollider;
+      result.set('tree-'+variant+'-'+part,geometry);
+    }
   }
   return result;
 }

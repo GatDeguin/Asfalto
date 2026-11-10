@@ -5,16 +5,16 @@ import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=510589c52d2d24e8';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=fe11ada0cd773951';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=9d7ddd559b41734b';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=5da9ee3e8eb494c1';
-import {addScenicSetpieces,hasScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=b96fdffad53cec8f';
+import {addScenicSetpieces,hasScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
-import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=e54c29bf9f974787';
+import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=22883e922e9447bd';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=9535a171be7c3c52';
 import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs?v=b7edee06e0b828be';
 import { addTerrainShoulderTransition } from './terrain-shoulder-transition.mjs?v=7782bd35eb4862d7';

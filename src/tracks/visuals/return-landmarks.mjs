@@ -1,4 +1,4 @@
-import {instanceDetailTiles} from './roadside-details.mjs';
+import {instanceDetailTiles} from './roadside-details.mjs?v=22883e922e9447bd';
 import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
 
 const palette={

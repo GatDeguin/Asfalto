@@ -68,6 +68,10 @@
     ];
   }
 
+  function trunkCollisionShape(node) {
+    return node.userData?.asfaltoTrunkCollider ?? node.geometry?.userData?.asfaltoTrunkCollider;
+  }
+
   function collectCollisionTriangles(THREE, collisionRoot, options = {}) {
     void THREE;
     if (!collisionRoot || typeof collisionRoot.traverse !== 'function') {
@@ -84,15 +88,16 @@
       if (typeof options.includeMesh === 'function' && !options.includeMesh(node)) return;
       const geometry = node.geometry;
       const position = geometry?.attributes?.position;
-      const positionArray = position?.array;
-      const itemSize = position?.itemSize || 3;
-      const count = position?.count ?? (positionArray ? positionArray.length / itemSize : 0);
+      const trunk = trunkCollisionShape(node);
+      const positionArray = trunk?.vertices ?? position?.array;
+      const itemSize = trunk ? 3 : position?.itemSize || 3;
+      const count = trunk ? trunk.vertices.length / 3 : position?.count ?? (positionArray ? positionArray.length / itemSize : 0);
       if (!positionArray || itemSize < 3 || !Number.isInteger(count) || count < 3) return;
       const matrix = node.matrixWorld?.elements;
-      const sourceIndices = geometry.index?.array;
-      const available = geometry.index?.count ?? sourceIndices?.length ?? count;
-      const first = Math.max(0, Math.floor(finite(geometry.drawRange?.start, 0) / 3) * 3);
-      const limit = Math.min(available, first + Math.max(0, finite(geometry.drawRange?.count, available)));
+      const sourceIndices = trunk?.indices ?? geometry.index?.array;
+      const available = trunk ? trunk.indices.length : geometry.index?.count ?? sourceIndices?.length ?? count;
+      const first = trunk ? 0 : Math.max(0, Math.floor(finite(geometry.drawRange?.start, 0) / 3) * 3);
+      const limit = trunk ? available : Math.min(available, first + Math.max(0, finite(geometry.drawRange?.count, available)));
       if (limit <= first) return;
       if ((limit-first) % 3 !== 0) throw new Error('collision mesh index count no divisible por tres');
       let instances = node.isInstancedMesh ? node.instanceMatrix?.array : null;
@@ -236,7 +241,9 @@
         || node.userData?.collision===false || node.userData?.asfaltoDistantRidge) return null;
     const names=[];for(let p=node;p;p=p.parent)names.push(String(p.name||''));
     const path=names.join(' ').toLowerCase();
-    if (/resource.owner|source.owner|detail.template|backdrop|billboard|canopy|foliage|leaves|grass|snow.patch|mist|water|wetland|river.design/.test(path)) return null;
+    if (/resource.owner|source.owner|detail.template/.test(path)) return null;
+    if (trunkCollisionShape(node)) return 'trunk';
+    if (/backdrop|billboard|canopy|foliage|leaves|grass|snow.patch|mist|water|wetland|river.design/.test(path)) return null;
     const materials=Array.isArray(node.material)?node.material:[node.material];
     if(materials.length&&materials.every(m=>m?.transparent||m?.transmission>0))return null;
     const roles=materials.map(m=>m?.userData?.asfaltoSurfaceRole);
@@ -249,13 +256,14 @@
   // collision survives render culling and LOD disposal until the track is freed.
   function createSceneCollisionLayer(RAPIER,worlds,getRoot) {
     const records=new Map(),slots=new Map(),nodeBindings=new WeakMap();
+    const suspensionWorld=worlds.at(-1),bodyWorlds=worlds.slice(0,-1);
     let disposed=false,lastRefresh=-Infinity,refreshes=0,builds=0,triangleCount=0,buildTimeMs=0,nextSlot=0;
-    let sourceMeshes=0,duplicateSourcePaths=0,lastBuiltMeshes=0,cacheHits=0;
+    let sourceMeshes=0,duplicateSourcePaths=0,lastBuiltMeshes=0,cacheHits=0,colliderCount=0;
     function refresh({timeSeconds=0,force=false}={}) {
       if(disposed||(!force&&timeSeconds>=lastRefresh&&timeSeconds-lastRefresh<.5))return false;
       lastRefresh=timeSeconds;refreshes++;lastBuiltMeshes=0;
       const root=getRoot?.();if(!root?.traverse)return false;
-      root.updateMatrixWorld?.(true);const before=Date.now();let changed=false;
+      root.updateMatrixWorld?.(true);const before=Date.now();let changed=false,suspensionChanged=false;
       const entries=[],present=new Set(),seen=new Set(),paths=new Set();
       root.traverse(node=>{
         const role=sceneCollisionRole(node);if(!role)return;
@@ -278,7 +286,7 @@
         }
         const key=binding.key,g=node.geometry,p=g.attributes.position;
         const canonical=node.userData?.asfaltoCanonicalInstances;
-        const signature=[g.uuid||g.id||'',p.version||0,g.index?.version||0,g.drawRange?.start,g.drawRange?.count,
+        const signature=[role,g.uuid||g.id||'',p.version||0,g.index?.version||0,g.drawRange?.start,g.drawRange?.count,
           canonical?'canonical-'+(canonical.version||0):(node.instanceMatrix?.version||0),...(node.matrixWorld?.elements||[])].join('|');
         seen.add(key);const previous=records.get(key);
         if(previous){previous.binding=binding;previous.chartScoped=/_CHART_-?\d+/i.test(path);}
@@ -286,9 +294,15 @@
         let triangles;try{triangles=collectCollisionTriangles({}, {traverse:visit=>visit(node)});}
         catch(error){if(/no contiene triangulos/.test(String(error?.message)))continue;throw error;}
         const colliders=[];
-        try{for(const world of worlds)colliders.push(createRapierTrackCollider(RAPIER,world,triangles,{material:role==='ground'?'soil':'stone'}));}
+        const material=role==='trunk'?'wood':role==='ground'?'soil':'stone';
+        // Stems stop the body in both vehicle worlds. The suspension only
+        // queries support surfaces, so it cannot climb or ride a trunk.
+        const targets=role==='trunk'?bodyWorlds:worlds;
+        try{for(const world of targets)colliders.push(createRapierTrackCollider(RAPIER,world,triangles,{material}));}
         catch(error){colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));throw error;}
         records.set(key,{signature,binding,path,role,colliders,triangles:triangles.triangleCount,chartScoped:/_CHART_-?\d+/i.test(path)});
+        colliderCount+=colliders.length-(previous?.colliders.length||0);
+        suspensionChanged ||= targets===worlds||previous?.colliders.length===worlds.length;
         triangleCount+=triangles.triangleCount-(previous?.triangles||0);builds++;lastBuiltMeshes++;changed=true;
         if(previous)previous.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));
       }
@@ -296,16 +310,17 @@
       // sector. Keep sector contacts, but do not accumulate past lap copies.
       for(const [key,record] of records)if(record.chartScoped&&!seen.has(key)){
         record.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));
+        colliderCount-=record.colliders.length;suspensionChanged ||= record.colliders.length===worlds.length;
         triangleCount-=record.triangles;records.delete(key);changed=true;
         const candidates=slots.get(record.path);if(candidates){const i=candidates.indexOf(key);if(i>=0)candidates.splice(i,1);if(!candidates.length)slots.delete(record.path);}
       }
       // Only the dedicated static query world needs an immediate BVH refresh.
-      if(changed)worlds.at(-1).step();
+      if(suspensionChanged)suspensionWorld.step();
       buildTimeMs+=Date.now()-before;return changed;
     }
-    function diagnostics(){return {meshes:records.size,colliders:records.size*worlds.length,triangleCount,builds,refreshes,buildTimeMs,
+    function diagnostics(){return {meshes:records.size,colliders:colliderCount,triangleCount,builds,refreshes,buildTimeMs,
       sourceMeshes,duplicateSourcePaths,lastBuiltMeshes,cacheHits,refreshIntervalSeconds:.5,retainedAcrossVisualUnload:true,disposed};}
-    function dispose(){if(disposed)return;disposed=true;for(const record of records.values())record.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));records.clear();slots.clear();triangleCount=0;}
+    function dispose(){if(disposed)return;disposed=true;for(const record of records.values())record.colliders.forEach((collider,i)=>worlds[i].removeCollider(collider,true));records.clear();slots.clear();triangleCount=0;colliderCount=0;}
     return {refresh,diagnostics,dispose};
   }
 

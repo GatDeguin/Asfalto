@@ -2,6 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {THREE as T} from './cinematic-three.mjs';
+import {createRegionalTreeTemplates} from '../src/tracks/visuals/regional-forest.mjs?v=76e2be9ca5367f98';
+import {createIguazuInstanceBatches} from '../src/tracks/visuals/iguazu-landscape.mjs?v=8af12914a5c2238f';
+import {installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
 
 const context=vm.createContext({console,WebAssembly,TextDecoder,TextEncoder,atob,btoa,performance});
 for(const name of ['rapier','vehicle-model','physics-runtime','falcon-runtime','integration-runtime']) {
@@ -16,11 +20,66 @@ function wall(name,z){
   const points=[0,0,z,100,0,z,100,3,z,0,3,z];
   return {name,isMesh:true,matrixWorld:{elements:identity},geometry:{attributes:{position:{array:new Float32Array(points),itemSize:3,count:4}},index:{array:new Uint32Array([0,1,2,0,2,3]),count:6}}};
 }
-async function setup(nodes=[]){
+async function setup(nodes=[],visualRoot){
   const track={length:100,sample:s=>({s,x:s,y:0,z:0,heading:0,width:12,halfWidth:6,grade:0,bank:0})};
   const collisionRoot={matrixWorld:{elements:identity},traverse:visit=>nodes.forEach(visit)};
-  return context.AsfaltoV6Integration.createBrowserPhysicalStack({track,collisionRoot,vehicleProfile:'original'});
+  return context.AsfaltoV6Integration.createBrowserPhysicalStack({track,collisionRoot,visualRoot,vehicleProfile:'original'});
 }
+
+test('a visible forest trunk strikes the chassis even when the camera culls its tile',async t=>{
+  const root=new T.Group(),templates=createRegionalTreeTemplates(T),material=new T.MeshBasicMaterial();
+  const terrain=new T.Mesh(new T.PlaneGeometry(100,40).rotateX(-Math.PI/2),material);
+  terrain.name='Ground';terrain.position.x=50;root.add(terrain);
+  const tree=new T.InstancedMesh(templates.get('tree-1-bark'),material,1);
+  tree.name='ASFALTO_DETAIL_tree-bark_test';tree.setMatrixAt(0,new T.Matrix4().makeTranslation(35,-.2,9));
+  installSharedInstanceWindow(T,tree,{rangeM:240});root.add(tree);
+  tree.count=0;tree.instanceMatrix.array.fill(0);
+  const stack=await setup([],root),player=stack.physicsSession;
+  t.after(async()=>{await stack.dispose();tree.dispose();terrain.geometry.dispose();material.dispose();for(const geometry of templates.values())geometry.dispose();});
+
+  const stemProbe=new R.Ray({x:28,y:.6,z:9},{x:1,y:0,z:0});
+  assert.equal(player.suspensionWorld.castRayAndGetNormal(stemProbe,14,true),null,'tree stems are obstacles, not suspension support');
+
+  player.teleport({x:21,y:.56,z:9},{x:36,y:0,z:0});
+  let impact;
+  for(let i=0;i<75&&!impact;i++){
+    const snapshot=player.stepFixed({});
+    impact=snapshot.impacts.find(event=>event.material==='wood');
+  }
+  assert.ok(impact?.impulseNs>1000,'the visible trunk must produce a real wood impact');
+  assert.ok(player.body.translation().x<35,'the trunk stops the chassis before its center');
+  assert.ok(player.body.linvel().x<20,'the solver dissipates the impact velocity');
+
+  player.reset({spawn:{x:21,y:.56,z:12}});
+  player.body.setLinvel({x:36,y:0,z:0},true);
+  for(let i=0;i<75;i++)player.stepFixed({});
+  assert.ok(player.body.translation().x>36,'the crown must not block travel beside the trunk');
+  assert.ok(!player.getSnapshot().impacts.some(event=>event.material==='wood'));
+});
+
+test('Iguazú tree batches collide only at selected stems, even with shared bark geometry',async t=>{
+  const root=new T.Group(),material=new T.MeshBasicMaterial({name:'MAT_bark'});
+  const ground=new T.Mesh(new T.PlaneGeometry(100,40).rotateX(-Math.PI/2),material);
+  ground.name='Ground';ground.position.x=50;root.add(ground);
+  const geometry=new T.CylinderGeometry(.25,.4,4,8).translate(0,1.9,0);
+  createIguazuInstanceBatches(T,root,[
+    {geometry,material,range:1050,matrix:new T.Matrix4().makeTranslation(32,0,9),treeTrunk:true},
+    {geometry,material,range:1050,matrix:new T.Matrix4().makeTranslation(32,0,13),treeTrunk:false},
+  ],'IGUAZU_SOURCE_');
+  const stack=await setup([],root),player=stack.physicsSession;
+  t.after(async()=>{await stack.dispose();root.traverse(mesh=>{if(mesh.isInstancedMesh)mesh.dispose();});ground.geometry.dispose();geometry.dispose();material.dispose();});
+  player.teleport({x:21,y:.56,z:13},{x:36,y:0,z:0});
+  for(let i=0;i<65;i++)player.stepFixed({});
+  assert.ok(player.body.translation().x>33);
+  assert.equal(player.getSnapshot().impacts.length,0);
+
+  player.reset({spawn:{x:21,y:.56,z:9}});
+  player.body.setLinvel({x:36,y:0,z:0},true);
+  let hit;
+  for(let i=0;i<65&&!hit;i++)hit=player.stepFixed({}).impacts.find(event=>event.material==='wood');
+  assert.ok(hit?.impulseNs>1000,'selected tropical tree must produce a real wood impact');
+  assert.ok(player.body.translation().x<32);
+});
 
 test('actual Rapier strikes keep their authored collider material in a mixed track',async t=>{
   const stack=await setup([wall('COL_Guardrail',3),wall('COL_Boulder',-3)]);

@@ -8,6 +8,7 @@ const strikeVoices={
   bump:{frequency:170,brightness:0,resonance:.6,duration:.14,tail:0,level:.16},
   metal:{frequency:2250,brightness:1050,resonance:1.7,duration:.18,tail:.22,level:.32},
   hard:{frequency:710,brightness:380,resonance:.85,duration:.14,tail:.15,level:.32},
+  wood:{frequency:495,brightness:460,resonance:.78,duration:.13,tail:.10,level:.32},
   soil:{frequency:370,brightness:270,resonance:.6,duration:.13,tail:.09,level:.32},
   other:{frequency:630,brightness:340,resonance:.6,duration:.14,tail:.15,level:.32},
 };
@@ -97,6 +98,7 @@ export function createRaceDrivingAudio({context,destination=context?.destination
         if(metalMaterials.has(material))voice='metal';
         else if(material==='stone'||material==='concrete')voice='hard';
         else if(material==='soil')voice='soil';
+        else if(material==='wood')voice='wood';
         transient({intensity:Math.sqrt(clamp(strike.impulseNs/6500)),pan:clamp(strike.localPointM?.[2]*.7,-.85,.85),voice,collision:true});
       }
       const scrape=snapshot.scrapeContact,scrapeAge=snapshot.timeSeconds-scrape?.timeSeconds;

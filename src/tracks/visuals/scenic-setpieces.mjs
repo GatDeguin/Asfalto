@@ -1,5 +1,5 @@
 import {directionSectors} from './route-direction-design.mjs?v=ab2c52ff0594d7f6';
-import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
+import {createIguazuFern} from './regional-forest.mjs?v=76e2be9ca5367f98';
 
 // [chapter index, fraction, preferred side, formation]. These are foreground
 // beats in the game world. The wider valley and distant skyline remain visible.

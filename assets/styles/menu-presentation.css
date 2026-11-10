@@ -532,3 +532,41 @@ body.v6-reduce-motion #v6-main-menu.an-cinematic-menu * { animation:none!importa
 @media(max-width:600px){#v6-main-menu.an-cinematic-menu .an-menu-footer .an-v7-quick-drive{margin-inline-end:0}#v6-main-menu.an-cinematic-menu .an-menu-footer .an-replay{font-size:11px!important;padding-inline:4px}}
 
 #v6-main-menu.an-cinematic-menu[data-an-view=section] .an-token-balance{margin-left:clamp(105px,14vw,200px)}
+
+/* Workshop lights can fall directly behind the labels in the main menu. */
+#v6-main-menu.an-cinematic-menu[data-an-view=home] .v6-brand :is(.an-brand-caption,.an-brand-tagline) {
+  box-sizing:border-box;
+  width:fit-content;
+  max-width:100%;
+  padding:3px 7px;
+  background:#101415ed;
+  border-radius:3px;
+}
+#v6-main-menu.an-cinematic-menu[data-an-view=home] .v6-brand .an-brand-caption {
+  color:#ffad76;
+  white-space:normal;
+}
+#v6-main-menu.an-cinematic-menu[data-an-view=home] .an-brand-modeled .an-brand-caption {
+  max-width:79%;
+}
+body.v6-menu-open #v6-main-menu.an-cinematic-menu[data-an-view=home] ~ #v6-toast-stack {
+  top:max(16px,env(safe-area-inset-top));
+  bottom:auto;
+}
+@media(max-width:720px) and (orientation:portrait) {
+  body.v6-menu-open #v6-main-menu.an-cinematic-menu[data-an-view=home] ~ #v6-toast-stack {
+    top:auto;
+    bottom:calc(72px + env(safe-area-inset-bottom));
+  }
+}
+@media(max-width:600px) {
+  #v6-main-menu.an-cinematic-menu[data-an-view=home] .an-menu-footer .an-v7-quick-drive {
+    margin-inline-end:28px;
+  }
+  #v6-main-menu.an-cinematic-menu[data-an-view=home] .an-menu-footer .an-replay {
+    gap:6px;
+  }
+  #v6-main-menu.an-cinematic-menu[data-an-view=home] .an-menu-footer .an-replay span {
+    width:26px;
+  }
+}

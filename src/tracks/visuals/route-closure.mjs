@@ -1,8 +1,8 @@
-import { createReturnLandscape } from './closure-terrain.mjs?v=08b99d0687f4b154';
+import { createReturnLandscape } from './closure-terrain.mjs?v=2f6471896e66f7fc';
 import { returnChapters, returnRoadShape } from './return-route-design.mjs?v=0f181ab60bc9e120';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=25294b25c4b5a598';
-import { addReturnLandmarks } from './return-landmarks.mjs?v=3a8bb176aa4e61f7';
-import {addScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=71055b87ba957724';
+import { addReturnLandmarks } from './return-landmarks.mjs?v=014dc064c17ba04b';
+import {addScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 // Procedural game-fiction return corridor. Original canonical samples are never modified.
 // Closing is physical: the last position and frame coincide with the original start.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));

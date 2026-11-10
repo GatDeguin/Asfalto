@@ -1,5 +1,5 @@
 // Distances and natural landmarks are located on the authored route, never on the return connector.
-import {instanceDetailTiles} from './roadside-details.mjs?v=e54c29bf9f974787';
+import {instanceDetailTiles} from './roadside-details.mjs?v=22883e922e9447bd';
 import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
 const random=n=>{const x=Math.sin(n*19.31+7.17)*45371.63;return x-Math.floor(x);};
 export function addRegionalWayfinding(T,root,{id,query,lengthM,heightAt,templates,textures,detailRange=null}){

@@ -1,7 +1,7 @@
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
-import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
-// Blender-authored, local-metre meshes. All instances are visual and have no collision role.
+import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=76e2be9ca5367f98';
+// Blender-authored meshes in local metres, with procedural tree stems at the roadside.
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);
 
 export async function loadRoadsideTemplates(THREE, signal, id="dos_lagos") {

@@ -1,17 +1,74 @@
 import {waterfallCameraProfile} from './regional-waterfall-camera.mjs?v=4147e1c291a4f463';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
-import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
+import {createIguazuFern} from './regional-forest.mjs?v=76e2be9ca5367f98';
 import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=657ba3796dce7370';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=25294b25c4b5a598';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=71055b87ba957724';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=88a5c279fc1ae5d5';
 import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
-import {addScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
+import {addScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 
 const sourceTemplates=new WeakMap();
+const trunkShapes=new WeakMap();
+const roadsideTreeReachM=48;
 const rand=n=>{const x=Math.sin(n*17.831+4.917)*43961.7;return x-Math.floor(x);};
 const ownerOf=mesh=>{let node=mesh;while(node&&!/^VEG_/.test(node.name||''))node=node.parent;return node;};
+
+function iguazuRoadsideTrees(query,lengthM){
+  const cellM=64,stepM=16,cells=new Set();
+  const cell=value=>Math.floor(value/cellM);
+  // Include neighboring cells before doing an exact route projection. This
+  // conservatively covers 48 m even halfway between the 16 m route samples.
+  for(let s=0;;s+=stepM){
+    const [x,,z]=query.sample(Math.min(s,lengthM)).position;
+    const cx=cell(x),cz=cell(z);
+    for(let dx=-1;dx<=1;dx++)for(let dz=-1;dz<=1;dz++)cells.add((cx+dx)+':'+(cz+dz));
+    if(s>=lengthM)break;
+  }
+  return (x,y,z)=>cells.has(cell(x)+':'+cell(z))&&query.project([x,y,z]).distanceXZ<=roadsideTreeReachM;
+}
+
+function iguazuTrunkShape(geometry){
+  if(trunkShapes.has(geometry))return trunkShapes.get(geometry);
+  const position=geometry.attributes.position,index=geometry.index;
+  if(!geometry.boundingBox)geometry.computeBoundingBox();
+  // The exported trunks start at the local origin. The roots spread outward
+  // beyond the stem, so take only the basal shaft of the authored mesh.
+  const contactHeight=geometry.boundingBox.min.y+1.35,stemRadiusM=.85;
+  const isStemVertex=i=>Math.hypot(position.getX(i),position.getZ(i))<=stemRadiusM;
+  const vertices=[],indices=[],mapped=new Map();
+  for(let i=0;i<(index?.count??position.count);i+=3){
+    const a=index?index.getX(i):i,b=index?index.getX(i+1):i+1,c=index?index.getX(i+2):i+2;
+    if(Math.min(position.getY(a),position.getY(b),position.getY(c))>contactHeight||![a,b,c].every(isStemVertex))continue;
+    for(const source of [a,b,c]){
+      if(!mapped.has(source)){
+        mapped.set(source,vertices.length/3);
+        vertices.push(position.getX(source),position.getY(source),position.getZ(source));
+      }
+      indices.push(mapped.get(source));
+    }
+  }
+  const shape={vertices,indices};
+  trunkShapes.set(geometry,shape);
+  return shape;
+}
+
+function addIguazuTrunkBatch(T,root,source,trees){
+  if(!trees.length)return null;
+  const mesh=new T.InstancedMesh(source.geometry,source.material,trees.length);
+  mesh.name=source.name+'_TRUNK_COLLISION';
+  mesh.visible=false;
+  mesh.userData.asfaltoTrunkCollider=iguazuTrunkShape(source.geometry);
+  trees.forEach((tree,i)=>mesh.setMatrixAt(i,tree.matrix));
+  const window=installSharedInstanceWindow(T,mesh,{rangeM:Infinity,eligible:i=>!trees[i].matrix.asfaltoReturnExcluded});
+  root.add(mesh);
+  return ()=>{
+    trees.forEach(({matrix},i)=>window.source.set(matrix.elements,i*16));
+    window.replace(window.source);
+  };
+}
+
 export function iguazuInstanceRange(name){
   if(/^(BANK_(PLANT|SCREE)_|WOW_(rock|arch)_)/.test(name))return Infinity;
   if(/^(VEG_|ROCK_|CLIFF_|PROP_|BRIDGE_|LATERITE_|JUNGLE_ARCH_|VINE_)/.test(name))return /fern|understory|shrub/.test(name)?190:1050;
@@ -31,7 +88,8 @@ export function createIguazuInstanceBatches(T,root,items,prefix){
     const mesh=new T.InstancedMesh(list[0].geometry,list[0].material,list.length);mesh.name=prefix+key;list.forEach((item,i)=>mesh.setMatrixAt(i,item.matrix));mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.receiveShadow=true;mesh.castShadow=false;
     const original=list.map(x=>x.matrix),range=list[0].range,maximum=list.length;
     const instanceWindow=installSharedInstanceWindow(T,mesh,{rangeM:range,eligible:index=>!original[index].asfaltoReturnExcluded,viewPartitions:partitions.map(items=>items.length)});
-    if(Number.isFinite(range)&&/MAT_(leaf|palm|fern|bark)|ASFALTO_IGUAZU_FERN_V7/.test(mesh.material.name))mesh.userData.asfaltoReprojectInstances=heightAt=>{let changed=0;for(let i=0;i<original.length;i++){const e=original[i].elements,y=heightAt(e[12],e[14],e[13]);if(y===null){original[i].asfaltoReturnExcluded=true;original[i].scale(new T.Vector3(0,0,0));changed++;}else if(Number.isFinite(y)){e[13]=y;changed++;}instanceWindow.source.set(original[i].elements,i*16);}if(changed)instanceWindow.replace(instanceWindow.source);return changed;};
+    const updateTrunks=addIguazuTrunkBatch(T,root,mesh,list.filter(item=>item.treeTrunk));
+    if(Number.isFinite(range)&&/MAT_(leaf|palm|fern|bark)|ASFALTO_IGUAZU_FERN_V7/.test(mesh.material.name))mesh.userData.asfaltoReprojectInstances=heightAt=>{let changed=0;for(let i=0;i<original.length;i++){const e=original[i].elements,y=heightAt(e[12],e[14],e[13]);if(y===null){original[i].asfaltoReturnExcluded=true;original[i].scale(new T.Vector3(0,0,0));changed++;}else if(Number.isFinite(y)){e[13]=y;changed++;}instanceWindow.source.set(original[i].elements,i*16);}if(changed){instanceWindow.replace(instanceWindow.source);updateTrunks?.();}return changed;};
     mesh.userData.asfaltoIguazuInstances={maximum,rangeM:range};root.add(mesh);
   }return bins.size;
 }
@@ -46,6 +104,7 @@ export async function prepareIguazuVisual(root,{query,lengthM,signal,THREE:T=glo
   fernMaterial.userData.asfaltoWind={heightM:1.2,baseY:0,maxBendM:.09};fernMaterial.userData.asfaltoRainCanopy=true;
   const replacedFernSources=new Set();let fernReplacements=0;
   const plants=[],bankDetails=[],remove=new Set(),removeBankDetails=new Set(),templates=[],templateNames=new Set(),worldInverse=root.matrixWorld.clone().invert();let vegetationParts=0;
+  const isRoadsideTree=iguazuRoadsideTrees(query,lengthM);
   root.traverse(mesh=>{
     if(!mesh.isMesh||/SOURCE_OWNER/.test(mesh.name))return;
     let plant=ownerOf(mesh);
@@ -71,7 +130,9 @@ export async function prepareIguazuVisual(root,{query,lengthM,signal,THREE:T=glo
     if(/^VEG_fern_/.test(plant.name)&&query.project([mesh.matrixWorld.elements[12],mesh.matrixWorld.elements[13],mesh.matrixWorld.elements[14]]).distanceXZ<38){
       replacedFernSources.add(geometry);geometry=fernForms[fernReplacements%3];material=fernMaterial;fernReplacements++;
     }
-    (bankDetail?bankDetails:plants).push({geometry,material,matrix,range});
+    const origin=mesh.matrixWorld.elements;
+    const treeTrunk=name==='MAT_bark'&&/^VEG_(tree|palmito)_/.test(plant.name)&&isRoadsideTree(origin[12],origin[13],origin[14]);
+    (bankDetail?bankDetails:plants).push({geometry,material,matrix,range,treeTrunk});
     if(/^VEG_(tree|palmito|fern|shrub)_/.test(plant.name)){
       const family=plant.name.split('_')[1],signature=family+':'+mesh.geometry.uuid+':'+mesh.material.uuid;
       if(!templateNames.has(signature)&&templates.filter(t=>t.family===family).length<12){templateNames.add(signature);const local=plant.matrixWorld.clone().invert().multiply(mesh.matrixWorld);templates.push({family,geometry:mesh.geometry,material:mesh.material,local,range,scale:plant.scale.clone()});}
@@ -112,6 +173,7 @@ export function addIguazuApproachPlants(T, root, name, placements) {
       const mesh = new T.InstancedMesh(geometry, material, rows.length);
       mesh.name = `${name}_${family}_${part}`;
       mesh.receiveShadow = true;
+      if(material.name==='MAT_bark')mesh.userData.asfaltoTrunkCollider=iguazuTrunkShape(geometry);
       scale.makeScale(...authoredScale.toArray()).multiply(local);
       rows.forEach(({x, y, z, size, rotation}, i) => {
         dummy.position.set(x, y, z);
@@ -131,7 +193,7 @@ export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,
   if(!root?.isObject3D||!T)return null;
   if(sourceRoot?.isObject3D&&sourceRoot.userData.asfaltoIguazu)sourceRoot.userData.asfaltoIguazu.ground=batchIguazuGround(T,sourceRoot);
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=25294b25c4b5a598'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=71055b87ba957724'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   delete root.userData.asfaltoReturnHeightAt;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;
