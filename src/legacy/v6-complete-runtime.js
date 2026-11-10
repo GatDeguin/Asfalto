@@ -211,7 +211,7 @@ function silenceLegacyV5(){const legacy=window.__cockpitV5App;if(legacy){for(con
 function openMenu(panel=profile.lastPanel||'drive'){
  globalThis.__asfaltoVehicleMaintenance?.flush({end:true});globalThis.__asfaltoVehicleAssistance?.hide();
  championshipResultsVisible=false;void leaveChampionship();cancelRoadTest('return-to-workshop');
- sessionRequestRunner?.cancel('menu');window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
+ sessionRequestRunner?.cancel('menu');window.__cockpit?.raceWorld?.clearDriveTraffic?.();window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
  setSessionPaused(true);sessionLoop.stop();window.__cockpit?.raceWorld?.pause?.({reason:'menu'});globalThis.__asfaltoRacePresentation?.closePause();
  silenceLegacyV5();workshop.restoreAfterRace();lastFocused=document.activeElement;document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');q('#v6-main-menu').classList.remove('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','false');openPanel(panel,false);workshop.setActive(true);setTimeout(()=>q(`.v6-nav-btn[data-v6-panel="${panel}"]`)?.focus(),30);ambient.start();
  globalThis.__asfaltoMenuPresentation?.onMenu(true);if(panel==='workshop')globalThis.__asfaltoMenuPresentation?.onPanel(panel);void syncWorkshopCollection();
@@ -405,7 +405,7 @@ async function startDrive(mode){
   if(workshop.vehicleSelector?.diagnostics().pending){if(!await tx.wait(workshop.vehicleSelector.whenSettled()))return false;}
   if(!await configureExistingGameReady({track:requestedTrack,weather,mode:'practice',laps:1,difficulty:'normal'},tx))return false;
   const track=persistPlayableRoute(requestedTrack);applyVehicleConfig();resetSession();activeSession.type=mode;activeSession.definition={id:mode,title:mode==='journey'?'Viaje':'Conducción libre'};activeSession.startTime=performance.now();activeSession.lastTime=activeSession.startTime;activeSession.phase='running';activeSession.config={track,weather};
-  tx.stage('Preparando el auto y el semáforo de largada…');await tx.wait(window.__cockpit.raceStart({signal:tx.signal,onStage:tx.stage}));if(!tx.isCurrent())return false;return openPreparedRace(tx);
+  tx.stage('Preparando el auto y el semáforo de largada…');await tx.wait(window.__cockpit.raceStart({signal:tx.signal,onStage:tx.stage,driveMode:mode}));if(!tx.isCurrent())return false;return openPreparedRace(tx);
  },{track:requestedTrack});
  if(success){toast(mode==='journey'?'VIAJE INICIADO · cuidá temperatura y combustible':'CONDUCCIÓN LIBRE · sin medición activa','ok');sessionLoop.start();}return success;
 }
@@ -470,9 +470,16 @@ async function startCompetition(){
 const sessionLoop={running:false,raf:0,start(){if(this.running)return;this.running=true;const tick=t=>{if(!this.running)return;syncTouchPause();updateSession(t);this.raf=requestAnimationFrame(tick)};this.raf=requestAnimationFrame(tick)},stop(){this.running=false;cancelAnimationFrame(this.raf)}};
 function updateSession(t){if(!activeSession.type||activeSession.completed||activeSession.pausedAt!==null)return;if(activeSession.type==='roadtest'){updateObjective();return;}const s=getGameState();if(s.raw?.status==='IDLE'||s.raw?.status==='COUNTDOWN'){activeSession.startTime+=Math.max(0,t-activeSession.lastTime);activeSession.lastTime=t;updateObjective();return;}const dt=clamp((t-activeSession.lastTime)/1000,0,0.1);activeSession.lastTime=t;activeSession.distance+=Math.max(0,s.speed)/3.6*dt;activeSession.maxSpeed=Math.max(activeSession.maxSpeed,s.speed);if(activeSession.series.length<2400&&(!activeSession.series.length||t-activeSession.startTime-activeSession.series.at(-1).t>100)){activeSession.series.push({t:t-activeSession.startTime,speed:s.speed,rpm:s.rpm,distance:activeSession.distance,lateral:s.lateral})}
  if(activeSession.type!=='championship'){if(s.offTrack)invalidate('SALIDA FUERA DE ZONA');if(s.collision)invalidate('CHOQUE');if(s.penalty>0&&!activeSession.reasons.includes('PENALIZACIÓN'))invalidate('PENALIZACIÓN');}
- if(activeSession.type==='journey')updateJourney(s,t,dt);else if(activeSession.type==='competition'&&(s.finished||t-activeSession.startTime>45*60*1000))finishCompetition(s,t);updateObjective();activeSession.lastSpeed=s.speed;
+ if(activeSession.type==='journey'&&s.finished)finishJourney(s,t);
+ else if(activeSession.type==='free'&&s.finished)finishFreeDrive(t);
+ else if(activeSession.type==='competition'&&(s.finished||t-activeSession.startTime>45*60*1000))finishCompetition(s,t);updateObjective();activeSession.lastSpeed=s.speed;
 }
-function updateJourney(s,t,dt){if(t-activeSession.startTime>20*60*1000)finishJourney(s,t)}
+function finishFreeDrive(t){
+ activeSession.completed=true;sessionLoop.stop();
+ showResults({title:'Llegada · Conducción libre',main:(activeSession.distance/1000).toFixed(1),unit:'kilómetros',
+  valid:true,unscored:true,elapsed:t-activeSession.startTime,distance:activeSession.distance,maxSpeed:activeSession.maxSpeed,
+  series:activeSession.series,reasons:[],class:vehicleClass()});
+}
 function roadTestMessage(value){
  const reason=String(value?.message||value||'');
  const messages={
@@ -550,13 +557,13 @@ function verdictFor(r){if(!r.valid)return `El intento no produjo una marca váli
 function showResults(r){
  q('#v6-results-repeat').disabled=false;q('#v6-results-repeat').textContent='Repetir actividad';
  const roadTest=activeSession.type==='roadtest';
- const measured=getGameState(),temperatureC=measured.snapshot?.engine?.temperatureC,race=measured.raw||{};r.experienceFacts=r.experienceFacts||experienceTools?.sessionResultFacts({activity:activeSession.type,race,elapsedMs:r.elapsed,valid:r.valid,reason:(r.reasons||[]).join(', '),progress:r.valid?'Intento válido registrado.':'Intento registrado sin marca válida.'});
- window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
+ const measured=getGameState(),temperatureC=measured.snapshot?.engine?.temperatureC,race=measured.raw||{};r.experienceFacts=r.experienceFacts||experienceTools?.sessionResultFacts({activity:activeSession.type,race,elapsedMs:r.elapsed,valid:r.valid,reason:(r.reasons||[]).join(', '),progress:r.unscored?'Recorrido completado.':r.valid?'Intento válido registrado.':'Intento registrado sin marca válida.'});
+ window.__cockpit?.raceWorld?.clearDriveTraffic?.();window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
  // Own the modern modal before either finish observer can let V5 reclaim it.
  document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');silenceLegacyV5();
  q('#v6-results-title').textContent=r.title||'Ficha técnica';q('#v6-results-subtitle').textContent=`Chevy Serie 2 · ${r.class||vehicleClass()} · ${dateStamp()}`;q('#v6-results-main').textContent=r.main??'—';q('#v6-results-unit').textContent=r.unit||'resultado';q('#v6-results-verdict').textContent=verdictFor(r);
  const metrics=[[roadTest?'Duración del intento':'Tiempo',fmtTime(r.elapsed||0)],['Velocidad máxima',`${Math.round(r.maxSpeed||0)} km/h`],['Distancia',`${Math.round(r.distance||0)} m`],['Consistencia',Number.isFinite(r.consistency)?`${Math.round(r.consistency)} %`:'Sin dato'],['Temperatura',Number.isFinite(temperatureC)?`${Math.round(temperatureC)} °C`:'Sin dato'],['Daño',`${Math.round(100-profile.condition.body)} %`]];q('#v6-results-metrics').innerHTML=metrics.map(([a,b])=>`<div class="v6-sheet-metric"><small>${a}</small><b>${b}</b></div>`).join('');
- const details=[`Clase registrada: ${r.class||vehicleClass()}`,`Condición general: ${Math.round(conditionAverage())} %`,`Neumáticos: ${Math.round(profile.condition.tires)} %`,`Frenos: ${Math.round(profile.condition.brakes)} %`,r.valid?'Intento válido para archivo.':`Invalidado: ${(r.reasons||[]).join(', ')}`];q('#v6-results-details').innerHTML=details.map(x=>`<li>${x}</li>`).join('');q('#v6-results-progress').innerHTML=`<div class="v6-note"><strong>Archivo actualizado.</strong> ${r.valid?'Se sumaron fichas de oficio y progreso coherente con la actividad.':'La experiencia suma conocimiento, pero no ingresa en la tabla de referencia.'}</div>`;drawResultChart(r.series||[]);q('#v6-results-sheet').classList.add('v6-open');if(r.experienceFacts)globalThis.__asfaltoV7Experience?.showResult(r.experienceFacts,q('#v6-results-metrics'),{showRaceTiming:!roadTest});globalThis.__asfaltoV7Experience?.syncPhase();q('#v6-results-repeat').focus();
+ const details=[`Clase registrada: ${r.class||vehicleClass()}`,`Condición general: ${Math.round(conditionAverage())} %`,`Neumáticos: ${Math.round(profile.condition.tires)} %`,`Frenos: ${Math.round(profile.condition.brakes)} %`,r.unscored?'Recorrido libre completado.':r.valid?'Intento válido para archivo.':`Invalidado: ${(r.reasons||[]).join(', ')}`];q('#v6-results-details').innerHTML=details.map(x=>`<li>${x}</li>`).join('');q('#v6-results-progress').innerHTML=r.unscored?'<div class="v6-note">Recorrido sin puntuación de club.</div>':`<div class="v6-note"><strong>Archivo actualizado.</strong> ${r.valid?'Se sumaron fichas de oficio y progreso coherente con la actividad.':'La experiencia suma conocimiento, pero no ingresa en la tabla de referencia.'}</div>`;drawResultChart(r.series||[]);q('#v6-results-sheet').classList.add('v6-open');if(r.experienceFacts)globalThis.__asfaltoV7Experience?.showResult(r.experienceFacts,q('#v6-results-metrics'),{showRaceTiming:!roadTest});globalThis.__asfaltoV7Experience?.syncPhase();q('#v6-results-repeat').focus();
 }
 function drawResultChart(series){const c=q('#v6-results-chart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#eee7d9';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#a49d90';ctx.lineWidth=1;for(let i=1;i<6;i++){ctx.beginPath();ctx.moveTo(0,h*i/6);ctx.lineTo(w,h*i/6);ctx.stroke()}if(series.length<2)return;const max=Math.max(60,...series.map(x=>x.speed)),tmax=series.at(-1).t||1;ctx.strokeStyle='#b54e1c';ctx.lineWidth=3;ctx.beginPath();series.forEach((p,i)=>{const x=p.t/tmax*w,y=h-8-p.speed/max*(h-16);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle='#222';ctx.font='700 18px monospace';ctx.fillText('VELOCIDAD / TIEMPO',14,24)}
 function closeResults(destination='drive'){q('#v6-results-sheet').classList.remove('v6-open');resetSession();q('#v6-objective-hud').classList.remove('v6-visible');openMenu(destination)}

@@ -87,3 +87,19 @@ body.v6-menu-open{overflow:hidden}body.v6-menu-open #settings-panel,body.v6-menu
 
 #v6-results-progress .v6-note,
 #v6-results-progress .v6-note strong{color:inherit}
+#modular-race-cue[data-phase="countdown"],
+#modular-race-cue[data-phase="green"],
+#modular-race-cue[data-phase="finish"] {
+  inset-inline: 0;
+  top: max(134px, calc(env(safe-area-inset-top) + 116px));
+  width: max-content;
+  margin-inline: auto;
+  border-left: 0;
+  border-bottom: 2px solid #efb556;
+  background: #121615ed;
+  text-align: center;
+}
+#modular-race-cue[data-phase="green"] { border-bottom-color: #51db8a; }
+@media (max-height: 500px) {
+  #modular-race-cue[data-phase]:not([data-phase=""]) { top: max(56px, calc(env(safe-area-inset-top) + 38px)); }
+}

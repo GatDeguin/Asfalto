@@ -104,7 +104,9 @@ import { createTrackMaterialController } from '../environment/track-material-con
 import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-day-cycle.mjs?v=99c8ee62b1e3818f';
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
-import {createRaceStartSignal} from '../render/race-start-signal.mjs?v=ad234b87f19b1844';
+import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
+import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=d873f6fcca11410e';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=4b2d0e2999f09780';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -5307,7 +5309,7 @@ const RaceCore = (() => {
       const lapTime = Math.max(0, this.state.totalTime - this.state.lapStartTime);
       this.state.lastLapTime = lapTime;
       this.state.lastSectorTimes = [...this.state.currentSectorTimes];
-      const isBest = valid && lapTime > 0 && (!Number.isFinite(this.state.bestLapTime) || lapTime < this.state.bestLapTime);
+      const isBest = valid && !this.settings.finishDriveLap && lapTime > 0 && (!Number.isFinite(this.state.bestLapTime) || lapTime < this.state.bestLapTime);
       if (isBest) {
         this.state.bestLapTime = lapTime;
         this.state.bestSectorTimes = [...this.state.currentSectorTimes];
@@ -5328,7 +5330,7 @@ const RaceCore = (() => {
       this.state.ghostSamples = [];
       this.state.ghostAccumulator = 0;
       this.state.ghostSampleInterval = GHOST_SAMPLE_INTERVAL;
-      if ((this.track.closed === false || !['practice', 'sectors', 'speedTrap'].includes(this.settings.mode))
+      if ((this.track.closed === false || this.settings.finishDriveLap || !['practice', 'sectors', 'speedTrap'].includes(this.settings.mode))
         && this.state.completedLaps >= this.settings.laps
         && this.state.status === 'RUNNING') this.finish('completed');
       return this.getState();
@@ -5684,8 +5686,12 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     ui.message.textContent = text;
     ui.message.className = `race-message show${kind ? ` ${kind}` : ''}${countdown ? ' countdown' : ''}`;
     if (announce) ui.live.textContent = text;
-    const criticalRaceCue = /PAUSA|RECUPERACIÓN/.test(text); modularRaceCue.textContent = criticalRaceCue ? text : ""; modularRaceCue.classList.toggle("show", criticalRaceCue);
-    if (duration > 0) messageTimer = window.setTimeout(() => { ui.message.className = 'race-message'; modularRaceCue.classList.remove("show"); modularRaceCue.textContent = ""; }, duration);
+    const phase=countdown?'countdown':text==='¡LARGÁ!'?'green':text.startsWith('META ·')?'finish':'';
+    const criticalRaceCue = phase || /PAUSA|RECUPERACIÓN/.test(text);
+    modularRaceCue.dataset.phase=phase;
+    modularRaceCue.textContent=criticalRaceCue?(countdown?`LARGADA · ${text}`:text):"";
+    modularRaceCue.classList.toggle("show",!!criticalRaceCue);
+    if (duration > 0) messageTimer = window.setTimeout(() => { ui.message.className = 'race-message'; modularRaceCue.classList.remove("show"); modularRaceCue.textContent = "";delete modularRaceCue.dataset.phase; }, duration);
   }
 
   const bindingButtons = Array.from(document.querySelectorAll('[data-binding]'));
@@ -6025,12 +6031,14 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     }
   }
 
+  let finishDriveLap=false;
   function coreSettingsFromUi() {
     const mode = ui.mode?.value || 'timeTrial';
-    const laps = track.closed===false?1:Math.max(1,Math.min(20,Math.trunc(Number(ui.laps?.value)||settings.laps||1)));
+    const laps = finishDriveLap||track.closed===false?1:Math.max(1,Math.min(20,Math.trunc(Number(ui.laps?.value)||settings.laps||1)));
     return {
       mode,
       laps,
+      finishDriveLap,
       weather: settings.weather,
       timeOfDay: settings.timeOfDay,
       skyId: settings.skyId,
@@ -6068,8 +6076,56 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   getEnvironmentState: () => readEnvironmentSimulationState(),
 });
 const startSignal=createRaceStartSignal(THREE,{scene});
+const finishMarker=createRaceFinishMarker(THREE,{scene});
 let startSignalSubscription=null;
-function prepareStartSignal(){const context=simulation.getRoadTestContext();startSignal.set(context.routeQuery.sample((context.projection?.s||0)+18));startSignalSubscription?.();startSignalSubscription=simulation.subscribePhysicalSteps({sample(){},rebase:event=>startSignal.rebase(event),invalidated:()=>startSignal.clear()});}
+let finishRoute=null, driveTraffic=null, raceStartRequest=0;
+function prepareStartSignal(){
+ const context=simulation.getRoadTestContext();
+ startSignal.set(context.routeQuery.sample((context.projection?.s||0)+30));
+ finishRoute=context.routeQuery;
+ finishMarker.clear();
+ startSignalSubscription?.();
+ startSignalSubscription=simulation.subscribePhysicalSteps({
+  sample(){},
+  rebase:event=>{startSignal.rebase(event);finishMarker.rebase(event);},
+  invalidated:reason=>{
+   startSignal.clear();finishMarker.clear();finishRoute=null;
+   if(driveTraffic?.route&&['track-changed','session-restarted','session-disposed'].includes(reason))clearDriveTraffic();
+  },
+ });
+}
+function clearDriveTraffic(){
+ driveTraffic?.view.dispose();driveTraffic=null;
+}
+async function prepareDriveTraffic(mode,signal){
+ if(mode!=='free'&&mode!=='journey')return;
+ const seed=crypto.getRandomValues(new Uint32Array(1))[0];
+ const plan=createDriveTrafficPlan({lengthM:track.length,seed,canPark:progress=>{
+  const row=track.sample(progress);
+  return row.width>=5&&Math.abs(row.curvature||0)<.008&&Math.abs(row.bank||0)<.10;
+ }});
+ const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel});
+ const session={view,traffic:createDriveTraffic(plan,{lengthM:track.length}),route:null,...(isAsfaltoV5Qa?{plan}:{})};
+ driveTraffic=session;
+ try{await view.prepare(plan,signal);signal?.throwIfAborted();}
+ catch(error){if(driveTraffic===session)clearDriveTraffic();throw error;}
+}
+function updateRoutePresentation(dt, renderFrame){
+ const status=lastState.status, progress=lastState.raceProgress;
+ const finishAt=track.checkpoints.at(-1)??track.length;
+ const distance=finishAt+track.length*(Math.max(1,simulation.settings.laps)-1)-progress;
+ if(distance<=245&&distance>=-22&&(status==='RUNNING'||status==='FINISHED')){
+  if(!finishRoute)finishRoute=simulation.getRoadTestContext().routeQuery;
+  const chart=renderFrame.projection?.referenceChart;
+  if(!finishMarker.isConfigured(chart))finishMarker.set(finishRoute.sample(Math.min(track.length-.001,finishAt)));
+ }
+ finishMarker.update(distance,status);
+ if(!driveTraffic?.route||status!=='RUNNING')return;
+ const projection=renderFrame.projection || lastState.projection || lastState;
+ const cars=driveTraffic.traffic.update({progressM:progress,speedMps:Math.abs(feedback.speedMps||0),
+  lateralM:projection.lateral||0,dt,passingAllowed:()=>Math.abs(track.sample(progress).curvature||0)<.008});
+ driveTraffic.view.update(cars,driveTraffic.route.sample);
+}
 const roadTestCourse=createRoadTestCoursePresentation(THREE,{scene});
 let roadTestCourseUnsubscribe=null;
 function clearRoadTestGates(){roadTestCourseUnsubscribe?.();roadTestCourseUnsubscribe=null;roadTestCourse.clear();}
@@ -7948,17 +8004,26 @@ listen(window,'chevy:vehicle-config',(event)=>{
       environmentTransition.finish();
     }
   }
-  async function start({signal,onStage=()=>{}}={}) {
-    return withRacePreparation(async()=>{
+  async function start({signal,onStage=()=>{},driveMode}={}) {
+    const request=++raceStartRequest;
+    try{return await withRacePreparation(async()=>{
     signal?.throwIfAborted();if(environmentHostDisposed)throw new Error('Race world disposed');
+    clearDriveTraffic();
     if(ui.mode.value==='race'){onStage('Preparando el rival…');await options.ensureRivalVisual?.();signal?.throwIfAborted();}
     releaseRaceDayCycle();raceWeatherEffects.reset();
-    await prepareRaceStart({signal,onStage,onUpdate:state=>{racePreparation=state;},paint:()=>new Promise(resolve=>requestAnimationFrame(resolve)),
+    const driving=driveMode==='free'||driveMode==='journey';
+    let trafficReady=!driving;
+    const trafficPreparation=driving?prepareDriveTraffic(driveMode,signal).then(()=>{trafficReady=true;}):null;
+    const raceStartPreparation=prepareRaceStart({signal,onStage,onUpdate:state=>{racePreparation=state;},paint:()=>new Promise(resolve=>requestAnimationFrame(resolve)),
       environment:()=>syncEnvironment({prepareCycle:false}),dayCycle:()=>prepareRaceDayCycle(),physics:()=>simulation.prepare(),
       graphics:()=>prepareVisualPolicies(signal),audio:()=>Promise.allSettled([ensureAudioStarted(),raceAudio.ensureStarted()])});
+    await Promise.all([trafficPreparation,raceStartPreparation.then(()=>{if(!trafficReady)onStage('Preparando los autos del camino…');})]);
+    signal?.throwIfAborted();
+    if(request!==raceStartRequest)throw new DOMException('Otra largada reemplazó esta preparación','AbortError');
+    finishDriveLap=driving;
     const initialGear=options.getTransmissionMode?.()==='automatic'?1:0;
-    closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=null;ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(Math.ceil(lastState.countdown||3)),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
-    });
+    closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();if(driveTraffic)driveTraffic.route=finishRoute;lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=Math.ceil(lastState.countdown||3);ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(lastCountdownNumber),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
+    });}catch(error){if(request===raceStartRequest&&driveTraffic&&!driveTraffic.route)clearDriveTraffic();throw error;}
   }
   function pause({reason='pause'}={}) {simulation.pause();lastState=simulation.getState();ui.pause.textContent='▶';ui.pause.setAttribute('aria-label','Reanudar carrera');showMessage('PAUSA',{duration:0});clearInputs();onInputCaptureRelease('pause');driverControlPipeline.reset();window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason}}));return getState();}
   function retryRaceAudioFromGesture(){if(document.hidden||!document.body.classList.contains('v6-driving')||document.body.classList.contains('v6-menu-open')||document.body.classList.contains('an-race-paused'))return;void raceAudio.ensureStarted().catch(()=>{});}
@@ -8085,6 +8150,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     // Presentation reads the current published frame. Public getState() still
     // returns a detached snapshot, including the recorded ghost when asked.
     lastState=simulation.state;updateFalconVisual();feedback=checkRivalCollision(feedback);lastState=simulation.state;maxSpeedMps=Math.max(maxSpeedMps,Math.abs(feedback.speedMps||0));
+    updateRoutePresentation(dt,renderFrame);
     if(feedback.surface!==lastSurface){lastSurface=feedback.surface;if(!['asphalt','curb'].includes(lastSurface))showMessage(lastSurface==='barrier'?'BARRERA':String(lastSurface).toUpperCase(),{duration:500,kind:lastSurface==='barrier'?'danger':'',announce:false});}
     updateSkyAndWeather(dt);updateActiveTrackScene();
     if (currentSnapshot?.chassis && playerVisualBody) {
@@ -8222,7 +8288,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     falconPresentation?.dispose();falconPresentation=null;
     playerContactOcclusion.dispose();
     raceWeatherEffects.dispose();
-    releaseRaceDayCycle();raceSkyTransition?.dispose();startSignalSubscription?.();startSignal.dispose();
+    releaseRaceDayCycle();raceSkyTransition?.dispose();startSignalSubscription?.();startSignal.dispose();finishMarker.dispose();clearDriveTraffic();
     environmentController.dispose();
     trackMaterialController?.dispose?.();
     trackMaterialController = null;
@@ -8281,6 +8347,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
     renderWaterReflections:options=>raceWeatherEffects.renderWaterReflections(options),
     activateAudio:()=>raceAudio.ensureStarted(),
     getStartSignalDiagnostics:()=>startSignal.diagnostics(),
+    getFinishMarkerDiagnostics:()=>finishMarker.diagnostics(),
+    getDriveTrafficDiagnostics:()=>driveTraffic?{...driveTraffic.traffic.diagnostics(),...driveTraffic.view.diagnostics(),...(driveTraffic.plan?{plan:driveTraffic.plan.map(car=>({...car}))}:{})}:null,
+    clearDriveTraffic,
     getWeatherEffectsDiagnostics:()=>({...raceWeatherEffects.diagnostics(),policy:weatherEffectsPolicy(getRaceRenderEnvironment() || {},performanceState.qualityTier)}),
     getEffectiveFogState:()=>raceWeatherEffects.getEffectiveFogState(regionalEnvironment),
     prepareFogRender:options=>raceWeatherEffects.prepareFogRender(options),

@@ -2106,8 +2106,8 @@
     },
     {
       "path": "assets/styles/v6-complete-style.css",
-      "bytes": 24800,
-      "sha256": "FE42F82EC208BF0ACB8C1F7EA4E6844647E4E1C9AF196664F1327628D2E653A3"
+      "bytes": 25364,
+      "sha256": "CEC3A158061B331D4DFF6D4BA2818C1CED800D35AF10D9E8A56A4A87F44B1653"
     },
     {
       "path": "assets/styles/vehicle-assistance.css",
@@ -2746,8 +2746,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 82295,
-      "sha256": "E98A139E5DECE52BBB5B9124B796FE08E7C1A8426633C57B901266AFC0BEA0D4"
+      "bytes": 82297,
+      "sha256": "9D608E7629FE043118C5019CE66F9EC778F95740DA115CF6AE036CDEEFB71645"
     },
     {
       "path": "release-version.json",
@@ -2923,6 +2923,11 @@
       "path": "src/game/composition-editor-state.mjs",
       "bytes": 10785,
       "sha256": "1E45675593DEBE09C2B82ED79EB1831600CCE842E53EFA76B1A1BD1111812426"
+    },
+    {
+      "path": "src/game/drive-traffic.mjs",
+      "bytes": 4830,
+      "sha256": "D873F6FCCA11410E837F0B075D634B18BC0CC6152BDA0196C95BADA915CB2D31"
     },
     {
       "path": "src/game/driver-control-pipeline.mjs",
@@ -3131,13 +3136,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 581440,
-      "sha256": "F10FB7E9382C1EB13A3B4FA6E1F2A4E592BCF0B15082AB418EC583225AD291FD"
+      "bytes": 585430,
+      "sha256": "AC45C0F7EEC14261832C69F7AF12650F9802E90CDB4FDC2C832F66759D8D6F29"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 132350,
-      "sha256": "50D94F13F79C829EE3E6F9543D9A508889351292E0A93465DA6141C10849735D"
+      "bytes": 133003,
+      "sha256": "13054B85F75837263B3E275CDF0A46F44D75582B789C9B30DCBFB87582E56EA2"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -3490,6 +3495,11 @@
       "sha256": "5FD22C87B2D9B166B143AFFD494C079F36A8AEED7E4D71BDE286B2DB5B582D14"
     },
     {
+      "path": "src/render/drive-traffic-view.mjs",
+      "bytes": 9041,
+      "sha256": "4B2D0E2999F0978012D7ADEFBB91DC74139963712F922F7939735DAA4B104600"
+    },
+    {
       "path": "src/render/empty-instance-draw-guard.mjs",
       "bytes": 743,
       "sha256": "41A3CF08442DA55FAB188776F6249616B0C121FDD25BA2617D36A9ADB02F114D"
@@ -3636,8 +3646,8 @@
     },
     {
       "path": "src/render/race-start-signal.mjs",
-      "bytes": 3940,
-      "sha256": "AD234B87F19B1844DBA3727984918A107CE0C9987EA2B2CD9DBAEE30D15469A0"
+      "bytes": 7320,
+      "sha256": "62D43D5A178B174FF5C64C7DB6BAD240667CE2B9A63B75476E77218743D37744"
     },
     {
       "path": "src/render/race-weather-effects.mjs",
@@ -4472,17 +4482,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "6DA860875FE6C29792614EFCEA4E0B33CA4298BCAB9492C33F7E37B9AE394CE2"
+      "sha256": "D2E813A509521294BDEC866F8D3570DE3078D41399BE4E69CB721BB42B23CFA0"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "255D56ED02A6FB0CCB25D8C095E0D4D3FF544A54B1CC90918C76C4041DD22DE9"
+      "sha256": "8DB6DC016AACDC40233A36C785A34717C8B9D05A1825ADB3AD54E64E822833B3"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "2BD90FEE61AE3D9B6ECF4E100D713401712CB34C16D09B29A72ABFE26A5C550B"
+      "sha256": "9C1E023898B9BF647A47487E7FF8CF636B651C35A42825830453C2197E9C6063"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4590,6 +4600,11 @@
       "sha256": "47AF4F009B1B426735083C22A8B0A2A5DB0E140557E6BE2E61F59A0A2DFF49FF"
     },
     {
+      "path": "tools/drive-traffic.test.mjs",
+      "bytes": 2786,
+      "sha256": "44AA31C08944B5F0108C9F8B57C0178217CF6FA11797181575576072A73A90FB"
+    },
+    {
       "path": "tools/fixtures/hydrology-reference.json",
       "bytes": 5977,
       "sha256": "3DB913350AF086C1F6DCFCDE8777ABFC9CE5094A3C9649E366BACCF1B2B21CCF"
@@ -4681,13 +4696,13 @@
     },
     {
       "path": "tools/lazy-rival.test.mjs",
-      "bytes": 5764,
-      "sha256": "C0FBEC27D7C239B044A5B2BAD06EBF6C23EAF761DE01B6770B9F4F10693352D4"
+      "bytes": 5842,
+      "sha256": "BD2DC6ACB1B92D6E9EE7B32E258F159F3F80CC7215523ED0FEBBE2EB6D92F55B"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "6BAF1DBB9A34E584BA119371BFCB499D3AC6D6000F941E2EB52A9C659B33371D"
+      "sha256": "C5EE74597A3DDA7E35F7A9390A44CF28657799443709E3BC95313A190142EB1A"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4742,7 +4757,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "979E75CF37ACD997563CD80DC3B3DFFA43045B046C25A46F18172B64643CE2C0"
+      "sha256": "6697D40EF1EFD28F7408D4C1F972260B312870A6AA1C4D0D0539359FFA8CFA42"
     },
     {
       "path": "tools/pmrem-cache.test.mjs",
@@ -4753,6 +4768,11 @@
       "path": "tools/preparation-time-budget.test.mjs",
       "bytes": 5126,
       "sha256": "CB37C6561D88DA4CC7D1551FF1B089D58C49B0CFCE287839C0BB67355D47278A"
+    },
+    {
+      "path": "tools/race-finish-marker.test.mjs",
+      "bytes": 1248,
+      "sha256": "74D6B2AC939EAD5227693BDEB371E4A9C4620A3AFD3C4D1566C2F274E60A58E2"
     },
     {
       "path": "tools/recovery-state.test.mjs",
@@ -4802,7 +4822,7 @@
     {
       "path": "tools/session-result-consistency.test.mjs",
       "bytes": 3954,
-      "sha256": "EF3DDB296BEA9B815E261D668C5E975B60DD2FF95F50FC9D3F7DE86E87E5140E"
+      "sha256": "0EA0C907214AA642E0B4AED614FC84C086BD01C1B644AD049805DF6B6801DB3D"
     },
     {
       "path": "tools/spatial-antialias.gpu.mjs",
@@ -4862,7 +4882,7 @@
     {
       "path": "tools/v7-earned-collection.test.mjs",
       "bytes": 4665,
-      "sha256": "E558BDDB83EF4E3FA48C8C405D40093AD69103047E74A7D3436A9C507E7914F9"
+      "sha256": "2CD1F4094CA58B2C65627879EA35FD8CC889287D351CC1F25630D0CBE768916E"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -4887,7 +4907,7 @@
     {
       "path": "tools/v7-sep12-condition.test.mjs",
       "bytes": 8376,
-      "sha256": "BDC78F891B89A31A8CE8ED8C1DF902E95EA48B9C0476163490CE57F3899503B0"
+      "sha256": "0A25526113206D57EF1F983707A608B4147C5EF46792BA13AF4BAEC0406D9509"
     },
     {
       "path": "tools/v7-sep12-environment-clock.test.mjs",
@@ -4937,7 +4957,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 2980,
-      "sha256": "CF47209DE9E21F432E5C575FD05C4671E8A5FE646DC275F0B8503F1FF6D0F722"
+      "sha256": "8B14CC24D555480166F4E5497D5F12B34C8CC86AA7E543998D71FE5472D550E1"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -4972,7 +4992,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "F75BBCC77C14582B08E7330B489A032BA8D933579C8F39F99E1A1294CAE8E2DB"
+      "sha256": "9BAB25A75DD60C2C0A8EB1F27277F8DFC8C0027EC5833EFFD12D1FC20EA63315"
     },
     {
       "path": "tracks/aconcagua-horcones/distant-aconcagua-dem.LICENSE.txt",
@@ -5275,7 +5295,7 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 1040,
-  "totalBytes": 998674140,
-  "inventorySha256": "28F3FC22DF16EA2503CCC448F974933123E0422985FE9DA8A903EFB4BBAB5A29"
+  "fileCount": 1044,
+  "totalBytes": 998700712,
+  "inventorySha256": "343F014B25CB065804E4A0CB2E468A61C5B6B863CDA6DE96C0A54E0E6A104A3F"
 }
