@@ -77,6 +77,10 @@ El atlas de franjas del Falcon se prepara al cargar el rival. La captura de refe
 
 Después de la ventana en tiempo real, el piloto de QA completó la vuelta de 22,7 km con pasos físicos de Rapier a 120 Hz, sin teletransportes ni recuperaciones. Se verificaron la clasificación, el regreso al taller y la persistencia del resultado tras recargar. La etapa de física acelerada se usa para validar el recorrido y se excluye de las cifras de cadencia. El aviso de guardado de la ficha de resultado pasó de 1,22 a 11,84 de contraste en las comprobaciones de 1280 y 390 píxeles de ancho. [Contraste mínimo del texto](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
 
+Sprint y Viaje muestran «Sin dato» en la consistencia mientras la actividad carece de una medición.
+
+Las consultas GPU en 137 cuadros muestreados dieron 8,25 ms p95 para la captura principal del mundo, 5,64 ms para el reflejo de ribera y 5,28 ms para el retrovisor interior. Cada auxiliar se mide sólo en los cuadros en los que se ejecuta, por lo que esos percentiles se leen por separado. La suma de los renderizados medidos dio un p95 de 16,72 ms por cuadro muestreado y excluye comandos sin consulta.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.

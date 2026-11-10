@@ -2556,8 +2556,8 @@
     },
     {
       "path": "docs/fluidez-gpu.md",
-      "bytes": 16120,
-      "sha256": "153B8D07750F207B7B880B408D7326A3A75FCB91699BFF44B110714792C7CE39"
+      "bytes": 16629,
+      "sha256": "4F4D3957DC4B4B065B7E8BF50823E12BE243429BD5B99633619BF03F8E340E36"
     },
     {
       "path": "docs/intro-brand-fix.md",
@@ -2747,7 +2747,7 @@
     {
       "path": "index.html",
       "bytes": 82295,
-      "sha256": "B2032F0207D0EFD0A722DD28E7EB03378C3A0F91C42793598F4FEA26711CBA46"
+      "sha256": "F896E2488DB55BD8B3FD92609D45655675C536F0C8B790E96B7CD081034AE16C"
     },
     {
       "path": "release-version.json",
@@ -3136,8 +3136,8 @@
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
-      "bytes": 131788,
-      "sha256": "7E135E2E629B85F3DAA464E8B57117133F18F7F9647BFFA43CF02CA589956897"
+      "bytes": 131758,
+      "sha256": "FE417D7C7CF47BFE33A4D19D592305A8977AAB56D570B2F031D2BF183F8EEC15"
     },
     {
       "path": "src/menu/deferred-race-vehicle.mjs",
@@ -4687,7 +4687,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "C1EDCB35268EF289F77806732681494A930FC0FD3FF67F57CDD7F79A5BC0E92A"
+      "sha256": "593CC5FAD6B688B7C7C61D2CF7FAA3ACA2F72675F9537B4780416847A0919269"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4742,7 +4742,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "9487ABA42FC3B78BB207A2E1837D22BD4088548C5D6B9672DC455A082BFB26B5"
+      "sha256": "9198B65701628A54F8DEFE8FF8D6BB29672528FE89EAD6CF0FCC63D40958FED0"
     },
     {
       "path": "tools/pmrem-cache.test.mjs",
@@ -4798,6 +4798,11 @@
       "path": "tools/serve-local.mjs",
       "bytes": 178,
       "sha256": "4657B440E42A836BA4C89D8DF7B7446F1994D29D6A33073C9A88ECA987B6FA2E"
+    },
+    {
+      "path": "tools/session-result-consistency.test.mjs",
+      "bytes": 1395,
+      "sha256": "26C93D9E634EBBCE1A27C551652333044A9123F40E6D2FD70AEE5902A39D62A3"
     },
     {
       "path": "tools/spatial-antialias.gpu.mjs",
@@ -4857,7 +4862,7 @@
     {
       "path": "tools/v7-earned-collection.test.mjs",
       "bytes": 4665,
-      "sha256": "A159963FDEC339180F63B63EF8EC9EF303B67915D04A73D74A353EDC485893EE"
+      "sha256": "1AF0D74FF1300D5192DCC02900BDB24633157882CF94084776F1C41B494BD553"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -5270,7 +5275,7 @@
       "sha256": "24F59C3F27BD63D6EDAB8492A809A9DE82806DD1D2FC1044A1DB12B4CC29A82A"
     }
   ],
-  "fileCount": 1039,
-  "totalBytes": 998651980,
-  "inventorySha256": "008203A1CD0CB01B5B4B71FDA466F8EE25DD7D833DD504FB87F959354F4FEE45"
+  "fileCount": 1040,
+  "totalBytes": 998653854,
+  "inventorySha256": "C16FEDA6233F4B05C28DFFADA441B9A2F326DA5F9F408E548C2F839DA9A761AF"
 }
