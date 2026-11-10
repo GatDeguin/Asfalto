@@ -1,7 +1,7 @@
 import { getVehicleDefinition } from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
 import { VEHICLE_VISUAL_CALIBRATION } from './vehicle-physical-calibration.mjs?v=dc9a8e2b14a2b21c';
 import { releaseVehicleModel } from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
-import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
+import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=17327ea46d639db9';
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
 import { createTrafficDriver } from './traffic-driver.mjs?v=6a52e1173920be49';
 

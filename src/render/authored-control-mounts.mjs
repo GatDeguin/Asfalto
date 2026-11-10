@@ -1,4 +1,5 @@
 import {installDelco986443Face} from './delco-986443-face.mjs?v=4d8e4fb7be97f44a';
+import {installDelco987575Face} from './delco-987575-face.mjs?v=981f69ebb500ae2d';
 import {installSS250RadioFace} from './ss250-radio-face.mjs?v=fcb4ae19d389cad0';
 
 // Coordinates are measured in the shipped dash meshes. The 400 uses the R53
@@ -19,7 +20,7 @@ const dashboards = {
   belair_1957: {
     lights: {point:[-.104,.050,.267], width:.017},
     ignition: {point:[-.104,.050,.124], width:.017},
-    radio: {point:[-.094,.070,.013], width:.105, plate:[.122,.035], inset:.012},
+    radio: {point:[-.104,.070,.016], width:.105, plate:[.122,.035], inset:.012},
   },
 };
 
@@ -152,8 +153,13 @@ export function createAuthoredControlMounts(T,parts){
         if(spec)s.node.position.z=(s.id==='radio'?.004:.002)-reference.max.z*factor;
         if(s.id==='radio'){
           if(is400)radioFace=installSS250RadioFace(T,s.node);
-          if(!is400||!radioFace)addRadioMount(host,spec,id);
           if(id==='pickup_3100')radioFace=installDelco986443Face(T,s.node);
+          if(id==='belair_1957')radioFace=installDelco987575Face(T,s.node);
+          if(id==='pickup_3100'||!radioFace)addRadioMount(host,spec,id);
+          if(id==='belair_1957'&&radioFace)frame.traverse(node=>{
+            if(!node.name.startsWith('belair_1957_radioDonor_'))return;
+            hidden.push([node,node.visible]);node.visible=false;
+          });
           if(is400){
             const donor=frame.getObjectByName('SS250_RadioControlGrip');
             if(donor){hidden.push([donor,donor.visible]);donor.visible=false;}
