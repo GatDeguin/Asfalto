@@ -953,7 +953,7 @@ export function createDosLagosAdapter(dependencies) {
       cumulative.created.collisionRoots += 1;
       try {
         if (closure) { const roots=attachClosedRouteRoots(closure, transaction.visualRoot, transaction.collisionRoot);await prepareReturnScenery(roots.visualRoot,{id:'dos_lagos',query:transaction.routeQuery,lengthM:transaction.normalizedRoute.lengthM,startM:sourceCanonical.lengthM,signal,sourceRoot:transaction.visualRoot});addDosLagosPostSupport(globalThis.__chevyV6Three||globalThis.THREE,transaction.visualRoot,transaction.routeQuery,transaction.normalizedRoute.lengthM); }
-        else dependencies.prepareTrackApproaches?.({id:'dos_lagos',query:sourceQuery,lengthM:sourceCanonical.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot});
+        else await dependencies.prepareTrackApproaches?.({id:'dos_lagos',query:sourceQuery,lengthM:sourceCanonical.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot,signal});
       } finally {
         // A malformed optional closure can already have attached one root.
         // Count both owners before rollback so every allocated resource is released.

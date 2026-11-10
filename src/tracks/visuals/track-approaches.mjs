@@ -1,5 +1,6 @@
 import {createForestImpostorGeometry} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
-import {addIguazuApproachPlants} from './iguazu-landscape.mjs?v=d0651ecfab891a56';
+import {addIguazuApproachPlants} from './iguazu-landscape.mjs?v=4c81e25195c5f805';
+import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=657ba3796dce7370';
 
 // The access roads are scene geometry. The route query still spans the two official gates.
 const STEP_M = 8;
@@ -259,5 +260,8 @@ export function addTrackApproaches(T, {id, query, lengthM, visualRoot, collision
       apron.position.set(middle.x, Math.min(...rows.map(row => row.y)) - 30, middle.z);
       visualRoot.add(apron);
     }
+  }
+  if (id === 'cataratas_iguazu' && visualRoot.userData.asfaltoIguazu) {
+    visualRoot.userData.asfaltoIguazu.ground = batchIguazuGround(T, visualRoot);
   }
 }

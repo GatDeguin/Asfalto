@@ -354,7 +354,8 @@ export function createCuestaLipanAdapter(dependencies) {
         current(tx);
       }
 
-      if(!closure)dependencies.prepareTrackApproaches?.({id:'cuesta_lipan',query:routeQuery,lengthM:route.lengthM,visualRoot:tx.visualRoot,collisionRoot:tx.collisionRoot});
+      if(!closure)await dependencies.prepareTrackApproaches?.({id:'cuesta_lipan',query:routeQuery,lengthM:route.lengthM,visualRoot:tx.visualRoot,collisionRoot:tx.collisionRoot,signal:tx.controller.signal});
+      current(tx);
       await dependencies.installVisualRoot(tx.visualRoot, { signal: tx.controller.signal });
       tx.visualInstalled = true;
       current(tx);

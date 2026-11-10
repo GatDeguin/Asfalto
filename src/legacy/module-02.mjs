@@ -30,7 +30,8 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=fc65cc9445589d6b';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=9759e92494196433';
+import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=4f7deb4bf592efe1';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c4baaeb1f89d1b0c';
@@ -65,7 +66,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=d9f326c1
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=1b366163bbfc7326';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=71fd8b3c5ff8b8db';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -8482,7 +8483,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
       root.name = label;
       return root;
     },
-    prepareTrackApproaches(context) { addTrackApproaches(THREE, context); },
+    async prepareTrackApproaches(context) {
+      addTrackApproaches(THREE, context);
+      await loadTrackApproachArt(context, {
+        fetchBytes: this.fetchBytes, loadGlb: this.completeGlbToObject, dispose: disposeTrackObjectRoot,
+      });
+    },
     disposeObjectRoot(root) { return disposeTrackObjectRoot(root); },
     createCollisionProbe(root) {
       return globalThis.AsfaltoV5GlbCore.createCollisionProbe(THREE, root);

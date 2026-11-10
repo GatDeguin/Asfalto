@@ -239,7 +239,8 @@ export function createGlbPointToPointAdapter(dependencies, policy) {
       transaction.visualRoot=transaction.visualRoots[0]||null;
       transaction.collisionRoot=transaction.collisionRoots[0]||null;
       if(closure){const roots=attachClosedRouteRoots(closure,transaction.visualRoot,transaction.collisionRoot);await (policy.prepareReturnVisual||prepareReturnScenery)(roots.visualRoot,{id:expected.id,sourceRoot:transaction.visualRoot,query,lengthM:route.lengthM,startM:sourceRoute.lengthM,signal:transaction.controller.signal});current(transaction);}
-      else dependencies.prepareTrackApproaches?.({id:expected.id,query,lengthM:route.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot});
+      else await dependencies.prepareTrackApproaches?.({id:expected.id,query,lengthM:route.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot,signal:transaction.controller.signal});
+      current(transaction);
       for(const name of policy.requiredVisualNodes||[])if(!transaction.visualRoots.some(root=>named(root,name)))throw new TypeError('visual root missing required node '+name);
       for(const name of (policy.requiredCollisionNodes||expected.collisionNodes||[])){const required=transaction.collisionRoots.map(root=>named(root,name)).find(Boolean);if(!required)throw new TypeError('collision root missing required node '+name);if(!hasTriangleMesh(required))throw new TypeError('collision root required node lacks triangle mesh '+name);}
 

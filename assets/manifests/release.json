@@ -2075,6 +2075,31 @@
       "sha256": "00A4B774295909EEE2A42B49377203F9A2ED6C7EF9964FEDBA631F489A8532E4"
     },
     {
+      "path": "assets/tracks/approach-art/aconcagua_horcones.glb.gz",
+      "bytes": 1142093,
+      "sha256": "17CEE0CCE30B700FCCAAFFEDCBBC8AB8C56A4596DA760E43C8AD5A55A81F526A"
+    },
+    {
+      "path": "assets/tracks/approach-art/cataratas_iguazu.glb.gz",
+      "bytes": 1173600,
+      "sha256": "78E3CE2AD3D083AF881CC5BBDDA5802772044134DEA8DECC719E69E9603F193B"
+    },
+    {
+      "path": "assets/tracks/approach-art/cuesta_lipan.glb.gz",
+      "bytes": 1301949,
+      "sha256": "6A7EC7D1874DA9AD5327DF11839772E82D1298516293953ADAEEFEC337EE1F82"
+    },
+    {
+      "path": "assets/tracks/approach-art/dos_lagos.glb.gz",
+      "bytes": 830237,
+      "sha256": "C00A9987550220282396BAA65810E05257DEC932D0F7C17768A22226CB64CFED"
+    },
+    {
+      "path": "assets/tracks/approach-art/paso_garibaldi.glb.gz",
+      "bytes": 926299,
+      "sha256": "15C0E49D38F51D94AAC747AD55009A7990018B269E714A09448E051D68B90EB3"
+    },
+    {
       "path": "assets/tracks/offline-bake/aconcagua_horcones.bake.gz",
       "bytes": 4269267,
       "sha256": "350C4386E01EB6B029963BA8C8FB9A53AF34BDDCC79EFDE1B1748B34235CBA91"
@@ -2702,7 +2727,7 @@
     {
       "path": "index.html",
       "bytes": 81599,
-      "sha256": "F8738275B0E8ADBF77408E380E04393480728D5C0F5EB57710F71C3005CE7509"
+      "sha256": "5C46803493E5F94997E830F89297562B64DD6F1F6EABF122D023FED3F8F1D419"
     },
     {
       "path": "release-version.json",
@@ -2722,7 +2747,7 @@
     {
       "path": "src/app/modular-bootstrap.mjs",
       "bytes": 9572,
-      "sha256": "1B366163BBFC7326809FB5E0FACC3ABBC97621367930672749FAF571995F8F2C"
+      "sha256": "71FD8B3C5FF8B8DBD6AFE42B2CA54587E28FE38BB61BE409496DD27AD3DC348A"
     },
     {
       "path": "src/audio/audio-targets.mjs",
@@ -3101,8 +3126,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 588261,
-      "sha256": "8EE7BFBAAA00CC467D9286C08A2F4B0B625E5F51457CEC9FBBC63E0AAA486600"
+      "bytes": 588534,
+      "sha256": "F2341A36FE300E12F2C3C2D5538B4E1158522FCA54C69E649A61ACF2759DC7CA"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -4202,12 +4227,12 @@
     {
       "path": "src/tracks/adapters/aconcagua-horcones.mjs",
       "bytes": 7303,
-      "sha256": "0137AB526691E24754FDCF96E26C809515ED9D18646CE4B749CD605CA4F59B97"
+      "sha256": "7F47156733104F7BC1CF43136A2F4743A87D08D9B5DF6A4E935AAA1B7594E4CE"
     },
     {
       "path": "src/tracks/adapters/cataratas-iguazu.mjs",
       "bytes": 2874,
-      "sha256": "D7F39915A5B6F70B052F3AF2ED53AAE64747BDBC0FC6133B737B3BF6FE280BC0"
+      "sha256": "E134750C443182C951D7D50D334818C6ED3A1B2445CE8DF79A1D3D725A4ABC68"
     },
     {
       "path": "src/tracks/adapters/closed-route-support.mjs",
@@ -4216,23 +4241,23 @@
     },
     {
       "path": "src/tracks/adapters/cuesta-lipan.mjs",
-      "bytes": 32275,
-      "sha256": "562F48731A7C2FFD9A114A094235243ECFFCDEDEE184BAC46D062E77E8A8DCFD"
+      "bytes": 32329,
+      "sha256": "55704A4FBA9C1278B749EF9B5B463886D6059A0A2F249620CAE3E18281E60DC6"
     },
     {
       "path": "src/tracks/adapters/dos-lagos.mjs",
-      "bytes": 59877,
-      "sha256": "75F18490B1BC021C79ED900832424260310F1DD56BC5CB1DBAA585C03D0FB3D4"
+      "bytes": 59890,
+      "sha256": "28D420D6D60ED1DD387A5E16E8B08E03117897192BD477D28BEC9B9904AE2839"
     },
     {
       "path": "src/tracks/adapters/glb-point-to-point.mjs",
-      "bytes": 27082,
-      "sha256": "082F76D1E387E0D00C9A90C5C2A68F591CC507BF4EE576D7685BD775E5E7E667"
+      "bytes": 27154,
+      "sha256": "6154A472FC455A340B2C675354C1CA35A8B019202B319E38C4F6124950FD4E43"
     },
     {
       "path": "src/tracks/adapters/paso-garibaldi.mjs",
       "bytes": 8173,
-      "sha256": "451D4B0EC6F9EBCC9FC3F92921AF304AEF40F448F819242A5E3225AF01070B67"
+      "sha256": "F5FF6967C99D3520E8981E5543584B9702EBCA244982316F21CB821D03C40BFD"
     },
     {
       "path": "src/tracks/gameplay-bridge.mjs",
@@ -4336,13 +4361,13 @@
     },
     {
       "path": "src/tracks/visuals/iguazu-ground-batches.mjs",
-      "bytes": 3672,
-      "sha256": "FF9CD4EEB5BB9D5C2A47F8580DA7F2E7A6662BCBEC783EA3081DE35B4D4F3372"
+      "bytes": 3662,
+      "sha256": "657BA3796DCE7370E2EF094F4EB8B0819A5BDDF4DE16187A11352592FE446CD1"
     },
     {
       "path": "src/tracks/visuals/iguazu-landscape.mjs",
       "bytes": 13286,
-      "sha256": "D0651ECFAB891A56FEBEF63A83CEF85731315BD0DED12DC9DC2B31A6BD180F4C"
+      "sha256": "4C81E25195C5F805BDDB1F0DF90E89651D2837B02CDC2EDEAD222856CF5A8AB4"
     },
     {
       "path": "src/tracks/visuals/mountain-profile.mjs",
@@ -4490,9 +4515,19 @@
       "sha256": "2512B89D549B04318A7441911E61DBEF7D0A4093AF907FCC820D35790E96E9B2"
     },
     {
+      "path": "src/tracks/visuals/track-approach-art-assets.mjs",
+      "bytes": 814,
+      "sha256": "BB9A576B1FAC7CC882C106926721DABE311E5EA59919FD14D2A4DD59350F3AB5"
+    },
+    {
+      "path": "src/tracks/visuals/track-approach-art.mjs",
+      "bytes": 3565,
+      "sha256": "4F7DEB4BF592EFE1DF01B0D09AC87E45D9A060C526BC4E2BA437BBDCD70402F1"
+    },
+    {
       "path": "src/tracks/visuals/track-approaches.mjs",
-      "bytes": 15655,
-      "sha256": "FC65CC9445589D6BB080629980C03AF84F69DA0757B2A624CF908A20FA70E98D"
+      "bytes": 15894,
+      "sha256": "9759E92494196433807B0D602AFEDB9DFAB635807CCCFE47A7CDF1674FF5FB4A"
     },
     {
       "path": "src/tracks/visuals/waterfall-impact.mjs",
@@ -4537,7 +4572,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "9123C2B64B9D3FDDF0F335C7B8F06DEC76487CA5084B54B76565AFA9FAB2863A"
+      "sha256": "41D9416E6285423275EEA04AA5010D783687D787F4F6AEAF219C6866E39CA0C8"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4557,17 +4592,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "FA4BBFA72EE59AF833BC351F74970A3E555D59A35EAE8906C2F611408E05008F"
+      "sha256": "AA87A10FEF459F0AE507305840F994B90D28D38A282D74C4055935853D7A2D44"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "D8D0D89307A0788FE75E1DD9D87629F1F797564AA9446423F2334717323F552B"
+      "sha256": "53967067F5BF02CCAB5A378C231A8B0A0E9F7F77BCE40AD74948DBF67328AF2C"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "DAF38FFEB15BFD65E79D9D484B7734E5E3D37EF5FC2D6193CAFEA272985EF5FA"
+      "sha256": "6A7265FD032C13CD1AEDEF8918BCD0F23BD6013B19ED2A8960DA80379484AD6D"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4582,7 +4617,7 @@
     {
       "path": "tools/automatic-reverse.test.mjs",
       "bytes": 4285,
-      "sha256": "2C0584082F15F20DA3300D315BF493D40B16DF828A239FD6E37194E0710E574E"
+      "sha256": "1F098B32948AB9F027874B62A11ADC83EB1AFB0535503D38B8B9CD77C917E256"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
@@ -4792,12 +4827,12 @@
     {
       "path": "tools/iguazu-ground-batches.test.mjs",
       "bytes": 2197,
-      "sha256": "72E00EBFA0562A052752B384E6CFE4B34F30BDC98D9F9BBDD61BF2E823B25B53"
+      "sha256": "8DA6067BA8EB06B6E7B7B8C1720A08A8F99FF42908C2FE7D756B820122BA9686"
     },
     {
       "path": "tools/iguazu-instance-batches.test.mjs",
       "bytes": 5829,
-      "sha256": "015AC8C1AD87021E092EC1AD35BF44F43E5518B4A7B784276985DADEA7403958"
+      "sha256": "CF9E9E2B9E7E5F3A63F81C955B7A2AFE59786F2E1FC4CA9CB78D76B7A325D1B4"
     },
     {
       "path": "tools/initial-vehicle-demand.test.mjs",
@@ -4812,17 +4847,17 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "D84360747920BF5564D22B221FD48C998D9324682076B9CB2B45F640D7871342"
+      "sha256": "7BF030B9307DB958008C6270FA7D8D886DA71908A397020448BA62F45937B853"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "F512CFE26CB30E99B95A3F65CA0FCCA795F769064B408D2930980224E2C6307A"
+      "sha256": "6D717C68EFB0AF07988C2730CB199AA27EEBBB8E5E7B602680AD368BEF2EAB89"
     },
     {
       "path": "tools/original-track-layouts.test.mjs",
       "bytes": 1382,
-      "sha256": "CA76512988B96EBB81E070C08631070933D452D8FC6AC8058F7099B18D2A5AE0"
+      "sha256": "4894C756A3BC3A530C60348E882A33116E421D04C42C066235F3B12E46EDADCA"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4907,7 +4942,7 @@
     {
       "path": "tools/recovery-state.test.mjs",
       "bytes": 4906,
-      "sha256": "BB78591928F42DD385AC800584D05AFC57C684F42AB7E09A2BFDF613FED19FCE"
+      "sha256": "25BE85AE1B31B227CB554C00BC80CB21531DE86A00BA6B1549B20CB92A7187CB"
     },
     {
       "path": "tools/regional-backdrop.test.mjs",
@@ -4995,9 +5030,14 @@
       "sha256": "3B103076790C1EB098C3F36D44F8C1E9F6781393CCE438CE7B7F575FE2E51D77"
     },
     {
+      "path": "tools/track-approach-art.test.mjs",
+      "bytes": 3168,
+      "sha256": "75DB882B09FF822E3051ED97D078D008DA4F06A017E0A49FAE8B3C03603A8B0C"
+    },
+    {
       "path": "tools/track-approaches.test.mjs",
       "bytes": 2299,
-      "sha256": "0D21EC7DE69CC7F2B48888FEC32AFEB8011F8FF89E02FC11C4BCA53775070EC7"
+      "sha256": "6BF27CE50089F360B868C47E2401A4B0A9234FBB7C33E919A132037A4597D3BE"
     },
     {
       "path": "tools/track-bake.test.mjs",
@@ -5127,7 +5167,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "C43356CE633FA188BDF954EC1DBA1EA2D62D66015119DF435D242FFC1FA4862E"
+      "sha256": "228CAD3466637934FCB6868E6F61637EEBD6601FA1DB975B92453687F80AF92A"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5162,7 +5202,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "E1415637DE34D9B09DED47FA62AB8702E71F8926CCD9BD4B36A47F2F296D9FEF"
+      "sha256": "2085F3F5131802832F54127A73E0C9CDFEBE67398F1C68C3D01F7B09BEC61747"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -5475,7 +5515,7 @@
       "sha256": "1086156075A1A6D4768F78BC3F0973BE664E2BB6688C5034BF7388E00BC4FC77"
     }
   ],
-  "fileCount": 1080,
-  "totalBytes": 937707503,
-  "inventorySha256": "8E8355B603AF467084128DF35F6E536E4935BC1A4022207FBA6319CC5C94AAA9"
+  "fileCount": 1088,
+  "totalBytes": 943089869,
+  "inventorySha256": "76134A77DB89BCD8C6D55B3836EB5D27B531299B4F213BF86D0E9BE4EDA9CFA0"
 }

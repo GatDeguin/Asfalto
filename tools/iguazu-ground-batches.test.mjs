@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {batchIguazuGround} from '../src/tracks/visuals/iguazu-ground-batches.mjs?v=ff9cd4eeb5bb9d5c';
+import {batchIguazuGround} from '../src/tracks/visuals/iguazu-ground-batches.mjs?v=657ba3796dce7370';
 
 function tile(root,material,name,x,y){
  const geometry=new T.PlaneGeometry(4,4).rotateX(-Math.PI/2).translate(x,y,0);

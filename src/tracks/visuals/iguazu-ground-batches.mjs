@@ -1,7 +1,7 @@
 const SECTOR_M=768;
 const GROUND=/^(TERRAIN_\d+|(?:SHOULDER|VERGE|EDGE)_\d+_-?1|CENTER_\d+)$/;
 
-// Pack the static visual sheets after the return valley has been carved.
+// Pack the static visual sheets after the final terrain edits.
 // Authored vertices, surface attributes and the independent collision GLB stay intact.
 export function batchIguazuGround(T,root){
  const sectors=new Map();
