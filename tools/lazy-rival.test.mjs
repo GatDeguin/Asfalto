@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=02db7b2be4966581',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=f10fb7e9382c1eb1',import.meta.url),'utf8');
 const block=source.match(/  let rivalVisualPromise=null;[\s\S]*?    return rivalVisualPromise;\r?\n  }/)[0];
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
 function fixture({decode,convert,present,meshes=[],contextLost=false}={}){

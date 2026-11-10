@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {prepareReturnScenery} from '../src/tracks/visuals/reference-landscape.mjs?v=1877fbe8d19b298a';
+import {prepareReturnScenery} from '../src/tracks/visuals/reference-landscape.mjs?v=fe37dae2ff5129f6';
 
 test('Dos Lagos return borrows its source maps without taking ownership on a failed load',async t=>{
  const originalDocument=Object.getOwnPropertyDescriptor(globalThis,'document');

@@ -1,8 +1,31 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=f89c6008d98919ad';
-import {bindSharedInstanceWindows} from '../src/tracks/seam-copy-factory.mjs?v=97bbf38e4233d892';
+import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=5db01989ee3d3348';
+import {bindSharedInstanceWindows,installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
+
+test('ordinary roadside windows prepare their buffer before drawing and skip hidden or off-layer passes',()=>{
+ const scene=new T.Scene(),root=new T.Group(),tile=new T.Group(),geometry=new T.BoxGeometry(),material=new T.MeshBasicMaterial();
+ const mesh=new T.InstancedMesh(geometry,material,2),matrix=new T.Matrix4();
+ scene.add(root);root.add(tile);tile.add(mesh);
+ mesh.setMatrixAt(0,matrix.makeTranslation(-20,0,0));mesh.setMatrixAt(1,matrix.makeTranslation(20,0,0));mesh.computeBoundingSphere();
+ installSharedInstanceWindow(T,mesh,{rangeM:12});
+ const unbind=bindSharedInstanceWindows(scene,root),camera=new T.OrthographicCamera(-2,2,2,-2,.1,100);
+ function view(x){camera.position.set(x,0,5);camera.updateMatrixWorld(true);scene.updateMatrixWorld(true);scene.onBeforeRender(null,scene,camera);}
+ view(-20);
+ assert.equal(mesh.count,1);
+ assert.equal(mesh.instanceMatrix.array[12],-20);
+ view(20);
+ assert.equal(mesh.count,1);
+ assert.equal(mesh.instanceMatrix.array[12],20);
+ camera.layers.set(30);view(-20);
+ assert.equal(mesh.instanceMatrix.array[12],20);
+ camera.layers.set(0);tile.visible=false;view(-20);
+ assert.equal(mesh.instanceMatrix.array[12],20);
+ tile.visible=true;view(-20);
+ assert.equal(mesh.instanceMatrix.array[12],-20);
+ unbind();mesh.dispose();geometry.dispose();material.dispose();
+});
 
 test('Iguazú shares one draw per geometry, material and range across visible spatial cells',()=>{
  const scene=new T.Scene(),root=new T.Group(),geometry=new T.BoxGeometry(4,4,4),material=new T.MeshStandardMaterial();

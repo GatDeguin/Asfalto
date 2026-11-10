@@ -49,8 +49,10 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
  rebuildBlocks();
  const cameraLocal=new T.Vector3(),inverse=new T.Matrix4();let visibleCount=maximum;
  mesh.count=maximum;
+ mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
+ if(mesh.frustumCulled&&mesh.boundingSphere===null)mesh.computeBoundingSphere();
  function select(camera){
-  camera.getWorldPosition(cameraLocal);inverse.copy(mesh.matrixWorld).invert();cameraLocal.applyMatrix4(inverse);let count=0,changed=false;
+  camera.getWorldPosition(cameraLocal);inverse.copy(mesh.matrixWorld).invert();cameraLocal.applyMatrix4(inverse);let count=0,firstChanged=-1,lastChanged=-1;
   if(viewFrustum){
    clipMatrix.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse).multiply(mesh.matrixWorld);
    viewFrustum.setFromProjectionMatrix(clipMatrix,camera.coordinateSystem,camera.reversedDepth);
@@ -66,7 +68,9 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
     if(eligible&&!eligible(i,source))continue;
     if(packedIndices[count]!==i){
      for(let k=0;k<16;k++)mesh.instanceMatrix.array[count*16+k]=source[o+k];
-     packedIndices[count]=i;changed=true;
+     packedIndices[count]=i;
+     if(firstChanged<0)firstChanged=count;
+     lastChanged=count;
     }
     count++;
    }
@@ -74,12 +78,13 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
   mesh.count=visibleCount=count;
   // Repeated world/depth/mirror passes often select the same instances.
   // Upload only changed matrices, while still evaluating dynamic eligibility.
-  if(changed){mesh.instanceMatrix.clearUpdateRanges();mesh.instanceMatrix.addUpdateRange(0,count*16);mesh.instanceMatrix.needsUpdate=true;}
+  if(firstChanged>=0){mesh.instanceMatrix.addUpdateRange(firstChanged*16,(lastChanged-firstChanged+1)*16);mesh.instanceMatrix.needsUpdate=true;}
  }
- if(viewFrustum)viewSelections.set(mesh,select);
+ const selection={T,mesh,select,bound:false};
+ viewSelections.set(mesh,selection);
  mesh.onBeforeRender=(_renderer,_scene,camera)=>{
   beforeRender?.();
-  if(!viewFrustum)select(camera);
+  if(!viewFrustum&&!selection.bound)select(camera);
  };
  const canonicalInfo={maximum,rangeM,version:0};mesh.userData.asfaltoCanonicalInstances=canonicalInfo;
  mesh.userData.asfaltoCloneForChart=({acceptInstance}={})=>{
@@ -107,18 +112,32 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
 export function bindSharedInstanceWindows(scene,root){
  const selections=[];
  root.traverse(node=>{
-  const select=viewSelections.get(node);
-  if(select)selections.push(select);
+  const entry=viewSelections.get(node);
+  if(entry&&!entry.bound){entry.bound=true;selections.push(entry);}
  });
  if(!selections.length)return ()=>{};
+ const {T}=selections[0],frustum=new T.Frustum(),projection=new T.Matrix4();
  const previous=scene.onBeforeRender;
  function prepare(renderer,world,camera,target){
   previous.call(this,renderer,world,camera,target);
-  for(const select of selections)select(camera);
+  if(!root.visible)return;
+  let frustumReady=false;
+  for(const {mesh,select} of selections){
+   if(!mesh.visible||!mesh.layers.test(camera.layers))continue;
+   let ancestor=mesh.parent;
+   while(ancestor?.visible)ancestor=ancestor.parent;
+   if(ancestor)continue;
+   if(mesh.frustumCulled){
+    if(!frustumReady){projection.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);frustum.setFromProjectionMatrix(projection,camera.coordinateSystem,camera.reversedDepth);frustumReady=true;}
+    if(!frustum.intersectsObject(mesh))continue;
+   }
+   select(camera);
+  }
  }
  scene.onBeforeRender=prepare;
  return ()=>{
   if(scene.onBeforeRender===prepare)scene.onBeforeRender=previous;
+  for(const entry of selections)entry.bound=false;
   selections.length=0;
  };
 }

@@ -110,6 +110,18 @@ El pase interior conserva sus capas, luces y profundidad. Al cambiar la jerarqu�
 
 En dos controles y dos pruebas alternadas de 25 s en Dos Lagos, el p95 de GPU del pase interior fue de 6,77–7,33 ms en los controles y 4,79–5,54 ms con la poda. El tiempo medio de CPU dentro de la llamada de renderizado interior fue de 3,70–3,74 ms y 3,23–3,41 ms, respectivamente. Los cuadros de escena enviados pasaron de 47,30–48,12 FPS a 52,38–57,16 FPS en esas cuatro ventanas instrumentadas. Las capturas del mismo tramo muestran el tablero, la ruta y ambos reflejos. Las pruebas cubren una luz que se añade o retira dentro de un grupo, visibilidad previa y restauración tras una excepción.
 
+### Selección de instancias por cámara
+
+Las instancias de vegetación y rocas se seleccionan antes de que Three prepare la lista de dibujo y suba sus matrices. Cada vista conserva su máscara, frustum y alcance originales. Se saltan los grupos invisibles y se actualiza sólo el intervalo de matrices modificado.
+
+En una prueba de píxeles con WebGL2 y ANGLE/D3D11, el control omitió el objeto en dos de cinco vistas al alternar cámaras. Las cinco vistas de la corrección dibujaron la instancia elegida en el primer cuadro. En Dos Lagos, entre los km 21,44 y 21,93, las dos pasadas instrumentadas dieron 56,12 y 55,48 FPS. El p95 de GPU del mundo fue 9,77 y 10,61 ms, respectivamente. Ninguna de esas dos pasadas registró saltos superiores a 75 ms. El resultado confirma la corrección visual. La causa de los saltos de la etapa larga sigue abierta.
+
+Una tercera pasada candidata entre los km 21,44 y 21,93, con la telemetría del juego y sin instrumentación externa de GPU, envió 57,97 FPS durante 42,0 s. No se registraron cuadros separados por más de 75 ms ni tareas largas. El taller estuvo disponible en 77,7 ms al salir de ese tramo.
+
+En Iguazú se completaron 30,53 km bajo lluvia con física acelerada para comprobar la funcionalidad. Se usaron las cuatro cámaras, se pausó y reanudó la carrera y se terminó segundo. Tras volver al taller en 121,3 ms, la recarga conservó historial, eventos y puntuación. No hubo errores del navegador.
+
+La captura D3D11 con Nsight Systems llegó al arranque, donde el navegador agotó el tiempo de espera de la prueba bajo el perfilador. Windows restringió la captura WDDM. Los resultados de carrera de esta sección proceden de consultas de GPU de WebGL y del navegador.
+
 ### Primera etapa del campeonato en tiempo real
 
 La etapa de Dos Lagos recorrió 22.717 m en unos 18 min 36 s de pared, sin adelantar el reloj de la simulación. La clasificación aceptó a Falcon y al jugador con todos sus controles de paso y sin penalizaciones. El jugador obtuvo 1 punto y regresó al taller. El script de comprobación de recarga consultó el menú antes de que existiera, por lo que la verificación independiente del recibo después de recargar queda pendiente.
@@ -129,7 +141,7 @@ En navegador, un Sprint penalizado por recuperación completó el recorrido con 
 
 ## Comprobaciones reproducibles
 
-- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 365 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
+- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 366 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
 - Configurar `PLAYWRIGHT_PACKAGE` si Playwright está fuera de la raíz y `CHROME_PATH` para indicar el Chrome de prueba. Ejecutar `node tools/roadtest-browser.mjs <directorio-de-evidencia>`. El 0–100 usa teclado, movimiento reducido y un perfil aislado. Verifica pausa, resultado y persistencia tras recargar.
 - Ejecutar `node tools/track-drive-browser.mjs <directorio-de-evidencia> [circuito] [--draw-detail]` con el mismo entorno. Abre los circuitos desde el taller y comprueba aceleración, pausa, reanudación y regreso. Al elegir un circuito, comprueba también que su escena sea la única solicitada en la primera salida. Guarda cadencia, GPU, tareas largas, preparación de shaders y capturas.
 - Ejecutar `node tools/water-optics.gpu.mjs <archivo-json>`. La prueba lee la absorción del fragmento en WebGL. A 2 m obtiene 0,275 perpendicular y 0,380 rasante, con cero en la orilla de profundidad cero y una llamada de dibujo en cada muestra.
