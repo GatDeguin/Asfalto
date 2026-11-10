@@ -1,7 +1,8 @@
 import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=55fb7202cdfb2f7b';
 import {prepareDepartureDoor} from './workshop-departure-door.mjs?v=47519597b1833cf9';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 
-const DOOR_LATCH=.74, IGNITION=1.02, HEADLAMPS=2.08, LIGHTS=2.94;
+const DOOR_LATCH=.72, DOOR_SETTLED=.92, IGNITION=1.02, HEADLAMPS=2.08, LIGHTS=2.94;
 const GATE=3.78, GATE_OPEN=5.54, ROLL=5.65, EXIT=5.68, NIGHT=9.44;
 const THRESHOLD_Z=6.50, TURN_Z=9.55, TURN_RADIUS=4.80, STREET_RUN=26;
 const TURN_LENGTH=TURN_RADIUS*Math.PI/2;
@@ -91,8 +92,13 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
     }
   });
   const fillPosition=fill?.position?.clone(),fillColor=fill?.color?.clone(),outsideColor=fillColor?.clone().set('#a5c9ff');
+  const exitFill=presentation.getDepartureFillPosition?.()??{x:1.05,y:4.55,z:9};
   const gate=presentation.getDepartureGate();
   const exterior=scene?.getObjectByName('E31_DepartureExterior'),exteriorVisible=exterior?.visible;
+  const beam=scene?.getObjectByName('E31_DepartureBeam');
+  const beamState=beam&&{visible:beam.visible,position:beam.position.clone(),yaw:beam.rotation.y,scale:beam.scale.clone(),opacity:beam.material.opacity};
+  const [lampX,lampY,lampSide]=getVehicleDefinition(workshop.vehicleId)?.lampAnchor??[-.9452,.006,.267];
+  const lampCenter=beam&&new workshop.T.Vector3(), lampOuter=beam&&new workshop.T.Vector3();
   const contact=scene?.getObjectByName('Workshop_Vehicle_Contact');
   const contactPosition=contact?.position.clone(),contactRotation=contact?.quaternion.clone();
   const vehicleCue=vehiclePresentation?.beginDepartureCue?.();
@@ -124,6 +130,8 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
       motion.removeEventListener('change',onMotion);
       sound.dispose();
       if(exterior)exterior.visible=exteriorVisible;
+      if(beam){beam.visible=beamState.visible;beam.position.copy(beamState.position);beam.rotation.y=beamState.yaw;
+        beam.scale.copy(beamState.scale);beam.material.opacity=beamState.opacity;}
       car.position.copy(position);car.quaternion.copy(rotation);
       if(contact){contact.position.copy(contactPosition);contact.quaternion.copy(contactRotation);}
       camera.position.copy(cameraPosition);camera.quaternion.copy(cameraRotation);
@@ -153,10 +161,9 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
           if(finished)return;
           if(id!=='door'&&(id!=='gate'||gate<1))sound.phase(id);
         }
-        if(!latch){
-          door?.setOpen(1-smooth((elapsed-.13)/(DOOR_LATCH-.13)));
-          if(elapsed>=DOOR_LATCH){latch=true;door?.restore();door=null;sound.phase('door');}
-        }
+        door?.setOpen(clamp(presentation.getDepartureDoorOpen?.(elapsed)??(1-smooth((elapsed-.13)/(DOOR_LATCH-.13)))));
+        if(!latch&&elapsed>=DOOR_LATCH){latch=true;sound.phase('door');}
+        if(door&&elapsed>=DOOR_SETTLED){door.restore();door=null;}
         const dark=smooth((elapsed-LIGHTS)/.33);
         const opening=smooth((elapsed-GATE)/(GATE_OPEN-GATE)),nextGate=lerp(gate,1,opening);
         const spill=smooth((nextGate-.04)/.72);
@@ -174,7 +181,7 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         for(const [material,intensity] of fluorescents)material.emissiveIntensity=intensity*(1-smooth((elapsed-LIGHTS-(tube++%3)*.06)/.18));
         if(fill){
           fill.intensity=(roomLights.get(fill)*(1-dark)+2.78*spill)*(1-.93*night);
-          if(fillPosition)fill.position.set(lerp(fillPosition.x,1.05,dark),lerp(fillPosition.y,4.55,dark),lerp(fillPosition.z,9.0,dark));
+          if(fillPosition)fill.position.set(lerp(fillPosition.x,exitFill.x,dark),lerp(fillPosition.y,exitFill.y,dark),lerp(fillPosition.z,exitFill.z,dark));
           if(fillColor)fill.color.copy(fillColor).lerp(outsideColor,dark);
         }
         const gateDelta=nextGate-lastGate;lastGate=nextGate;
@@ -194,7 +201,20 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         }
         lastTurn=turn;
         const steer=.46*smooth((distance-straightDistance+.55)/1.1)*(1-smooth((streetTravel-TURN_LENGTH+.55)/1.1));
-        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps:smooth((elapsed-HEADLAMPS)/.33),brake:1-smooth((elapsed-ROLL)/.26)});
+        const headlamps=smooth((elapsed-HEADLAMPS)/.33);
+        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps,brake:1-smooth((elapsed-ROLL)/.26)});
+        if(beam&&vehiclePresentation?.root){
+          const root=vehiclePresentation.root;
+          root.updateWorldMatrix(true,false);
+          lampCenter.set(lampX,lampY,0).applyMatrix4(root.matrixWorld);
+          lampOuter.set(lampX,lampY,lampSide).applyMatrix4(root.matrixWorld);
+          beam.position.set(lampCenter.x,beamState.position.y,lampCenter.z);
+          beam.rotation.y=-turn;
+          beam.scale.x=lampCenter.distanceTo(lampOuter)/.72;
+          beam.scale.z=nextGate<.13?clamp((THRESHOLD_Z-lampCenter.z)/8.4):1;
+          beam.material.opacity=headlamps*(.43+.48*dark)*(1-.48*night);
+          beam.visible=beam.material.opacity>.005;
+        }
         frameCamera(camera,car.position,elapsed,straightProgress,clamp(streetTravel/TURN_LENGTH),phases[phaseIndex][1]);
         const fade=smooth((elapsed-FADE)/(BLACK-FADE));
         if(fade>0)onFade(fade);

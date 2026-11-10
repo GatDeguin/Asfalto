@@ -1,4 +1,4 @@
-import {computeWaterField,computeRoadField} from './hydrology-compute.mjs?v=d280021eea2b85af';
+import {computeWaterField,computeRoadField} from './hydrology-compute.mjs?v=2de92e09d7c5ffc8';
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 /** Geometric perimeter, not a painted noise mask. Quantization joins GLB split vertices. */
 export function waterBoundarySegments(THREE,mesh){
@@ -27,9 +27,11 @@ export function createWaterHydrology(THREE,mesh,{jobs}={}){
   const materials=Array.isArray(mesh.material)?mesh.material:[mesh.material];
   const metadata={kind:materials.some(material=>/RIVER/.test(material?.name||''))?'river':'lake',...mesh.userData?.asfaltoWater},boundary=waterBoundarySegments(THREE,mesh),segments=metadata.shoreSegments?.length?metadata.shoreSegments:boundary;
   const bounds=new THREE.Box3().setFromObject(mesh),size=bounds.getSize(new THREE.Vector3()),resolution=96,maxDepth=Math.max(.1,Number(metadata.maxDepthM)||(metadata.kind==='river'?2:18));
-  const input={segments:new Float64Array(segments.flatMap(({a,b})=>[...a,...b])),bounds:[bounds.min.x,bounds.min.z,size.x,size.z],maxDepth,resolution,depthSamples:new Float64Array((metadata.depthSamples||[]).flat())};
+  const input={segments:new Float64Array(segments.flatMap(({a,b})=>[...a,...b])),bounds:[bounds.min.x,bounds.min.z,size.x,size.z],maxDepth,resolution,depthSamples:new Float64Array((metadata.depthSamples||[]).flat()),
+    localDepthSamples:new Float64Array(metadata.localDepthSamples||[])};
   const controller=new AbortController();let disposed=false;
-  const diagnostics={segments:segments.length,depthSource:input.depthSamples.length?(metadata.depthSource||'authored-depth-samples'):'geometric-shore-wedge',maxDepthM:maxDepth,status:jobs?'pending':'ready',worker:!!jobs};
+  const diagnostics={segments:segments.length,depthSource:(input.depthSamples.length||input.localDepthSamples.length)?(metadata.depthSource||'authored-depth-samples'):'geometric-shore-wedge',
+    localDepthSamples:input.localDepthSamples.length/5,maxDepthM:maxDepth,status:jobs?'pending':'ready',worker:!!jobs};
   const texture=new THREE.DataTexture(jobs?new Float32Array(resolution*resolution*4):computeWaterField(input),resolution,resolution,THREE.RGBAFormat,THREE.FloatType);texture.name='AN_GeometricWaterDepthShore';texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.needsUpdate=true;
   const ready=jobs?jobs.run('water',input,{signal:controller.signal}).catch(error=>{if(disposed)return null;diagnostics.worker=false;diagnostics.fallback=String(error?.message||error);return computeWaterField(input);}).then(values=>{if(disposed||!values)return false;texture.image.data=values;texture.needsUpdate=true;diagnostics.status='ready';return true;}):Promise.resolve(true);
   return{texture,ready,distanceToWater:createWaterDistance(boundary,(bounds.min.y+bounds.max.y)*.5),bounds:new THREE.Vector4(bounds.min.x,bounds.min.z,Math.max(.001,size.x),Math.max(.001,size.z)),metadata,diagnostics,dispose(){if(disposed)return;disposed=true;controller.abort();diagnostics.status='disposed';texture.dispose();}};

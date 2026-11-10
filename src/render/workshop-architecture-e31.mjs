@@ -143,7 +143,7 @@ function createDepartureStars(T,floorY){
  return stars;
 }
 
-export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LAYOUT.floorY}={}){
+export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LAYOUT.floorY,shutter=null}={}){
  const {scene,workshopRoot:source}=workshop,root=new T.Group(),staticRoot=new T.Group(),doorRoot=new T.Group(),owned=new Set(),changed=[],records=[];let disposed=false,gateOpen=0,serviceOpen=0;
  root.userData.pivotPainter=false;root.name='Workshop_Architecture_E31';staticRoot.name='E31_StaticConstruction';doorRoot.name='E31_OperableDoors';root.add(staticRoot,doorRoot);scene.add(root);source.updateWorldMatrix(true,true);
  const originalBounds=new T.Box3().setFromObject(source),materials={};
@@ -161,6 +161,14 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  const I=WORKSHOP_E31_LAYOUT.inside,top=I.ceiling,base=.179005535,gateTop=floorY+4.1,halfGate=3.43,thickness=.29834254;
  for(const side of [-1,1])box('E31_FrontPier_'+side,[side*(halfGate+(I.right-halfGate)/2),(base+top)/2,6.09737572],[I.right-halfGate,top-base,thickness],plaster);
  box('E31_FrontPortalLintel',[0,(gateTop+top)/2,6.09737572],[6.86,top-gateTop,thickness],concrete);
+ if(shutter){
+  const dy=floorY-WORKSHOP_E31_LAYOUT.floorY;
+  for(const part of [shutter.fixed,shutter.moving,shutter.driveway])part.position.y+=dy;
+  shutter.beam.position.y=floorY+.006;
+  shutter.wear.position.y=floorY;
+  root.add(shutter.beam,shutter.wear);
+  staticRoot.add(shutter.fixed);doorRoot.add(shutter.moving);owned.add(shutter);
+ }else{
  // Steel door frame leaves a 6.86m useful drive-through width and a flush threshold.
  for(const side of [-1,1]){box('E31_GateGuideWeb_'+side,[side*3.555,(floorY+gateTop)/2,6.4935],[.018,4.1,.045],steel);for(const z of[6.475,6.512])box('E31_GateGuideFlange_'+side+'_'+z,[side*3.49,(floorY+gateTop)/2,z],[.12,4.1,.008],steel);}
  // Exterior guides are tied to the masonry by continuous folded jamb returns, not left across an open setback.
@@ -174,11 +182,13 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  }
  box('E31_GateHeadGuide',[0,gateTop+.015,6.36],[7.02,.055,.06],steel);
  box('E31_GateThreshold',[0,floorY-.018,6.15],[6.86,.036,.75],concrete);
+ }
  const apron=box('E31_ExteriorApron',[0,floorY-.064,9.17],[8.5,.12,6.0],concrete);
  apron.castShadow=false;
  const exterior=createDepartureExterior(T,floorY);
  root.add(exterior);
  exterior.traverse(object=>{owned.add(object.geometry);owned.add(object.material);});
+ if(shutter)exterior.add(shutter.driveway);
  const doorMin=3.2025,doorMax=4.4675,serviceTop=floorY+2.1;
  for(const [a,b,label]of [[I.back,doorMin,'Back'],[doorMax,I.front,'Front']])box('E31_ServiceWall_'+label,[8.85082873,(base+top)/2,(a+b)/2],[thickness,top-base,b-a],plaster);
  box('E31_ServiceLintel',[8.85082873,(serviceTop+top)/2,3.835],[thickness,top-serviceTop,1.265],plaster);
@@ -208,21 +218,27 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  relocate('FUR_LowShelf_Center',WORKSHOP_E31_LAYOUT.lowShelf.position,Math.PI/2,{supportLevels:[.22872929,.83038676,1.43204424]});
  const teal=source.getObjectByName('FUR_ToolChest_Teal');if(teal){const b=new T.Box3().setFromObject(teal),c=b.getCenter(new T.Vector3());relocate('FUR_ToolChest_Teal',[c.x-.36,b.min.y,c.z],0,{supportLevels:[1.61104978]});}
  // Operable roller curtain: each narrow lath follows a take-up path, never translates through the roof as a solid sheet.
+ let gate=null;
  const count=66,lathHeight=4.1/count,lathLength=lathHeight-.001,rollStartRadius=.145,rollPitch=.021,rollK=rollPitch/(2*Math.PI),rollY=gateTop+.215,rollZ=6.74;
+ const matrix=new T.Matrix4(),q=new T.Quaternion();
+ if(!shutter){
  // A 1.2mm folded sheet, with a concave broad face and returned edges. The silhouette is geometry.
  const faceProfile=[[-.5,-.001],[-.43,.001],[-.34,0],[-.20,-.006],[0,-.011],[.20,-.006],[.34,0],[.43,.001],[.5,-.001]],sheet=.0012;
  const section=[...faceProfile,...[...faceProfile].reverse().map(([y,z])=>[y,z+sheet])],lathShape=new T.Shape();section.forEach(([y,z],i)=>i?lathShape.lineTo(-z,y):lathShape.moveTo(-z,y));lathShape.closePath();const lathGeo=new T.ExtrudeGeometry(lathShape,{depth:1,steps:1,bevelEnabled:false});lathGeo.rotateY(Math.PI/2);lathGeo.translate(-.5,0,0);owned.add(lathGeo);
- const gate=new T.InstancedMesh(lathGeo,red,count),matrix=new T.Matrix4(),q=new T.Quaternion();owned.add(gate);gate.name='E31_RollerCurtain';gate.userData.profile={section,height:lathLength,width:6.92,sheetM:sheet,pitchM:rollPitch,startRadiusM:rollStartRadius,axis:[rollY,rollZ]};gate.castShadow=true;gate.receiveShadow=true;doorRoot.add(gate);
+ gate=new T.InstancedMesh(lathGeo,red,count);owned.add(gate);gate.name='E31_RollerCurtain';gate.userData.profile={section,height:lathLength,width:6.92,sheetM:sheet,pitchM:rollPitch,startRadiusM:rollStartRadius,axis:[rollY,rollZ]};gate.castShadow=true;gate.receiveShadow=true;doorRoot.add(gate);
  cylinder('E31_RollerDrum',[0,rollY,rollZ],.140,7.00,zinc,[0,0,Math.PI/2]);box('E31_RollerMotor',[-3.69,rollY,rollZ],[.25,.26,.25],steel);
  box('E31_RollerCassetteTop',[0,4.795,6.72],[7.90,.030,.63],zinc);box('E31_RollerCassetteFront',[0,4.51,7.025],[7.90,.54,.020],zinc);
  for(const x of[-3.93,3.93])box('E31_RollerCassetteEnd',[x,4.51,6.72],[.03,.54,.63],zinc);
  for(const x of[-3.49,3.49]){box('E31_RollerBearingStand',[Math.sign(x)*3.54,(gateTop+rollY)/2,6.62],[.065,rollY-gateTop+.08,.28],steel);box('E31_RollerBearing',[x,rollY,rollZ],[.08,.065,.065],zinc);}
  cylinder('E31_RollerDriveShaft',[-3.57,rollY,rollZ],.018,.20,steel,[0,0,Math.PI/2]);
+ }
  for(const y of [.29,1.04,1.81])box('E31_ServiceFixedHingePlate',[8.721,floorY+y,3.164],[.086,.075,.057],zinc);
  const spiralPrimitive=r=>(r*Math.hypot(r,rollK)+rollK*rollK*Math.log(r+Math.hypot(r,rollK)))/(2*rollK),spiralZero=spiralPrimitive(rollStartRadius);
  function spiralAngle(travel){let angle=(Math.sqrt(rollStartRadius*rollStartRadius+2*rollK*travel)-rollStartRadius)/rollK;for(let j=0;j<4;j++){const r=rollStartRadius+rollK*angle;angle-=(spiralPrimitive(r)-spiralZero-travel)/Math.hypot(r,rollK);}return angle;}
  function setGateOpen(value){
-  gateOpen=Math.max(0,Math.min(1,Number(value)||0));const lift=gateOpen*4.1,bridgeHeight=rollY-gateTop,smooth=u=>u*u*(3-2*u);let radius=rollStartRadius,bridge=[],bridgeLength=bridgeHeight,rolled=0;
+  gateOpen=Math.max(0,Math.min(1,Number(value)||0));
+  if(shutter){shutter.setOpen(gateOpen);return gateOpen;}
+  const lift=gateOpen*4.1,bridgeHeight=rollY-gateTop,smooth=u=>u*u*(3-2*u);let radius=rollStartRadius,bridge=[],bridgeLength=bridgeHeight,rolled=0;
   // The incoming sheet joins the outside of the roll. A short guide bows to its changing tangent.
   for(let solve=0;solve<6;solve++){const endZ=rollZ-radius;bridge=[[0,0]];bridgeLength=0;let py=gateTop,pz=6.50;for(let j=1;j<=48;j++){const u=j/48,y=gateTop+u*bridgeHeight,z=6.50+(endZ-6.50)*smooth(u);bridgeLength+=Math.hypot(y-py,z-pz);bridge.push([u,bridgeLength]);py=y;pz=z;}rolled=Math.max(0,lift-bridgeLength);radius=rollStartRadius+rollK*spiralAngle(rolled);}
   const endZ=rollZ-radius;
@@ -236,6 +252,6 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  for(const [material,pieces]of leafGroups){const g=new T.BufferGeometry();for(const key of ['position','normal','uv']){const size=key==='uv'?2:3,values=new Float32Array(pieces.reduce((n,p)=>n+p.attributes.position.count,0)*size);let at=0;for(const p of pieces){values.set(p.attributes[key].array,at);at+=p.attributes[key].array.length;}g.setAttribute(key,new T.Float32BufferAttribute(values,size));}pieces.forEach(p=>p.dispose());g.computeBoundingBox();g.computeBoundingSphere();owned.add(g);const leaf=new T.Mesh(g,material);leaf.name='E31_ServiceLeaf_'+material.name;leaf.castShadow=true;leaf.receiveShadow=true;servicePivot.add(leaf);}
  function setServiceOpen(value){serviceOpen=Math.max(0,Math.min(1,Number(value)||0));servicePivot.rotation.y=-serviceOpen*Math.PI/2;servicePivot.updateMatrixWorld(true);return serviceOpen;}
  setGateOpen(0);setServiceOpen(0);for(const m of Object.values(materials))owned.add(m);root.updateMatrixWorld(true);
- const diagnostics=()=>({version:'E31-construction-1',units:'world metres',gateOpen,serviceOpen,gateClearM:[6.86,4.05],serviceClearM:[1.2425,2.10],beamBearingM:.21,beamDepthM:.395,roofFall:'1.8% from central ridge to both side gutters',roofPurlinBearing:'purlin soffit touches I-flange top along sloped profile',cabinet:WORKSHOP_E31_LAYOUT.cabinet,originalBounds:{min:originalBounds.min.toArray(),max:originalBounds.max.toArray()},records,disposed});
- return{root,staticRoot,doorRoot,setGateOpen,setServiceOpen,diagnostics,dispose(){if(disposed)return;disposed=true;root.removeFromParent();for(const r of changed.reverse()){if(r.parent)r.parent.add(r.node);if(r.position)r.node.position.copy(r.position);if(r.quaternion)r.node.quaternion.copy(r.quaternion);if(r.scale)r.node.scale.copy(r.scale);if(r.visible!==undefined)r.node.visible=r.visible;}for(const x of owned)x.dispose?.();owned.clear();}};
+ const diagnostics=()=>({version:'E31-construction-1',units:'world metres',gateOpen,serviceOpen,gateClearM:[6.86,4.05],shutter:shutter?.diagnostics()??{source:'procedural'},serviceClearM:[1.2425,2.10],beamBearingM:.21,beamDepthM:.395,roofFall:'1.8% from central ridge to both side gutters',roofPurlinBearing:'purlin soffit touches I-flange top along sloped profile',cabinet:WORKSHOP_E31_LAYOUT.cabinet,originalBounds:{min:originalBounds.min.toArray(),max:originalBounds.max.toArray()},records,disposed});
+ return{root,staticRoot,doorRoot,setGateOpen,setServiceOpen,exitLight:shutter?.exitLight,workbenchLight:shutter?.workbenchLight,displayLight:shutter?.displayLight,photoAngles:shutter?.photoAngles,doorOpenAt:shutter?.doorOpenAt,diagnostics,dispose(){if(disposed)return;disposed=true;root.removeFromParent();for(const r of changed.reverse()){if(r.parent)r.parent.add(r.node);if(r.position)r.node.position.copy(r.position);if(r.quaternion)r.node.quaternion.copy(r.quaternion);if(r.scale)r.node.scale.copy(r.scale);if(r.visible!==undefined)r.node.visible=r.visible;}for(const x of owned)x.dispose?.();owned.clear();}};
 }

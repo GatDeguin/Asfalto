@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {THREE as T} from './cinematic-three.mjs';
 import {createRegionalTreeTemplates} from '../src/tracks/visuals/regional-forest.mjs?v=76e2be9ca5367f98';
-import {createIguazuInstanceBatches} from '../src/tracks/visuals/iguazu-landscape.mjs?v=8af12914a5c2238f';
+import {createIguazuInstanceBatches} from '../src/tracks/visuals/iguazu-landscape.mjs?v=3c1d151eb58dab4a';
 import {installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
 
 const context=vm.createContext({console,WebAssembly,TextDecoder,TextEncoder,atob,btoa,performance});

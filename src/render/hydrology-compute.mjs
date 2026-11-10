@@ -1,7 +1,7 @@
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 /** Pure metric fields: no scene, texture or physics ownership crosses the worker. */
-export function computeWaterField({segments,bounds,maxDepth,resolution=96,depthSamples=new Float64Array()}){
- if(!(segments instanceof Float64Array)||segments.length%6||!(depthSamples instanceof Float64Array)||depthSamples.length%4||!Array.isArray(bounds)||bounds.length!==4||!bounds.every(Number.isFinite)||!Number.isFinite(maxDepth)||maxDepth<=0||!Number.isInteger(resolution)||resolution<2||resolution>512)throw new TypeError('Invalid hydrology field input');
+export function computeWaterField({segments,bounds,maxDepth,resolution=96,depthSamples=new Float64Array(),localDepthSamples=new Float64Array()}){
+ if(!(segments instanceof Float64Array)||segments.length%6||!(depthSamples instanceof Float64Array)||depthSamples.length%4||!(localDepthSamples instanceof Float64Array)||localDepthSamples.length%5||!Array.isArray(bounds)||bounds.length!==4||!bounds.every(Number.isFinite)||!Number.isFinite(maxDepth)||maxDepth<=0||!Number.isInteger(resolution)||resolution<2||resolution>512)throw new TypeError('Invalid hydrology field input');
  const data=new Float32Array(resolution*resolution*4),step=Math.max(1,Math.ceil(segments.length/6/2048));
  for(let y=0;y<resolution;y++)for(let x=0;x<resolution;x++){
   const wx=bounds[0]+bounds[2]*x/(resolution-1),wz=bounds[1]+bounds[3]*y/(resolution-1);let shore=Infinity;
@@ -9,6 +9,17 @@ export function computeWaterField({segments,bounds,maxDepth,resolution=96,depthS
   if(!Number.isFinite(shore))shore=maxDepth/.22;
   let depth=clamp(shore*.22+.06,0,maxDepth);
   if(depthSamples.length){let numerator=0,denominator=0;for(let i=0;i<depthSamples.length;i+=4){const d=Math.hypot(wx-depthSamples[i],wz-depthSamples[i+2]),weight=1/Math.max(.2,d*d);numerator+=Math.max(0,depthSamples[i+3])*weight;denominator+=weight;}depth=numerator/denominator;}
+  let weightedDepth=0,totalWeight=0,strongest=0;
+  for(let i=0;i<localDepthSamples.length;i+=5){
+   const dx=wx-localDepthSamples[i],dz=wz-localDepthSamples[i+2],radius=localDepthSamples[i+4];
+   const proximity=1-(dx*dx+dz*dz)/(radius*radius);
+   if(!(proximity>0))continue;
+   const weight=proximity*proximity;
+   weightedDepth+=clamp(localDepthSamples[i+3],0,maxDepth)*weight;
+   totalWeight+=weight;
+   strongest=Math.max(strongest,weight);
+  }
+  if(totalWeight>0)depth+=(weightedDepth/totalWeight-depth)*strongest;
   const offset=(y*resolution+x)*4;data[offset]=depth;data[offset+1]=shore;data[offset+2]=0;data[offset+3]=1;
  }
  return data;

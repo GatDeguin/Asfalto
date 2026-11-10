@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=c2ea69acda3ee7c3';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=6a79200613bc5413';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=a91aa1f0755040d1';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=56be296de9a809d6';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=90a703f379ef0e55';
-import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=ff12bfc087dcb530';
+import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=b0d766ee92317059';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=2cb0605f3be95739';
 

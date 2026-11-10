@@ -1,4 +1,4 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=d843a670b7ff4625';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=ca4378465bf6e57d';
 
 const SCENE_LOCK=Object.freeze({bytes:30462168,sha256:'BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92'});
 const MANIFEST=Object.freeze({

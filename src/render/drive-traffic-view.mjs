@@ -1,10 +1,10 @@
 import { getVehicleDefinition } from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import { VEHICLE_VISUAL_CALIBRATION } from './vehicle-physical-calibration.mjs?v=dc9a8e2b14a2b21c';
 import { releaseVehicleModel } from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
-import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=5539b087de767880';
+import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=a2261469769a80e3';
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
-import { createTrafficDriver } from './traffic-driver.mjs?v=6a52e1173920be49';
-import { isHighBeamLens, vehicleLensIntensity } from './vehicle-lighting.mjs?v=5a49d3e7dc4a2630';
+import { createTrafficDriver, trafficOccupantSeat } from './traffic-driver.mjs?v=9229a704a8fd763a';
+import { createTrafficLamps } from './traffic-lamps.mjs?v=a2ab692c3e977c61';
 
 function release(model) {
   const materials = new Set();
@@ -18,7 +18,7 @@ function release(model) {
   releaseVehicleModel(model);
 }
 
-export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () => {}}) {
+export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () => {}, sampleCurvature = () => 0}) {
   const root = new T.Group();
   root.name = 'DriveTraffic';
   root.userData.visualOnly = true;
@@ -49,16 +49,12 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     rim:new T.RingGeometry(.61, .68, 24),
     hub:new T.CircleGeometry(.21, 18),
     caliper:new T.BoxGeometry(.10, .20, .09),
-    lamp:new T.BoxGeometry(.07, .09, .22),
-    positionLamp:new T.BoxGeometry(.038,.048,.10),
-    steering:new T.TorusGeometry(.16,.012,6,22),
+    lamp:new T.CircleGeometry(1,14),
+    steering:new T.TorusGeometry(1,.07,6,22),
+    seat:new T.SphereGeometry(1,8,5),
   };
   const spokeStyles = [4,5,8].map(spokeGeometry);
   const rotor = new T.MeshStandardMaterial({color:0x727472, metalness:.65, side:T.DoubleSide});
-  const amber = new T.MeshBasicMaterial({color:0xffa21d, toneMapped:false});
-  const lowBeam = new T.MeshBasicMaterial({color:0xffecd0,toneMapped:false});
-  const tailLight = new T.MeshBasicMaterial({color:0xd92b19,toneMapped:false});
-  const positionLight = new T.MeshBasicMaterial({color:0xfcc17a,toneMapped:false});
   const projectors=Array.from({length:2},()=>{
     const light=new T.SpotLight(0xffe5bb,0,53,.36,.65,2);
     light.userData.excludeFromCameraInterior=true;
@@ -66,9 +62,11 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     return light;
   });
   const steeringMaterial = new T.MeshStandardMaterial({color:0x302821,roughness:.76});
+  const seatMaterial = new T.MeshStandardMaterial({color:0x423936,roughness:.89});
   const tires = [0x171819, 0x262628, 0x15181c].map(color => new T.MeshStandardMaterial({color, roughness:.92}));
   const rims = [0xd3d1c6, 0x494b4c, 0xbc934f].map(color => new T.MeshStandardMaterial({color, metalness:.72, roughness:.27, side:T.DoubleSide}));
   const brakes = [0x851a17, 0xb39b63, 0x3a3d47].map(color => new T.MeshStandardMaterial({color, roughness:.48}));
+  const finishRoughness={restored:.31,daily:.48,work:.65};
 
   function measureHull(model,spec) {
     const bounds=new T.Box3(),paintBounds=new T.Box3(),part=new T.Box3();
@@ -99,11 +97,10 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
   function makeVehicle(model, id, canCarryPassenger) {
     const def = getVehicleDefinition(id), spec = def.calibration || VEHICLE_VISUAL_CALIBRATION[id];
     const scale = 1 / (def.sourceScale || .4), ground = spec.sourceWheelY * scale - spec.radiusM;
-    const group = new T.Group(), lamps = new T.Group(), wheelViews = [];
+    const group = new T.Group(), wheelViews = [], steeringParts = [];
     const paint = new Set(), materials = new Set(), hidden = [];
     const replacedGlass = new Set();
-    let cabinGlass = null, authoredWheel = false;
-    let frontLenses=0,rearLenses=0;
+    let cabinGlass = null, authoredSeats = false;
     group.name = 'DriveTraffic_' + id;
     group.visible = false;
     group.userData.asfaltoPrewarm = true;
@@ -111,7 +108,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     model.position.y -= ground;
     model.traverse(node => {
       const data = node.userData || {};
-      if (data.wheelId || data.stationaryWheelId || /EngineBay|^Interior$|^05_Habitaculo$|CabinSeats/i.test(node.name)) {
+      if (data.wheelId || data.stationaryWheelId || /EngineBay|^Interior$|^05_Habitaculo$/i.test(node.name)) {
         hidden.push(node);
       }
       if (!node.isMesh) return;
@@ -129,16 +126,11 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     for (const node of hidden) node.visible = false;
     createVehicleRefractionPolicy(materials).setReduced(true);
     model.traverseVisible(node => {
-      authoredWheel ||= !!node.userData?.steeringWheel || /steering.?wheel|volante/i.test(node.name);
+      if (node.userData?.steeringWheel) steeringParts.push(node);
+      authoredSeats ||= /CabinSeats|BenchSeat|SeatCushion|SeatBack/i.test(node.name);
       if (!node.isMesh) return;
       const substitute = material => {
         if (!material) return material;
-        if(material.emissive&&!isHighBeamLens(material)&&/headlamp|headlight|vidrio_faro/i.test(material.name)){
-          material.emissive.setHex(0xffe5af);material.emissiveIntensity=vehicleLensIntensity(material,1.35);frontLenses++;
-        }
-        if(material.emissive&&/brakelens|tail.?light|optica_trasera/i.test(material.name)){
-          material.emissive.setHex(0xf52b12);material.emissiveIntensity=.72;rearLenses++;
-        }
         if (/(?:^|_)Glass(?:$|_)/i.test(material.name) && !/Gauge/i.test(material.name)) {
           cabinGlass ||= new T.MeshBasicMaterial({color:0x85999b,transparent:true,opacity:.14,
             depthWrite:false,side:T.DoubleSide,forceSinglePass:true,toneMapped:false});
@@ -161,42 +153,43 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       node.material=Array.isArray(node.material)?node.material.map(replace):replace(node.material);
     });
     replacedGlass.forEach(material=>material.dispose());
-    group.add(model, lamps);
+    group.add(model);
     const hull=measureHull(model,spec);
     const sourceAnchor = (point) => [point[0]*scale,point[1]*scale-ground,point[2]*scale];
-    const eye = def.cockpitEyeSource ? sourceAnchor(def.cockpitEyeSource) : [.39,spec.heightM-.245,.40];
-    const wheel = def.steeringCenterSource ? sourceAnchor(def.steeringCenterSource) : [eye[0]-.46,eye[1]-.29,eye[2]];
-    const driver=createTrafficDriver(T,{eye,wheel,roofM:spec.heightM});
+    const sourceEye = def.cockpitEyeSource || (id === 'chevy_400_1957' ? [.22,.235,.15865] : null);
+    const eye = sourceEye ? sourceAnchor(sourceEye) : [.39,spec.heightM-.245,.40];
+    const seat = trafficOccupantSeat(id), steeringAxis = def.steeringAxis || seat.steering?.axis || [1,0,0];
+    const wheelSource = def.steeringCenterSource || seat.steering?.center;
+    const wheel = wheelSource ? sourceAnchor(wheelSource) : [eye[0]-.46,eye[1]-.29,eye[2]];
+    const steeringNormal = new T.Vector3(...steeringAxis).normalize();
+    const driver=createTrafficDriver(T,{eye,wheel,roofM:spec.heightM,model:id,steeringAxis});
     group.add(driver.root);
-    const passenger=canCarryPassenger?createTrafficDriver(T,{
-      eye:[eye[0]+.035,eye[1]-.05,-eye[2]],wheel,roofM:spec.heightM,passenger:true,
-    }):null;
+    const passenger=canCarryPassenger ? createTrafficDriver(T,{eye,wheel,roofM:spec.heightM,model:id,passenger:true}) : null;
     if(passenger){passenger.root.visible=false;group.add(passenger.root);}
-    if(!authoredWheel){
+    const steeringPivot = new T.Group();
+    steeringPivot.position.fromArray(wheel);
+    steeringPivot.userData.asfaltoDynamicTransform = true;
+    group.add(steeringPivot);
+    if (steeringParts.length) {
+      for (const part of steeringParts) steeringPivot.attach(part);
+    } else {
       const steering=new T.Mesh(geometries.steering,steeringMaterial);
-      steering.position.fromArray(wheel);
-      steering.rotation.y=Math.PI/2;
-      driver.root.add(steering);
+      steering.quaternion.setFromUnitVectors(new T.Vector3(0,0,1),steeringNormal);
+      steering.scale.setScalar(seat.radius);
+      steeringPivot.add(steering);
     }
-    const halfLength = (def.sourceBoundsM?.size[0] || def.physicsEstimate?.dimensionsM.length || 4.85) / 2;
-    for(const side of [-1,1]){
-      const lamp=new T.Mesh(geometries.positionLamp,positionLight);
-      lamp.position.set(-halfLength+.015,.51,side*.66);
-      group.add(lamp);
-    }
-    for(const [end,lenses,material] of [[-1,frontLenses,lowBeam],[1,rearLenses,tailLight]]){
-      if(lenses)continue;
-      for(const side of [-1,1]){
-        const lamp=new T.Mesh(geometries.lamp,material);
-        lamp.position.set(end*(halfLength-.015),.62,side*.70);
-        group.add(lamp);
+    if (!authoredSeats) {
+      const bench=seat.seat==='bench';
+      for (const lateral of bench ? [0] : [-eye[2],eye[2]]) {
+        const backrest = new T.Mesh(geometries.seat,seatMaterial);
+        backrest.name = bench ? 'TrafficBench' : 'TrafficSeatBack';
+        backrest.position.set(eye[0]+seat.hip[0]+.11,eye[1]+seat.hip[1]+.16,lateral);
+        backrest.scale.set(.063,.245,bench?.66:.23);
+        backrest.rotation.z=.18;
+        group.add(backrest);
       }
     }
-    for (const end of [-1, 1]) for (const side of [-1, 1]) {
-      const light = new T.Mesh(geometries.lamp, amber);
-      light.position.set(end * (halfLength + .03), .65, side * .74);
-      lamps.add(light);
-    }
+    const lamps=createTrafficLamps(T,{group,model,id,disc:geometries.lamp});
     const centers = def.centers || [
       [spec.sourceFrontX, 0, -spec.sourceHalfTrack], [spec.sourceFrontX, 0, spec.sourceHalfTrack],
       [spec.sourceRearX, 0, -spec.sourceHalfTrack], [spec.sourceRearX, 0, spec.sourceHalfTrack],
@@ -222,13 +215,16 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       wheelViews.push({spin, tire, lip, hub, spokes, caliper, radius});
     }
     root.add(group);
-    return {model, group, paint, lamps, driver, passenger, wheelViews, lastId:null, drawn:false, selected:false,
-      pose:{id:null,car:null,position:[0,0,0],rotation:[0,0,0,1],hull},
-      halfLength,runningLights:{front:frontLenses||2,rear:rearLenses||2,positions:true}};
+    return {model, group, paint, lamps, driver, passenger, wheelViews, steeringPivot,
+      steeringAxis:steeringNormal, lastId:null, drawn:false, selected:false, occupantLod:'near',
+      pose:{id:null,car:null,position:[0,0,0],rotation:[0,0,0,1],hull,steering:0}};
   }
 
   function applyVariant(entry, car) {
-    for (const material of entry.paint) material.color.set(car.color);
+    for (const material of entry.paint) {
+      material.color.set(car.color);
+      material.roughness=finishRoughness[car.finish]??finishRoughness.daily;
+    }
     entry.driver.setVariant(car.driver);
     entry.driver.setParked(car.kind==='parked');
     if(car.passenger!=null)entry.passenger?.setVariant(car.passenger);
@@ -282,9 +278,11 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       const half = route.widthM / 2;
       // In the physical chart the stored lateral vector points to the
       // driver's right when facing increasing route progress.
-      const offset = car.kind === 'parked' ? half + .48 : car.side * Math.min(2.2, half * .52);
+      const offset = car.kind === 'parked' ? half + (car.parking?.edgeOffsetM ?? .48) : car.side * Math.min(2.2, half * .52);
       posePosition.fromArray(route.position).addScaledVector(left.fromArray(route.frame.left), offset);
-      posePosition.addScaledVector(y,.03).toArray(pose.position);
+      posePosition.addScaledVector(y,car.parking?.liftM ?? .03).toArray(pose.position);
+      const curvature=car.kind==='parked'?0:(route.curvaturePerM??sampleCurvature(car.progressM))||0;
+      pose.steering=car.kind==='parked' ? 0 : Math.max(-.63,Math.min(.63,-curvature*car.direction*45+(car.laneChangeRate||0)*.25));
       pose.id=car.id;pose.car=car;entry.selected=true;poses.push(pose);
     }
     return poses;
@@ -294,20 +292,38 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     for (const entry of entries.values()) entry.drawn = false;
     for(const projector of projectors)projector.intensity=0;
     let beamIndex=0;
-    for (const {car,position,rotation} of trafficPoses) {
+    for (const {car,position,rotation,steering} of trafficPoses) {
       const entry=entries.get(car.model),{group,lamps,wheelViews}=entry;
       group.position.fromArray(position);
       group.quaternion.fromArray(rotation);
       if (entry.lastId !== car.id) applyVariant(entry, car);
-      lamps.visible = !!car.hazards;
-      entry.driver.root.visible=Math.abs(car.progressM-playerProgress)<82;
-      if(entry.passenger)entry.passenger.root.visible=car.passenger!=null&&entry.driver.root.visible;
-      if(night>.08&&Math.abs(car.progressM-playerProgress)<105&&beamIndex<projectors.length){
-        const light=projectors[beamIndex++];
+      const distance = Math.abs(car.progressM-playerProgress), parked = car.kind==='parked';
+      const lampMode = !parked && night>.10 ? 'low' : 'position';
+      lamps.update(lampMode,!!car.hazards);
+      if (entry.occupantLod==='near' && distance>41) entry.occupantLod='far';
+      if (entry.occupantLod==='far' && distance<34) entry.occupantLod='near';
+      entry.driver.root.visible=distance<118;
+      if (entry.passenger) entry.passenger.root.visible=car.passenger!=null && distance<118;
+      if (entry.driver.root.visible) {
+        const pose={steering, parked, seconds:car.poseTimeS||0, facing:steering};
+        entry.driver.setLod(entry.occupantLod);
+        entry.driver.update(pose);
+        if (entry.passenger?.root.visible) {
+          entry.passenger.setLod(entry.occupantLod);
+          entry.passenger.update(pose);
+        }
+        entry.steeringPivot.quaternion.setFromAxisAngle(entry.steeringAxis,steering);
+      }
+      if (lampMode==='low' && distance<105 && beamIndex===0) {
         group.updateWorldMatrix(true,false);
-        light.position.set(-entry.halfLength,.65,0).applyMatrix4(group.matrixWorld);
-        light.target.position.set(-32,-.13,0).applyMatrix4(group.matrixWorld);
-        light.intensity=3100*night;
+        for (const mount of lamps.lowMounts) {
+          const light=projectors[beamIndex++];
+          light.position.copy(mount.position).applyMatrix4(group.matrixWorld);
+          light.target.position.copy(mount.position).addScaledVector(x.set(-1,0,0),32);
+          light.target.position.y-=.78;
+          light.target.position.applyMatrix4(group.matrixWorld);
+          light.intensity=1800*night;
+        }
       }
       for (const {spin, radius} of wheelViews) {
         spin.rotation.z = car.kind === 'parked' ? 0 : (-car.progressM * car.direction / radius) % (2 * Math.PI);
@@ -322,21 +338,31 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     diagnostics:() => ({models:[...entries.keys()], drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id),
       drivers:[...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id])=>id),
       passengers:[...entries].filter(([,e])=>e.drawn&&e.passenger?.root.visible).map(([id])=>id),
-      runningLights:Object.fromEntries([...entries].filter(([,e])=>e.drawn).map(([id,e])=>[id,e.runningLights])),
+      runningLights:Object.fromEntries([...entries].filter(([,e])=>e.drawn).map(([id,e])=>[id,e.lamps.diagnostics()])),
+      occupants:Object.fromEntries([...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id,e])=>[id,{
+        driver:e.driver.diagnostics(),passenger:e.passenger?.root.visible?e.passenger.diagnostics():null,
+      }])),
       texturesWarmed:warmedTextures.size, errors:[...errors]}),
     dispose() {
       if (disposed) return;
       disposed = true;
       controller.abort();
       root.removeFromParent();
-      for (const entry of entries.values()) {entry.driver.dispose();entry.passenger?.dispose();release(entry.model);}
+      for (const entry of entries.values()) {
+        entry.driver.dispose();entry.passenger?.dispose();entry.lamps.dispose();
+        // Return authored wheel meshes to the model that owns their materials.
+        for (const child of [...entry.steeringPivot.children]) {
+          if (child.userData?.steeringWheel) entry.model.add(child);
+        }
+        release(entry.model);
+      }
       entries.clear();
       poses.length=0;
       warmedTextures.clear();
       root.clear();
       projectors.forEach(light=>light.dispose());
       [...Object.values(geometries), ...spokeStyles].forEach(geometry => geometry.dispose());
-      [amber, lowBeam, tailLight, positionLight, rotor, steeringMaterial, ...tires, ...rims, ...brakes].forEach(material => material.dispose());
+      [rotor, steeringMaterial, seatMaterial, ...tires, ...rims, ...brakes].forEach(material => material.dispose());
     },
   };
 }

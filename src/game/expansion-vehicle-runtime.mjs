@@ -17,6 +17,16 @@ export function authoredCockpitAnchors(id){
  return {lookDownDeg:review?18:Math.max(10,d.cockpitLookDownDeg||0),cockpit,hood:transform([-.34,.245,0])};
 }
 
+// Reach and pivot spacing include clearance for the full rubber blade width.
+const authoredWiperFit = {
+ chevy_400_1957:{wiperPivotFractions:[-.191,.176],wiperOuterRadiusFraction:.82},
+ pickup_3100:{wiperOuterRadiusFraction:.925},
+ belair_1957:{wiperOuterRadiusFraction:.92},
+};
+
 export function authoredWindshieldMount(T,presentation,id){
- const fit=id==='chevy_400_1957'?{widthM:.620,topWidthM:.560,heightM:.188,baseY:.129716993,baseZ:-.254339524,rakeRad:.632766248,curveDepthM:.008,curveTopYM:-.020,curveBottomYM:-.002,curveExponent:6,curveYExponent:4}:getVehicleDefinition(id)?.windshield;if(!fit)return null;const mount=new T.Group();mount.name='AuthoredWindshieldMount';mount.rotation.y=Math.PI/2;presentation.root.add(mount);return{cabinMount:mount,...fit,glassOffsetM:.001,bladeOffsetM:.0015,pivotBelowM:.008};
+ const fit=id==='chevy_400_1957'?{widthM:.620,topWidthM:.560,heightM:.188,baseY:.129716993,baseZ:-.254339524,rakeRad:.632766248,curveDepthM:.008,curveTopYM:-.020,curveBottomYM:-.002,curveExponent:6,curveYExponent:4}:getVehicleDefinition(id)?.windshield;
+ if(!fit)return null;
+ const mount=new T.Group();mount.name='AuthoredWindshieldMount';mount.rotation.y=Math.PI/2;presentation.root.add(mount);
+ return{cabinMount:mount,...fit,...authoredWiperFit[id],angleMin:.20,glassOffsetM:.001,bladeOffsetM:.0015,pivotBelowM:.008};
 }

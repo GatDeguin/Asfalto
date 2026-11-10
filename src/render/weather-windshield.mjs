@@ -5,12 +5,12 @@ import {VEHICLE_GLASS_FRACTURE_GLSL} from './vehicle-condition-appearance.mjs?v=
  * Frame fit: z=.335262279*y-.353797844 (16 pillar samples, RMS .00260).
  * Every position and wipe radius uses the same cabin-local glass plane.
  */
-export const WINDSHIELD_FIT=Object.freeze({widthM:1.54,topWidthM:1.62,heightM:.292,baseY:.157,baseZ:-.301161666,rakeRad:Math.atan(.335262279),glassOffsetM:.001,bladeOffsetM:-.0025,pivotBelowM:.023,angleMin:.20,angleMax:2.76});
+export const WINDSHIELD_FIT=Object.freeze({widthM:1.54,topWidthM:1.62,heightM:.292,baseY:.157,baseZ:-.301161666,rakeRad:Math.atan(.335262279),glassOffsetM:.001,bladeOffsetM:-.0025,pivotBelowM:.023,angleMin:.27,angleMax:2.76,wiperPivotFractions:Object.freeze([-.23,.21]),wiperOuterRadiusFraction:.96});
 export function windshieldLayout(options={}){
  const p={...WINDSHIELD_FIT,...options},cos=Math.cos(p.rakeRad),sin=Math.sin(p.rakeRad),surfaceHeight=p.heightM/cos;
- const pivots=[[-p.widthM*.23,-p.pivotBelowM/cos],[p.widthM*.21,-p.pivotBelowM/cos]];
+ const pivots=p.wiperPivotFractions.map(fraction=>[p.widthM*fraction,-p.pivotBelowM/cos]);
  const widthAt=fraction=>(1+fraction*(p.topWidthM/p.widthM-1))*(1-(p.edgeNarrow||0)*Math.pow(Math.abs(2*fraction-1),12));
- return {...p,cos,sin,surfaceHeight,pivots,widthAt,innerRadius:surfaceHeight*.36,outerRadius:surfaceHeight*.96,
+ return {...p,cos,sin,surfaceHeight,pivots,widthAt,innerRadius:surfaceHeight*.36,outerRadius:surfaceHeight*p.wiperOuterRadiusFraction,
   point(x,y,normalOffset=0,out=[]){const fraction=y/surfaceHeight,q=Math.min(1,Math.abs(x)/(p.widthM*.5*widthAt(fraction))),edge=Math.pow(q,p.curveYExponent||12);out[0]=x;out[1]=p.baseY+y*cos-normalOffset*sin+edge*((p.curveBottomYM||0)*(1-fraction)+(p.curveTopYM||0)*fraction);out[2]=p.baseZ+y*sin+normalOffset*cos+(p.curveDepthM||0)*Math.pow(q,p.curveExponent||6);return out;}};
 }
 export function windshieldBladeEndpoints(layout,index,phase){

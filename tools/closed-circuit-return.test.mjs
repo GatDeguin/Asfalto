@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
 import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs?v=dab87f84716fb019';
-import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=8bbab7ad93574903';
+import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=2f3e403346c10653';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {createGameplayBridge} from '../src/tracks/gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import {planReturnLandmarks} from '../src/tracks/visuals/return-landmarks.mjs?v=014dc064c17ba04b';

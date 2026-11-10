@@ -2,12 +2,31 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {computeWaterField,computeRoadField} from '../src/render/hydrology-compute.mjs?v=d280021eea2b85af';
+import {computeWaterField,computeRoadField} from '../src/render/hydrology-compute.mjs?v=2de92e09d7c5ffc8';
 const fixtures=JSON.parse(fs.readFileSync(new URL('./fixtures/hydrology-reference.json?v=afef1f37a0cdeada',import.meta.url)));
 for(const [i,f]of fixtures.entries())test('hydrology typed CPU output matches pre-worker reference '+i,()=>{const input={...f.input};for(const key of ['segments','depthSamples','positions'])if(input[key])input[key]=new Float64Array(input[key]);const values=f.kind==='water'?computeWaterField(input):computeRoadField(input);assert.equal(createHash('sha256').update(new Uint8Array(values.buffer)).digest('hex'),f.sha256);});
 
-import {createHydrologyJobs} from '../src/render/hydrology-jobs.mjs?v=3415d1d281b4f2e9';
-import {createWaterHydrology,installRoadHydrology} from '../src/render/weather-hydrology.mjs?v=02f1a8ed11382fce';
+test('authored shallow banks affect the depth field only inside their footprint', () => {
+  const input = {
+    segments: new Float64Array([0, 16.5, 0, 0, 16.5, 40]),
+    bounds: [0, 0, 40, 40],
+    maxDepth: 35,
+    resolution: 5,
+  };
+  const original = computeWaterField(input);
+  const localDepthSamples = new Float64Array([20, 16.5, 20, 1.4, 12]);
+  const authored = computeWaterField({ ...input, localDepthSamples });
+  const center = (2 * 5 + 2) * 4;
+  const shoulder = center + 4;
+  assert.ok(Math.abs(authored[center] - 1.4) < 1e-6);
+  assert.ok(authored[shoulder] < original[shoulder] && authored[shoulder] > 1.4);
+  assert.deepEqual(authored.slice(0, 4), original.slice(0, 4));
+  assert.equal(authored[center + 1], original[center + 1]);
+  assert.equal(authored[center + 8], original[center + 8]);
+});
+
+import {createHydrologyJobs} from '../src/render/hydrology-jobs.mjs?v=c6c6f2381c6c0f08';
+import {createWaterHydrology,installRoadHydrology} from '../src/render/weather-hydrology.mjs?v=256f4d475bace940';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 function fakeWorkers(){const all=[];return {all,workerFactory(){const worker={messages:[],terminated:false,postMessage(message,transfers){this.messages.push(structuredClone(message,{transfer:transfers}));},terminate(){this.terminated=true;}};all.push(worker);return worker;}};}

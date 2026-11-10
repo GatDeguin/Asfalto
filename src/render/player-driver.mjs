@@ -1,6 +1,6 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {VEHICLE_VISUAL_CALIBRATION} from './vehicle-physical-calibration.mjs';
-import {createTrafficDriver} from './traffic-driver.mjs?v=6a52e1173920be49';
+import {createTrafficDriver,trafficOccupantSeat} from './traffic-driver.mjs?v=9229a704a8fd763a';
 
 export function playerDriverSeat(id){
   const definition=getVehicleDefinition(id),fit=definition?.calibration||VEHICLE_VISUAL_CALIBRATION[id];
@@ -14,15 +14,16 @@ export function playerDriverSeat(id){
   const authoredEye=definition?.cockpitEyeSource||(id==='chevy_400_1957'?[.22,.235,.15865]:null);
   const roofM=fit.heightM-fit.cgHeightM;
   const eye=authoredEye?source(authoredEye):[.39-offsetX,roofM-.245,.40];
-  const wheel=definition?.steeringCenterSource?source(definition.steeringCenterSource):[eye[0]-.46,eye[1]-.29,eye[2]];
-  const [x,y,z]=definition?.steeringAxis||[1,0,0];
-  return {eye,wheel,roofM,steeringAxis:[x*sx,y*sy,z*sz]};
+  const cabin=trafficOccupantSeat(id),mount=definition?.steeringCenterSource||cabin.steering?.center;
+  const wheel=mount?source(mount):[eye[0]-.46,eye[1]-.29,eye[2]];
+  const [x,y,z]=definition?.steeringAxis||cabin.steering?.axis||[1,0,0];
+  return {eye,wheel,roofM,wheelRadius:cabin.radius,steeringAxis:[x/sx,y/sy,z/sz]};
 }
 
 export function createPlayerDriver(T,id){
   const seat=playerDriverSeat(id);
   if(!seat)return null;
-  const driver=createTrafficDriver(T,{...seat,animatedHands:true});
+  const driver=createTrafficDriver(T,{...seat,model:id});
   driver.root.name='PlayerDriver';
   driver.root.rotation.y=Math.PI;
   driver.root.visible=false;
@@ -32,6 +33,7 @@ export function createPlayerDriver(T,id){
       driver.root.visible=exterior&&(mode==='chase'||mode==='cinematic'||opening);
       if(driver.root.visible)driver.setSteering(steeringRad);
     },
+    diagnostics:driver.diagnostics,
     dispose:driver.dispose,
   };
 }

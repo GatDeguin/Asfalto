@@ -17,7 +17,7 @@ import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233f
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
 import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2e9cc129c7e77388';
-import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=c305fb230b0c0a0b';
+import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=aaacadfb3c716f14';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../game/workshop-performance.mjs?v=bc1ff950c62515a0';
 globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerformance(buildVehiclePhysicsSpec(base,id),setup);
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
@@ -30,7 +30,7 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=e7d29aec048c4a0f';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=af849d453160b2ba';
 import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=4f7deb4bf592efe1';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
@@ -66,7 +66,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=63fddeca761ff2e9';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=b2cf6b851ce21bfe';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -89,11 +89,11 @@ import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=5
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=cd3b096c06d47fea';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=6074ad3aa6f28f6d';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=42d2950b3f6dff91';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=38c1999bb7cf725a';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=6a79200613bc5413';
-import { createPlayerDriver } from '../render/player-driver.mjs?v=b311481c7155df85';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=a91aa1f0755040d1';
+import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18ec';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
@@ -109,8 +109,8 @@ import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-d
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
-import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=0583e108bf35b4e5';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=493df828efb369d8';
+import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=04803f511e9003de';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=1e0ee363cbcbeab0';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -6090,11 +6090,11 @@ function clearDriveTraffic(){
 async function prepareDriveTraffic(mode,signal){
  if(mode!=='free'&&mode!=='journey')return;
  const seed=crypto.getRandomValues(new Uint32Array(1))[0];
- const plan=createDriveTrafficPlan({lengthM:track.length,seed,canPark:progress=>{
+ const plan=createDriveTrafficPlan({lengthM:track.length,trackId:track.id,seed,canPark:(progress,site)=>{
   const row=track.sample(progress);
-  return row.width>=5&&Math.abs(row.curvature||0)<.008&&Math.abs(row.bank||0)<.10;
+  return row.width>=5&&Math.abs(row.width-site.widthM)<.28&&Math.abs(row.curvature||0)<.008&&Math.abs(row.bank||0)<.10;
  }});
- const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel,prepareTexture:texture=>renderer.initTexture(texture)});
+ const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel,prepareTexture:texture=>renderer.initTexture(texture),sampleCurvature:progress=>track.sample(progress).curvature});
  const session={view,traffic:createDriveTraffic(plan,{lengthM:track.length}),route:null,cars:[],poses:[],...(isAsfaltoV5Qa?{plan}:{})};
  driveTraffic=session;
  try{await view.prepare(plan,signal);signal?.throwIfAborted();}

@@ -12,8 +12,13 @@ export function buildShorePromontory(T,{center,tangent,landNormal,waterLevelM,he
  const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(index);g.computeVertexNormals();let n=0;for(let i=0;i<g.attributes.normal.count;i++)n+=g.attributes.normal.getY(i);
  if(n<0){for(let i=0;i<index.length;i+=3)[index[i+1],index[i+2]]=[index[i+2],index[i+1]];g.setIndex(index);g.computeVertexNormals();}g.computeBoundingBox();g.computeBoundingSphere();return g;
 }
-export function shorelineFromGeometry(T,geometry,level){
- const p=geometry.attributes.position,index=geometry.index,segments=[];for(let i=0;i<index.count;i+=3){const points=[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(p,index.getX(i+j))),hits=[];
+export function shorelineFromGeometry(T,geometry,level,matrixWorld){
+ const p=geometry.attributes.position,index=geometry.index,segments=[];
+ for(let i=0;i<(index?.count??p.count);i+=3){
+  const points=[0,1,2].map(j=>{
+   const point=new T.Vector3().fromBufferAttribute(p,index?index.getX(i+j):i+j);
+   return matrixWorld?point.applyMatrix4(matrixWorld):point;
+  }),hits=[];
   for(let k=0;k<3;k++){const a=points[k],b=points[(k+1)%3];if((a.y-level)*(b.y-level)<0)hits.push(a.clone().lerp(b,(level-a.y)/(b.y-a.y)).toArray());}if(hits.length===2)segments.push({a:hits[0],b:hits[1]});
  }return segments;
 }

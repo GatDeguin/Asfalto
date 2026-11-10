@@ -1,3 +1,44 @@
+const authoredPhotoShots = {
+  front: { label: 'Frente', lens: 35 },
+  profile: { label: 'Perfil', lens: 50 },
+  quarter: { label: 'Tres cuartos', lens: 35 },
+  interior: { label: 'Interior', lens: 28 },
+};
+
+function fitPhotoShot(T, workshop, angle, shot) {
+  const vehicle = workshop.vehiclePresentation.root;
+  vehicle.updateWorldMatrix(true, true);
+  const arm = angle.clone().transformDirection(vehicle.matrixWorld);
+  const radius = angle.length();
+  const pose = { yaw: Math.atan2(arm.x, arm.z), pitch: Math.asin(arm.y), radius };
+  if (shot === 'interior') return { ...pose, target: workshop.hotspots.interior.target, lens: 28 };
+
+  const box = new T.Box3().setFromObject(vehicle, true);
+  const center = box.getCenter(new T.Vector3());
+  const corners = [];
+  for (const x of [box.min.x, box.max.x]) {
+    for (const y of [box.min.y, box.max.y]) {
+      for (const z of [box.min.z, box.max.z]) corners.push(new T.Vector3(x, y, z));
+    }
+  }
+  const camera = workshop.camera.clone(), point = new T.Vector3();
+  camera.clearViewOffset();
+  camera.filmGauge = 35;
+  let lens = 20;
+  for (const candidate of [50,35,28,24,20].filter(value => value <= authoredPhotoShots[shot].lens)) {
+    camera.setFocalLength(candidate);
+    camera.position.copy(center).addScaledVector(arm, radius);
+    workshop.cameraConstraint?.constrain(camera, center);
+    camera.lookAt(center);
+    camera.updateMatrixWorld(true);
+    if (corners.every(corner => {
+      point.copy(corner).project(camera);
+      return Math.max(Math.abs(point.x), Math.abs(point.y)) <= .91 && point.z >= -1 && point.z <= 1;
+    })) { lens = candidate; break; }
+  }
+  return { ...pose, target: center.toArray(), lens };
+}
+
 /** Garage interaction owns only presentation and camera focus, never the saved cockpit. */
 export function createWorkshopInspection(T,workshop,{root=document.getElementById('v6-main-menu')}={}) {
   const records=[],owned=[],listeners=[];let hood=0,targetHood=0,disposed=false;
@@ -8,6 +49,11 @@ export function createWorkshopInspection(T,workshop,{root=document.getElementByI
   controls.innerHTML='<label class="v6-field"><span>Iluminación</span><select name="workshop-photo-lighting" aria-label="Iluminación del taller"><option value="day">Luz de ventana</option><option value="night">Taller de noche</option></select></label><label class="v6-field"><span>Encuadre</span><select name="workshop-photo-framing" aria-label="Encuadre fotográfico"><option value="free">Libre</option><option value="opening">El taller despierta · 35 mm</option><option value="portrait">Retrato de la Chevy · 50 mm</option><option value="mechanical">Mecánica · 85 mm</option></select></label>';
   photo.querySelector('.v6-form-grid').after(controls);owned.push(controls);
   const light=controls.querySelector('[aria-label="Iluminación del taller"]'),preset=controls.querySelector('[aria-label="Encuadre fotográfico"]');
+  const photoAngles=workshop.presentation.getPhotoAngles?.();
+  for (const [name, shot] of Object.entries(authoredPhotoShots)) {
+    if (!photoAngles?.[name]) continue;
+    const option=document.createElement('option');option.value=name;option.textContent=shot.label;preset.add(option);
+  }
   listen(light,'change',()=>workshop.presentation.setLighting(light.value));
   const hoodButton=document.createElement('button');hoodButton.type='button';hoodButton.className='v6-btn an-hood-control';hoodButton.textContent='Abrir capó · inspeccionar motor';hoodButton.setAttribute('aria-expanded','false');mechanics.prepend(hoodButton);owned.push(hoodButton);
   const overlay=document.createElement('div');overlay.className='an-component-points';root.append(overlay);owned.push(overlay);
@@ -21,12 +67,27 @@ export function createWorkshopInspection(T,workshop,{root=document.getElementByI
   function focus(key){updateTargets();setHood(key.startsWith('engine'));}
   listen(hoodButton,'click',()=>{setHood(!targetHood);if(targetHood){updateTargets();workshop.focus('engine');}});
   listen(root,'click',event=>{const tab=event.target.closest('[data-workshop-tab]');if(tab){if(tab.dataset.workshopTab==='mechanics'){setHood(true);updateTargets();workshop.focus('engine');}else if(tab.dataset.workshopTab!=='photo')setHood(false);}});
-  listen(preset,'change',()=>{
-    if(preset.value==='free')return;updateTargets();workshop.camera.clearViewOffset();const box=new T.Box3().setFromObject(workshop.car),center=box.getCenter(new T.Vector3()),floor=workshop.car.userData.surfaceY??box.min.y;
+  function applyPreset(){
+    if(preset.value==='free')return;updateTargets();workshop.camera.clearViewOffset();
+    const angle=photoAngles?.[preset.value];
+    if(angle){
+      const {lens,...pose}=fitPhotoShot(T,workshop,angle,preset.value);
+      const lensSelect=root.querySelector('#v6-photo-lens');
+      if(![...lensSelect.options].some(option=>Number(option.value)===lens)){
+        const option=document.createElement('option');option.value=String(lens);option.textContent=`${lens} mm`;lensSelect.add(option);
+      }
+      workshop.setLens(lens);setHood(false);
+      workshop.hotspots.storyboard=pose;workshop.focus('storyboard',reduced());
+      lensSelect.value=String(lens);root.querySelector('#v6-photo-focus').value=preset.value==='interior'?'interior':'general';
+      return;
+    }
+    const box=new T.Box3().setFromObject(workshop.car),center=box.getCenter(new T.Vector3()),floor=workshop.car.userData.surfaceY??box.min.y;
     if(preset.value==='mechanical'){workshop.setLens(85);setHood(true);workshop.focus('engine');workshop.targetPose.radius=3.8;root.querySelector('#v6-photo-lens').value='85';root.querySelector('#v6-photo-focus').value='engine';return;}
     const opening=preset.value==='opening',mm=opening?35:50,height=floor+(opening?.98:1.05),radius=opening?8.4:7.2,targetY=floor+.86;
     workshop.setLens(mm);setHood(false);workshop.hotspots.storyboard={yaw:opening?-.92:-1.08,pitch:Math.asin((height-targetY)/radius),radius,target:[center.x,targetY,center.z]};workshop.focus('storyboard',reduced());root.querySelector('#v6-photo-lens').value=String(mm);root.querySelector('#v6-photo-focus').value='general';
-  });
+  }
+  listen(preset,'change',applyPreset);
+  listen(window,'resize',()=>{if(root.dataset.anPhoto==='true'&&photoAngles?.[preset.value])applyPreset();});
   updateTargets();
   return {
     focus,

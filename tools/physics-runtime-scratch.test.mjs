@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import * as chassis from '../src/game/chassis-configuration.mjs?v=cb4421d5b87d806c';
-import {buildVehiclePhysicsSpec} from '../src/game/expansion-vehicle-runtime.mjs';
+import {buildVehiclePhysicsSpec} from '../src/game/expansion-vehicle-runtime.mjs?v=aaacadfb3c716f14';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../src/game/workshop-performance.mjs';
 const root=new URL('../',import.meta.url);
 const context=vm.createContext({console,WebAssembly,TextDecoder,TextEncoder,atob,btoa,performance});

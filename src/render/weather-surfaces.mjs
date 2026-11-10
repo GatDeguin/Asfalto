@@ -1,8 +1,8 @@
 import {WEATHER_VERTEX_FRAME,WEATHER_NORMAL_HELPERS} from './surface-weather.glsl.mjs?v=4659f155d8a61d7e';
-import {createHydrologyJobs} from './hydrology-jobs.mjs?v=3415d1d281b4f2e9';
+import {createHydrologyJobs} from './hydrology-jobs.mjs?v=c6c6f2381c6c0f08';
 import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=d1afc4809830045d';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
-import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=02f1a8ed11382fce';
+import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=256f4d475bace940';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
 const WATER_IOR=1.333;
 const SURFACE_SHADER = `

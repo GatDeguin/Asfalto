@@ -1,6 +1,7 @@
 import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=5e96c4931974c8ab';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
-import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=3197d396b128f4f7';
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=a3ad738f3e2cc180';
+import {loadWorkshopShutter} from './workshop-shutter.mjs?v=ed78438af5c6205d';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';
 import {createWorkshopContactShadow} from './workshop-contact-shadow.mjs?v=2e31137f87c36ece';
 import { createWorkshopCollection } from './workshop-collection.mjs?v=abd9e9f27b941233';
@@ -60,6 +61,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   let collection=null,collectionItems=[],collectionPosters=[],collectionMemories=[],collectionLoad=null,collectionDisposed=false,room=null;
   const collectionLight=new T.PointLight('#ffd5a5',18,4,2);collectionLight.name='Collection_Warm_Shelf_Light';collectionLight.position.set(-5.8,2.2,4.7);collectionLight.castShadow=false;
   let detailPass = null, night = false, lastTime = null, probeDirty = false, contactShadow=null;
+  let benchLighting = false;
   const probeGuard=createRoomProbeGuard(T,renderer,{onReset:()=>{probeError=null;invalidateProbe();}});
   const invalidateContact=()=>contactShadow?.invalidate();
   const previousEnvironment = scene.environment;
@@ -112,6 +114,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
       if (!response.ok) throw new Error('No se pudo cargar la utilería del taller.');
       return workshop.buildGLTF(workshop.parseGLB(await response.arrayBuffer()), () => {});
     })(),
+    loadWorkshopShutter(workshop),
   ]);
   // Wait for every in-flight load before cleanup: a rejected sibling must not
   // leave textures arriving after the failed initialization has been disposed.
@@ -136,7 +139,7 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const extras = await extraLoads;
   const failedMaterial = materialLoads.find(result => result.status === 'rejected');
   if (failedMaterial) throw failedMaterial.reason;
-  const failedExtra = extras.find(result => result.status === 'rejected');
+  const failedExtra = extras.slice(0, 2).find(result => result.status === 'rejected');
   if (failedExtra) throw failedExtra.reason;
   const hdr = extras[0].value;
   hdr.mapping = T.EquirectangularReflectionMapping;
@@ -153,7 +156,9 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   scene.environmentRotation?.set(0, .72, 0);
   detailsRoot = extras[1].value;
   detailsRoot.name = 'Workshop_Blender_Service_Details'; scene.add(detailsRoot);
-  architecture=createWorkshopArchitectureE31(T,workshop);livedIn=createWorkshopLivedInE31(T,workshop);
+  const shutter = extras[2].status === 'fulfilled' ? extras[2].value : null;
+  if (!shutter) console.warn('Se usa la cortina de respaldo del taller.', extras[2].reason);
+  architecture=createWorkshopArchitectureE31(T,workshop,{shutter});livedIn=createWorkshopLivedInE31(T,workshop);
 
   root.updateMatrixWorld(true);
   const floorBounds = new T.Box3();
@@ -231,6 +236,20 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     try{return await collectionLoad;}finally{collectionLoad=null;}
   }
 
+  function updateWarmLight() {
+    const target = workshop.target;
+    const bench = Boolean(architecture.workbenchLight && target && Math.hypot(target.x + 2.3, target.z + 4.4) < 1.65);
+    const marker = bench ? architecture.workbenchLight : architecture.displayLight;
+    if (marker) workshop.warm.position.copy(marker);
+    else workshop.warm.position.set(1, 4.2, -2.5);
+    workshop.warm.intensity = bench ? (night ? 35 : 15) : (night ? 32 : 5);
+    workshop.warm.distance = bench ? 7.5 : 16;
+    if (bench !== benchLighting) {
+      benchLighting = bench;
+      invalidateProbe();
+    }
+  }
+
   function configure() {
     workshop.hemi.color.set('#b8c3cb'); workshop.hemi.groundColor.set('#3c3023');
     workshop.hemi.intensity = night ? .15 : .42;
@@ -239,9 +258,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     workshop.key.target.position.set(0, .5, 0); scene.add(workshop.key.target);
     workshop.fill.color.set('#bfd0d1'); workshop.fill.intensity = night?.14:.72;
     workshop.fill.position.set(5.5, 3.8, -4);
-    workshop.warm.color.set('#ffd4a3'); workshop.warm.intensity = night?32:5;
-    workshop.warm.distance = 16; workshop.warm.decay = 2;
-    workshop.warm.position.set(1, 4.2, -2.5);
+    workshop.warm.color.set('#ffd4a3'); workshop.warm.decay = 2;
+    updateWarmLight();
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.VSMShadowMap;
     workshop.key.castShadow = true;
     workshop.key.shadow.mapSize.set(1024, 1024);
@@ -315,6 +333,9 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);workshop.cameraConstraint?.refresh();invalidateProbe();return architecture.diagnostics();},
     getDepartureGate:()=>architecture?.diagnostics().gateOpen??0,
     setDepartureGate:value=>architecture?.setGateOpen(value),
+    getDepartureFillPosition:()=>architecture?.exitLight,
+    getDepartureDoorOpen:seconds=>architecture?.doorOpenAt?.(seconds),
+    getPhotoAngles:()=>architecture?.photoAngles,
     invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
     setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
     // Earned memories are borrowed from the album lease. Rebuild before the host
@@ -326,13 +347,13 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
     setPaintColor: hex => paint.setColor(hex),
     update(t=0) {
       const dt=lastTime===null?0:Math.max(0,Math.min(.05,(t-lastTime)/1000));lastTime=t;
-      workshop.warm.position.set(1,4.2,-2.5);workshop.warm.intensity=night?32:5;
+      updateWarmLight();
       detailPass.update(dt,{reducedMotion:globalThis.document?.body?.classList.contains('v6-reduce-motion')||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches});
       staticBatches.update(workshop.camera);
       contactShadow.update();
       if(workshop.camera&&!workshop.drag&&(probeDirty||car.position.distanceTo(reflectedCarPosition)>.25))refreshRoomReflection();
     },
-    diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',texturedMeshes,hiddenDecals,roomReflection:!!room.texture,roomProbe:{...probeGuard.diagnostics(),preparing:probePending,preparationError:probeError},planarReflection:!!reflector,textures:textureTasks.size,
+    diagnostics:()=>({architecture:architecture?.diagnostics(),livedIn:livedIn?.diagnostics(),contactShadow:contactShadow?.diagnostics(),collection:collection?.diagnostics(),lighting:night?'night':'day',lightingArea:benchLighting?'bench':'display',texturedMeshes,hiddenDecals,roomReflection:!!room.texture,roomProbe:{...probeGuard.diagnostics(),preparing:probePending,preparationError:probeError},planarReflection:!!reflector,textures:textureTasks.size,
       surfaceRelief:{...surfaceReliefDiagnostics(),materials:[...materials.values()].filter(m=>m.asfaltoHeightTexture).length,heightMaps:new Set([...materials.values()].map(m=>m.asfaltoHeightTexture).filter(Boolean)).size},vertexColors:{...vertexColors,instances:detailPass.diagnostics().coloredInstances},
       hdri:'Poly Haven Workshop 2K CC0',environmentIntensity:scene.environmentIntensity,details:true,staticBatches:staticBatches.diagnostics(),detailPass:detailPass.diagnostics(),paint:paint.diagnostics()}),
     dispose(){ disposeOwned(); if (workshop.presentation === presentation) workshop.presentation = null; },

@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=bcddf03d5ca9eb7d';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=6a79200613bc5413';
-import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=3197d396b128f4f7';
+import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=7b8dea2cbb0e38c6';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=a91aa1f0755040d1';
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=a3ad738f3e2cc180';
 
 const vector=(x=0,y=0,z=0)=>({x,y,z,set(x,y,z){Object.assign(this,{x,y,z});},clone(){return vector(this.x,this.y,this.z);},copy(v){this.set(v.x,v.y,v.z);}});
 function fixture(t){

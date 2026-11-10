@@ -1,6 +1,6 @@
-import { createReturnLandscape } from './closure-terrain.mjs?v=2f6471896e66f7fc';
+import { createReturnLandscape } from './closure-terrain.mjs?v=7c3c8e7cd092d62e';
 import { returnChapters, returnRoadShape } from './return-route-design.mjs?v=0f181ab60bc9e120';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=71055b87ba957724';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=7191e18f64bf833f';
 import { addReturnLandmarks } from './return-landmarks.mjs?v=014dc064c17ba04b';
 import {addScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 // Procedural game-fiction return corridor. Original canonical samples are never modified.

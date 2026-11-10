@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=0583e108bf35b4e5';
+import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=04803f511e9003de';
+import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs';
+import {createRouteQuery} from '../src/tracks/route-query.mjs';
+import {TRAFFIC_PARKING} from '../src/game/traffic-parking.mjs?v=3006726ba162354a';
 
 test('a trip gives each model two or three varied encounters, with one parking and one passing event', () => {
   const plan = createDriveTrafficPlan({lengthM: 22717, seed: 42});
@@ -12,7 +15,7 @@ test('a trip gives each model two or three varied encounters, with one parking a
   for (const model of models) {
     const rows = regular.filter(event => event.model === model);
     assert.ok(rows.length >= 2 && rows.length <= 3);
-    for (const key of ['color', 'rim', 'tire', 'brake', 'driver']) {
+    for (const key of ['finish', 'color', 'rim', 'tire', 'brake', 'driver']) {
       assert.equal(new Set(rows.map(row => row[key])).size, rows.length);
     }
   }
@@ -24,6 +27,26 @@ test('a trip gives each model two or three varied encounters, with one parking a
   assert.ok(occupied.length>0&&occupied.length<plan.length);
   assert.ok(occupied.every(event=>event.passenger>=0&&event.passenger<6&&event.passenger!==event.driver));
   assert.ok(plan.every((event, i) => !i || event.atM - plan[i - 1].atM > 240));
+});
+
+test('the parking event selects a measured site on each circuit and rejects invalidated sites',()=>{
+  for(const trackId of CIRCUIT_IDS) {
+    const route=readCircuitSource(trackId),query=createRouteQuery(route);
+    const options={trackId,lengthM:route.lengthM,canPark:(s,site)=>Math.abs(query.sample(s).widthM-site.widthM)<.02};
+    const stations=new Set();
+    for(let seed=1;seed<=40;seed++) {
+      const plan=createDriveTrafficPlan({...options,seed});
+      const row=plan.find(e=>e.kind==='parked');
+      assert.ok(row,trackId);
+      assert.ok(TRAFFIC_PARKING[trackId].includes(row.parking),trackId);
+      assert.equal(row.parking.atM,row.atM,trackId);
+      assert.ok(row.parking.freeLaneM>=2.65&&row.parking.tireDeviationM<=.092,trackId);
+      assert.ok(plan.every((event,i)=>i===0||event.atM>plan[i-1].atM),trackId);
+      stations.add(row.atM);
+    }
+    assert.ok(stations.size>1,trackId);
+    assert.ok(!createDriveTrafficPlan({...options,seed:1,canPark:()=>false}).some(e=>e.kind==='parked'),trackId);
+  }
 });
 
 test('overtaking waits for a safe opening and pause and reversal cannot repeat an encounter', () => {

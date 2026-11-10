@@ -1,4 +1,4 @@
-import {buildShorePromontory,shorelineFromGeometry} from './shore-promontory.mjs?v=5f5256d2401f842d';
+import {buildShorePromontory,shorelineFromGeometry} from './shore-promontory.mjs?v=d288d03e3f385b93';
 // Extract actual terrain/water intersections for hydrology and terrain-conforming shores.
 export function refineRegionalShoreline(THREE,root,{id,query,heightAt,textures}){
   if(id!=='dos_lagos'&&id!=='paso_garibaldi')return {shoreSegments:0,shoreBanks:0};

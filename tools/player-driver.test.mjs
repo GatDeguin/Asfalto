@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
 import {VEHICLE_CATALOG} from '../src/render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
-import {createPlayerDriver,playerDriverSeat} from '../src/render/player-driver.mjs?v=b311481c7155df85';
+import {createPlayerDriver,playerDriverSeat} from '../src/render/player-driver.mjs?v=adcc8b7a60cc18ec';
 import {createVehicleCameraRig} from '../src/game/vehicle-camera-rig.mjs?v=93a85b29944b9925';
 
 test('each selectable exterior seats its driver below the roof and articulates both hands',()=>{
@@ -13,12 +13,24 @@ test('each selectable exterior seats its driver below the roof and articulates b
     assert.equal(driver.root.visible,false);
     driver.update('chase',0);
     assert.equal(driver.root.visible,true);
-    assert.ok(new T.Box3().setFromObject(driver.root).max.y<=seat.roofM,def.id);
-    const hands=driver.root.children.filter(node=>/^DriverArm_.*_2$/.test(node.name));
-    const rest=hands.map(mesh=>mesh.position.toArray());
+    assert.ok(new T.Box3().setFromObject(driver.root,true).max.y<=seat.roofM,def.id);
+    const rest=driver.diagnostics().hands;
     driver.update('cinematic',.52);
     assert.equal(driver.root.visible,true);
-    assert.ok(hands.every((mesh,i)=>mesh.position.distanceTo(new T.Vector3(...rest[i]))>.04));
+    assert.ok(driver.diagnostics().hands.some((point,i)=>new T.Vector3(...point).distanceTo(new T.Vector3(...rest[i]))>.04));
+    const axis=new T.Vector3(...seat.steeringAxis).normalize();
+    for(let step=-120;step<=120;step++) {
+      driver.update('chase',step*Math.PI/72);
+      const {hands,elbows,wheelRadius,wheelCenter}=driver.diagnostics();
+      assert.equal(hands.length,2);
+      assert.equal(elbows.length,2);
+      for(const point of hands) {
+        const offset=new T.Vector3(...point).sub(new T.Vector3(...wheelCenter));
+        assert.ok(Math.abs(offset.length()-wheelRadius)<1e-8,def.id);
+        assert.ok(Math.abs(offset.dot(axis))<1e-8,def.id);
+      }
+      assert.ok(hands[0][2]<seat.wheel[2]&&hands[1][2]>seat.wheel[2],def.id);
+    }
     driver.update('hood',0);
     assert.equal(driver.root.visible,false);
     driver.update('cockpit',0);

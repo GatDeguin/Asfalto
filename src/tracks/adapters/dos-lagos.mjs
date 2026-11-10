@@ -5,8 +5,9 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=71055b87ba957724';
-import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=562873ea4c3c1e4a';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=7191e18f64bf833f';
+import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=a6b17d51f89dd1f3';
+import { loadDosLagosRibera } from '../visuals/dos-lagos-ribera.mjs?v=b1337fbed3bf6958';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({
@@ -930,6 +931,24 @@ export function createDosLagosAdapter(dependencies) {
       assertCurrent(transaction);
 
       await prepareTrackVisual(transaction.visualRoot, { id: 'dos_lagos', query: sourceQuery, lengthM: sourceCanonical.lengthM, signal });
+      updateInventory(transaction, [transaction.visualRoot]);
+      assertCurrent(transaction);
+
+      await loadDosLagosRibera({
+        root: transaction.visualRoot, releaseRoot, signal, loadGlb: dependencies.completeGlbToObject,
+        async fetchLocked(url, lock) {
+          const bytes = bytesOf(await dependencies.fetchBytes(url, { signal }), 'Falkner shore');
+          if (bytes.byteLength !== lock.bytes || await sha256(bytes) !== lock.sha256) {
+            throw new Error('Falkner shore payload integrity');
+          }
+          return bytes;
+        },
+        dispose(root) {
+          for (const resources of Object.values(resourceInventory([root], owns))) {
+            for (const resource of resources) resource.dispose?.();
+          }
+        },
+      });
       updateInventory(transaction, [transaction.visualRoot]);
       assertCurrent(transaction);
 

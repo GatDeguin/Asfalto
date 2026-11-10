@@ -1,6 +1,6 @@
 const abortError=()=>new DOMException('Hydrology cancelled','AbortError');
 /** One worker per weather controller. Copies retain a deterministic fallback; messages transfer typed buffers. */
-export function createHydrologyJobs({workerFactory=()=>new Worker(new URL('./hydrology-worker.mjs?v=3ad58c948a924028',import.meta.url),{type:'module'}),timeoutMs=30000}={}){
+export function createHydrologyJobs({workerFactory=()=>new Worker(new URL('./hydrology-worker.mjs?v=2f1f2ef1d6cc59e8',import.meta.url),{type:'module'}),timeoutMs=30000}={}){
  let worker=null,nextId=0,disposed=false;const pending=new Map(),stats={submitted:0,completed:0,cancelled:0,failures:0,computeMs:0,copyMs:0};
  const stop=()=>{worker?.terminate();worker=null;};
  const failAll=error=>{stop();for(const job of [...pending.values()])job.finish(error);};

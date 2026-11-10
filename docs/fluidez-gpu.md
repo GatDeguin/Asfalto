@@ -148,6 +148,23 @@ Nsight Systems 2026.6.1 registró 1.055 llamadas a `D3DCompile` y 1.424 presenta
 
 La comprobación de conducción recorrió 710 m durante 75 s en Dos Lagos, con el ciclo de cielo acelerado para recorrer seis HDRI. La sesión se mantuvo en conducción, con 59,83 FPS de escena, 18,4 ms p95, un intervalo máximo de 108,6 ms y 9,66 ms p95 en la consulta GPU. También se probó la reversa automática con `R` hacia el tramo detrás de la largada y el regreso al taller en 369 ms. La medida cubre ese tramo y esa configuración.
 
+## Ribera del Falkner en Dos Lagos
+
+El terraplén sigue la cota de la banquina medida entre los km 8,00 y 8,76. La misma malla alimenta el apoyo de Rapier. Los bancos y cantos de la ribera son escenografía. Sus intersecciones con el nivel de agua y 44 muestras locales ajustan el material del lago sin extrapolar la profundidad de los bancos al resto del Falkner. El paquete exportado desde Blender contiene cinco primitivas, 11.618 triángulos y 166.957 bytes comprimidos.
+
+El control `794bdde` y la candidata con la ribera se ejecutaron en Chrome 157 con ANGLE D3D11, RTX 3060 Ti, 1280 × 800, nivel Bajo, cielo despejado fijo y tránsito desactivado para aislar el tramo. El piloto de prueba usó el control del juego, en cabina y en tiempo real entre los km 7,97 y 9,32. Las 175 muestras tomadas durante las dos pasadas tuvieron cuatro apoyos.
+
+| Medición | Control | Candidata |
+| --- | ---: | ---: |
+| Tiempo hasta la sesión activa | 23,89 s | 22,59 s |
+| Conducción continua | 85,58 s | 88,82 s |
+| Cuadros de escena por segundo | 59,85 | 56,09 |
+| Intervalo p95 de presentación | 16,8 ms | 16,8 ms |
+| Intervalo p99 de presentación | 17,7 ms | 33,4 ms |
+| Mayor intervalo de presentación | 66,6 ms | 1.150,1 ms |
+
+En la candidata, el pico mayor se observó alrededor del km 8,35. En la repetición de 40,37 s entre los km 7,97 y 8,62, el p99 fue 16,9 ms y el máximo 100 ms al iniciar el desplazamiento. El pico de 1,15 s queda sin causa confirmada. La comparación corresponde al paquete de Dos Lagos aislado, en este equipo.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.
