@@ -26,16 +26,16 @@ test('low race glass drops the transmission prepass and restores the authored ma
 });
 
 test('a vehicle staged before a tier change uses the live tier when committed',async()=>{
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=47661b0e9593c481',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=13d6b8b611aaf5a2',import.meta.url),'utf8');
  const start=source.indexOf('  async function preparePlayerVehicle(');
  const end=source.indexOf("  setLoading('Preparando vegetación",start);
  let tier='balanced';
  const refraction=[],mount=new T.Group();
  const presentation={root:new T.Group(),setReducedRefraction:value=>refraction.push(value),setChassisConfig(){},setLightMode(){}};
  const scope={
-  THREE:T,raceChevyV3Model:mount,runtimeDeviceProfile:{phone:false},scene:{},
+  THREE:T,raceChevyV3Model:mount,raceChevyPhysicalRoot:new T.Group(),runtimeDeviceProfile:{phone:false},scene:{},
   window:{__asfaltoVehiclePresentations:{}},getVehicleDefinition:()=>null,
-  createVehiclePresentation:async()=>presentation,
+  createVehiclePresentation:async()=>presentation,createPlayerDriver:()=>null,playerDriver:null,
   authoredControlMounts:{restore(){},attach(){}},authoredMirrors:null,raceChevyPresentation:null,
   cockpitMirrors:{feeds:{}},attachAuthoredMirrors:()=>null,authoredWindshieldMount:()=>null,cabinMount:{},
   raceCameraInitialized:true,lightingEditor:null,rayTracing:null,

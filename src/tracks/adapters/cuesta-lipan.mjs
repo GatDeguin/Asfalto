@@ -1,12 +1,12 @@
 import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance, sourceStreamingDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
-import { createGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
+import { createGameplayBridge } from '../gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040';
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=fe37dae2ff5129f6';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=aef74622e732cf21';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -349,7 +349,8 @@ export function createCuestaLipanAdapter(dependencies) {
         const roots=attachClosedRouteRoots(closure,tx.visualRoot,tx.collisionRoot,{});tx.closureRoots=roots;
         // A streamed source sector may be disposed later. The permanent return
         // therefore owns its own maps/materials instead of borrowing sector resources.
-        await prepareTrackVisual(roots.visualRoot,{id:'cuesta_lipan',query:routeQuery,lengthM:route.lengthM,signal:tx.controller.signal,scenery:false});
+        await prepareTrackVisual(roots.visualRoot,{id:'cuesta_lipan',query:routeQuery,lengthM:route.lengthM,signal:tx.controller.signal,
+          scenery:false,detailRange:{startM:sourceRoute.lengthM+60,endM:route.lengthM-60}});
         current(tx);
       }
 

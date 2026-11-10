@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import { createGameplayBridge } from '../src/tracks/gameplay-bridge.mjs?v=75c4371c18fdd85b';
+import { createGameplayBridge } from '../src/tracks/gameplay-bridge.mjs?v=c594401a38ba1b3f';
 
 const read = name => fs.readFileSync(new URL('../src/legacy/'+name, import.meta.url), 'utf8');
 const source = read('module-02.mjs');

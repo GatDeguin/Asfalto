@@ -10,7 +10,7 @@ import { createSkyMatchedFog } from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 import { createWeatherDynamics } from './weather-dynamics.mjs?v=97b633343145b353';
 import { createWeatherWind } from './weather-wind.mjs';
 import { createWeatherLightning } from './weather-lightning.mjs';
-import { createWeatherWindshield } from './weather-windshield.mjs?v=6c3ebaa493191d5f';
+import { createWeatherWindshield } from './weather-windshield.mjs?v=7d8cf1fdcc8f4382';
 import { createVehicleRainSurfaces } from './weather-vehicle-surface.mjs?v=04c089b22a01690a';
 
 /** Visual-only effects in the live renderer's metre-scale scene coordinates. */
@@ -60,7 +60,7 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
     layers.update({time,camera,policy,velocity,environment,groundY:vehicle.groundY??vehicle.position?.y??0,color:scene.fog?.color||'#c1d0d5',wind:windVector,vehicle,valleyFloorM:trackRoot?.userData.asfaltoWeather?.valleyFloorM});
     waterfalls.update({time,camera,wind:windVector,qualityTier,color:scene.fog?.color,vehicle});
     surfaces.update({time,policy,skyFog:fogAlignment.shaderState,wind:windVector,dynamics:dynamics.state});
-    windshield?.update({dt,rain:policy.rainy?policy.intensity:0,speedMps:speed,cameraMode:options.cameraMode||vehicle.cameraMode||'chase',paused:options.paused,active,wiperMode:options.wiperMode||'auto'});
+    windshield?.update({dt,rain:policy.rainy?policy.intensity:0,speedMps:speed,cameraMode:options.cameraMode||vehicle.cameraMode||'chase',paused:options.paused,active,wiperMode:options.wiperMode||'auto',condition:options.windshieldCondition});
     lightning.update({dt,storm:(environment.weatherId||environment.weather||environment.precipitation)==='storm',position:vehicle.position});
     rivalEffects.update({dt,policy:vehiclePolicy,wind:windVector});
     if(dt>0){particleFrame.dt=dt;particleFrame.vehicle=vehicle;particleFrame.emission=emissions.update(vehicle,dt,policy.wetness);particleFrame.policy=vehiclePolicy;particleFrame.velocity=velocity;particleFrame.wind=windVector;particles.update(particleFrame);}

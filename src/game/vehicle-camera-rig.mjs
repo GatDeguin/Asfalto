@@ -229,7 +229,8 @@ function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
       [-7.1, 1.25, -2.4],
     ];
     position = localPoint(origin, basis, offsets[phase]);
-    look = add(origin, scale(basis.forward, 4.5));
+    // The driver and the car stay in frame in the frontal and side shots.
+    look = localPoint(origin,basis,[.45,.48,0]);
   }
 
   position = add(position, scale(basis.up, motion.heaveM));
@@ -283,6 +284,7 @@ export function createVehicleCameraRig(options = {}) {
   let rearLook = [-1, 0, 0];
   let collisionLiftM = 0;
   let lastOutput = null;
+  let lastChassisPosition = null;
   const trace = [];
   const pitch = { value: 0, velocity: 0 };
   const roll = { value: 0, velocity: 0 };
@@ -326,6 +328,13 @@ export function createVehicleCameraRig(options = {}) {
   function apply(frame, dt, snap) {
     const snapshot = interpolatedFromFrame(frame);
     if (!snapshot) return false;
+    const chassisPosition=vector(snapshot.chassis.position);
+    if(lastChassisPosition&&length(subtract(chassisPosition,lastChassisPosition))>24){
+      // Recoveries and QA jumps can move the car farther than the entire boom.
+      // Snap the presentation to the new chassis instead of panning across the map.
+      snap=true;resetMotion();
+    }
+    lastChassisPosition=chassisPosition;
     const suppressCockpitMotion = mode === 'cockpit' && options.cockpitPhysicalMotion === false;
     const motion = snap || suppressCockpitMotion ? { pitchRad: 0, rollRad: 0, heaveM: 0 } : physicalMotion(snapshot, dt);
     const target = poseTarget(mode, snapshot, frame, motion, cockpitCalibration);
@@ -450,6 +459,7 @@ export function createVehicleCameraRig(options = {}) {
       }) : output;
       const renderedPosition=transform.point([camera.position.x,camera.position.y,camera.position.z]);
       position=transform.point(position);look=transform.point(look);rearPosition=transform.point(rearPosition);rearLook=transform.point(rearLook);
+      if(lastChassisPosition)lastChassisPosition=transform.point(lastChassisPosition);
       lastOutput=remap(lastOutput);for(let i=0;i<trace.length;i++)trace[i]=remap(trace[i]);
       setVector(camera.position,renderedPosition);setVector(camera.up,transform.vector([camera.up.x,camera.up.y,camera.up.z]));
       const aim=lastOutput?.look||look;camera.lookAt(aim[0],aim[1],aim[2]);

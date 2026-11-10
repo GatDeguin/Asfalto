@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises';import path from 'node:path';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {startServer} from '../server.mjs';
+import fs from 'node:fs/promises';import path from 'node:path';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {startServer} from '../server.mjs?v=5a11a063822d96e9';
 let playwright;try{playwright=createRequire(import.meta.url)('playwright');}catch{playwright=createRequire(process.env.PLAYWRIGHT_PACKAGE_JSON||'C:/Users/Gaston/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json')('playwright');}const {chromium}=playwright;
 const label=process.argv[2]||'verified',root=process.argv[3]||path.resolve(import.meta.dirname,'..');const output=process.env.PHOTOREAL_REPORT_DIR||path.resolve(import.meta.dirname,'../../Reports/Asfalto_Nacional_v8/photoreal-2026-10-04');await fs.mkdir(output,{recursive:true});
 const report={label,checks:[],errors:[],consoleErrors:[],externalRequests:[],measurements:[],environments:[]};const check=(name,value)=>{assert.ok(value,name);report.checks.push(name);console.log(name);};

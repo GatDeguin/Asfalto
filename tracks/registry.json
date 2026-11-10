@@ -8,6 +8,7 @@
       "adapter": "dos_lagos",
       "manifest": "./dos-lagos/manifest.json",
       "lengthM": 10250,
+      "closedRuntimeLengthM": 22962.411,
       "sectors": 6,
       "defaultEnvironment": "clear",
       "capabilities": {
@@ -22,6 +23,7 @@
       "adapter": "aconcagua_horcones",
       "manifest": "./aconcagua-horcones/manifest.json",
       "lengthM": 21000,
+      "closedRuntimeLengthM": 61890.323,
       "sectors": 8,
       "defaultEnvironment": "golden-hour",
       "capabilities": {
@@ -36,6 +38,7 @@
       "adapter": "cuesta_lipan",
       "manifest": "./cuesta-lipan/manifest.json",
       "lengthM": 20000,
+      "closedRuntimeLengthM": 51951.321,
       "sectors": 8,
       "defaultEnvironment": "clear",
       "capabilities": {
@@ -50,6 +53,7 @@
       "adapter": "paso_garibaldi",
       "manifest": "./paso-garibaldi/manifest.json",
       "lengthM": 24000,
+      "closedRuntimeLengthM": 50241.750,
       "sectors": 9,
       "defaultEnvironment": "overcast",
       "capabilities": {
@@ -64,7 +68,7 @@
       "adapter": "cataratas_iguazu",
       "manifest": "./cataratas-iguazu/manifest.json",
       "lengthM": 10600,
-      "closedRuntimeLengthM": 30532.731,
+      "closedRuntimeLengthM": 31080.041,
       "sectors": 9,
       "defaultEnvironment": "clear",
       "capabilities": {

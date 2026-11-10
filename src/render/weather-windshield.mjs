@@ -1,3 +1,5 @@
+import {VEHICLE_GLASS_FRACTURE_GLSL} from './vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
+
 /**
  * Measured against cabinaGz normalized to COCKPIT_LAYOUT.cabin.targetWidth=2.20.
  * Frame fit: z=.335262279*y-.353797844 (16 pillar samples, RMS .00260).
@@ -32,8 +34,79 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
  wipeMemory.minFilter=THREE.LinearFilter;wipeMemory.magFilter=THREE.LinearFilter;wipeMemory.generateMipmaps=false;wipeMemory.needsUpdate=true;
  const uniforms={uWipeMemory:{value:wipeMemory},uTime:{value:0},uRain:{value:0},uSpeed:{value:0},uPhase:{value:0},uFilm:{value:0},uSweep:{value:0},uCycles:{value:0},uRate:{value:0},
   uHeight:{value:fit.surfaceHeight},uAngles:{value:new THREE.Vector2(fit.angleMin,fit.angleMax)},
+  uGlassDirt:{value:0},uGlassDamage:{value:0},uGlassOrigin:{value:new THREE.Vector2(fit.widthM*.27,fit.surfaceHeight*.27)},
   uWipers:{value:fit.pivots.map(([x,y])=>new THREE.Vector4(x,y,fit.innerRadius,fit.outerRadius))}};
- const material=new THREE.ShaderMaterial({name:'AN_WindshieldDropsFilm',uniforms,transparent:true,depthWrite:false,depthTest:true,side:THREE.DoubleSide,vertexShader:"#include <common>\n#include <logdepthbuf_pars_vertex>\nattribute vec2 windshieldSurface;\nvarying vec2 vUv,vSurface;\nvoid main(){vUv=uv;vSurface=windshieldSurface;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;\n#include <logdepthbuf_vertex>\n}",fragmentShader:"#include <logdepthbuf_pars_fragment>\nuniform float uTime,uRain,uSpeed,uPhase,uFilm,uSweep,uCycles,uRate,uHeight;\nuniform sampler2D uWipeMemory;\nuniform vec2 uAngles;uniform vec4 uWipers[2];varying vec2 vUv,vSurface;\nfloat hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}\n// Metric coordinates retain round beads on the very wide, shallow cabin glass.\n// RGB stores lens coverage, a narrow lit crescent and its opposing dark rim.\nvec3 beads(vec2 metric,float scale,float runoff,float seed){\n vec2 grid=metric*scale+vec2(seed,seed*.73),cell=floor(grid),f=fract(grid);float id=hash(cell),jitter=hash(cell+19.7);\n f.y=fract(f.y+uTime*runoff*(.07+id*.16+uSpeed*.0018));\n vec2 p=f-vec2(.23+jitter*.52,.3+id*.27);p.x+=sin(uTime*.7+id*37.)*.012*runoff;\n float radius=mix(.085,.205,id*id);vec2 q=p/vec2(radius,radius*(1.+runoff*(.8+uSpeed*.016)));\n float d=length(q),aa=max(.025,fwidth(d)),body=1.-smoothstep(1.-aa,1.+aa,d);\n float rim=1.-smoothstep(.09,.09+aa,abs(d-.84));\n float lit=pow(max(0.,dot(normalize(q+vec2(.001)),normalize(vec2(-.55,.84)))),5.)*rim;\n float shade=pow(max(0.,dot(normalize(q+vec2(.001)),normalize(vec2(.4,-.8)))),3.)*rim;\n float deposit=smoothstep(.025,.2,uRain-id*.72);\n return vec3(body*(.04+rim*.24),lit,shade)*deposit;\n}\nvec3 rivulets(vec2 metric){\n vec2 cell=floor(vec2(metric.x*5.,metric.y*2.));float id=hash(cell+31.1);\n float flow=uTime*(.07+id*.045+uSpeed*.001),y=fract(metric.y*2.+flow);\n float center=.2+id*.58+sin(metric.y*15.+id*43.+uTime*.23)*.035;\n float x=fract(metric.x*5.)-center,width=.012+id*.013;\n float aa=max(.002,fwidth(x)),line=1.-smoothstep(width,width+aa,abs(x));\n float tail=smoothstep(.12,.28,y)*(1.-smoothstep(.72,.9,y));\n float deposit=smoothstep(.23,.8,uFilm)*step(.71,id),edge=1.-smoothstep(aa,aa*2.5,abs(abs(x)-width*.7));\n return vec3(line*tail*.1,edge*tail*.36,line*tail*.07)*deposit;\n}\nfloat wiped(vec2 surface,vec4 wiper){\n vec2 p=surface-wiper.xy;float radius=length(p),angle=atan(p.y,p.x),arc=(angle-uAngles.x)/(uAngles.y-uAngles.x);\n float feather=.003;\n float annulus=smoothstep(wiper.z-feather,wiper.z+feather,radius)*(1.-smoothstep(wiper.w-feather,wiper.w+feather,radius));\n float history=texture2D(uWipeMemory,vec2(clamp(arc,0.,1.),.5)).r;\n return history*annulus*step(0.,arc)*step(arc,1.);\n}\nvoid main(){\n float cleaned=max(wiped(vSurface,uWipers[0]),wiped(vSurface,uWipers[1]));\n float edge=smoothstep(0.,.015,vUv.x)*smoothstep(0.,.015,1.-vUv.x)*smoothstep(0.,.02,vUv.y)*smoothstep(0.,.02,1.-vUv.y);\n vec2 metric=vSurface/uHeight;\n vec3 optics=beads(metric,54.,0.,.3)*.36+beads(metric,26.,.32,7.8)+beads(metric,11.,1.,19.2)*1.1+rivulets(metric);\n float residue=1.-cleaned*.96;\n float edgeWater=uFilm*(1.-smoothstep(.015,.11,vUv.y))*.025;\n float alpha=min(.46,optics.x*residue+optics.y*.17*residue+uFilm*.004*(1.-cleaned*.8)+edgeWater)*edge;\n vec3 color=mix(vec3(.13,.19,.22),vec3(.83,.91,.96),clamp(.3+optics.y*1.1-optics.z*.8,0.,1.));\n if(alpha<.002)discard;gl_FragColor=vec4(color,alpha);\n #include <logdepthbuf_fragment>\n #include <tonemapping_fragment>\n #include <colorspace_fragment>\n}"});
+ const material=new THREE.ShaderMaterial({name:'AN_WindshieldDropsFilm',uniforms,transparent:true,depthWrite:false,depthTest:true,side:THREE.DoubleSide,vertexShader:`#include <common>
+#include <logdepthbuf_pars_vertex>
+attribute vec2 windshieldSurface;
+varying vec2 vUv,vSurface;
+void main(){vUv=uv;vSurface=windshieldSurface;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
+#include <logdepthbuf_vertex>
+}`,
+  fragmentShader:`#include <logdepthbuf_pars_fragment>
+uniform float uTime,uRain,uSpeed,uPhase,uFilm,uSweep,uCycles,uRate,uHeight;
+uniform sampler2D uWipeMemory;
+uniform float uGlassDirt,uGlassDamage;
+uniform vec2 uGlassOrigin;
+uniform vec2 uAngles;uniform vec4 uWipers[2];varying vec2 vUv,vSurface;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+// Metric coordinates retain round beads on the very wide, shallow cabin glass.
+// RGB stores lens coverage, a narrow lit crescent and its opposing dark rim.
+vec3 beads(vec2 metric,float scale,float runoff,float seed){
+ vec2 grid=metric*scale+vec2(seed,seed*.73),cell=floor(grid),f=fract(grid);float id=hash(cell),jitter=hash(cell+19.7);
+ f.y=fract(f.y+uTime*runoff*(.07+id*.16+uSpeed*.0018));
+ vec2 p=f-vec2(.23+jitter*.52,.3+id*.27);p.x+=sin(uTime*.7+id*37.)*.012*runoff;
+ float radius=mix(.085,.205,id*id);vec2 q=p/vec2(radius,radius*(1.+runoff*(.8+uSpeed*.016)));
+ float d=length(q),aa=max(.025,fwidth(d)),body=1.-smoothstep(1.-aa,1.+aa,d);
+ float rim=1.-smoothstep(.09,.09+aa,abs(d-.84));
+ float lit=pow(max(0.,dot(normalize(q+vec2(.001)),normalize(vec2(-.55,.84)))),5.)*rim;
+ float shade=pow(max(0.,dot(normalize(q+vec2(.001)),normalize(vec2(.4,-.8)))),3.)*rim;
+ float deposit=smoothstep(.025,.2,uRain-id*.72);
+ return vec3(body*(.04+rim*.24),lit,shade)*deposit;
+}
+vec3 rivulets(vec2 metric){
+ vec2 cell=floor(vec2(metric.x*5.,metric.y*2.));float id=hash(cell+31.1);
+ float flow=uTime*(.07+id*.045+uSpeed*.001),y=fract(metric.y*2.+flow);
+ float center=.2+id*.58+sin(metric.y*15.+id*43.+uTime*.23)*.035;
+ float x=fract(metric.x*5.)-center,width=.012+id*.013;
+ float aa=max(.002,fwidth(x)),line=1.-smoothstep(width,width+aa,abs(x));
+ float tail=smoothstep(.12,.28,y)*(1.-smoothstep(.72,.9,y));
+ float deposit=smoothstep(.23,.8,uFilm)*step(.71,id),edge=1.-smoothstep(aa,aa*2.5,abs(abs(x)-width*.7));
+ return vec3(line*tail*.1,edge*tail*.36,line*tail*.07)*deposit;
+}
+float wiped(vec2 surface,vec4 wiper){
+ vec2 p=surface-wiper.xy;float radius=length(p),angle=atan(p.y,p.x),arc=(angle-uAngles.x)/(uAngles.y-uAngles.x);
+ float feather=.003;
+ float annulus=smoothstep(wiper.z-feather,wiper.z+feather,radius)*(1.-smoothstep(wiper.w-feather,wiper.w+feather,radius));
+ float history=texture2D(uWipeMemory,vec2(clamp(arc,0.,1.),.5)).r;
+ return history*annulus*step(0.,arc)*step(arc,1.);
+}
+${VEHICLE_GLASS_FRACTURE_GLSL}
+void main(){
+ float cleaned=max(wiped(vSurface,uWipers[0]),wiped(vSurface,uWipers[1]));
+ float edge=smoothstep(0.,.015,vUv.x)*smoothstep(0.,.015,1.-vUv.x)*smoothstep(0.,.02,vUv.y)*smoothstep(0.,.02,1.-vUv.y);
+ vec2 metric=vSurface/uHeight;
+ vec3 optics=beads(metric,54.,0.,.3)*.36+beads(metric,26.,.32,7.8)+beads(metric,11.,1.,19.2)*1.1+rivulets(metric);
+ float residue=1.-cleaned*.96;
+ float edgeWater=uFilm*(1.-smoothstep(.015,.11,vUv.y))*.025;
+ float alpha=min(.46,optics.x*residue+optics.y*.17*residue+uFilm*.004*(1.-cleaned*.8)+edgeWater)*edge;
+ vec3 color=mix(vec3(.13,.19,.22),vec3(.83,.91,.96),clamp(.3+optics.y*1.1-optics.z*.8,0.,1.));
+ if(uGlassDirt>.02||uGlassDamage>.18){
+  // Keep the driver's sightline clear. The wipers lift road film from their sweep.
+  float grimePattern=.55+.45*sin(metric.x*32.0+sin(metric.y*13.0)) * sin(metric.y*16.0);
+  float grime=uGlassDirt*(.018+.12*(1.0-smoothstep(.03,.58,vUv.y)))*grimePattern*(1.0-cleaned*.63);
+  float fracture=0.0;
+  if(uGlassDamage>.18)fracture=vehicleGlassFracture((vSurface-uGlassOrigin)*.42,uGlassDamage*.81)*.48;
+  float conditionAlpha=(grime+fracture)*edge;
+  vec3 conditionColor=mix(vec3(.25,.20,.13),vec3(.75,.84,.86),fracture/max(.002,grime+fracture));
+  color=mix(color,conditionColor,conditionAlpha/max(.002,alpha+conditionAlpha));
+  alpha=min(.52,alpha+conditionAlpha);
+ }
+ if(alpha<.002)discard;gl_FragColor=vec4(color,alpha);
+ #include <logdepthbuf_fragment>
+ #include <tonemapping_fragment>
+ #include <colorspace_fragment>
+}`});
  const pane=new THREE.Mesh(geometry,material);pane.name='AN_DropsOnCabinGlass';pane.renderOrder=3;root.add(pane);
  const curvedParts=[],curvedPoint=[0,0,0];
  const wiperMaterial=new THREE.MeshStandardMaterial({name:'WindshieldWiperRubber',color:'#17201f',roughness:.68,metalness:.18}),wipers=[],blades=[];
@@ -50,7 +123,7 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
    }
   }
  }
- root.traverse(node=>{node.userData.asfaltoPrewarm=true;});root.visible=false;pane.visible=false;let time=0,film=0,cycle=0,disposed=false;
+ root.traverse(node=>{node.userData.asfaltoPrewarm=true;});root.visible=false;pane.visible=false;let time=0,film=0,cycle=0,disposed=false,dropsVisible=false;
  let lastPhase=NaN;
  function setPhase(phase){
   if(phase===lastPhase)return;lastPhase=phase;
@@ -80,8 +153,14 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
     wipeSurface:uniforms.uWipers.value[i].toArray(),bladeNormalOffsetM:fit.bladeOffsetM})),fitSource:'measured-cabinaGz-opening',wipeCoordinates:'shared-metric-glass-plane'};
  }
  return{
-  update({dt=0,rain=0,speedMps=0,active=true,cameraMode='cockpit',paused=false,wiperMode='auto'}={}){
-   if(disposed)return;root.visible=active&&cameraMode==='cockpit';if(paused||!active)return;
+  update({dt=0,rain=0,speedMps=0,active=true,cameraMode='cockpit',paused=false,wiperMode='auto',condition}={}){
+   if(disposed)return;
+   root.visible=active&&cameraMode==='cockpit';
+   const dirt=uniforms.uGlassDirt.value=Number.isFinite(condition?.dirt)?Math.max(0,Math.min(1,condition.dirt)):0;
+   const damage=uniforms.uGlassDamage.value=Number.isFinite(condition?.damage)?Math.max(0,Math.min(1,condition.damage)):0;
+   const conditionVisible=dirt>.02||damage>.18;
+   pane.visible=dropsVisible||conditionVisible;
+   if(paused||!active)return;
    dt=Number.isFinite(dt)?Math.max(0,Math.min(.05,dt)):0;rain=Number.isFinite(rain)?Math.max(0,Math.min(1,rain)):0;speedMps=Number.isFinite(speedMps)?Math.abs(speedMps):0;
    time+=dt;film+=(rain-film)*(1-Math.exp(-dt/(rain>film?3.2:12)));
    const rate=wiperMode==='off'?0:wiperMode==='fast'?1.2:wiperMode==='slow'?.62:rain>.8?1.1:rain>.02?.66:0,previousCycle=cycle;
@@ -94,9 +173,9 @@ export function createWeatherWindshield(THREE,{cabinMount,camera,...options}={})
    }if(changed)wipeMemory.needsUpdate=true;}
    const phase=(1-Math.cos(cycle*Math.PI*2))*.5;
    uniforms.uTime.value=time;uniforms.uRain.value=Math.max(rain,film*.42);uniforms.uSpeed.value=speedMps;uniforms.uPhase.value=phase;uniforms.uSweep.value=cycle%1>.5?1:0;uniforms.uFilm.value=film;uniforms.uCycles.value=cycle;uniforms.uRate.value=movingRate;setPhase(phase);
-   pane.visible=rain>.005||film>.005;
+   dropsVisible=rain>.005||film>.005;pane.visible=dropsVisible||conditionVisible;
   },
-  diagnostics:()=>({visible:root.visible,dropsVisible:pane.visible,time,film,phase:uniforms.uPhase.value,cabinAnchored:root.parent===cabinMount,drawBatches:5,wipeMemorySamples:wipeSamples,optics:'hierarchical-beads-rivulets-persistent-wipe',measurements:measure()}),
+  diagnostics:()=>({visible:root.visible,dropsVisible,condition:{dirt:uniforms.uGlassDirt.value,damage:uniforms.uGlassDamage.value},time,film,phase:uniforms.uPhase.value,cabinAnchored:root.parent===cabinMount,drawBatches:5,wipeMemorySamples:wipeSamples,optics:'hierarchical-beads-rivulets-persistent-wipe',measurements:measure()}),
   dispose(){if(disposed)return;disposed=true;root.removeFromParent();root.traverse(object=>object.geometry?.dispose());material.dispose();wiperMaterial.dispose();wipeMemory.dispose();}
  };
 }

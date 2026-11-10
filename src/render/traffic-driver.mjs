@@ -8,8 +8,9 @@ const DRIVERS = [
 ];
 
 // All coordinates are in the car's real metre space. The hood is toward -X.
-export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false}) {
+export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false, animatedHands=false, steeringAxis=[1,0,0]}) {
   const [ex,ey,ez]=eye, [wx,wy,wz]=wheel, headY=Math.min(ey+.018,roofM-.145);
+  const articulated=animatedHands&&!passenger;
   const root=new T.Group();
   root.name=passenger?'TrafficPassenger':'TrafficDriver';
   root.userData.asfaltoPrewarm=true;
@@ -39,8 +40,10 @@ export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false}) {
       const joint=[shoulder[0],shoulder[1]-.016,ez+side*.145];
       const elbow=[ex-.075,parked?headY-.38:wy-.105,ez+side*.18];
       const hand=parked?[ex-.17,headY-.41,ez+side*.10]:[wx,wy+.084,wz+side*.134];
-      shirt.push(limb(joint,elbow,.052),limb(elbow,hand,.036));
-      skin.push(blob(hand,[.039,.024,.022]));
+      if(!articulated){
+        shirt.push(limb(joint,elbow,.052),limb(elbow,hand,.036));
+        skin.push(blob(hand,[.039,.024,.022]));
+      }
     }
     const hair=[blob([ex+.008,headY+.009,ez],[.106,.123,.089],scalp),
       ...[-1,1].map(side=>blob([ex-.086,headY+.026,ez+side*.034],[.008,.008,.014]))];
@@ -72,6 +75,40 @@ export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false}) {
     mesh.userData.asfaltoPrewarm=true;
     root.add(mesh);return mesh;
   });
+  const armGeometry=articulated?new T.SphereGeometry(1,8,6):null;
+  const arms=articulated?[-1,1].map(side=>{
+    const shoulder=new T.Vector3(ex+.11,headY-.251,ez+side*.145),elbow=new T.Vector3();
+    const nodes=[meshes[1].material,meshes[1].material,meshes[0].material].map((material,i)=>{
+      const mesh=new T.Mesh(armGeometry,material);mesh.name='DriverArm_'+side+'_'+i;root.add(mesh);return mesh;
+    });
+    nodes[2].scale.set(.039,.025,.023);
+    return {side,shoulder,elbow,nodes};
+  }):null;
+  const wheelCenter=articulated?new T.Vector3(wx,wy,wz):null;
+  const wheelAxis=articulated?new T.Vector3(...steeringAxis).normalize():null;
+  const grip=articulated?new T.Vector3():null;
+  let lastSteer=NaN;
+  function moveArm(arm,from,to,radius){
+    const length=delta.subVectors(to,from).length();
+    arm.position.copy(from).addScaledVector(delta,.5);
+    arm.quaternion.setFromUnitVectors(up,delta.normalize());
+    arm.scale.set(radius,length*.54+radius*.27,radius);
+  }
+  function setSteering(value=0){
+    if(!arms)return;
+    // Hands shift their grip before the steering wheel makes another full turn.
+    const angle=Math.max(-.68,Math.min(.68,value));
+    if(angle===lastSteer)return;
+    lastSteer=angle;
+    for(const {side,shoulder,elbow,nodes} of arms){
+      grip.set(0,.084,side*.134).applyAxisAngle(wheelAxis,angle).add(wheelCenter);
+      elbow.set(ex-.075,Math.min(headY-.29,grip.y-.14),ez+side*.18);
+      moveArm(nodes[0],shoulder,elbow,.052);
+      moveArm(nodes[1],elbow,grip,.036);
+      nodes[2].position.copy(grip);
+    }
+  }
+  setSteering(0);
   function setVariant(index) {
     const variant=DRIVERS[index]||DRIVERS[0];
     for(const [i,mesh] of meshes.entries())mesh.material.color.setHex(variant[palette[i]]??0x34312e);
@@ -82,12 +119,13 @@ export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false}) {
   }
   setVariant(0);
   return {
-    root,setVariant,
+    root,setVariant,setSteering,
     setParked(value) {const pose=value?parked:driving;meshes.forEach((mesh,i)=>{mesh.geometry=pose[i];});},
     dispose() {
       root.removeFromParent();root.clear();
       meshes.forEach(mesh=>mesh.material.dispose());
       for(const geometry of new Set([...driving,...parked]))geometry.dispose();
+      armGeometry?.dispose();
     },
   };
 }

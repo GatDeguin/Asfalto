@@ -3,7 +3,7 @@ import { VEHICLE_VISUAL_CALIBRATION } from './vehicle-physical-calibration.mjs?v
 import { releaseVehicleModel } from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
 import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
-import { createTrafficDriver } from './traffic-driver.mjs?v=15a626a866acb5ac';
+import { createTrafficDriver } from './traffic-driver.mjs?v=6a52e1173920be49';
 
 function release(model) {
   const materials = new Set();

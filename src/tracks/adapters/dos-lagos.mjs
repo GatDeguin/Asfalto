@@ -1,12 +1,12 @@
 import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
 import {freezeStaticTrackTransforms} from '../../render/frame-matrices.mjs?v=711167562fad7c51';
-import { createGameplayBridge as createCanonicalGameplayBridge } from '../gameplay-bridge.mjs?v=75c4371c18fdd85b';
+import { createGameplayBridge as createCanonicalGameplayBridge } from '../gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=fe37dae2ff5129f6';
-import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=3cc7bd2a43b231fc';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=aef74622e732cf21';
+import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=9098ebd9e517436c';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({

@@ -1,5 +1,5 @@
 import {bakeSpatialField} from './offline-track-bake.mjs?v=67e9450828b29db5';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=fe37dae2ff5129f6';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=aef74622e732cf21';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
 const terrainNode=o=>o.isMesh&&!o.userData?.asfaltoReplacedTerrain&&!/^(COLLISION_|ASFALTO_TERRAIN_SOURCE_OWNER|RETURN_)/.test(o.name||'')&&(/ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION/.test(o.name||'')||/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(o.material?.name||''));
@@ -40,7 +40,7 @@ export function carveReturnValley(THREE,root,returnField,sourceField){
   });for(const owner of owners)root.add(owner);
   root.userData.asfaltoReturnValley=report;return report;
 }
-export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,material,id}){
+export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,material,id,chapters=[]}){
   if(!sourceRoot?.isObject3D)sourceRoot=null;
   const returnField=routeSpatialField(samples),sourceField=routeSpatialField(sourceSamples||[]);
   if(sourceRoot)relocateDistantRidges(THREE,sourceRoot,[...sourceSamples,...samples]);
@@ -56,13 +56,29 @@ export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,ma
   for(let z=0;z<=nz;z++)for(let x=0;x<=nx;x++){const i=z*(nx+1)+x,wx=bounds.minX+x*dx,wz=bounds.minZ+z*dz,y=raw(wx,wz);if(Number.isFinite(y)){sourceHeight[i]=y;nearest[i]=i;queue[tail++]=i;}}
   while(head<tail){const i=queue[head++],x=i%(nx+1),z=Math.floor(i/(nx+1));for(const j of [x>0?i-1:-1,x<nx?i+1:-1,z>0?i-nx-1:-1,z<nz?i+nx+1:-1])if(j>=0&&nearest[j]<0){nearest[j]=nearest[i];queue[tail++]=j;}}
   const forest=id==='dos_lagos'||id==='paso_garibaldi'||id==='cataratas_iguazu',mean=samples.reduce((n,s)=>n+s.position[1],0)/samples.length;
-  function regional(x,z,q){const relief=(forest?100:320)*( .55+.28*Math.sin(x/670+Math.sin(z/940))+.17*Math.cos(z/420-x/1150));return(q?.height??mean)-15+relief;}
+  const firstM=samples[0].sM,returnLength=samples.at(-1).sM-firstM;
+  const regionScale={dos_lagos:143,paso_garibaldi:188,cataratas_iguazu:72,cuesta_lipan:340,aconcagua_horcones:420}[id]||(forest?100:320);
+  const forms={shore:.46,grove:.85,lookout:1.14,cut:1.16,talus:1.23,wash:.59};
+  function regional(x,z,q){
+    const at=q?clamp((q.sM-firstM)/returnLength*chapters.length-.5,0,Math.max(0,chapters.length-1)):0;
+    const i=Math.floor(at),j=Math.min(chapters.length-1,i+1);
+    const a=forms[chapters[i]?.landscape]||1,b=forms[chapters[j]?.landscape]||1,form=a+(b-a)*smooth(at-i);
+    const ridges=Math.pow(.5+.5*Math.sin(x/450+Math.cos(z/570)+z/830),2);
+    const rolling=.44+.23*Math.sin(x/670+Math.sin(z/940))+.14*Math.cos(z/420-x/1150)+.21*ridges;
+    return(q?.height??mean)-12+regionScale*form*rolling;
+  }
   for(let z=0;z<=nz;z++)for(let x=0;x<=nx;x++){
     const i=z*(nx+1)+x,wx=bounds.minX+x*dx,wz=bounds.minZ+z*dz,q=returnField(wx,wz,1900);let y=regional(wx,wz,q),known=nearest[i];
     const underlayM=id==='cataratas_iguazu'?24:2;
     if(Number.isFinite(sourceHeight[i]))y=sourceHeight[i]-underlayM;
     else if(known>=0){const sx=known%(nx+1),sz=Math.floor(known/(nx+1)),d=Math.hypot((x-sx)*dx,(z-sz)*dz),u=smooth(d/1800);y=sourceHeight[known]-underlayM+(y-sourceHeight[known]+underlayM)*u;}
-    if(q){const valleyY=q.height-2+.25*(Math.sqrt(q.distance*q.distance+1600)-40);y=Math.min(y,valleyY);if(q.distance<140)y=Math.min(y,q.height-3);}
+    if(q){
+      const clearance=Math.max(0,q.distance-q.widthM*.5-2);
+      const valleyY=q.height-2+.25*(Math.sqrt(clearance*clearance+2200)-Math.sqrt(2200));
+      y=Math.min(y,valleyY);
+      // A grid cell may straddle the road without a centreline vertex.
+      if(q.distance<140)y=Math.min(y,q.height-3);
+    }
     const authored=sourceField(wx,wz,id==='cuesta_lipan'?1600:180);
     if(authored){
       // A 180m hard cutoff raised adjacent grid cells by hundreds of metres.
@@ -78,7 +94,7 @@ export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,ma
   for(let z=0;z<=nz;z++)for(let x=0;x<=nx;x++){const i=z*(nx+1)+x;positions.set([bounds.minX+x*dx,heights[i],bounds.minZ+z*dz],i*3);uv.set([x*dx/10,z*dz/10],i*2);if(x<nx&&z<nz)indices.push(i,i+nx+1,i+nx+2,i,i+nx+2,i+1);}
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.BufferAttribute(uv,2));geometry.setIndex(indices);geometry.computeVertexNormals();geometry.computeBoundingSphere();
   const mesh=new THREE.Mesh(geometry,material);mesh.name='RETURN_REGIONAL_TERRAIN';mesh.receiveShadow=true;mesh.userData.asfaltoReturnLandscape={bounds,stepM:step,vertices:count,sourceSamplesPreserved:true,valley};
-  return {mesh,heightAt,returnField,carveSourceTerrain:root=>(id==='dos_lagos'||id==='cuesta_lipan'||id==='cataratas_iguazu')?carveReturnValley(THREE,root,returnField,sourceField):null};
+  return {mesh,heightAt,returnField,sourceField,carveSourceTerrain:root=>(id==='dos_lagos'||id==='cuesta_lipan'||id==='cataratas_iguazu')?carveReturnValley(THREE,root,returnField,sourceField):null};
 }
 
 function relocateDistantRidges(T,root,samples){

@@ -554,7 +554,8 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   const changed = sceneryOnly ? 0 : improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField });
   let details = sceneryOnly ? {} : improveRegionalRoadMaterials(THREE,root,{query,id});
   let treePlacements = [];
-  const heightAt = !sceneryOnly ? terrainHeightSampler(THREE, root) : null;
+  const heightAt = !sceneryOnly ? root.userData.asfaltoReturnHeightAt||terrainHeightSampler(THREE, root) : null;
+  delete root.userData.asfaltoReturnHeightAt;
   if(heightAt&&query&&Number.isFinite(lengthM)){
     details={...details,...refineRegionalBoulders(THREE,root,{id,query,heightAt})};
     let source;root.traverse(mesh=>{if(!source&&mesh.userData.asfaltoTerrainRefinement)source=mesh.material;});
@@ -602,7 +603,9 @@ export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,
   let templates;try{templates=await loadRoadsideTemplates(THREE,signal,id);}catch(error){for(const texture of owned)texture.dispose();throw error;}
   const keeper=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial());keeper.name='ASFALTO_RETURN_SCENERY_RESOURCE_OWNER';keeper.visible=false;
   owned.forEach((texture,i)=>keeper.material['asfaltoOwnedTexture'+i]=texture);for(const[name,geometry]of templates){const owner=new THREE.Mesh(geometry,keeper.material);owner.name='Return detail template '+name;keeper.add(owner);}root.add(keeper);
-  const heightAt=terrainHeightSampler(THREE,root),roadField=visualRoadField(query,lengthM);let placements=[],stats={};
+  const heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(THREE,root),roadField=visualRoadField(query,lengthM);
+  delete root.userData.asfaltoReturnHeightAt;
+  let placements=[],stats={};
   if(FOREST_TRACKS.has(id)){const forest=addForest(THREE,root,id,query,lengthM,textures.forest,heightAt,roadField,detailRange);placements=forest.placements;stats=forest;}
   stats={...stats,...addRoadsideDetails(THREE,root,{id,query,lengthM,heightAt,templates,textures,treePlacements:placements,detailRange}),...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
   stats.vertexColors=applySurfaceVertexColors(THREE,root,{id});

@@ -46,7 +46,7 @@ import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs
 import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=b43d93f1161c6526';
 import {startupDemand} from '../runtime/startup-demand.mjs?v=cdc80b4586de6db3';
 import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=78be56c6974baa83';
-import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=10fea583284d52b0';
+import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=5a600e9872121b20';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=5a4f657d52211b79';
 import {createFramePacer} from '../performance/frame-pacer.mjs?v=a3ed1a05db9caf08';
 import {installFramePacingSettings,readFramePacingTarget} from '../render/frame-pacing-settings.mjs?v=49e6b83e1cf67591';
@@ -63,7 +63,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=daeee784
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=8f0c163e49f66080';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=0aab96eeb9587f57';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -86,18 +86,19 @@ import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=5
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=cd3b096c06d47fea';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=759eba2a6de85a5f';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=ceb667c1c4ccf5c5';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
-import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=e74b08c0fa52f74a';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=1ef06752490f9859';
-import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=6f5809ba6f02e86b';
+import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=520277a6490cae4d';
+import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
+import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=08ac3d0601782090';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
-import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=8fde600cbc04fd1d';
+import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=93a85b29944b9925';
 import { createCameraBoomCollisionQuery } from '../game/camera-boom-collision.mjs?v=d809a788e1c11c70';
-import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=9789fe512594b28a';
-import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=d168eb0d52e16134';
+import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=854484feaf2bd3fc';
+import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=717dcf1a7e3be45f';
 import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironment } from '../environment/environment-profiles.mjs?v=10029cc9ad1b0d80';
 import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=2cf0ac07a334fc63';
 import { resolveRaceLighting, applyRaceLightingSupport, orientHdriRows } from '../environment/race-lighting.mjs';
@@ -107,7 +108,7 @@ import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f98693
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
 import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=be8bee16cabf1aea';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=d03d998c1000922a';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=4956b0f663168a60';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -4716,14 +4717,14 @@ try {
   // Visible wheels are owned and calibrated by the selected presentation in updateExterior.
   const raceChevyWheelVisualRig = {applyWheels(){},reset(){},getDiagnostics:()=>({selectedPresentation:true,...raceChevyPresentation?.diagnostics()}),dispose:()=>true};
   const racePaint = createChevyPaintController(THREE, raceChevyV3Model, { color:globalThis.__chevyPaintColor || '#d66a24' });
-  let raceChevyPresentation=null,cockpitFrontPaint=null,cockpitHoodPaintMaterial=null,authoredMirrors=null,authoredControlMounts=null,mobileDrivingControls=null;
+  let raceChevyPresentation=null,playerDriver=null,cockpitFrontPaint=null,cockpitHoodPaintMaterial=null,authoredMirrors=null,authoredControlMounts=null,mobileDrivingControls=null;
   const updateRacePaint = event => {const hex=event.detail?.hex;if(typeof hex!=='string'||!/^#[a-f\d]{6}$/i.test(hex))return;racePaint.setColor(hex);raceChevyPresentation?.setPaintColor(hex);cockpitFrontPaint?.setColor(hex);cockpitHoodPaintMaterial?.color.set(hex);};
   window.addEventListener('chevy:paint-change', updateRacePaint);
   window.__chevyWheelVisualRig = raceChevyWheelVisualRig;
   function disposeRaceChevyWheels() {
     window.removeEventListener('chevy:paint-change', updateRacePaint);
     if(window.__asfaltoVehiclePresentations?.chevy===raceChevyPresentation)delete window.__asfaltoVehiclePresentations;
-    mobileDrivingControls?.dispose();authoredControlMounts?.dispose();authoredMirrors?.dispose();authoredControlMounts=null;authoredMirrors=null;raceChevyPresentation?.dispose();raceChevyPresentation=null;
+    mobileDrivingControls?.dispose();authoredControlMounts?.dispose();authoredMirrors?.dispose();authoredControlMounts=null;authoredMirrors=null;raceChevyPresentation?.dispose();raceChevyPresentation=null;playerDriver?.dispose();playerDriver=null;
     cockpitFrontPaint?.dispose();cockpitFrontPaint=null;cockpitHoodPaintMaterial=null;
     racePaint.dispose();
     const released = raceChevyWheelVisualRig.dispose();
@@ -4969,7 +4970,8 @@ const RaceCore = (() => {
     _recordKey() {
       const a = this.settings.assists;
       const diff = Math.round(this.settings.difficulty * 100);
-      return `cockpit-race-v5:${this.track.id}:${this.settings.mode}:${this.settings.weather}:${this.settings.timeOfDay}:${diff}:${this.settings.rivalCount}:${a.steering ? 1 : 0}${a.abs ? 1 : 0}${a.tcs ? 1 : 0}${a.stability ? 1 : 0}`;
+      const layout=this.track.layoutRevision?':'+this.track.layoutRevision:'';
+      return `cockpit-race-v5:${this.track.id}${layout}:${this.settings.mode}:${this.settings.weather}:${this.settings.timeOfDay}:${diff}:${this.settings.rivalCount}:${a.steering ? 1 : 0}${a.abs ? 1 : 0}${a.tcs ? 1 : 0}${a.stability ? 1 : 0}`;
     }
 
     _legacyRecordKey() {
@@ -5056,7 +5058,7 @@ const RaceCore = (() => {
       if (!this.storage) return;
       try {
         const record = safeParse(this.storage.getItem(this._recordKey()), null)
-          || safeParse(this.storage.getItem(this._legacyRecordKey()), null);
+          || (!this.track.layoutRevision&&safeParse(this.storage.getItem(this._legacyRecordKey()), null));
         if (!record || !Number.isFinite(record.bestLapTime)) return;
         this.state.bestLapTime = record.bestLapTime;
         this.state.bestSectorTimes = Array.isArray(record.bestSectorTimes) ? [...record.bestSectorTimes] : [];
@@ -5933,7 +5935,6 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     const startupAbort=new AbortController();
     const signalSources=new Set();
     let ownsContext = false;
-    let lastImpactAt = 0;
     const ambientMix = { target: 0, current: 0 };
     const surfaceNoise = { target: 0, current: 0 };
     const tireSlip = { target: 0, current: 0 };
@@ -5981,24 +5982,22 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
         offset += duration + .035;
       }
     }
-    function impact(intensity=.5){drivingFx?.impact({intensity:clamp(intensity)*settings.audioImpacts});}
     const audioListenerPosition=new THREE.Vector3(),audioRivalDirection=new THREE.Vector3();
     function update(dt,feedback,state,input,renderFrame) {
       if(!context||!started)return;
-      const driving=document.body.classList.contains('v6-driving')&&!document.body.classList.contains('v6-menu-open')&&!document.hidden&&state.status!=='PAUSED';
-      if(!driving){silenceSignals();soundscape?.setActive(false);drivingFx?.setActive(false);master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);return;}
+      const snapshot=renderFrame?.currentSnapshot||{},other=renderFrame?.rivals?.falcon?.currentSnapshot;
+      const levels=options.getDrivingAudioLevels?.()||{};
+      const driving=context.state==='running'&&levels.enabled!==false&&document.body.classList.contains('v6-driving')&&!document.body.classList.contains('v6-menu-open')&&!document.hidden&&state.status!=='PAUSED';
+      if(!driving){silenceSignals();soundscape?.setActive(false);drivingFx?.update({snapshot,active:false});master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);return;}
       master.gain.setTargetAtTime(.82,context.currentTime,.025);
       const weather=raceWeatherEffects.getSoundscapeState(),cameraMode=options.getCameraMode?.()||'cockpit',speed=Math.abs(feedback.speedMps||0);
       soundscape?.update({...weather,active:true,cameraMode,speedMps:speed,ambientGain:settings.audioAmbient});
-      const snapshot=renderFrame?.currentSnapshot||{},other=renderFrame?.rivals?.falcon?.currentSnapshot;
       let rival=null;
       if(other?.chassis){camera.getWorldPosition(audioListenerPosition);audioRivalDirection.fromArray(other.chassis.position).sub(audioListenerPosition);const distanceM=audioRivalDirection.length();audioRivalDirection.normalize();
         const relative=(other.chassis.linearVelocity||[0,0,0]).map((v,i)=>v-(snapshot.chassis?.linearVelocity?.[i]||0)),m=camera.matrixWorld.elements;
         rival={distanceM,rpm:other.engine?.rpm,throttle:other.engine?.load,pan:audioRivalDirection.x*m[0]+audioRivalDirection.y*m[1]+audioRivalDirection.z*m[2],radialSpeedMps:relative[0]*audioRivalDirection.x+relative[1]*audioRivalDirection.y+relative[2]*audioRivalDirection.z};}
-      const levels=options.getDrivingAudioLevels?.()||{};
       drivingFx?.update({snapshot,controls:input,speedMps:speed,wetness:weather.wetness,active:true,cameraMode,tiresGain:settings.audioTires,roadGain:levels.road??.44,brakesGain:levels.brakes??.56,impactsGain:settings.audioImpacts,rival});
       const diagnostic=drivingFx?.diagnostics();ambientMix.current=weather.rainIntensity||0;surfaceNoise.current=diagnostic?.targets?.rollingLeft||0;tireSlip.current=diagnostic?.targets?.skidLeft||0;
-      if(feedback.impact){const event=snapshot.impacts?.at(-1);drivingFx?.impact({intensity:clamp((event?.impulseNs||0)/1400,.15,1)*settings.audioImpacts,eventId:event?event.timeSeconds+'|'+event.otherId:null,metal:['falcon','chevy'].includes(event?.otherId)});}
     }
     function silenceSignals(){for(const voice of [...signalSources]){try{voice.osc.stop();}catch{}voice.dispose();}}
     async function suspend() { silenceSignals();drivingFx?.setActive(false);soundscape?.setActive(false);if(master&&context)master.gain.setValueAtTime(0,context.currentTime);try { if (ownsContext) await context?.suspend(); } catch { /* ignored */ } }
@@ -6013,7 +6012,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
       try { if (ownsContext) await context?.close(); } catch { /* ignored */ }
       context = null; ownsContext = false; started = false;
     }
-    return { ensureStarted, update, raceSignal, impact, suspend, resume, dispose, thunder:event=>soundscape?.thunder(event), soundscapeDiagnostics:()=>({ambient:soundscape?.diagnostics(),driving:drivingFx?.diagnostics()}), getState: () => ({ started, contextState: context?.state || 'closed', ambientMix: ambientMix.current, surfaceNoise: surfaceNoise.current, tireSlip: tireSlip.current, reverb: reverbSend?.gain?.value || 0 }) };
+    return { ensureStarted, update, raceSignal, suspend, resume, dispose, thunder:event=>soundscape?.thunder(event), soundscapeDiagnostics:()=>({ambient:soundscape?.diagnostics(),driving:drivingFx?.diagnostics()}), getState: () => ({ started, contextState: context?.state || 'closed', ambientMix: ambientMix.current, surfaceNoise: surfaceNoise.current, tireSlip: tireSlip.current, reverb: reverbSend?.gain?.value || 0 }) };
   }
   const raceAudio = createRaceAudio();
 
@@ -7539,6 +7538,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const xAxis = new THREE.Vector3(1,0,0);
   const scatter = { grass: [], flowers: [], trees: [], rocks: [], decals: [] };
   let minimapSamples = [];
+  let legacyMinimapTrack = null;
 
   function groundMask(lateral, width, shoulder) {
     const edge = width * .5 + shoulder;
@@ -7585,7 +7585,6 @@ listen(window,'chevy:vehicle-config',(event)=>{
         color:patch?.32+random()*.12:.05+random()*.08,
       });
     }
-    minimapSamples = Array.from({length:260},(_,i)=>track.sample(track.length*i/259));
     grassMesh.count=flowerMesh.count=trunkMesh.count=canopyMesh.count=rockMesh.count=roadDecals.count=0;
     if(rarGrassSceneRockMesh)rarGrassSceneRockMesh.count=0;
   }
@@ -7827,9 +7826,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
   }
 
   function drawMinimap() {
-    const canvas=ui.minimap;if(!canvas)return;const rect=canvas.getBoundingClientRect();const dpr=Math.min(2,window.devicePixelRatio||1);const width=Math.max(1,Math.round(rect.width*dpr)),height=Math.max(1,Math.round(rect.height*dpr));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}const ctx=canvas.getContext('2d');if(!ctx)return;ctx.clearRect(0,0,width,height);ctx.fillStyle='rgba(5,8,10,.66)';ctx.fillRect(0,0,width,height);
+    const canvas=ui.minimap;
+    if(!canvas||document.body.classList.contains('v6-driving')||canvas.offsetWidth===0)return;
+    if(legacyMinimapTrack!==track){legacyMinimapTrack=track;minimapSamples=Array.from({length:260},(_,i)=>track.sample(track.length*i/259));}
+    const rect=canvas.getBoundingClientRect();const dpr=Math.min(2,window.devicePixelRatio||1);const width=Math.max(1,Math.round(rect.width*dpr)),height=Math.max(1,Math.round(rect.height*dpr));if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}const ctx=canvas.getContext('2d');if(!ctx)return;ctx.clearRect(0,0,width,height);ctx.fillStyle='rgba(5,8,10,.66)';ctx.fillRect(0,0,width,height);
     const xs=minimapSamples.map(p=>p.x),zs=minimapSamples.map(p=>p.z);const minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);const pad=9*dpr,scale=Math.min((width-pad*2)/Math.max(1,maxX-minX),(height-pad*2)/Math.max(1,maxZ-minZ));const mapPoint=(sample)=>({x:pad+(sample.x-minX)*scale,y:height-pad-(sample.z-minZ)*scale});
-    ctx.lineWidth=5*dpr;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.18)';ctx.beginPath();minimapSamples.forEach((sample,i)=>{const p=mapPoint(sample);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});ctx.closePath();ctx.stroke();ctx.lineWidth=1.5*dpr;ctx.strokeStyle=track.palette.curbA;ctx.stroke();
+    ctx.lineWidth=5*dpr;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='rgba(255,255,255,.18)';ctx.beginPath();minimapSamples.forEach((sample,i)=>{const p=mapPoint(sample);i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y)});if(track.closed)ctx.closePath();ctx.stroke();ctx.lineWidth=1.5*dpr;ctx.strokeStyle=track.palette.curbA;ctx.stroke();
     for(const cp of track.checkpoints){const p=mapPoint(track.sample(cp));ctx.fillStyle='rgba(255,211,112,.68)';ctx.fillRect(p.x-1*dpr,p.y-1*dpr,2*dpr,2*dpr);}
     for(const rival of lastState.rivals||[]){const p=mapPoint(track.sample(rival.s));ctx.fillStyle='#ff766d';ctx.beginPath();ctx.arc(p.x,p.y,2*dpr,0,Math.PI*2);ctx.fill();}
     const ghostPose=simulation.getGhostPose(Math.max(0,lastState.totalTime-lastState.lapStartTime));if(ghostPose){const p=mapPoint(track.sample(ghostPose.s));ctx.fillStyle='rgba(126,232,255,.75)';ctx.beginPath();ctx.arc(p.x,p.y,1.8*dpr,0,Math.PI*2);ctx.fill();}
@@ -8179,6 +8181,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       }
       raceWeatherEffects.update({dt,environment:getRaceRenderEnvironment(),qualityTier:performanceState.qualityTier,camera,cameraMode:options.getCameraMode?.()||'cockpit',
         paused:simulation.state.status==='PAUSED',active:document.body.classList.contains('v6-driving')&&!document.body.classList.contains('v6-menu-open')&&!document.body.classList.contains('an-intro-open'),
+        windshieldCondition:cockpit?.visible?options.getPlayerPresentation?.()?.getWindshieldCondition?.():null,
         rivals:falconPhysicalBody?.visible&&renderFrame.rivals?.falcon?.currentSnapshot?.chassis?[{id:'falcon',snapshot:renderFrame.rivals.falcon.currentSnapshot}]:[],
         vehicle:{id:globalThis.__asfaltoSelectedPlayerVehicle||'chevy',visualRoot:playerVisualBody,metalContact,position:fxPosition,quaternion:fxQuaternion,velocity:fxVelocity,speedMps:feedback.speedMps,groundY,wheelContacts:currentSnapshot.wheels,impacts:currentSnapshot.impacts,enclosed:true,
           surface:feedback.surface,slip:feedback.slip,impact:feedback.impact,collisionCount:lastState.collisionCount,
@@ -8524,7 +8527,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     getSharedAudioContext: () => engineSound.context,
     getSharedAudioDestination: () => engineSound.safetyLimiter || engineSound.masterGain,
     getUiAudioDestination:()=>engineSound.masterGain,
-    getDrivingAudioLevels: () => ({road:gameSettings.roadVolume,brakes:gameSettings.brakeVolume}),
+    getDrivingAudioLevels: () => ({enabled:gameSettings.soundEnabled,road:gameSettings.roadVolume,brakes:gameSettings.brakeVolume}),
     getTransmissionMode:()=>gameSettings.transmissionMode,
     onVehicleReset({ speedMps = 0, gear = 'N', reason } = {}) {
       // Track/reset discontinuities must not interpolate from the previous route.
@@ -9895,6 +9898,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       cockpit.visible=false;raceChevyV3.visible=true;
       camera.position.fromArray(opening.shot.position);camera.up.set(0,1,0);camera.lookAt(...opening.shot.target);camera.fov=opening.shot.fov;camera.updateProjectionMatrix();camera.updateMatrixWorld();
     }
+    playerDriver?.update(mode,steerToWheelRotation(steering.steer,maxWheelAngle),{opening:!!opening.shot,exterior:raceChevyV3.visible});
     // Portrait phones keep a usable road view instead of expanding to a fisheye cabin lens.
     if(runtimeDeviceProfile.phone&&isCockpit&&!opening.shot&&!compositionEditor?.isActive())applyPhoneCockpitProjection(camera);
   }
@@ -9910,7 +9914,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     stage.userData.vehicleSelectionMount=true;
     stage.visible=false;
     raceChevyV3Model.add(stage);
-    let presentation,committed=false,released=false;
+    let presentation,driver,committed=false,released=false;
     try {
       presentation=await createVehiclePresentation(THREE,{
         vehicle,signal,lodLevels:runtimeDeviceProfile.phone?[0]:[0,1,2],modelRoot:stage,
@@ -9918,9 +9922,13 @@ listen(window,'chevy:vehicle-config',(event)=>{
         paintColor:getVehicleDefinition(vehicle)?.defaultPaint||globalThis.__chevyPaintColor||'#d66a24',
       });
       presentation.setChassisConfig(globalThis.__asfaltoChassisConfig||null);
+      const savedCondition=globalThis.__chevyV6Complete?.profile?.().vehicleConditionsV7?.cars?.[vehicle];
+      if(savedCondition)presentation.setPersistentCondition(savedCondition);
+      driver=createPlayerDriver(THREE,vehicle);
     } catch(error) {
       stage.removeFromParent();
       presentation?.dispose();
+      driver?.dispose();
       throw error;
     }
     return {
@@ -9930,6 +9938,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
         authoredControlMounts?.restore();
         authoredMirrors?.dispose();
         raceChevyPresentation?.dispose();
+        playerDriver?.dispose();
+        playerDriver=driver;
+        if(driver)raceChevyPhysicalRoot.add(driver.root);
         for(const child of [...raceChevyV3Model.children])if(child!==stage){
           if(child.userData.vehicleSelectionMount)child.removeFromParent();
           else child.visible=false;
@@ -9953,6 +9964,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
         if(released||committed)return;
         released=true;
         presentation.dispose();
+        driver?.dispose();
         stage.removeFromParent();
       },
     };

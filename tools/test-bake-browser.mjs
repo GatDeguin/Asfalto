@@ -1,4 +1,4 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {startServer} from '../server.mjs?v=ec9ca3d30198bdb8';
+import fs from 'node:fs';import assert from 'node:assert/strict';import {createRequire} from 'node:module';import {fileURLToPath} from 'node:url';import {startServer} from '../server.mjs?v=5a11a063822d96e9';
 const {chromium}=createRequire('C:/Users/Gaston/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json')('playwright');
 const server=await startServer({root:fileURLToPath(new URL('../',import.meta.url))});let browser;
 try{

@@ -5,6 +5,7 @@
   const FIXED_DT = 1 / 120;
   // Session starts share a monotonic identifier even when a track replaces its physics session.
   let nextIgnitionSequence = 0;
+  let nextImpactSequence = 0;
   const TELEPORT_TOKENS = new WeakSet();
 
   function finite(value, fallback) {
@@ -684,8 +685,10 @@
     out.contactState={contacts,rotation:null,translation:out.translation};
     out.snapshots=Array.from({length:2},()=>({fixedHz:120,timeSeconds:0,chassis:{position:[0,0,0],rotation:[0,0,0,1],linearVelocity:[0,0,0],angularVelocity:[0,0,0],acceleration:[0,0,0]},
       wheels:session.wheels.map(w=>({...w,point:[0,0,0],normal:[0,1,0],tire:{}})),steering:{frontAligningTorqueNm:0,frontContactRatio:0},
-      engine:{ignition:{state:'ready',sequence:0,startedAtS:0}},gearbox:{},clutch:{},brakes:{locked:[false,false,false,false],wheelBrakeTorquesNm:[0,0,0,0],absModulation:[1,1,1,1]},controls:{},chassisConfig:null,impact:false,impacts:[],damage:session.core.createMutableDamageState(),debugForces:{suspensionN:[0,0,0],tireN:[0,0,0],resistanceN:[0,0,0]}}));
-    const impactRecord=()=>({timeSeconds:0,impulseNs:0,magnitude:0,otherId:'world',material:'unknown',localPointM:[0,0,0],relativeVelocityMps:[0,0,0]});
+      engine:{ignition:{state:'ready',sequence:0,startedAtS:0}},gearbox:{},clutch:{},brakes:{locked:[false,false,false,false],wheelBrakeTorquesNm:[0,0,0,0],absModulation:[1,1,1,1]},controls:{},chassisConfig:null,impact:false,impacts:[],scrapeContact:null,damage:session.core.createMutableDamageState(),debugForces:{suspensionN:[0,0,0],tireN:[0,0,0],resistanceN:[0,0,0]}}));
+    const impactRecord=()=>({sequence:0,timeSeconds:0,impulseNs:0,magnitude:0,otherId:'world',material:'unknown',localPointM:[0,0,0],relativeVelocityMps:[0,0,0]});
+    const scrapeRecord=()=>({timeSeconds:-Infinity,normalForceN:0,tangentialSpeedMps:0,localSideM:0,material:'unknown'});
+    out.scrapeContact=scrapeRecord();out.scrapeSnapshotSlots=[scrapeRecord(),scrapeRecord()];
     out.impactHistory=Array.from({length:8},impactRecord);out.impactHistoryIndex=0;
     out.impactSnapshotSlots=Array.from({length:2},()=>Array.from({length:8},impactRecord));
     out.impactInput=impactRecord();out.impactRotation={x:0,y:0,z:0,w:1};
@@ -728,7 +731,8 @@
       this.impactEvents = this.RAPIER.EventQueue ? new this.RAPIER.EventQueue(true) : null;
       if(this.impactEvents) for(const collider of this.colliders) {
         collider.setActiveEvents(this.RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS);
-        collider.setContactForceEventThreshold(this.spec.massKg * .3 / FIXED_DT);
+        // Sustained rubbing needs lighter force samples than a damaging strike.
+        collider.setContactForceEventThreshold(this.spec.massKg * .012 / FIXED_DT);
       }
       this.previousLinearVelocity = fromRapierVector(this.body.linvel());
       const state = this.core.createVehicleState(this.spec);
@@ -749,7 +753,6 @@
       };
       this.damage = this.core.createMutableDamageState();
       this.impacts = [];
-      this.staticImpactTimes = new Map();
       this.timeSeconds = 0;
       this.ignitionSequence = 0;
       this.ignitionStartedAtS = 0;
@@ -969,6 +972,7 @@
       snapshot.brakes.frontTemperatureC=this.brakeState.frontTemperatureC;snapshot.brakes.rearTemperatureC=this.brakeState.rearTemperatureC;snapshot.brakes.frontFade=brakes.frontFade;snapshot.brakes.rearFade=brakes.rearFade;
       for(let i=0;i<4;i++){snapshot.brakes.locked[i]=s.locked[i];snapshot.brakes.wheelBrakeTorquesNm[i]=s.brakeTorques[i];snapshot.brakes.absModulation[i]=this.absModulation[i];}
       fieldsInto(snapshot.controls,controls);snapshot.chassisConfig=this.chassisConfig;snapshot.impact=hadImpact;this._copyImpactsInto(snapshot);
+      this._copyScrapeInto(snapshot);
       this.core.copyDamageInto(snapshot.damage,this.damage);
       this.lastSnapshot=snapshot;return snapshot;
     }
@@ -1006,7 +1010,7 @@
           for(let k=0;k<3;k++)s.impactPoint[k]+=s.impactOrigin[k];this._impactHasPoint=true;
         };
         this._registerImpactCollider=collider=>{if(this._impactRegistry.has(collider.handle))return;
-          const record={index:this._impactRecords.length,handle:collider.handle,point:[0,0,0],impulseNs:0,speed:0,material:'unknown',tick:-1,lastTime:-Infinity};
+          const record={index:this._impactRecords.length,handle:collider.handle,point:[0,0,0],impulseNs:0,speed:0,tangentSpeed:0,material:'unknown',tick:-1,lastTime:-Infinity};
           this._impactRegistry.set(collider.handle,record);this._impactRecords.push(record);};
       }
       if(!this._inImpactDrain) {
@@ -1037,9 +1041,18 @@
       const p=s.impactPoint,c=s.impactCenter,w=s.angularVelocity,v=s.velocity,rx=p[0]-c[0],ry=p[1]-c[1],rz=p[2]-c[2];
       vectorInto(s.impactVelocity,v[0]+w[1]*rz-w[2]*ry,v[1]+w[2]*rx-w[0]*rz,v[2]+w[0]*ry-w[1]*rx);
       const speed=Math.abs(dot(s.impactVelocity,s.impactNormal));
-      if(record.tick!==this.timeSeconds){record.tick=this.timeSeconds;record.impulseNs=0;record.speed=0;this._activeImpactIndices[this._activeImpactCount++]=record.index;}
+      if(record.tick!==this.timeSeconds){record.tick=this.timeSeconds;record.impulseNs=0;record.speed=0;record.tangentSpeed=0;this._activeImpactIndices[this._activeImpactCount++]=record.index;}
       record.impulseNs+=impulse;record.speed=Math.max(speed,record.speed);record.material=other.asfaltoContactMaterial||'unknown';
+      const tangentSpeed=Math.sqrt(Math.max(0,dot(s.impactVelocity,s.impactVelocity)-speed*speed));
+      record.tangentSpeed=Math.max(record.tangentSpeed,tangentSpeed);
       for(let k=0;k<3;k++)record.point[k]=p[k];
+    }
+
+    _contactLocalPoint(point,out) {
+      const s=this.scratch,q=this.body.rotation(s.rapierRotation);
+      s.impactRotation.x=-q.x;s.impactRotation.y=-q.y;s.impactRotation.z=-q.z;s.impactRotation.w=q.w;
+      for(let k=0;k<3;k++)s.impactLocal[k]=point[k]-s.impactCenter[k];
+      return rotateInto(out,s.impactLocal,s.impactRotation);
     }
 
     _captureStaticImpacts(linearVelocity, angularVelocity) {
@@ -1049,20 +1062,28 @@
       for(let k=0;k<3;k++){s.velocity[k]=linearVelocity[k];s.angularVelocity[k]=angularVelocity[k];}
       this._activeImpactCount=0;this._inImpactDrain=true;
       try {this.impactEvents.drainContactForceEvents(this._impactDrain);} finally {this._inImpactDrain=false;}
-      let impacted=false;
+      let impacted=false,strongestScrape=null,scrapePower=0;
       for(let i=0;i<this._activeImpactCount;i++) {const c=this._impactRecords[this._activeImpactIndices[i]];
+        const power=c.impulseNs*c.tangentSpeed;
+        if(c.material!=='soil'&&c.material!=='unknown'&&c.tangentSpeed>Math.max(3,c.speed*1.8)&&power>scrapePower) {
+          strongestScrape=c;scrapePower=power;
+        }
         if(c.impulseNs<this.spec.massKg*.65||c.speed<2||this.timeSeconds-c.lastTime<.3)continue;
-        const q=this.body.rotation(s.rapierRotation);s.impactRotation.x=-q.x;s.impactRotation.y=-q.y;s.impactRotation.z=-q.z;s.impactRotation.w=q.w;
-        for(let k=0;k<3;k++)s.impactLocal[k]=c.point[k]-s.impactCenter[k];
-        rotateInto(s.impactInput.localPointM,s.impactLocal,s.impactRotation);s.impactInput.impulseNs=c.impulseNs;s.impactInput.otherId='world';s.impactInput.material=c.material;s.impactInput.relativeVelocityMps=s.velocity;
+        this._contactLocalPoint(c.point,s.impactInput.localPointM);
+        s.impactInput.impulseNs=c.impulseNs;s.impactInput.otherId='world';s.impactInput.material=c.material;s.impactInput.relativeVelocityMps=s.velocity;
         c.lastTime=this.timeSeconds;this._applyImpactMutable(s.impactInput);impacted=true;
+      }
+      if(strongestScrape){
+        const local=this._contactLocalPoint(strongestScrape.point,s.impactLocal),scrape=s.scrapeContact;
+        scrape.timeSeconds=this.timeSeconds;scrape.material=strongestScrape.material;scrape.localSideM=local[2];
+        scrape.normalForceN=strongestScrape.impulseNs/FIXED_DT;scrape.tangentialSpeedMps=strongestScrape.tangentSpeed;
       }
       return impacted;
     }
 
     _applyImpactMutable(event) {
       const s=this.scratch,impulse=Math.max(0,finite(event?.impulseNs,0)),record=s.impactHistory[s.impactHistoryIndex];s.impactHistoryIndex=(s.impactHistoryIndex+1)%8;
-      record.timeSeconds=this.timeSeconds;record.impulseNs=impulse;record.magnitude=clamp(impulse/20000,0,1);record.otherId=String(event?.otherId||'world');record.material=String(event?.material||'unknown');
+      record.sequence=++nextImpactSequence;record.timeSeconds=this.timeSeconds;record.impulseNs=impulse;record.magnitude=clamp(impulse/20000,0,1);record.otherId=String(event?.otherId||'world');record.material=String(event?.material||'unknown');
       for(let k=0;k<3;k++){record.localPointM[k]=finite(event?.localPointM?.[k],0);record.relativeVelocityMps[k]=finite(event?.relativeVelocityMps?.[k],0);}
       this.core.applyImpactDamageInto(this.damage,this.damage,record);
       if(this.impacts.length===8){for(let i=0;i<7;i++)this.impacts[i]=this.impacts[i+1];this.impacts[7]=record;}else this.impacts.push(record);
@@ -1087,9 +1108,26 @@
       snapshot.impacts.length=this.impacts.length;
       const slots=snapshot===this.scratch.snapshots[0]?this.scratch.impactSnapshotSlots[0]:this.scratch.impactSnapshotSlots[1];
       for(let i=0;i<this.impacts.length;i++){const source=this.impacts[i],out=slots[i];
-        out.timeSeconds=source.timeSeconds;out.impulseNs=source.impulseNs;out.magnitude=source.magnitude;out.otherId=source.otherId;out.material=source.material;
+        out.sequence=source.sequence;out.timeSeconds=source.timeSeconds;out.impulseNs=source.impulseNs;out.magnitude=source.magnitude;out.otherId=source.otherId;out.material=source.material;
         for(let k=0;k<3;k++){out.localPointM[k]=source.localPointM[k];out.relativeVelocityMps[k]=source.relativeVelocityMps[k];}snapshot.impacts[i]=out;
       }
+    }
+
+    _copyScrapeInto(snapshot) {
+      const s=this.scratch,scrape=s.scrapeContact;
+      // A short hold bridges uneven contact sampling across render frames.
+      if(this.timeSeconds-scrape.timeSeconds>4*FIXED_DT){snapshot.scrapeContact=null;return;}
+      const slot=s.scrapeSnapshotSlots[snapshot===s.snapshots[0]?0:1];
+      fieldsInto(slot,scrape);snapshot.scrapeContact=slot;
+    }
+
+    publishScrapeContact(material,normalForceN,tangentialSpeedMps,localSideM) {
+      const scrape=this.scratch.scrapeContact;
+      if(normalForceN<500||(scrape.timeSeconds===this.timeSeconds
+        &&scrape.normalForceN*scrape.tangentialSpeedMps>=normalForceN*tangentialSpeedMps))return;
+      scrape.timeSeconds=this.timeSeconds;scrape.material=material;scrape.normalForceN=normalForceN;
+      scrape.tangentialSpeedMps=tangentialSpeedMps;scrape.localSideM=localSideM;
+      if(this.lastSnapshot&&!Object.isFrozen(this.lastSnapshot))this._copyScrapeInto(this.lastSnapshot);
     }
 
     _gripScale(environment, axle) {
@@ -1171,6 +1209,7 @@
         controls: { throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0, clutchEngagement: initialClutchEngagement, requestedGear: initialGear },
         impact: false,
         impacts: [],
+        scrapeContact: null,
         damage: this.damage,
       });
       return this.lastSnapshot;
@@ -1191,7 +1230,7 @@
 
     teleport(spawn, linearVelocity = { x: 0, y: 0, z: 0 }) {
       if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
-      this.staticImpactTimes.clear();
+      this.scratch.scrapeContact.timeSeconds=-Infinity;
       for(const record of this._impactRecords){record.lastTime=-Infinity;record.tick=-1;}
       this.impactEvents?.clear();
       const yaw = finite(spawn?.yawRad, 0);
@@ -1242,6 +1281,7 @@
       this.lastSnapshot = this.core.finiteSnapshot({
         ...prior,
         timeSeconds: this.timeSeconds,
+        scrapeContact: null,
         chassis: {
           ...(prior.chassis || {}),
           position: [translation.x, translation.y, translation.z],

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=47661b0e9593c481',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=13d6b8b611aaf5a2',import.meta.url),'utf8');
 const body=source.slice(source.indexOf('  function createRaceAudio() {'),source.indexOf('  const raceAudio = createRaceAudio();'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((r,j)=>{resolve=r;reject=j});return{promise,resolve,reject}};
 function setup({shared=Promise.resolve(true),prepared=Promise.resolve({drivingBuffers:[]})}={}){

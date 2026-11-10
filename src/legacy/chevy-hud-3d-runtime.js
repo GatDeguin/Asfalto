@@ -9,13 +9,12 @@ const normalizeDegrees=value=>((Number(value)||0)%360+360)%360;
 const ASSETS=Object.freeze({
   objective:{script:'chevy-hud-asset-objective',host:'chevy-hud-objective',required:['ObjectiveRoot']},
   timer:{script:'chevy-hud-asset-timer',host:'chevy-hud-timer',required:['TimerRoot']},
-  navigation:{script:'chevy-hud-asset-navigation',host:'chevy-hud-navigation',required:['NavigationRoot','CompassNeedle']},
   telemetry:{script:'chevy-hud-asset-telemetry',host:'chevy-hud-telemetry',required:['TelemetryRoot',...Array.from({length:12},(_,i)=>`RpmSegment_${String(i+1).padStart(2,'0')}`)]}
 });
 const elements={
   canvas:$('#chevy-hud-webgl-canvas'),overlay:$('#chevy-hud-overlay'),notice:$('#chevy-hud-render-notice'),
   objectiveMain:$('#chevy-hud-objective-main'),objectiveSub:$('#chevy-hud-objective-sub'),
-  timer:$('#chevy-hud-timer-value'),navHeading:$('#chevy-hud-navigation-heading'),navValue:$('#chevy-hud-navigation-value'),navMode:$('#chevy-hud-navigation-mode'),
+  timer:$('#chevy-hud-timer-value'),navMap:$('#chevy-hud-route-map'),navHeading:$('#chevy-hud-navigation-heading'),navValue:$('#chevy-hud-navigation-value'),navMode:$('#chevy-hud-navigation-mode'),
   gear:$('#chevy-hud-gear'),rpm:$('#chevy-hud-rpm'),oil:$('#chevy-hud-oil'),temperature:$('#chevy-hud-temperature')
 };
 const publicState={
@@ -35,6 +34,7 @@ let entries=[];
 let lastProfile=null;
 let lastProfileRead=0;
 let vehicleHudTelemetry=null;
+let routeMinimap=null;
 
 function waitForThree(){
   const current=window.__chevyV6Three||window.THREE;
@@ -200,12 +200,11 @@ class SharedHudRenderer{
         const bounds=new this.T.Box3().setFromObject(model.root),center=bounds.getCenter(new this.T.Vector3()),size=bounds.getSize(new this.T.Vector3());model.root.position.sub(center);model.root.updateMatrixWorld(true);
         const camera=new this.T.OrthographicCamera(-1,1,1,-1,.01,100);camera.position.set(0,0,10);camera.lookAt(0,0,0);
         const entry={key,host,scene,root,camera,size,nodeMap:model.nodeMap,resources:model.resources};
-        if(key==='navigation'){entry.needle=model.nodeMap.get('CompassNeedle');entry.needleBase=entry.needle.rotation.z}
         if(key==='telemetry')prepareRpmSegments(entry);
         entries.push(entry);host.dataset.renderState='ready';
       }catch(error){host.dataset.renderState='error';markRenderFailure(error)}
     }
-    publicState.renderer.ready=entries.length===4;
+    publicState.renderer.ready=entries.length===Object.keys(ASSETS).length;
     this.render(performance.now(),true);
     requestAnimationFrame(time=>this.loop(time));
   }
@@ -239,8 +238,6 @@ function prepareRpmSegments(entry){
   }
 }
 function applyModelState(){
-  const navigation=entries.find(entry=>entry.key==='navigation');
-  if(navigation?.needle)navigation.needle.rotation.z=navigation.needleBase-publicState.navigation.heading*Math.PI/180;
   const telemetry=entries.find(entry=>entry.key==='telemetry'),active=Math.min(12,Math.max(0,Math.ceil(publicState.telemetry.rpm/8000*12)));
   const compact=reviewInterior&&document.body.classList.contains('an-ss250-clear-console')&&!document.body.classList.contains('an-phone-hud')&&innerWidth>900;
   for(const [name,node] of telemetry?.nodeMap||[])if(/^(OilIcon_|TemperatureIcon_)/.test(name))node.visible=!compact;
@@ -313,20 +310,45 @@ function statusWord(status){return status==='critical'?'CRÍTICO':status==='warn
 function updateDom(){
   elements.objectiveMain.textContent=publicState.objective.main;elements.objectiveSub.textContent=publicState.objective.sub;
   elements.timer.value=formatTimer(publicState.timerMs);
-  elements.navHeading.textContent=cardinal(publicState.navigation.heading);elements.navHeading.setAttribute('aria-label',`${cardinal(publicState.navigation.heading)}, ${Math.round(publicState.navigation.heading)} grados`);
-  elements.navValue.value=formatDistance(publicState.navigation.distanceKm);elements.navMode.textContent=publicState.navigation.mode;
+  const heading=`Rumbo ${cardinal(publicState.navigation.heading)}`;
+  if(elements.navHeading.textContent!==heading)elements.navHeading.textContent=heading;
+  const distance=formatDistance(publicState.navigation.distanceKm);
+  if(elements.navValue.value!==distance)elements.navValue.value=distance;
+  if(elements.navMode.textContent!==publicState.navigation.mode)elements.navMode.textContent=publicState.navigation.mode;
   elements.gear.value=publicState.telemetry.gear;elements.rpm.value=publicState.telemetry.rpm===null?'— RPM':`${String(publicState.telemetry.rpm).padStart(4,'0')} RPM`;
   elements.oil.textContent=`CONDICIÓN ACEITE ${statusWord(publicState.telemetry.oilStatus)}`;elements.oil.dataset.level=publicState.telemetry.oilStatus;
   elements.temperature.textContent=publicState.telemetry.temperatureC===null?'TEMPERATURA —':`TEMPERATURA ${publicState.telemetry.temperatureC}°`;elements.temperature.dataset.level=publicState.telemetry.temperatureStatus;
 }
 function updateHudState(time){
+  const classes=document.body.classList;
   const clearConsole=reviewInterior&&window.__asfaltoSelectedPlayerVehicle==='chevy_400_1957'&&window.__cockpit?.raceCameraMode?.()==='cockpit';
-  document.body.classList.toggle('an-ss250-clear-console',clearConsole);
+  classes.toggle('an-ss250-clear-console',clearConsole);
   const race=getRaceState();publicState.objective=objectiveText();publicState.timerMs=deriveTimer(race);publicState.navigation=deriveNavigation(race,publicState.objective);publicState.telemetry=deriveTelemetry(race,time);updateDom();applyModelState();
+  if(!document.hidden&&classes.contains('v6-driving')&&!classes.contains('an-v7-free-hud')){
+    routeMinimap?.render(window.__cockpit?.raceWorld?.track,race.projection);
+  }
 }
 async function boot(){
-  try{const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);({vehicleHudTelemetry}=await import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=e1759c101dc759b7',document.baseURI)));await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));if(detectDeviceProfile().phone){const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=c5694410bc095b05',document.baseURI));renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));return;}const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());api.ready=true;publicState.renderer.ready=entries.length===4;window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));console.info('[Chevy HUD 3D] cuatro módulos cargados en un canvas compartido',api.getDiagnostics())}
-  catch(error){markRenderFailure(error);for(const host of document.querySelectorAll('.chevy-hud-host'))host.dataset.renderState='error';api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-error',{detail:{message:error?.message||String(error)}}))}
+  try{
+    const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);
+    const [telemetry,{createRouteMinimap}]=await Promise.all([
+      import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=e1759c101dc759b7',document.baseURI)),
+      import(new URL('src/ui/route-minimap.mjs?v=4ea627b08927281c',document.baseURI)),
+    ]);
+    vehicleHudTelemetry=telemetry.vehicleHudTelemetry;
+    routeMinimap=createRouteMinimap(elements.navMap);
+    await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});
+    const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));
+    if(detectDeviceProfile().phone){
+      const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=84c9be8ab4e15e37',document.baseURI));
+      renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;
+    }else{
+      const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());
+    }
+    api.ready=true;
+    window.dispatchEvent(new CustomEvent('chevy-hud-3d-ready',{detail:api.getDiagnostics()}));
+    if(publicState.renderer.contextCount)console.info('[Chevy HUD 3D] Instrumentos cargados en un canvas compartido',api.getDiagnostics());
+  }catch(error){markRenderFailure(error);for(const host of document.querySelectorAll('.chevy-hud-host[data-hud-asset]'))host.dataset.renderState='error';api.ready=true;window.dispatchEvent(new CustomEvent('chevy-hud-3d-error',{detail:{message:error?.message||String(error)}}))}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

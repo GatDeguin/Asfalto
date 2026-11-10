@@ -1,6 +1,6 @@
-import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS} from './vehicle-condition.mjs?v=96fdee90b39e2e75';
+import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS} from './vehicle-condition.mjs?v=3960803c4e868c79';
 /** Persistent maintenance is fed by actual 120 Hz player steps, independent of test receipts. */
-export function createVehicleMaintenance({getProfile,getVehicleId,save=()=>{},onChanged=()=>{},onFault=()=>{}}){
+export function createVehicleMaintenance({getProfile,getVehicleId,save=()=>{},onChanged=()=>{},onAppearance=()=>{},onFault=()=>{}}){
  let session=null,sessionVehicle=null,lastPublishedTick=0,lastSavedTick=0,faultLatched=false;
  const initial=getVehicleId();ensureVehicleConditionProfile(getProfile(),initial);selectVehicleCondition(getProfile(),initial);
  function store(condition,id=sessionVehicle||getVehicleId()){
@@ -19,7 +19,11 @@ export function createVehicleMaintenance({getProfile,getVehicleId,save=()=>{},on
   sessionVehicle=getVehicleId();session=createVehicleConditionSession({vehicleId:sessionVehicle,condition:state.condition,vehicleSpec});lastPublishedTick=0;lastSavedTick=0;faultLatched=false;return toPhysicalDamage(state.condition);
  }
  function sample(frame){if(!session)return;session.sample(frame);if(!frame.running||frame.qa)return;
-  if(frame.tick-lastPublishedTick>=12||frame.snapshot?.impact){store(session.getCondition());lastPublishedTick=frame.tick;}
+  if(frame.tick-lastPublishedTick>=12||frame.snapshot?.impact){
+   const condition=session.getCondition();
+   store(condition);lastPublishedTick=frame.tick;
+   onAppearance(condition,sessionVehicle);
+  }
   const faults=session.faults();if(faults.length&&!faultLatched){faultLatched=true;flush();onFault(faults);}
   else if(frame.tick-lastSavedTick>=600){lastSavedTick=frame.tick;flush();}
  }

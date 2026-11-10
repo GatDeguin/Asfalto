@@ -3,6 +3,8 @@ import {createFuelObserver} from './fuel-observer.mjs?v=c8691a04c5e062fe';
 export const VEHICLE_CONDITION_KEYS=Object.freeze(['engine','oil','brakes','tires','body','paint','fuel','steering','suspension','drivetrain','gearbox']);
 export const VEHICLE_IDS=Object.freeze(['chevy',...Object.values(VEHICLE_CATALOG).filter(v=>v.selectable||v.supportsPersistentCondition).map(v=>v.id)]);
 const ZONES=['front','rear','left','right','roof'],WHEELS=['frontLeft','frontRight','rearLeft','rearRight'];
+// Dirt added in percentage points per meter of actual tire contact.
+const DIRT_RATE={gravel:.018,dirt:.026,sand:.024,grass:.013,shoulder:.018,mud:.052,snow:.021,wet:.003};
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 const finite=(n,fallback)=>Number.isFinite(n)?n:fallback;
 const copy=value=>structuredClone(value);
@@ -81,8 +83,14 @@ export function createVehicleConditionSession({vehicleId,condition,vehicleSpec,t
   const newImpacts=[];for(const impact of frame.snapshot?.impacts||[]){const key=impact.timeSeconds+':'+impact.impulseNs+':'+impact.localPointM?.join(',');if(!seenImpacts.has(key)){seenImpacts.add(key);newImpacts.push(impact);if(seenImpacts.size>64)seenImpacts.delete(seenImpacts.values().next().value);}}
   current.fuel=Math.max(0,current.fuel-delta/tankLiters*100);
   if(samples%12===0||newImpacts.length||frame.snapshot?.damage?.engine?.fire)current=conditionFromSnapshot(current,frame.snapshot,{newImpacts});
-  const speed=Math.hypot(...(frame.snapshot?.chassis?.linearVelocity||[0,0,0]));const unpaved=(frame.snapshot?.wheels||[]).some(w=>w.contact&&!['asphalt','road'].includes(w.surface));
-  current.dirt=Math.min(100,current.dirt+speed/120*(unpaved?.0009:.00004));
+  const wheels=frame.snapshot?.wheels||[];
+  let dirtRate=0;
+  for(const wheel of wheels)if(wheel.contact)dirtRate+=DIRT_RATE[wheel.surface]??.0012;
+  const velocity=frame.snapshot?.chassis?.linearVelocity;
+  if(dirtRate>0&&velocity){
+   const distance=Math.hypot(finite(velocity[0],0),finite(velocity[2],0))/120;
+   current.dirt=Math.min(100,current.dirt+distance*dirtRate/wheels.length);
+  }
  }
  return{sample,getCondition:()=>normalizeVehicleCondition(current),faults:()=>terminalVehicleFaults(current),diagnostics:()=>({vehicleId,samples,fuel:fuel.getState()}),dispose(){disposed=true;seenImpacts.clear();}};
 }

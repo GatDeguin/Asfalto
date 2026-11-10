@@ -769,28 +769,36 @@
       if(/terrain/.test(name))visualTerrainAvailable=true;
       if(/shoulder/.test(name))visualShouldersAvailable=true;
     });
-    let authoredBoundaryTriangleCount=0;const authoredContactMaterials=new Set();
-    let boundaryTriangles = null;
-    try {
-      boundaryTriangles = physicsCore.collectCollisionTriangles(
-        options.THREE || {},
-        options.collisionRoot,
-        {
-          includeMesh(node) {
-            const name = String(node?.name || '').toLowerCase();
-            const boundary=/(guardrail|barrier|track[_\-\s]?limit|wall)/.test(name);
-            if(boundary)authoredBoundaryTriangleCount+=(node.geometry?.index?.count||node.geometry?.attributes?.position?.count||0)/3;
-            if(/mist|trigger|sensor|checkpoint/.test(name))return false;
-            if(!boundary&&/(?:^|[_\-\s])(road|asphalt)(?:[_\-\s]|$)/.test(name))return false;
-            if(visualTerrainAvailable&&/terrain|shoulder|ground/.test(name))return false;
-            if(visualShouldersAvailable&&/shoulder/.test(name))return false;
-            authoredContactMaterials.add(/guardrail|steel|metal/.test(name)?'metal':/rock|boulder/.test(name)?'stone':/terrain|shoulder|ground/.test(name)?'soil':'unknown');
-            return true;
-          },
-        },
-      );
-    } catch (error) {
-      if (!/no contiene triangulos/.test(String(error?.message || ''))) throw error;
+    let authoredBoundaryTriangleCount=0,authoredSolidTriangleCount=0;
+    const authoredMeshes=new Map(),authoredColliders=[];
+    const triangleBounds={min:[Infinity,Infinity,Infinity],max:[-Infinity,-Infinity,-Infinity]};
+    options.collisionRoot.updateMatrixWorld?.(true);
+    options.collisionRoot.traverse(node=>{
+      if(!node?.isMesh)return;
+      const name=String(node.name||'').toLowerCase();
+      const boundary=/(guardrail|barrier|track[_\-\s]?limit|wall)/.test(name);
+      if(boundary)authoredBoundaryTriangleCount+=(node.geometry?.index?.count||node.geometry?.attributes?.position?.count||0)/3;
+      if(/mist|trigger|sensor|checkpoint/.test(name))return;
+      if(!boundary&&/(?:^|[_\-\s])(road|asphalt)(?:[_\-\s]|$)/.test(name))return;
+      if(visualTerrainAvailable&&/terrain|shoulder|ground/.test(name))return;
+      if(visualShouldersAvailable&&/shoulder/.test(name))return;
+      let material='unknown';
+      if(/guardrail|steel|metal|s\d+_collision_barrier_web_export/.test(name))material='metal';
+      else if(/rock|boulder|stone/.test(name))material='stone';
+      else if(/concrete|retaining/.test(name))material='concrete';
+      else if(/terrain|shoulder|ground/.test(name))material='soil';
+      if(!authoredMeshes.has(material))authoredMeshes.set(material,[]);
+      authoredMeshes.get(material).push(node);
+    });
+    for(const [material,meshes] of authoredMeshes){
+      let triangles;
+      try{triangles=physicsCore.collectCollisionTriangles(options.THREE||{},{traverse:visit=>meshes.forEach(visit)});}
+      catch(error){if(/no contiene triangulos/.test(String(error?.message||'')))continue;throw error;}
+      authoredColliders.push({material,triangles});authoredSolidTriangleCount+=triangles.triangleCount;
+      for(let axis=0;axis<3;axis++){
+        triangleBounds.min[axis]=Math.min(triangleBounds.min[axis],triangles.bounds.min[axis]);
+        triangleBounds.max[axis]=Math.max(triangleBounds.max[axis],triangles.bounds.max[axis]);
+      }
     }
     const endpointMarginM = Math.max(0, finite(vehicleSpec.dimensionsM?.length, 0));
     const routeTriangles = physicsCore.buildRouteRibbonTriangles(
@@ -800,7 +808,6 @@
     let playerWorld = null;
     let rivalWorld = null;
     let suspensionWorld = null;
-    const authoredContactMaterial=authoredContactMaterials.size===1?[...authoredContactMaterials][0]:'unknown';
     let sceneCollisionLayer = null;
     let physicsSession = null;
     let rivalSession = null;
@@ -840,16 +847,10 @@
     playerWorld.timestep = FIXED_DT;
     rivalWorld.timestep = FIXED_DT;
     suspensionWorld.timestep = FIXED_DT;
-    if (boundaryTriangles) {
-      physicsCore.createRapierTrackCollider(RAPIER, playerWorld, boundaryTriangles, {material:authoredContactMaterial});
+    for(const world of [playerWorld,rivalWorld,suspensionWorld]){
+      for(const {material,triangles} of authoredColliders)physicsCore.createRapierTrackCollider(RAPIER,world,triangles,{material});
+      physicsCore.createRapierTrackCollider(RAPIER,world,routeTriangles,{material:'asphalt'});
     }
-    physicsCore.createRapierTrackCollider(RAPIER, playerWorld, routeTriangles, {material:'asphalt'});
-    if (boundaryTriangles) {
-      physicsCore.createRapierTrackCollider(RAPIER, rivalWorld, boundaryTriangles, {material:authoredContactMaterial});
-    }
-    physicsCore.createRapierTrackCollider(RAPIER, rivalWorld, routeTriangles, {material:'asphalt'});
-    physicsCore.createRapierTrackCollider(RAPIER, suspensionWorld, routeTriangles, {material:'asphalt'});
-    if(boundaryTriangles)physicsCore.createRapierTrackCollider(RAPIER,suspensionWorld,boundaryTriangles,{material:authoredContactMaterial});
     sceneCollisionLayer=physicsCore.createSceneCollisionLayer?.(RAPIER,[playerWorld,rivalWorld,suspensionWorld],visualCollisionRoot)||null;
     sceneCollisionLayer?.refresh({force:true});
     const trackAdapter = createBrowserTrackAdapter(
@@ -949,54 +950,71 @@
       getTrafficState:()=>{const snapshot=physicsSession.getSnapshot();trafficProjection=trackAdapter.projectSnapshot(snapshot,{previous:trafficProjection});return {snapshot,projection:trafficProjection};},
       wheelbaseM: vehicleCore.FALCON_CALIBRATED_SPEC.wheelbaseM,
     });
-    function syncFalconProxy(state) {
+    function syncFalconProxy(state, teleport = false) {
       const snapshot = state?.snapshot || physicalRival.getState?.().snapshot;
       const position = snapshot?.chassis?.position;
       const rotation = snapshot?.chassis?.rotation;
       if (!Array.isArray(position) || position.length !== 3
           || !Array.isArray(rotation) || rotation.length !== 4) return false;
-      falconProxyBody.setNextKinematicTranslation({
+      const translation={
         x: Number(position[0]) || 0,
         y: Number(position[1]) || 0,
         z: Number(position[2]) || 0,
-      });
-      falconProxyBody.setNextKinematicRotation({
+      };
+      const orientation={
         x: Number(rotation[0]) || 0,
         y: Number(rotation[1]) || 0,
         z: Number(rotation[2]) || 0,
         w: Number.isFinite(Number(rotation[3])) ? Number(rotation[3]) : 1,
-      });
+      };
+      if(teleport){
+        falconContactLatched=false;
+        falconProxyBody.setTranslation(translation,true);
+        falconProxyBody.setRotation(orientation,true);
+        playerWorld.propagateModifiedBodyPositionsToColliders();
+      }
+      falconProxyBody.setNextKinematicTranslation(translation);
+      falconProxyBody.setNextKinematicRotation(orientation);
       return true;
     }
     let falconContactLatched = false;
     let falconContactActive = false;
     falconProxyCollider.setEnabled?.(false);
-    function localContactPoint(session, otherPosition) {
-      const position = session.body.translation();
-      const rotation = session.body.rotation();
-      const dx = finite(otherPosition?.x, 0) - finite(position.x, 0);
-      const dz = finite(otherPosition?.z, 0) - finite(position.z, 0);
-      const forwardX = 1 - 2 * (rotation.y * rotation.y + rotation.z * rotation.z);
-      const forwardZ = 2 * (rotation.x * rotation.z - rotation.w * rotation.y);
-      const sideX = 2 * (rotation.x * rotation.z + rotation.w * rotation.y);
-      const sideZ = 1 - 2 * (rotation.x * rotation.x + rotation.y * rotation.y);
-      const localX = dx * forwardX + dz * forwardZ;
-      const localZ = dx * sideX + dz * sideZ;
-      return [
-        Math.sign(localX || 1) * session.spec.dimensionsM.length * 0.42,
-        0,
-        Math.sign(localZ || 1) * session.spec.dimensionsM.width * 0.42,
-      ];
+    function localContactPoint(body,point) {
+      const p=body.translation(),q=body.rotation(),offset=[point[0]-p.x,point[1]-p.y,point[2]-p.z];
+      const inverse=[-q.x,-q.y,-q.z],cross=cross3(inverse,offset),correction=cross3(inverse,cross);
+      return offset.map((value,i)=>value+2*(q.w*cross[i]+correction[i]));
+    }
+    function contactVelocity(body,point,linear,angular) {
+      const center=body.worldCom();
+      const rotation=cross3(angular,[point[0]-center.x,point[1]-center.y,point[2]-center.z]);
+      return rotation.map((value,i)=>value+linear[i]);
     }
     function resolveFalconContact() {
       if (!falconContactActive) return false;
       let impulseNs = 0;
       let touching = false;
+      let point=null,normal=null,largestImpulse=0;
+      let impulseX=0,impulseY=0,impulseZ=0;
       for (const collider of physicsSession.colliders) {
-        playerWorld.contactPair(collider, falconProxyCollider, (manifold) => {
+        playerWorld.contactPair(collider, falconProxyCollider, (manifold,flipped) => {
+          const count=manifold.numSolverContacts();
+          if(!count)return;
           touching = true;
+          let manifoldImpulse=0;
           for (let index = 0; index < manifold.numContacts(); index += 1) {
-            impulseNs += Math.abs(finite(manifold.contactImpulse(index), 0));
+            manifoldImpulse += Math.max(0,finite(manifold.contactImpulse(index),0));
+          }
+          if(!manifoldImpulse)return;
+          const direction=manifold.normal(),sign=flipped?-1:1;
+          impulseNs+=manifoldImpulse;
+          impulseX+=direction.x*sign*manifoldImpulse;impulseY+=direction.y*sign*manifoldImpulse;impulseZ+=direction.z*sign*manifoldImpulse;
+          if(manifoldImpulse<=largestImpulse)return;
+          largestImpulse=manifoldImpulse;normal=[direction.x*sign,direction.y*sign,direction.z*sign];
+          point=[0,0,0];
+          for(let index=0;index<count;index++){
+            const contact=manifold.solverContactPoint(index);
+            point[0]+=contact.x/count;point[1]+=contact.y/count;point[2]+=contact.z/count;
           }
         });
       }
@@ -1004,28 +1022,39 @@
         falconContactLatched = false;
         return false;
       }
-      if (falconContactLatched || impulseNs <= 0) return false;
+      if(!point)return false;
+      const scratch=physicsSession.scratch;
+      const playerVelocity=contactVelocity(physicsSession.body,point,scratch.velocity,scratch.angularVelocity);
+      const linear=falconProxyBody.linvel(),angular=falconProxyBody.angvel();
+      const falconVelocity=contactVelocity(falconProxyBody,point,[linear.x,linear.y,linear.z],[angular.x,angular.y,angular.z]);
+      const relativeVelocityMps=playerVelocity.map((value,i)=>value-falconVelocity[i]);
+      const closingSpeed=dot3(relativeVelocityMps,normal);
+      const tangentialSpeedMps=Math.sqrt(Math.max(0,dot3(relativeVelocityMps,relativeVelocityMps)-closingSpeed*closingSpeed));
+      const localPointM=localContactPoint(physicsSession.body,point);
+      if(tangentialSpeedMps>Math.max(3,Math.abs(closingSpeed)*1.8)){
+        physicsSession.publishScrapeContact('vehicle-metal',impulseNs/FIXED_DT,tangentialSpeedMps,localPointM[2]);
+      }
+      if(falconContactLatched||closingSpeed<.6||impulseNs<physicsSession.spec.massKg*.18)return false;
       falconContactLatched = true;
-      const playerPosition = physicsSession.body.translation();
-      const falconPosition = falconProxyBody.translation();
-      const dx = falconPosition.x - playerPosition.x;
-      const dz = falconPosition.z - playerPosition.z;
-      const distance = Math.hypot(dx, dz) || 1;
-      const exchangedImpulse = Math.min(30_000, impulseNs);
+      const exchangeScale=Math.min(1,30_000/impulseNs);
       rivalSession.body.applyImpulse({
-        x: dx / distance * exchangedImpulse,
-        y: 0,
-        z: dz / distance * exchangedImpulse,
+        x: impulseX*exchangeScale,
+        y: impulseY*exchangeScale,
+        z: impulseZ*exchangeScale,
       }, true);
       physicsSession.applyImpact({
         impulseNs,
-        localPointM: localContactPoint(physicsSession, falconPosition),
+        localPointM,
         otherId: 'falcon',
+        material:'vehicle-metal',
+        relativeVelocityMps,
       });
       physicalRival.applyImpact({
         impulseNs,
-        localPointM: localContactPoint(rivalSession, playerPosition),
+        localPointM: localContactPoint(rivalSession.body,point),
         otherId: 'chevy',
+        material:'vehicle-metal',
+        relativeVelocityMps:relativeVelocityMps.map(value=>-value),
       });
       return true;
     }
@@ -1053,7 +1082,7 @@
       },
       recover(progress) {
         const recovered = physicalRival.recover(progress);
-        syncFalconProxy(physicalRival.getState());
+        syncFalconProxy(physicalRival.getState(),true);
         return recovered;
       },
       reset(frame) {
@@ -1064,7 +1093,7 @@
           ? trackAdapter.projectSnapshot(snapshot, { previous: null, track: options.track })
           : { s: frame.s, raceProgress: frame.s, lateral: 0 };
         const state = { ...physicalRival.getState(), snapshot, projection };
-        syncFalconProxy(state);
+        syncFalconProxy(state,true);
         return state;
       },
       getState() {
@@ -1098,9 +1127,9 @@
         dynamicBodyCount: 2,
         vehicleColliderCount: physicsSession.colliders.length + rivalSession.colliders.length,
         contactProxyCount: 1,
-        triangleCount: (boundaryTriangles?.triangleCount || 0) + routeTriangles.triangleCount,
+        triangleCount: authoredSolidTriangleCount + routeTriangles.triangleCount,
         authoredBoundaryTriangleCount,
-        authoredSolidTriangleCount: boundaryTriangles?.triangleCount || 0,
+        authoredSolidTriangleCount,
         get sceneCollisions(){return sceneCollisionLayer?.diagnostics()||null;},
         generatedRouteTriangleCount: routeTriangles.triangleCount,
         authoredRoadAndTerrainReplaced: false,
@@ -1110,7 +1139,7 @@
         rapierContactProxy: true,
         vehicleProfile,
         forwardGears: vehicleSpec.gearbox.forward.length,
-        triangleBounds: boundaryTriangles?.bounds || null,
+        triangleBounds: authoredSolidTriangleCount?Object.freeze({min:Object.freeze(triangleBounds.min),max:Object.freeze(triangleBounds.max)}):null,
         routeTriangleBounds: routeTriangles.bounds,
         endpointMarginM,
         initialFrame: Object.freeze({ ...initialFrame }),

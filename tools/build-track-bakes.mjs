@@ -7,7 +7,7 @@ import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {encodeBinaryBake,BAKE_SCHEMA} from '../src/tracks/visuals/bake-binary-codec.mjs?v=9a206fac5b81dd7a';
 import {prepareBinaryPayload} from './bake-tooling.mjs?v=08383d8a84ffdff4';
-import {startServer} from '../server.mjs?v=ec9ca3d30198bdb8';
+import {startServer} from '../server.mjs?v=5a11a063822d96e9';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const {chromium}=createRequire(process.env.PLAYWRIGHT_PACKAGE||import.meta.url)('playwright');
 const referenceFlag=process.argv.indexOf('--reference');
@@ -15,7 +15,7 @@ const reference=referenceFlag<0?null:path.resolve(process.argv[referenceFlag+1])
 if(reference)fs.mkdirSync(reference,{recursive:true});
 const out=path.join(root,'assets/tracks/offline-bake');fs.mkdirSync(out,{recursive:true});
 const manifest={schema:BAKE_SCHEMA,tracks:{},inputs:{}};
-for(const file of ['src/tracks/visuals/closure-terrain.mjs?v=e1e19af015fd9957','src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be','src/tracks/visuals/forest-terrain-detail.mjs?v=9535a171be7c3c52','src/render/surface-curvature.mjs?v=b65bd00ab81d3d27'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+for(const file of ['src/tracks/visuals/closure-terrain.mjs?v=adeb580d9382288f','src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be','src/tracks/visuals/forest-terrain-detail.mjs?v=9535a171be7c3c52','src/render/surface-curvature.mjs?v=b65bd00ab81d3d27'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
 for(const e of JSON.parse(fs.readFileSync(path.join(root,'tracks/registry.json'))).tracks){const file=path.join('tracks',e.manifest);if(fs.existsSync(path.join(root,file)))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');}
 const server=await startServer({root});let browser;
 try{

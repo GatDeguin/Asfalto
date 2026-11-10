@@ -1,4 +1,7 @@
-import { createReturnLandscape } from './closure-terrain.mjs?v=e1e19af015fd9957';
+import { createReturnLandscape } from './closure-terrain.mjs?v=adeb580d9382288f';
+import { returnChapters, returnRoadShape } from './return-route-design.mjs?v=0f181ab60bc9e120';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=aef74622e732cf21';
+import { addReturnLandmarks } from './return-landmarks.mjs?v=babf731ba166a899';
 // Procedural game-fiction return corridor. Original canonical samples are never modified.
 // Closing is physical: the last position and frame coincide with the original start.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -47,10 +50,41 @@ function smoothPath(points,startDirection,endDirection,stepM){
     if(last)horizontalM+=distance(last,p);output.push({p,horizontalM});last=p;
   }}
   const p=clean.at(-1);horizontalM+=distance(last,p);output.push({p:[...p],horizontalM});
+  return resample(output,stepM);
+}
+function resample(output,stepM){
+  const horizontalM=output.at(-1).horizontalM;
   // Arc-length resample; each retained segment remains under stepM + numerical tolerance.
   const sampled=[output[0]];let index=1;
   for(let s=stepM;s<horizontalM;s+=stepM){while(output[index].horizontalM<s)index++;const a=output[index-1],b=output[index],u=(s-a.horizontalM)/(b.horizontalM-a.horizontalM);sampled.push({p:a.p.map((v,i)=>v+(b.p[i]-v)*u),horizontalM:s});}
   sampled.push(output.at(-1));return sampled;
+}
+function shapePath(path,chapters,strength,stepM){
+  if(!chapters.length)return path;
+  const length=path.at(-1).horizontalM,look=Math.ceil(140/stepM);
+  let horizontalM=0,previous;
+  const result=path.map((record,i)=>{
+    const tangent=unit(add(path[Math.min(path.length-1,i+look)].p,path[Math.max(0,i-look)].p,-1));
+    const {offset}=returnRoadShape(chapters,record.horizontalM,length);
+    const p=add(record.p,[-tangent[2],0,tangent[0]],offset*strength);
+    if(previous)horizontalM+=distance(previous,p);
+    previous=p;
+    return {p,horizontalM};
+  });
+  return resample(result,stepM);
+}
+function selfClearance(path){
+  const grid=new Map(),size=24;
+  for(const sample of path){
+    const p=sample.p,x=Math.floor(p[0]/size),z=Math.floor(p[2]/size);
+    for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)
+      for(const other of grid.get((x+i)+':'+(z+j))||[])
+        if(sample.horizontalM-other.horizontalM>65&&distance(p,other.p)<18)return false;
+    const key=x+':'+z;
+    if(!grid.has(key))grid.set(key,[]);
+    grid.get(key).push(sample);
+  }
+  return true;
 }
 function sourceGrid(samples){const grid=new Map(),size=100;for(let i=0;i<samples.length;i++){const p=samples[i].position,key=Math.floor(p[0]/size)+':'+Math.floor(p[2]/size);if(!grid.has(key))grid.set(key,[]);grid.get(key).push({p,index:i});}return{grid,size};}
 function crossingCount(path,source,spatial){
@@ -72,6 +106,7 @@ export function createClosedRoute(sourceRoute,{id=sourceRoute.id||'circuit',maxG
   if(stepM<2||stepM>20||maxGrade<=0||maxGrade>.2)throw new RangeError('invalid closure spacing or grade');
   if(id==='cataratas_iguazu'&&marginM===1100)marginM=1800;
   const source=sourceRoute.samples,first=source[0],last=source.at(-1),S=first.position,F=last.position,t0=unit(frame(last).tangent),t1=unit(frame(first).tangent),spatial=sourceGrid(source);
+  const chapters=returnChapters(id);
   if(![...S,...F,...t0,...t1].every(Number.isFinite))throw new TypeError('finite nonvertical endpoint tangents are required');
   const sourceBounds={minX:Math.min(...source.map(s=>s.position[0])),maxX:Math.max(...source.map(s=>s.position[0])),minZ:Math.min(...source.map(s=>s.position[2])),maxZ:Math.max(...source.map(s=>s.position[2]))};
   const slope=s=>{const t=frame(s).tangent;return t[1]/Math.hypot(t[0],t[2]);},g0=slope(last),g1=slope(first);
@@ -86,16 +121,31 @@ export function createClosedRoute(sourceRoute,{id=sourceRoute.id||'circuit',maxG
     const departure=dosLagos?[add(F,t0,120),[F[0]+210,0,F[2]-300]]:[];
     const exit=boundaryPoint(departure.at(-1)||F,dosLagos?[0,0,-1]:t0,b),entry=boundaryPoint(S,t1.map(v=>-v),b);
     for(const direction of [1,-1]){
-      const perimeter=perimeterPoints(exit,entry,b,direction),points=[F,...departure,...perimeter,S],path=smoothPath(points,t0,t1,stepM),L=path.at(-1).horizontalM;
-      const profile=elevation(L*.5,L,F[1],S[1],g0,g1),clearance=crossingCount(path,source,spatial);
-      if(clearance.crossings||Math.abs(profile.base)>maxGrade)continue;
-      const candidate={path,b,margin,L,grade:profile.base,...clearance};
-      if(!best||L<best.L)best=candidate;
+      const perimeter=perimeterPoints(exit,entry,b,direction),points=[F,...departure,...perimeter,S],base=smoothPath(points,t0,t1,stepM);
+      for(const strength of chapters.length?[1,.8,.6,.4]:[1]){
+        const path=shapePath(base,chapters,strength,stepM),L=path.at(-1).horizontalM;
+        const profile=elevation(L*.5,L,F[1],S[1],g0,g1),clearance=crossingCount(path,source,spatial);
+        if(clearance.crossings||Math.abs(profile.base)>maxGrade||(chapters.length&&!selfClearance(path)))continue;
+        const candidate={path,b,margin,L,grade:profile.base,strength,...clearance};
+        if(!best||L<best.L)best=candidate;
+        break;
+      }
     }
     if(best)break;
   }
   if(!best)throw new Error('No noncrossing exterior closure within the configured grade budget');
-  const points=best.path.map(record=>{const e=elevation(record.horizontalM,best.L,F[1],S[1],g0,g1);return{...record,p:[record.p[0],e.y,record.p[2]],grade:e.grade};});
+  // Preserve the original end grades (some are above the return budget) and
+  // scale the complete vertical profile if any interior grade would exceed it.
+  const gradeLimit=Math.max(maxGrade,Math.abs(g0),Math.abs(g1));
+  let gradeScale=1;
+  const points=best.path.map(record=>{
+    const e=elevation(record.horizontalM,best.L,F[1],S[1],g0,g1),shape=returnRoadShape(chapters,record.horizontalM,best.L);
+    if(shape.grade>0)gradeScale=Math.min(gradeScale,(gradeLimit-e.grade)/shape.grade);
+    if(shape.grade<0)gradeScale=Math.min(gradeScale,(-gradeLimit-e.grade)/shape.grade);
+    return {...record,e,shape};
+  }).map(({p,horizontalM,e,shape})=>({
+    p:[p[0],e.y+shape.rise*gradeScale,p[2]],horizontalM,grade:e.grade+shape.grade*gradeScale,widthDelta:shape.width,
+  }));
   const closureSamples=[];let accumulated=sourceRoute.lengthM,maxObservedGrade=0;
   for(let i=0;i<points.length;i++){
     const record=points[i],a=points[Math.max(0,i-1)].p,b=points[Math.min(points.length-1,i+1)].p;
@@ -103,24 +153,32 @@ export function createClosedRoute(sourceRoute,{id=sourceRoute.id||'circuit',maxG
     let left=normalize([-tangent[2],0,tangent[0]]),normal=cross(left,tangent);
     if(i===0){left=[...frame(last).left];normal=[...frame(last).normal];}else if(i===points.length-1){left=[...frame(first).left];normal=[...frame(first).normal];}
     if(i)accumulated+=Math.hypot(...record.p.map((v,k)=>v-points[i-1].p[k]));
-    const u=record.horizontalM/best.L,widthM=(last.widthM||8)*(1-u)+(first.widthM||8)*u;
+    const u=record.horizontalM/best.L,widthM=(last.widthM||8)*(1-u)+(first.widthM||8)*u+record.widthDelta;
     closureSamples.push({sM:accumulated,position:[...record.p],tangent,left,normal,widthM,bank:0,bankRad:0,surfaceId:'asphalt',sectorId:'return_corridor',curvaturePerM:0,targetSpeedKmh:id==='cuesta_lipan'?65:90});
     maxObservedGrade=Math.max(maxObservedGrade,Math.abs(record.grade));
   }
   // Copy exact endpoints rather than accepting accumulated floating-point drift.
   closureSamples[0].position=[...F];closureSamples.at(-1).position=[...S];
   const lengthM=accumulated,returnLength=lengthM-sourceRoute.lengthM;
-  const sectors=Array.from({length:5},(_,i)=>({id:'return_'+String(i+1).padStart(2,'0'),name:i===4?'Regreso a largada':'Enlace de regreso '+(i+1),startM:sourceRoute.lengthM+returnLength*i/5,endM:i===4?lengthM:sourceRoute.lengthM+returnLength*(i+1)/5}));
+  const sectors=Array.from({length:5},(_,i)=>({id:'return_'+String(i+1).padStart(2,'0'),name:chapters[i]?.name||(i===4?'Regreso a largada':'Enlace de regreso '+(i+1)),startM:sourceRoute.lengthM+returnLength*i/5,endM:i===4?lengthM:sourceRoute.lengthM+returnLength*(i+1)/5}));
   for(let i=0;i<closureSamples.length;i++){
     const s=closureSamples[i],previous=closureSamples[Math.max(0,i-1)],next=closureSamples[Math.min(closureSamples.length-1,i+1)],a=previous.tangent,b=next.tangent;
     s.sectorId=sectors[Math.min(4,Math.floor((s.sM-sourceRoute.lengthM)/returnLength*5))].id;
     s.curvaturePerM=Math.atan2(a[0]*b[2]-a[2]*b[0],a[0]*b[0]+a[2]*b[2])/Math.max(1,next.sM-previous.sM);
     s.targetSpeedKmh=Math.min(id==='cuesta_lipan'?80:95,Math.sqrt(4.1/Math.max(.0001,Math.abs(s.curvaturePerM)))*3.6);
   }
+  if(chapters.length)for(let i=1;i<closureSamples.length-1;i++){
+    const s=closureSamples[i],a=closureSamples[Math.max(0,i-3)],b=closureSamples[Math.min(closureSamples.length-1,i+3)];
+    const bend=Math.atan2(a.tangent[0]*b.tangent[2]-a.tangent[2]*b.tangent[0],a.tangent[0]*b.tangent[0]+a.tangent[2]*b.tangent[2])/Math.max(1,b.sM-a.sM);
+    const fade=clamp(Math.min(s.sM-sourceRoute.lengthM,lengthM-s.sM)/110,0,1);
+    const bank=clamp(-bend*10,-.08,.08)*fade;
+    s.left=add(s.left.map(v=>v*Math.cos(bank)),s.normal,Math.sin(bank));
+    s.normal=cross(s.left,s.tangent);s.bank=s.bankRad=bank;
+  }
   const respawns=[...(sourceRoute.respawns||[])];for(let s=sourceRoute.lengthM+80;s<lengthM-20;s+=500)respawns.push({sM:s,lateralM:0});
   const sourceCopies=[...source.slice(0,-1),{...last,sectorId:sectors[0].id}];
-  const route={...sourceRoute,format:'closed_loop',closed:true,lengthM,samples:[...sourceCopies,...closureSamples.slice(1)],sectors:[...(sourceRoute.sectors||[]),...sectors],checkpoints:[...(sourceRoute.checkpoints||[]),...sectors.map((sector,i)=>({index:(sourceRoute.checkpoints||[]).length+i,sM:sector.endM,halfWidthM:(first.widthM||8)/2}))],respawns};
-  const closure=Object.freeze({id,startS:sourceRoute.lengthM,lengthM:lengthM-sourceRoute.lengthM,totalLengthM:lengthM,bounds:best.b,marginM:best.margin,mainGrade:best.grade,maxGrade:maxObservedGrade,inheritedEndpointGrade:Math.max(Math.abs(g0),Math.abs(g1)),clearanceM:best.minClearanceM,originalCrossings:best.crossings,sampleCount:closureSamples.length,physical:true,fictionalConnector:true});
+  const route={...sourceRoute,format:'closed_loop',closed:true,layoutRevision:chapters.length?'return-v2':null,lengthM,samples:[...sourceCopies,...closureSamples.slice(1)],sectors:[...(sourceRoute.sectors||[]),...sectors],checkpoints:[...(sourceRoute.checkpoints||[]),...sectors.map((sector,i)=>({index:(sourceRoute.checkpoints||[]).length+i,sM:sector.endM,halfWidthM:(first.widthM||8)/2}))],respawns};
+  const closure=Object.freeze({id,startS:sourceRoute.lengthM,lengthM:lengthM-sourceRoute.lengthM,totalLengthM:lengthM,bounds:best.b,marginM:best.margin,mainGrade:best.grade,maxGrade:maxObservedGrade,inheritedEndpointGrade:Math.max(Math.abs(g0),Math.abs(g1)),clearanceM:best.minClearanceM,originalCrossings:best.crossings,sampleCount:closureSamples.length,layoutRevision:chapters.length?'return-v2':null,chapters:Object.freeze(chapters.map((chapter,i)=>Object.freeze({...chapter,startM:sectors[i].startM,endM:sectors[i].endM}))),shapeStrength:best.strength,gradeScale,physical:true,fictionalConnector:true});
   return {route,closure,samples:closureSamples,createRoots:(THREE,materials={})=>createClosureRoots(THREE,closureSamples,{id,materials,closure,sourceSamples:source})};
 }
 
@@ -147,16 +205,58 @@ export function createClosureRoots(THREE,samples,{id='circuit',materials={},clos
   strip('RETURN_ROAD',[s=>-s.widthM/2,s=>s.widthM/2],[0,0],road,true);
   strip('LEFT_SHOULDER',[s=>-s.widthM/2-2,s=>-s.widthM/2],[0,0],shoulder,true);
   strip('RIGHT_SHOULDER',[s=>s.widthM/2,s=>s.widthM/2+2],[0,0],shoulder,true);
-  const landscape=createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot:materials.sourceRoot,material:ground,id});visualRoot.add(landscape.mesh);
+  const landscape=createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot:materials.sourceRoot,material:ground,id,chapters:closure?.chapters});visualRoot.add(landscape.mesh);
   const bankY=(p,s,off)=>{const u=Math.max(0,Math.min(1,(Math.abs(off)-s.widthM/2-2)/240));return s.position[1]+(landscape.heightAt(p[0],p[2])-s.position[1])*u;};
   strip('RETURN_LEFT_BANK',[-260,-180,-100,-55,-24,s=>-s.widthM/2-2],[bankY,bankY,bankY,bankY,bankY,0],ground);
   strip('RETURN_RIGHT_BANK',[s=>s.widthM/2+2,24,55,100,180,260],[0,bankY,bankY,bankY,bankY,bankY],ground);
-  const paint=materials.paint||new THREE.MeshStandardMaterial({name:'MAT_ROAD_MARKING',color:'#c6bb83',roughness:.9});
+  // Iguazú's authored markings carry baked appearance; the generated strips
+  // need their own readable paint where those source attributes do not exist.
+  const paint=id==='cataratas_iguazu'
+    ?new THREE.MeshStandardMaterial({name:'MAT_road_white',color:'#ebe4cc',roughness:.9})
+    :materials.paint||new THREE.MeshStandardMaterial({name:'MAT_ROAD_MARKING',color:'#c6bb83',roughness:.9});
   for(const side of [-1,1])strip('RETURN_EDGE_LINE_'+side,[s=>side*(s.widthM/2-.22)-.055,s=>side*(s.widthM/2-.22)+.055],[.012,.012],paint);
-  // Centre dashes are actual segmented strips at route scale.
-  const dashes=[];for(let i=1;i<samples.length;i++)if(Math.floor((samples[i].sM-samples[0].sM)/10)%2===0)dashes.push(i);
-  const p=[],idx=[],coordinates=[];for(const i of dashes){const a=samples[i-1],b=samples[i],start=p.length/3;for(const s of [a,b])for(const side of [-1,1]){const point=add(s.position,frame(s).left,side*.05);point[1]+=.012;p.push(...point);coordinates.push(s.sM,side*.05);}idx.push(start,start+1,start+3,start,start+3,start+2);}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);g.setAttribute('asfaltoRoadCoordinates',new THREE.Float32BufferAttribute(coordinates,2));g.computeVertexNormals();const dash=new THREE.Mesh(g,paint);dash.name='RETURN_CENTRE_DASHES';visualRoot.add(dash);
+  const startM=samples[0].sM,endM=samples.at(-1).sM,lerp=(a,b,t)=>a+(b-a)*t;
+  function routeSample(sM){
+    let low=0,high=samples.length-1;
+    while(high-low>1){const mid=(low+high)>>1;if(samples[mid].sM<=sM)low=mid;else high=mid;}
+    const a=samples[low],b=samples[high],u=clamp((sM-a.sM)/(b.sM-a.sM),0,1);
+    const mix=(x,y)=>x.map((v,i)=>lerp(v,y[i],u));
+    return {sM,position:mix(a.position,b.position),widthM:lerp(a.widthM,b.widthM,u),curvature:lerp(a.curvaturePerM,b.curvaturePerM,u),
+      frame:{left:mix(frame(a).left,frame(b).left),tangent:mix(frame(a).tangent,frame(b).tangent)}};
+  }
+  // Actual painted lengths, independent of the geometric mesh's sample spacing.
+  const p=[],idx=[],uv=[],coordinates=[],widths=[];
+  for(let s=startM+12;s+12<endM-12;s+=12){
+    const tight=Math.abs(routeSample(s+6).curvature)>.004;
+    for(const line of tight?[-.13,.13]:[0]){
+      const end=s+(tight?12:3);
+      for(let at=s;at<end;at+=3){
+        const first=p.length/3;
+        for(const station of [at,Math.min(at+3,end)]){
+          const q=routeSample(station);
+          for(const side of [-1,1]){
+            const off=line+side*.045,point=add(q.position,q.frame.left,off);point[1]+=.018;
+            p.push(...point);uv.push(side*.5+.5,station/6);coordinates.push(station,off);widths.push(q.widthM*.5);
+          }
+        }
+        idx.push(first,first+1,first+3,first,first+3,first+2);
+      }
+    }
+  }
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setIndex(idx);
+  g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setAttribute('asfaltoRoadCoordinates',new THREE.Float32BufferAttribute(coordinates,2));
+  g.setAttribute('asfaltoRoadHalfWidth',new THREE.Float32BufferAttribute(widths,1));g.computeVertexNormals();g.computeBoundingSphere();
+  const dash=new THREE.Mesh(g,paint);dash.name='RETURN_CENTRE_DASHES';visualRoot.add(dash);
+  if(closure?.chapters.length){
+    const heightAt=terrainHeightSampler(THREE,visualRoot,mesh=>mesh.name==='RETURN_REGIONAL_TERRAIN'||/^RETURN_(LEFT|RIGHT)_BANK$/.test(mesh.name));
+    const query={sample:routeSample,project(position){
+      const returned=landscape.returnField(position[0],position[2],80),original=landscape.sourceField(position[0],position[2],80);
+      const nearest=original&&(!returned||original.distance<returned.distance)?original:returned;
+      return nearest&&{distanceXZ:nearest.distance,widthM:nearest.widthM};
+    }};
+    visualRoot.userData.asfaltoReturnLandmarks=addReturnLandmarks(THREE,visualRoot,{id,chapters:closure.chapters,query,heightAt,ground});
+    visualRoot.userData.asfaltoReturnHeightAt=heightAt;
+  }
   visualRoot.userData.asfaltoClosure=closure;collisionRoot.userData.asfaltoClosure=closure;
   return {visualRoot,collisionRoot,carveSourceTerrain:landscape.carveSourceTerrain};
 }
