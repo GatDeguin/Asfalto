@@ -89,7 +89,7 @@ import { createChevyPaintController } from '../render/chevy-paint-controller.mjs
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=23d1e7f259ba8f73';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=c54673f2600fae60';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=d657732de9ad22f3';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';

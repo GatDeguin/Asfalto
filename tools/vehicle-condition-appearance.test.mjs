@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=23d1e7f259ba8f73';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=c54673f2600fae60';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
@@ -120,6 +120,31 @@ test('classic glovebox trim seats on its donor and releases its own mesh and mat
  assert.equal(disposals,2);
  assert.deepEqual(dash.children,[donor]);
  donor.geometry.dispose();donor.material.dispose();
+});
+
+test('pickup pedals use live inputs and leave their fitted brackets fixed',()=>{
+ const model=new T.Group();
+ const underbody=new T.Group();
+ underbody.name='pickup_3100_static_C3100_UnderbodyBlackened';model.add(underbody);
+ const donorMaterial=new T.MeshStandardMaterial();
+ const floor=new T.Mesh(new T.BoxGeometry(.50,.02,.62),donorMaterial);
+ floor.position.set(0,-.1373,0);underbody.add(floor);
+ const firewall=new T.Mesh(new T.BoxGeometry(.02,.22,.61),donorMaterial);
+ firewall.position.set(-.236,.018,0);underbody.add(firewall);
+ const view=installVehiclePresentation(T,{vehicle:'pickup_3100',modelRoot:new T.Group(),lods:[model]});
+ try{
+  const diagnostics=()=>view.getInteriorDiagnostics().surfaces;
+  assert.equal(diagnostics().floor,2);
+  assert.deepEqual(diagnostics().pedals.map(({key})=>key),['clutch','brake','throttle']);
+  const pivot=model.getObjectByName('Pickup_brake_PedalPivot'),bracket=pivot.parent;
+  const anchor=bracket.position.clone(),bracketRotation=bracket.quaternion.clone();
+  view.update({snapshot:{controls:{throttle:.5,brake:1},clutch:{engagement:.75}}});
+  assert.deepEqual(diagnostics().pedals.map(({angle})=>angle),[-.27*.25,-.27,.29*.5]);
+  assert.ok(bracket.position.equals(anchor)&&bracket.quaternion.equals(bracketRotation));
+  view.update({snapshot:{controls:{throttle:0,brake:0},clutch:{engagement:1}}});
+  assert.ok(diagnostics().pedals.every(({angle})=>angle===0));
+ }finally{view.dispose();}
+ assert.equal(model.getObjectByName('ClassicCabinUpholstery'),undefined);
 });
 
 test('authored gauges dim independently of the road lights, and restore the legacy cabin lamp on exit',()=>{

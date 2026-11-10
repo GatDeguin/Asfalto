@@ -1,9 +1,10 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {installClassicCabinSurfaces} from './classic-cabin-surfaces.mjs?v=bedb052169ac4ef1';
 import {installClassicCabinTrim} from './classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createSS250InteriorControls} from './ss250-interior-controls.mjs?v=88ce0aa6a33d0690';
 import {installSS250InstrumentGlass} from './ss250-instrument-glass.mjs?v=e200ae68ce6dcce2';
 import {installChevrolet400Finish,installHeritageHornBadge,installHeritageInteriorDetail} from './heritage-interior-detail.mjs?v=da4f2a284a5c6c12';
-export function installVehicleInteriorRig(T,{root,vehicle,lods}){
+export function installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetail=true}){
  const definition=getVehicleDefinition(vehicle),pivots=[],axis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
  const pickupSpokeIndex=vehicle==='pickup_3100'?new T.Quaternion().setFromAxisAngle(axis,35*Math.PI/180):null;
  for(const model of lods){
@@ -26,6 +27,7 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods}){
  const detail=['belair_1957','pickup_3100'].includes(vehicle)?installHeritageInteriorDetail(T,{root:lods[0],vehicle}):null;
  const badge=detail?installHeritageHornBadge(T,pivots[0],axis,vehicle):null;
  const trim=ss400||detail?installClassicCabinTrim(T,lods[0],vehicle):null;
+ const surfaces=cabinSurfaceDetail&&(ss400||detail)?installClassicCabinSurfaces(T,lods[0],vehicle):null;
  const visible=n=>{for(let p=n;p;p=p.parent)if(!p.visible)return false;return true;};
  let disposed=false,last=null,lights=false,instrumentPower=0,daylight=null;
  const applyIllumination=()=>{
@@ -39,7 +41,9 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods}){
    const speedKph=Math.abs(sample.speedMps??s.speedMps??s.chassis?.speedMps??0)*3.6,steer=Number(c.steer)||0;
    last={speedKph,rpm,steer};
    for(const pivot of pivots)pivot.quaternion.setFromAxisAngle(axis,-steer*Math.PI*5/3);
-   ss?.update({speedKph,rpm,steeringWheelRadians:-steer*Math.PI*5/3,throttle:c.throttle,brake:c.brake,clutch:1-(s.clutch?.engagement??1),temperatureC:s.engine?.temperatureC});
+   const clutch=1-(s.clutch?.engagement??1);
+   ss?.update({speedKph,rpm,steeringWheelRadians:-steer*Math.PI*5/3,throttle:c.throttle,brake:c.brake,clutch,temperatureC:s.engine?.temperatureC});
+   surfaces?.update(c,clutch);
    detail?.update({speedKph,rpm,temperatureC:s.engine?.temperatureC,fuel:fuelFraction});
    if(detail||finish){
     const phase=sample.phase||'';
@@ -57,7 +61,7 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods}){
   },
   getSteeringTargets:()=>[...pivots,...(ss?[root.getObjectByName('SS250_WheelAssembly')]:[])].filter(n=>n&&visible(n)),
   getPedalTarget(type){return ss?root.getObjectByName(type==='brake'?'SS250_BrakePedalPivot':'SS250_ThrottlePedalPivot'):null;},
-  diagnostics:()=>({vehicle,disposed,steering:pivots.length,hornBadge:!!badge,trimFittings:trim?.fittings??0,ss250:ss?.diagnostics(),finish:finish?.diagnostics(),lights,instrumentPower,detail:detail?.diagnostics(),last}),
-  dispose(){if(disposed)return;disposed=true;trim?.dispose();badge?.dispose();ss?.dispose();finish?.dispose();glass?.dispose();detail?.dispose();}
+  diagnostics:()=>({vehicle,disposed,steering:pivots.length,hornBadge:!!badge,trimFittings:trim?.fittings??0,surfaces:surfaces?.diagnostics(),ss250:ss?.diagnostics(),finish:finish?.diagnostics(),lights,instrumentPower,detail:detail?.diagnostics(),last}),
+  dispose(){if(disposed)return;disposed=true;surfaces?.dispose();trim?.dispose();badge?.dispose();ss?.dispose();finish?.dispose();glass?.dispose();detail?.dispose();}
  };
 }

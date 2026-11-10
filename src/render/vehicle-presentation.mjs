@@ -2,7 +2,7 @@ import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=49590cd241f95e87';
-import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=e788b792703716be';
+import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=4d59e8247447aa27';
 import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
@@ -85,12 +85,12 @@ export async function createVehiclePresentation(T,{vehicle='chevy',modelRoot,loa
     return createDemandVehicleLods({primary,signal,
       select(sample,current){if(['cockpit','hood'].includes(sample.cameraMode)||(!Number.isFinite(sample.projectedPixels)&&!(sample.snapshot?.timeSeconds>0)))return 0;let projectedPixels=sample.projectedPixels;if(!Number.isFinite(projectedPixels)&&sample.camera){primary.root.getWorldPosition(position);sample.camera.getWorldPosition(cameraPosition);projectedPixels=4.8*finite(sample.viewportHeight,800)/(2*Math.tan(finite(sample.camera.fov,46)*Math.PI/360)*Math.max(position.distanceTo(cameraPosition),.1));}return selectVehicleLod({projectedPixels,current,quality:sample.quality});},
       prefetch:(level,signal)=>assetByteCache.read(lodUrl(level),{signal}),
-      async load(level,signal){const model=await loadGlb(lodUrl(level),vehicle+' exterior LOD '+level,signal);if(signal.aborted){releaseModels([model]);throw signal.reason;}const stage=new T.Group();stage.name=vehicle+'_DemandLOD'+level;stage.visible=false;modelRoot.add(stage);try{const view=installVehiclePresentation(T,{vehicle,modelRoot:stage,lods:[model],...options});const dispose=view.dispose;view.dispose=()=>{const result=dispose();stage.removeFromParent();return result;};view.root.visible=false;stage.visible=true;return view;}catch(error){stage.removeFromParent();releaseModels([model]);throw error;}}
+      async load(level,signal){const model=await loadGlb(lodUrl(level),vehicle+' exterior LOD '+level,signal);if(signal.aborted){releaseModels([model]);throw signal.reason;}const stage=new T.Group();stage.name=vehicle+'_DemandLOD'+level;stage.visible=false;modelRoot.add(stage);try{const view=installVehiclePresentation(T,{vehicle,modelRoot:stage,lods:[model],...options,cabinSurfaceDetail:false});const dispose=view.dispose;view.dispose=()=>{const result=dispose();stage.removeFromParent();return result;};view.root.visible=false;stage.visible=true;return view;}catch(error){stage.removeFromParent();releaseModels([model]);throw error;}}
     });
   }catch(error){releaseModels(lods);throw error;}
 }
 
-export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,paintColor,initialCondition='clean',physicalCalibration=false,lightScene=null}={}) {
+export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,paintColor,initialCondition='clean',physicalCalibration=false,lightScene=null,cabinSurfaceDetail=true}={}) {
   const definition=getVehicleDefinition(vehicle),centers=definition?.centers||CENTERS[vehicle];
   if(!centers||!modelRoot?.add||!Array.isArray(lods)||![1,3].includes(lods.length))throw new TypeError('Vehicle presentation needs a vehicle root and one or three complete LODs');
   const conditionTransform=new T.Matrix4();if(definition?.conditionSpace){const cs=definition.conditionSpace;conditionTransform.makeScale(...cs.scale);conditionTransform.setPosition(...cs.offset);}
@@ -220,7 +220,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const calibration=physicalCalibration?createVehiclePhysicalCalibration(T,{vehicle,root,modelRoot,tiers,spec:definition?.calibration}):null;
   const chassis=createVehicleChassis(T,{root,tiers,centers});let chassisInspection=null;
   const lighting=createVehicleLighting(T,{vehicle,root,scene:lightScene,headlamps,brakes,lampAnchor:definition?.lampAnchor});
-  const interiorRig=installVehicleInteriorRig(T,{root,vehicle,lods});
+  const interiorRig=installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetail});
   // Include newly installed instrument/trim materials and upholstery clones in environment updates.
   root.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])if(material)materials.add(material);});
   const refraction=createVehicleRefractionPolicy(materials);
