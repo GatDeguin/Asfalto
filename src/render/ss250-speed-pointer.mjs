@@ -2,7 +2,7 @@
  * Coordinates are metres in the instrument plane, relative to its hidden pivot.
  * This is rendering geometry; it does not claim to reproduce the internal mechanism.
  */
-export const SS250_SPEED_WINDOW=Object.freeze({minX:-.249,maxX:.249,minY:.053,maxY:.162,halfScaleWidth:.228,scaleHeight:.120,width:.0014});
+export const SS250_SPEED_WINDOW=Object.freeze({minX:-.249,maxX:.249,minY:.053,maxY:.162,halfScaleWidth:.228,scaleHeight:.120,width:.0022});
 export function projectSS250SpeedNeedle(speedKph){
  const w=SS250_SPEED_WINDOW,v=Number.isFinite(speedKph)?Math.max(0,Math.min(200,speedKph)):0;
  const dx=(v/200*2-1)*w.halfScaleWidth,dy=w.scaleHeight,length=Math.hypot(dx,dy),u=[dx/length,dy/length],margin=w.width;

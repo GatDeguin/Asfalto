@@ -2747,7 +2747,7 @@
     {
       "path": "index.html",
       "bytes": 82123,
-      "sha256": "DCA7B7619B541580C371B29B6649BD6B9E8CC1A4E697BF88C958CC4D38551C81"
+      "sha256": "12997F497D4A70CE37C5FB275F32FCEBAFC69710377031965B4550E51A9D5CB9"
     },
     {
       "path": "release-version.json",
@@ -3146,13 +3146,13 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 587715,
-      "sha256": "0B078E9FE93BF2087E2560C0DDA6F4C85CDEABDB7022F4E2F22AA28FEBC5CD8A"
+      "bytes": 587857,
+      "sha256": "D0AED9E1DCC7458BDE0476536DECFF3865EDACCD5D05F50D4AB49DB9CD6EDE83"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
       "bytes": 140951,
-      "sha256": "B1A6E5A351BB7DAE1A95102EC0A44DAD41C7AD6206539C4982C90EC0D2B089C5"
+      "sha256": "BF057F0783D9D75B1C93903881130D19977A549F9B109A99FE16FFC12413D5A8"
     },
     {
       "path": "src/menu/activity-rewards.mjs",
@@ -3431,8 +3431,8 @@
     },
     {
       "path": "src/render/authored-control-mounts.mjs",
-      "bytes": 2974,
-      "sha256": "565D632AF422524040497DE3BBD2B4F872AE618844A59AC5F0DCDBBE85245EAA"
+      "bytes": 3160,
+      "sha256": "6876D2D01ACAEEAED04090A3D5547D592ABEC408821C2DCA727FC78FE5B810F2"
     },
     {
       "path": "src/render/authored-vehicle-mirrors.mjs",
@@ -3576,8 +3576,8 @@
     },
     {
       "path": "src/render/heritage-interior-detail.mjs",
-      "bytes": 18039,
-      "sha256": "A0CA02862E78D9BD6ED0BB12D7C691E56F12390F5E54E27AFC03D01E4C526C6F"
+      "bytes": 21095,
+      "sha256": "DA4F2A284A5C6C123B09FB0769C4E55216C526736E3D2A085802A9F1F939375A"
     },
     {
       "path": "src/render/hydrology-compute.mjs",
@@ -3767,7 +3767,7 @@
     {
       "path": "src/render/ss250-interior-controls.mjs",
       "bytes": 2695,
-      "sha256": "C96103CF4D023F04F2F6F0E3FE0213CE439DBCF4B08635102A55C2C61477080D"
+      "sha256": "88CE0AA6A33D06907CF4880C389A5B76D5587A89583BC009F1F61B18DD47A098"
     },
     {
       "path": "src/render/ss250-interior-review.mjs",
@@ -3777,7 +3777,7 @@
     {
       "path": "src/render/ss250-speed-pointer.mjs",
       "bytes": 1830,
-      "sha256": "F6CC4EC549F559201C841AB07D13953100A79490143F0E32B5498D4C8AB25FB3"
+      "sha256": "78CCB77EE1E58C8990A7D5CED8C6A5D7F30D3953929A991C7D613DBA061DDA05"
     },
     {
       "path": "src/render/surface-curvature.mjs",
@@ -3841,8 +3841,8 @@
     },
     {
       "path": "src/render/vehicle-interior-rig.mjs",
-      "bytes": 2739,
-      "sha256": "71AAB1ECB5885C3703C52FE917A309FC875206B7B8970CACF92C53CED52BD013"
+      "bytes": 3905,
+      "sha256": "00EA693EA28E95C05D61CE9E3436B471B9CE1EA667E2672D1E5BFCA33F7E87AC"
     },
     {
       "path": "src/render/vehicle-lighting.mjs",
@@ -3856,8 +3856,8 @@
     },
     {
       "path": "src/render/vehicle-presentation.mjs",
-      "bytes": 31647,
-      "sha256": "AF98EAD548191BE7B571B2DC5D0C2BD21A4EBD7143168DC37BF41535DC4FE382"
+      "bytes": 31726,
+      "sha256": "F4C2FC8AAB0894F5DBB2E57D2E660422450E83BADA2FFA43D322E02DD4DCB93D"
     },
     {
       "path": "src/render/vehicle-resource-pool.mjs",
@@ -4052,7 +4052,7 @@
     {
       "path": "src/render/workshop-vehicle-selection.mjs",
       "bytes": 2613,
-      "sha256": "02882F6D1396DD4F734941BF20D3A6EACE8047CB2D7969F537009DF5F6D38FD0"
+      "sha256": "26D41D64B9FF0680AA67B1887E8E69F0DDB1A62715878D6F3B7F4413953B1A2A"
     },
     {
       "path": "src/render/workshop-vertex-colors.mjs",
@@ -4527,7 +4527,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "A7B586D1AF42896E80DEEB245AAA354F06E9F0C3AAE03F14CDF77879B0467E7F"
+      "sha256": "51D7E31E8107B34E6A3A7CE6042A3ECAF2EF90A85C187C723C377A0B90495DE9"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4547,17 +4547,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "ED6FB204B5699361459D29BC7F680B7AF4CF4432D791716616936875D5D69B7B"
+      "sha256": "4897306BA71E5EFA2D5E383425A740B7ECC393F975CF6C2C7ACFB63E6C22441E"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "3AB9E0B7459288EF6CA695961D7A0123490D7AD29C7EA40835DFF0F51BBDE9FF"
+      "sha256": "01155415CEE611A96FBABC7EE5F6797F2A128587E60EEF1BFAE21ABA21F7F3C8"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "6914D1895CADEF6A3FB17D2763C709C10C48A0DE463CCE58FF544D529BBDA72F"
+      "sha256": "E759144E97777EA1997FEC51350A6CEDC56CE2AC246F46F9D5A63C7D1A268FB6"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4777,12 +4777,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "832C4518D751DEB25B42DF02823F23D01B56C4C9BD0BD80BE04689CAE73F4824"
+      "sha256": "F97585C22914646E53B91BD05DBAE7ED47DFD5846E776E687C2DBCF92B618942"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "D6D362CD78DA32FBA3B45D1081022BBFBFB1C5516C2C0C44988DAD226CE71238"
+      "sha256": "F3F100C017247250107447EDA4B4B41A7E637BC40F6EC3F9C7586FCDCC1F959B"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4837,7 +4837,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "413421EB399A4328B2125A7D30537102B776370CD7B27B144787458F07DD973A"
+      "sha256": "DDA92418550FC9BBCFC28F157265D106C2A98DD9C9DD320A17D8561FBC952947"
     },
     {
       "path": "tools/player-driver.test.mjs",
@@ -4922,7 +4922,7 @@
     {
       "path": "tools/session-result-consistency.test.mjs",
       "bytes": 5330,
-      "sha256": "84AB8E79CBF7F869F92770DDA74FEDF1A378A1219397FE0C4A0B3EC39D1032FF"
+      "sha256": "539E7723404DB4DB8EE458BBB28BDF49E48859CD3CCAF858D505FF650CF93036"
     },
     {
       "path": "tools/spatial-antialias.gpu.mjs",
@@ -4987,7 +4987,7 @@
     {
       "path": "tools/v7-earned-collection.test.mjs",
       "bytes": 4665,
-      "sha256": "DCC350394417FD2CABEA7B55EFB09C2AF084E35975483047861C1695EB967907"
+      "sha256": "441B9D2F3E6FC341020136559C3D5528C4F00DC92FB59B31C4162A0D359723FE"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -5051,8 +5051,8 @@
     },
     {
       "path": "tools/vehicle-condition-appearance.test.mjs",
-      "bytes": 7701,
-      "sha256": "879FED02EA36731A7E82430AECAF80F007B47D057F777B61898DD7B344F6F578"
+      "bytes": 9286,
+      "sha256": "1C49B0BCA190D9A0FE27550DE9FECD1371AC7DAB9F37B0266ECF09D8ED8EF14E"
     },
     {
       "path": "tools/vehicle-contact-occlusion.test.mjs",
@@ -5067,7 +5067,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "2E9BCD5903C29E3586BA24C9C8FC37B3FA52C03544934AED490DC8E6EE8789CB"
+      "sha256": "5496D2E4C4B267F2835A75B4EAFF41C7822D88B00C3799C20C650EEC9986D911"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5077,7 +5077,7 @@
     {
       "path": "tools/vehicle-surface-program-cache.test.mjs",
       "bytes": 2852,
-      "sha256": "A6F21A333E10D0CFF223841CAD4EAE4D993EE78B0455964E378BCF7985F6792C"
+      "sha256": "F0E99893D3FC33B947FC82535CF7D5A2CC681C64F04273FAEDFBC3D7DE835A6C"
     },
     {
       "path": "tools/vehicle-template-reference.test.mjs",
@@ -5102,12 +5102,12 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "2462778A80190BAFCE90CC07B27A3CD6BE9DC181ACF689F492E14B50075C9F35"
+      "sha256": "9D1E39B997A9B1D40574AF3CD7DAB4EC5BBA268EEB289150BE0D45F4A4EBC4B6"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
       "bytes": 12944,
-      "sha256": "19832C8F49D463A112528A827B8D9F80A9BBBD5C494698AED2463DB0B88012A5"
+      "sha256": "DD40E0B0C3A48FE96951AD5E79D11C819E5DFEAD24EE6F21DD1640DB180C03EE"
     },
     {
       "path": "tools/workshop-performance.test.mjs",
@@ -5416,6 +5416,6 @@
     }
   ],
   "fileCount": 1068,
-  "totalBytes": 998971669,
-  "inventorySha256": "537571B477DB279A56A9ECB9B575BDF42E9FE8F7423EEB1F01435EC485C93311"
+  "totalBytes": 998977883,
+  "inventorySha256": "817FAB87A08FB8D12C58275C0E456E105FD7DE442605865DEA1D7DEA9103BCF6"
 }

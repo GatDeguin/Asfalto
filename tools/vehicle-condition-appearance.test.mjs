@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=af98ead548191be7';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=f4c2fc8aab0894f5';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
+import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=6876d2d01acaeeae';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
@@ -99,6 +100,39 @@ test('Bel Air fuel gauge follows the current car’s persistent fuel, including 
    assert.equal(gauge().ratio,fuel/100);
   }
  }finally{view.dispose();}
+});
+
+test('authored gauges dim independently of the road lights, and restore the legacy cabin lamp on exit',()=>{
+ const model=new T.Group(),workshop=new T.Group();
+ const view=installVehiclePresentation(T,{vehicle:'pickup_3100',modelRoot:workshop,lods:[model]});
+ const cockpit=new T.Group(),lamp=new T.PointLight();
+ cockpit.add(lamp);
+ const equipment=createAuthoredControlMounts(T,{illumination:lamp});
+ try{
+  equipment.attach(view.root,'pickup_3100');
+  assert.equal(lamp.visible,false);
+  const face=model.getObjectByName('RecessedPrintedFace').material;
+  const needle=model.getObjectByName('TelemetryNeedle').material;
+  view.update({phase:'night'});
+  for(const power of [1,.25,0,1]){
+   view.setLightMode('low',power);
+   assert.equal(view.getInteriorDiagnostics().instrumentPower,power);
+   assert.equal(view.getLightingDiagnostics().mode,'low');
+   assert.equal(face.emissiveIntensity,.66*power);
+   assert.equal(needle.emissiveIntensity,1.35*power);
+  }
+  view.setLightMode('position',.4);
+  assert.equal(view.getInteriorDiagnostics().instrumentPower,.4);
+  view.setLightMode('off',.8);
+  assert.equal(face.emissiveIntensity,0);
+  assert.equal(needle.emissiveIntensity,0);
+  view.update({phase:'day'});
+  assert.ok(face.emissiveIntensity>0);
+  assert.equal(view.getInteriorDiagnostics().instrumentPower,0);
+  equipment.attach(view.root,'chevy');
+  assert.equal(lamp.visible,true);
+  assert.equal(lamp.parent,cockpit);
+ }finally{equipment.dispose();view.dispose();}
 });
 
 test('physical dirt responds to driving distance on the contacted surface',()=>{

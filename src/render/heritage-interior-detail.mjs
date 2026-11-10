@@ -57,13 +57,13 @@ function installCabinFinishes(root,finishes){
   const finish=Object.hasOwn(finishes,source?.name)?finishes[source.name]:null;
   if(!finish||!source.isMeshStandardMaterial)return source;
   if(!clones.has(source)){
-   const {color,grain,backlight,fill,...surface}=finish;
+   const {color,grain,backlight,fill,dayFill,...surface}=finish;
    const clone=source.clone();
    Object.assign(clone,surface);
    if(color!==undefined)clone.color.setHex(color);
    if(grain!==undefined)clone.normalScale.multiplyScalar(grain);
    if(backlight!==undefined){clone.emissive.copy(clone.color);clone.emissiveIntensity=fill;}
-   clones.set(source,{clone,backlight,fill});
+   clones.set(source,{clone,backlight,fill,dayFill});
   }
   return clones.get(source).clone;
  };
@@ -76,7 +76,11 @@ function installCabinFinishes(root,finishes){
   }
  });
  return {
-  setLights(on){for(const {clone,backlight,fill} of clones.values())if(backlight!==undefined)clone.emissiveIntensity=on?backlight:fill;},
+  setInstrumentPower(power,daylight){
+   for(const {clone,backlight,fill,dayFill} of clones.values()){
+    if(backlight!==undefined)clone.emissiveIntensity=fill+backlight*power+dayFill*daylight;
+   }
+  },
   diagnostics:()=>({materials:clones.size,meshes:bindings.length}),
   dispose(){
    for(const {node,original,installed} of bindings)if(node.material===installed)node.material=original;
@@ -89,9 +93,10 @@ function installCabinFinishes(root,finishes){
 export function installChevrolet400Finish(root){
  return installCabinFinishes(root,{
   SS250_DialFace:{color:0x222525,roughness:.78},
-  SS250_DialPrint:{color:0xf2dfb7,fill:.17,backlight:.58},
-  SS250_AuxScalePrint:{color:0xf2dfb7,fill:.19,backlight:.58},
-  SS250_NeedleIvory:{color:0xffdf9e,fill:.22,backlight:.68},
+  SS250_DialPrint:{color:0xf2dfb7,fill:.025,dayFill:.14,backlight:.88},
+  SS250_AuxScalePrint:{color:0xf2dfb7,fill:.025,dayFill:.16,backlight:.88},
+  SS250_NeedleIvory:{color:0xffc879,fill:.035,dayFill:.18,backlight:1.05},
+  SS250_InstrumentTrim:{color:0xc1b9ad,roughness:.32},
   SS250_DashCrownGrainedVinyl:{color:0x34312e,roughness:.74},
   SS250_ConsoleGrainedVinyl:{color:0x2b2925,roughness:.76},
   SS250_SeatVinyl:{color:0x42403b,roughness:.67},
@@ -99,6 +104,57 @@ export function installChevrolet400Finish(root){
   SS250_SatinSpokes:{color:0xb9b6ad,roughness:.42},
  });
 }
+
+export function installHeritageHornBadge(T,pivot,axis,vehicle){
+ if(!pivot||!instrumentFinishes[vehicle])return null;
+ const pickup=vehicle==='pickup_3100',radius=pickup?.011:.013;
+ const side=new T.Vector3(0,0,-1),up=new T.Vector3().crossVectors(axis,side).normalize();
+ const ray=new T.Raycaster(),probe=radius*.86;
+ pivot.updateWorldMatrix(true,true);
+ // Seat the insert on the donor hub. Check its footprint so a missing or
+ // simplified hub cannot leave a badge floating in front of the wheel.
+ const direction=axis.clone().transformDirection(pivot.matrixWorld).negate();
+ const heights=[];
+ for(const offset of [new T.Vector3(),side,side.clone().negate(),up,up.clone().negate()]){
+  const origin=offset.clone().multiplyScalar(probe).addScaledVector(axis,.04);
+  ray.set(pivot.localToWorld(origin),direction);
+  const hit=ray.intersectObjects(pivot.children,true)[0];
+  if(!hit)return null;
+  const height=pivot.worldToLocal(hit.point).dot(axis);
+  if(Math.abs(height)>.022)return null;
+  heights.push(height);
+ }
+ const [center,right,left,top,bottom]=heights;
+ const surfaceCenters=[center,(right+left)/2,(top+bottom)/2];
+ const height=Math.max(...surfaceCenters);
+ if(height-Math.min(...surfaceCenters)>.002)return null;
+ side.addScaledVector(axis,(right-left)/(2*probe)).normalize();
+ up.addScaledVector(axis,(top-bottom)/(2*probe));
+ const normal=new T.Vector3().crossVectors(side,up).normalize();
+ up.crossVectors(normal,side);
+ const basis=new T.Matrix4().makeBasis(side,up,normal);
+ const canvas=globalThis.document?.createElement?.('canvas'),c=canvas?.getContext('2d');
+ let map=null;
+ if(c){
+  canvas.width=canvas.height=128;
+  c.fillStyle='#e1ddd0';c.fillRect(0,0,128,128);
+  c.fillStyle=pickup?'#3c504f':'#711d1b';
+  c.beginPath();c.arc(64,64,58,0,2*Math.PI);c.fill();
+  c.strokeStyle=pickup?'#9ba69a':'#e9c58b';c.lineWidth=2;
+  c.beginPath();c.arc(64,64,53,0,2*Math.PI);c.stroke();
+  c.fillStyle=pickup?'#f0dfb1':'#ebbd69';
+  c.beginPath();c.moveTo(22,56);c.lineTo(51,56);c.lineTo(51,47);c.lineTo(106,47);
+  c.lineTo(106,72);c.lineTo(77,72);c.lineTo(77,81);c.lineTo(22,81);c.closePath();c.fill();
+  map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
+ }
+ const geometry=new T.CircleGeometry(radius,32);
+ const material=new T.MeshStandardMaterial({map,color:map?0xffffff:pickup?0x3c504f:0x711d1b,roughness:.36,metalness:.08});
+ const badge=new T.Mesh(geometry,material);
+ badge.name='HeritageHornBadge';badge.quaternion.setFromRotationMatrix(basis);
+ badge.position.copy(axis).multiplyScalar(height+.00032);pivot.add(badge);
+ return {dispose(){badge.removeFromParent();geometry.dispose();material.dispose();map?.dispose();}};
+}
+
 function installInteriorMicrorelief(T,root){
  const clones=new Map(),assignments=[];let texture=null;
  function usableUV(geometry){
@@ -227,14 +283,17 @@ export function installHeritageInteriorDetail(T,{root,vehicle}={}){
  root.traverse(o=>{if(o.userData?.instrumentType){replaced.push([o,o.visible]);o.visible=false;}});
  const chrome=material(T.MeshStandardMaterial,{color:finish.bezel,metalness:.92,roughness:finish.roughness});
  const seatingRubber=material(T.MeshStandardMaterial,{color:0x101714,roughness:.94,metalness:0});
- const needleMaterial=material(T.MeshBasicMaterial,{color:finish.needle});
+ const needleMaterial=material(T.MeshStandardMaterial,{color:finish.needle,emissive:finish.needle,emissiveIntensity:0,roughness:.62});
  const glassMaterial=material(T.MeshStandardMaterial,{color:0xd0e4db,metalness:0,roughness:.12,transparent:true,opacity:.045,depthWrite:false});
  for(const spec of specs){
   const dial=new T.Group();dial.name=`${vehicle}_${spec.channel}_Dial`;
   dial.position.set(spec.center[0]*SCALE,spec.center[1]*SCALE+SHIFT,spec.center[2]*SCALE);
   dial.rotation.y=Math.PI/2;group.add(dial);const radius=spec.radius*SCALE;
   const texture=faceTexture(T,spec,finish);if(texture)textures.add(texture);
-  const face=material(T.MeshBasicMaterial,{color:texture?0xffffff:finish.fallback,map:texture});
+  const face=material(T.MeshStandardMaterial,{
+   color:texture?0xffffff:finish.fallback,map:texture,roughness:.86,
+   emissive:texture?0xffe5bc:finish.fallback,emissiveMap:texture,emissiveIntensity:0,
+  });
   mesh(new T.CircleGeometry(radius,64),face,dial,'RecessedPrintedFace');
   // Narrow real rubber joint behind the chrome lip, not a painted AO halo.
   mesh(new T.RingGeometry(radius*.99,radius*1.07,64),seatingRubber,dial,'InstrumentSeatingGasket').position.z=-.00012;
@@ -245,23 +304,24 @@ export function installHeritageInteriorDetail(T,{root,vehicle}={}){
   mesh(new T.CircleGeometry(radius*.065,24),chrome,dial,'NeedleHub').position.z=.00085;
   const glass=mesh(new T.CircleGeometry(radius*.985,64),glassMaterial,dial,'InstrumentGlass');glass.position.z=.0011;glass.renderOrder=2;
   const initial=spec.channel==='temperatureC'?40:0;
-  gauges.push({spec,pivot,face,dayColor:face.color.clone(),position:dial.position.toArray(),value:initial,ratio:0});pivot.rotation.z=angle(0);
+  gauges.push({spec,pivot,face,position:dial.position.toArray(),value:initial,ratio:0});pivot.rotation.z=angle(0);
  }
  const fasciaDetail=addFasciaDetail(T,{root,group,vehicle,mesh,material,chrome,interiorMicrorelief});
- const warmLight=new T.Color(0xffdf9c);
- root.add(group);let disposed=false,lights=false;
+ root.add(group);let disposed=false;
  return {
   update(sample={}){
    if(disposed)return false;
-   if(typeof sample.lights==='boolean'&&sample.lights!==lights){
-    lights=sample.lights;
-    for(const gauge of gauges){gauge.face.color.copy(gauge.dayColor);if(lights)gauge.face.color.multiply(warmLight);}
-   }
    for(const gauge of gauges){const v=sample[gauge.spec.channel];if(Number.isFinite(v))gauge.value=v;
     const min=gauge.spec.min||0;gauge.ratio=clamp((gauge.value-min)/(gauge.spec.max-min));gauge.pivot.rotation.z=angle(gauge.ratio);
    }return true;
   },
-  diagnostics:()=>({vehicle,disposed,lights,source:'authored donor recesses; r12 control relocation',gauges:gauges.map(g=>({channel:g.spec.channel,value:g.value,ratio:g.ratio,angle:g.pivot.rotation.z,position:[...g.position]})),replacedNeedles:replaced.length,textureCount:textures.size,interiorMicrorelief:interiorMicrorelief.diagnostics(),cabinFinish:cabinFinish.diagnostics(),fasciaDetail}),
+  setInstrumentPower(power,daylight){
+   if(disposed)return;
+   // Compensate for diffuse daylight missing inside the opaque vehicle shell.
+   for(const gauge of gauges)gauge.face.emissiveIntensity=power*.66+daylight*.36;
+   needleMaterial.emissiveIntensity=power*1.35+daylight*.18;
+  },
+  diagnostics:()=>({vehicle,disposed,source:'authored donor recesses; r12 control relocation',gauges:gauges.map(g=>({channel:g.spec.channel,value:g.value,ratio:g.ratio,angle:g.pivot.rotation.z,position:[...g.position]})),replacedNeedles:replaced.length,textureCount:textures.size,interiorMicrorelief:interiorMicrorelief.diagnostics(),cabinFinish:cabinFinish.diagnostics(),fasciaDetail}),
   getInteractionTargets:()=>[],
   dispose(){if(disposed)return;disposed=true;cabinFinish.dispose();interiorMicrorelief.dispose();root.remove(group);for(const [o,visible]of replaced)o.visible=visible;for(const x of geometries)x.dispose();for(const x of materials)x.dispose();for(const x of textures)x.dispose();},
  };
