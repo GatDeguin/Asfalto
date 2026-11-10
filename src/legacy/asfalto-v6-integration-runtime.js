@@ -1426,12 +1426,12 @@
       return snapshot;
     }
 
-    _teleportPlayer(frame, velocity) {
+    _teleportPlayer(frame, velocity, options) {
       const teleport = this._physicsSession?.teleport;
       if (typeof teleport !== 'function') return undefined;
       this._physicalStack?.clearDriveTraffic?.();
       this._driveTrafficProvider?.clear();
-      const snapshot = teleport.call(this._physicsSession, frame, velocity);
+      const snapshot = teleport.call(this._physicsSession, frame, velocity, options);
       this._playerTeleportCount += 1;
       return snapshot;
     }
@@ -1998,10 +1998,17 @@
           this._recoveryFallbackReason = String(error?.message || error);
           respawn = this._safeFrameRespawn(safeProgressM);
         }
-        const frame = physicalRespawnFrame(respawn);
+        const nominalClearanceM = finite(respawn?.clearanceM, 0.56);
+        const spec = this._physicsSession?.spec;
+        // A zero-clearance legacy frame already contains the chassis height.
+        const clearanceM = nominalClearanceM > 0
+          ? Math.max(0, finite(spec?.cgHeightM, nominalClearanceM) + finite(spec?.suspensionSetup?.heightM, 0))
+          : 0;
+        const frame = physicalRespawnFrame({ ...respawn, clearanceM });
         const teleported = this._teleportPlayer(
           frame,
           { x: 0, y: 0, z: 0 },
+          { recovery: true },
         );
         const recoveredSnapshot = teleported && typeof teleported === 'object'
           ? teleported : this._physicsSession?.getSnapshot?.() || this._snapshot;
@@ -2024,12 +2031,12 @@
           valid: true,
           jumpRejected: false,
           continuous: true,
-          distanceM: finite(respawn?.clearanceM, 0.56),
+          distanceM: clearanceM,
           routePosition,
           routeFrame,
           segmentIndex: finite(this._lastSafeFrame?.segmentIndex, null),
           routeHalfWidthM: finite(this._lastSafeFrame?.routeHalfWidthM, null),
-          signedSeparationM: finite(respawn?.clearanceM, 0.56),
+          signedSeparationM: clearanceM,
         };
         this._recoveryCount += 1;
         this._lastRecoveryReason = String(reason || 'manual');

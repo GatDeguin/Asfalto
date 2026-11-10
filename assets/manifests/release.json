@@ -2536,8 +2536,8 @@
     },
     {
       "path": "docs/fluidez-gpu.md",
-      "bytes": 28388,
-      "sha256": "FF058712519A327C18C4434B221A503F716517E68D2DF79FD58BC63BFBDF2F28"
+      "bytes": 29071,
+      "sha256": "0A4E4BC89181C88BE160FDCDFF4159781B711A219D4A928D7B3168926EFD74D2"
     },
     {
       "path": "docs/intro-brand-fix.md",
@@ -2727,7 +2727,7 @@
     {
       "path": "index.html",
       "bytes": 81599,
-      "sha256": "B705806B1411F4CDB73EA4142F08B7010FEEA6E065C5227DB4DFB5E6DC409784"
+      "sha256": "4784D49DE1C52EF8E367C98E6795787E519BB220333DA46E7E4315DA58D73703"
     },
     {
       "path": "release-version.json",
@@ -3081,13 +3081,13 @@
     },
     {
       "path": "src/legacy/asfalto-v6-integration-runtime.js",
-      "bytes": 120256,
-      "sha256": "A82D04227FDE5ABC7AF7AFBC501AC046842AC3E94823BE1B99D477098FBACD30"
+      "bytes": 120649,
+      "sha256": "5C927EA089FF205A81D3A0E9492EEFFD6E6E190BD2B8CFA886B7DDD6D0493BE3"
     },
     {
       "path": "src/legacy/asfalto-v6-physics-runtime.js",
-      "bytes": 80896,
-      "sha256": "C5FDE6A88E095B7BE116AAD301CDD7C9147155EB0BB955D4DF077F47F9B16FB5"
+      "bytes": 82692,
+      "sha256": "0DE0D9A665BD6C1B1026674F6D274FD031C04079B36DAB0C024156FF000B699C"
     },
     {
       "path": "src/legacy/asfalto-v6-rapier.js",
@@ -4902,12 +4902,12 @@
     {
       "path": "tools/physical-route-projection.test.mjs",
       "bytes": 1509,
-      "sha256": "F6272EEACC7BD9C84D6D966003F375AF68608D953E70FD9B02CC1A6928E14238"
+      "sha256": "22938EF36D6ED637CF91D1C220A82A5E00F8AB10657926C38F813FEA6A08E87F"
     },
     {
       "path": "tools/physics-runtime-scratch.test.mjs",
-      "bytes": 5047,
-      "sha256": "5FF3D4B5EED03A2FF1CCDD9CFCBEE10C40188D59B9D16615A0449F7862EF9EBC"
+      "bytes": 8727,
+      "sha256": "8FAE153D019D1C754AC78B7A36ABAB89C73CCF84CB4C5F364FDB81EAAE5AA64E"
     },
     {
       "path": "tools/physics-scratch.test.mjs",
@@ -4917,7 +4917,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "B94CB6D98D155D4D1A2FDC81ACE299F31C3A8B5C3C94AC7CAA7E17E89D4A3887"
+      "sha256": "9C7561693CA1BEFD4B969F5A516F98045DB0EAE60A62236551F7C3EA0B6F7E79"
     },
     {
       "path": "tools/player-driver.test.mjs",
@@ -5531,6 +5531,6 @@
     }
   ],
   "fileCount": 1091,
-  "totalBytes": 943114867,
-  "inventorySha256": "2A5CF34200167469E0F1AEA022E075DC1E43D576A9D5829F1620B2D92FF385C4"
+  "totalBytes": 943121419,
+  "inventorySha256": "43605E0F3C62DD6477EE32A7E01BD7469CB26E3AE8BC4DD539EA29A0AA93BC9E"
 }

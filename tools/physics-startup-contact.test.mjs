@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 test('race startup snapshots typed contact storage as independent immutable arrays', () => {
-  const source=fs.readFileSync(new URL('../src/legacy/asfalto-v6-integration-runtime.js?v=a82d04227fde5abc',import.meta.url),'utf8');
+  const source=fs.readFileSync(new URL('../src/legacy/asfalto-v6-integration-runtime.js?v=5c927ea089ff205a',import.meta.url),'utf8');
   const start=source.indexOf('    const initialWheelContacts = Object.freeze(');
   const end=source.indexOf('    const falconSpawn =',start);
   assert.ok(start>=0&&end>start,'actual browser-stack startup boundary exists');

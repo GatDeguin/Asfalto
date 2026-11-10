@@ -1245,7 +1245,35 @@
       return this.lastSnapshot;
     }
 
-    teleport(spawn, linearVelocity = { x: 0, y: 0, z: 0 }) {
+    _resetRecoveredWheels() {
+      const contacts = this._prepareWheelLoads(this._collectContacts({ steer: 0 }).contacts);
+      const data = this.scratch.contactData;
+      return this.wheels.map((wheel, index) => {
+        const { point, normal } = contacts[index];
+        const load = data.normalLoadN[index];
+        const environment = this._sampleEnvironment(wheel.id, point, 0, load);
+        // Preserve tyre condition and wheel angle. Slip and stored forces belong
+        // to the contacts at the old position and must not enter the next tick.
+        Object.assign(wheel, {
+          angularSpeedRadps: 0,
+          steerAngleRad: 0,
+          slipAngleRad: 0,
+          slipRatio: 0,
+          aligningTorqueNm: 0,
+          combinedUtilization: 0,
+          tire: {},
+          normalLoadN: load,
+          contact: load > 0,
+          compressionM: data.compressionM[index],
+          compressionVelocityMps: 0,
+          surface: environment.surface || 'asphalt',
+          waterDepthM: finite(environment.waterDepthM, 0),
+        });
+        return { ...wheel, point: Array.from(point), normal: Array.from(normal) };
+      });
+    }
+
+    teleport(spawn, linearVelocity = { x: 0, y: 0, z: 0 }, { recovery = false } = {}) {
       if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
       this.scratch.scrapeContact.timeSeconds=-Infinity;
       for(const record of this._impactRecords){record.lastTime=-Infinity;record.tick=-1;record.latched=false;}
@@ -1295,8 +1323,24 @@
         damage: this.damage,
         impacts: this.impacts.slice(),
       };
+      let recovered = {};
+      if (recovery) {
+        this.body.resetForces(true);
+        this.body.resetTorques(true);
+        this.impacts.length = 0;
+        this.absModulation.fill(1);
+        const wheels = this._resetRecoveredWheels();
+        recovered = {
+          wheels,
+          steering: { frontAligningTorqueNm: 0, frontContactRatio: (Number(wheels[0].contact) + Number(wheels[1].contact)) / 2 },
+          controls: { ...prior.controls, throttle: 0, brake: 0, handbrake: 0, steer: 0, handwheelAngleRad: 0 },
+          impact: false,
+          impacts: [],
+        };
+      }
       this.lastSnapshot = this.core.finiteSnapshot({
         ...prior,
+        ...recovered,
         timeSeconds: this.timeSeconds,
         scrapeContact: null,
         chassis: {
