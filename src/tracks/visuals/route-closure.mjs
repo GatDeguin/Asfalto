@@ -1,7 +1,8 @@
-import { createReturnLandscape } from './closure-terrain.mjs?v=f3afdae720ec84b9';
+import { createReturnLandscape } from './closure-terrain.mjs?v=cd0160b7b8737148';
 import { returnChapters, returnRoadShape } from './return-route-design.mjs?v=0f181ab60bc9e120';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=4a7e306788ae0d39';
 import { addReturnLandmarks } from './return-landmarks.mjs?v=3a8bb176aa4e61f7';
+import {addScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
 // Procedural game-fiction return corridor. Original canonical samples are never modified.
 // Closing is physical: the last position and frame coincide with the original start.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -255,6 +256,7 @@ export function createClosureRoots(THREE,samples,{id='circuit',materials={},clos
       return nearest&&{distanceXZ:nearest.distance,widthM:nearest.widthM};
     }};
     visualRoot.userData.asfaltoReturnLandmarks=addReturnLandmarks(THREE,visualRoot,{id,chapters:closure.chapters,query,heightAt,ground});
+    addScenicSetpieces(THREE,visualRoot,{id,leg:'return',chapters:closure.chapters,query,heightAt,lengthM:endM});
     visualRoot.userData.asfaltoReturnHeightAt=heightAt;
   }
   visualRoot.userData.asfaltoClosure=closure;collisionRoot.userData.asfaltoClosure=closure;

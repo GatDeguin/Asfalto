@@ -2,11 +2,12 @@ import {waterfallCameraProfile} from './regional-waterfall-camera.mjs?v=4147e1c2
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
 import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=ff9cd4eeb5bb9d5c';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=4a7e306788ae0d39';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=88a5c279fc1ae5d5';
 import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
+import {addScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
 
 const sourceTemplates=new WeakMap();
 const rand=n=>{const x=Math.sin(n*17.831+4.917)*43961.7;return x-Math.floor(x);};
@@ -34,7 +35,7 @@ export function createIguazuInstanceBatches(T,root,items,prefix){
     mesh.userData.asfaltoIguazuInstances={maximum,rangeM:range};root.add(mesh);
   }return bins.size;
 }
-export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
+export async function prepareIguazuVisual(root,{query,lengthM,signal,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   root.updateMatrixWorld(true);const riverMeshes=[],falls=[];root.traverse(mesh=>{if(mesh.isMesh&&mesh.material?.name==='MAT_river_FLOW')riverMeshes.push(mesh);if(mesh.isMesh&&mesh.material?.name==='MAT_waterfall_FLOW')falls.push(mesh);});
   const groundAt=terrainHeightSampler(T,root);
@@ -86,16 +87,24 @@ export async function prepareIguazuVisual(root,{query,signal,THREE:T=globalThis.
   for(const owner of removeBankDetails)owner.removeFromParent();
   root.userData.asfaltoRegionalCameras={id:'cataratas_iguazu',views:points};root.userData.asfaltoWeather={snowLineM:1500,valleyFloorM:15};root.userData.asfaltoIguazu={sourceVegetationParts:vegetationParts,instancedBatches:batches+bankBatches,bankDetailParts:bankDetails.length,bankBatches,templateParts:templates.length,sourceGeometryPreserved:true,fernReplacements};
   root.userData.asfaltoIguazu.surfaces=await prepareIguazuSurfaces(root,{THREE:T,signal});
-  root.userData.asfaltoRegionalReview=regionalReviewPlan({id:'cataratas_iguazu',query,lengthM:query.lengthM});
-  const direction=addRouteDirection(T,root,{id:'cataratas_iguazu',leg:'outbound',query,heightAt:groundAt});
+  root.userData.asfaltoRegionalReview=regionalReviewPlan({id:'cataratas_iguazu',query,lengthM});
+  const direction=addRouteDirection(T,root,{id:'cataratas_iguazu',leg:'outbound',query,lengthM,heightAt:groundAt});
   root.userData.asfaltoIguazu.routeDirectionCues=direction.cues.length;
+  const water=new Set(riverMeshes);
+  const waterAt=terrainHeightSampler(T,root,mesh=>water.has(mesh),{includeDefaultTerrain:false}).raw;
+  const bankAt=terrainHeightSampler(T,root,mesh=>/^MAT_(basalt|laterite)/.test(mesh.material?.name||''),{includeDefaultTerrain:false}).raw;
+  const dryGroundAt=(x,z)=>{
+    const y=Math.max(groundAt.raw(x,z),bankAt(x,z)),waterY=waterAt(x,z);
+    return y<=waterY+.45?NaN:y;
+  };
+  root.userData.asfaltoIguazu.scenicSetpieces=addScenicSetpieces(T,root,{id:'cataratas_iguazu',leg:'outbound',query,lengthM,heightAt:dryGroundAt});
   return root.userData.asfaltoIguazu;
 }
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   if(sourceRoot?.isObject3D&&sourceRoot.userData.asfaltoIguazu)sourceRoot.userData.asfaltoIguazu.ground=batchIguazuGround(T,sourceRoot);
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=d54d8a6cbf9e0c5c'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=4a7e306788ae0d39'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   delete root.userData.asfaltoReturnHeightAt;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;

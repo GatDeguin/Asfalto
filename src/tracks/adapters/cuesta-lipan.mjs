@@ -6,7 +6,7 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=4a7e306788ae0d39';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -399,8 +399,10 @@ export function createCuestaLipanAdapter(dependencies) {
           setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
           root.visible = false;
           tx.visualRoot.add(root);
-          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange:{startM:sector.startM,endM:sector.endM}, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
-            tx.closureRoots?.carveSourceTerrain?.(root);
+          const detailRange={startM:sector.startM,endM:sector.endM};
+          await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
+          tx.closureRoots?.carveSourceTerrain?.(root);
+          prepareScenicSector(root,{id:'cuesta_lipan',query:routeQuery,lengthM:sourceRoute.lengthM,detailRange});
           current(tx);
           await dependencies.applyVisualEnvironment(root, tx.environment, { signal });
           return root;

@@ -10,6 +10,7 @@ import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=9d7ddd559b41734b';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
 import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=d33414548db428b8';
+import {addScenicSetpieces,hasScenicSetpieces} from './scenic-setpieces.mjs?v=878d4284f1763af9';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
@@ -326,15 +327,17 @@ export function createForestPlacements({ id, query, heightAt, maxTrees = 12000, 
   return trees;
 }
 
-export function terrainHeightSampler(THREE, root, includeSurface = () => false) {
+export function terrainHeightSampler(THREE, root, includeSurface = () => false, {includeDefaultTerrain=true} = {}) {
   // A spatial triangle grid makes thousands of vertical placements cheap and deterministic.
   const grid = new Map(), water = [], size = 80, bounds = new THREE.Box3();
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
   root.updateMatrixWorld(true);
   root.traverse(mesh => {
     if (mesh.isMesh && /^(WATER_|LAGO_ESCONDIDO)/.test(mesh.name)) water.push(new THREE.Box3().setFromObject(mesh));
-    if (!mesh.isMesh || mesh.userData.asfaltoReplacedTerrain || /^(COLLISION_)|SOURCE_OWNER/i.test(mesh.name) || (!/(ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION|^TERRAIN_)/.test(mesh.name)
-      && !/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(mesh.material?.name || '') && !includeSurface(mesh))) return;
+    if (!mesh.isMesh || mesh.userData.asfaltoReplacedTerrain || /^(COLLISION_)|SOURCE_OWNER/i.test(mesh.name)) return;
+    const terrain=includeDefaultTerrain&&(/(ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION|^TERRAIN_)/.test(mesh.name)
+      || /^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(mesh.material?.name || ''));
+    if(!terrain&&!includeSurface(mesh))return;
     const p = mesh.geometry.attributes.position, index = mesh.geometry.index;
     const count = index?.count || p.count;
     for (let i = 0; i < count; i += 3) {
@@ -592,6 +595,9 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   if(templates && heightAt && query)details={...details,...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange,barrierSource:id==='cuesta_lipan'?barrierSource:null}),...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
   else if(scenery&&query)root.userData.asfaltoRegionalCameras=regionalCameraProfiles({id,query,lengthM});
   if(scenery&&heightAt&&query)details={...details,...refineRegionalShoreline(THREE,root,{id,query,heightAt,textures})};
+  if(scenery&&id!=='cuesta_lipan'&&heightAt&&query){
+    details.scenicSetpieces=addScenicSetpieces(THREE,root,{id,leg:'outbound',query,lengthM,heightAt});
+  }
   if(query){const ys=Array.from({length:41},(_,i)=>query.sample(lengthM*i/40).position[1]),minY=Math.min(...ys),maxY=Math.max(...ys);root.userData.asfaltoWeather={snowLineM:minY+(maxY-minY)*.62,valleyFloorM:minY};}
   const vertexColors=applySurfaceVertexColors(THREE,root,{id});
   const reliefSet=new Set();
@@ -600,6 +606,12 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   root.userData.asfaltoRegionalReview = regionalReviewPlan({id,query,lengthM});
   root.userData.asfaltoReferenceVisual = stats;
   return stats;
+}
+
+export function prepareScenicSector(root,{id,query,lengthM,detailRange,THREE=globalThis.__chevyV6Three||globalThis.THREE}){
+  const options={id,leg:'outbound',query,lengthM,detailRange};
+  if(!root?.isObject3D||!THREE||!hasScenicSetpieces(options))return [];
+  return addScenicSetpieces(THREE,root,{...options,heightAt:terrainHeightSampler(THREE,root)});
 }
 
 export async function prepareReturnScenery(root,{id,query,lengthM,startM,signal,sourceRoot,THREE=globalThis.__chevyV6Three||globalThis.THREE}={}){
