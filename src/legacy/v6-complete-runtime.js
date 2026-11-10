@@ -146,10 +146,14 @@ async function loadChampionshipMenu(){
 function canLeaveWorkshop(){const state=globalThis.__asfaltoVehicleMaintenance?.getState();if(state&&!state.canDrive){toast(state.faults.map(f=>f.label).join(" · ")+". Repará el auto antes de salir.","warn");openMenu("workshop");return false;}return true;}
 async function openChampionship(){if(!canLeaveWorkshop())return false;q('#v7-championship-content').hidden=false;try{const menu=await loadChampionshipMenu();menu.render();q('#v7-championship-select')?.focus();}catch(error){q('#v7-championship-content').textContent='No se pudo abrir el campeonato. Volvé a elegir Campeonato nacional para reintentar.';}}
 function showChampionshipResults(info){
- const player=info.final?.participants?.find(p=>p.id==='player'),saved=info.phase==='result';showResults({title:'Clasificación de etapa',class:info.run?.entrant.class,main:player?.officialSeconds?.toFixed(3)||'—',unit:'segundos oficiales',elapsed:(player?.activeSeconds||0)*1000,valid:saved,reasons:info.error?[info.error]:[],series:activeSession.series,experienceFacts:{activeSeconds:player?.activeSeconds,penaltySeconds:player?.penaltySeconds,totalSeconds:player?.officialSeconds,valid:saved,progress:saved?'Etapa persistida.':'Sin publicar premios.'}});
+ const player=info.final?.participants?.find(p=>p.id==='player'),saved=info.phase==='result';
+ const progress=window.__cockpit?.raceWorld?.state?.raceProgress;
+ const distance=Number.isFinite(progress)&&progress>=0?progress:activeSession.distance;
+ showResults({title:'Clasificación de etapa',class:info.run?.entrant.class,main:player?.officialSeconds?.toFixed(3)||'—',unit:'segundos oficiales',elapsed:(player?.activeSeconds||0)*1000,maxSpeed:activeSession.maxSpeed,distance,valid:saved,reasons:info.error?[info.error]:[],series:activeSession.series,experienceFacts:{activeSeconds:player?.activeSeconds,penaltySeconds:player?.penaltySeconds,totalSeconds:player?.officialSeconds,valid:saved,progress:saved?'Etapa persistida.':'Sin publicar premios.'}});
  q('#v6-results-verdict').textContent=saved?'Clasificación guardada.':info.phase==='saving'?'Guardando clasificación…':info.error||'Intento inválido; la etapa no avanzó.';
  q('#v6-results-progress').textContent=saved?`${info.run.nextStageIndex}/${info.run.schedule.length} etapas guardadas. Los premios se derivan de las llegadas válidas.`:'No se publicaron premios de este intento.';
- q('#v6-results-details').replaceChildren();for(const p of info.final?.participants||[]){const row=document.createElement('li');row.textContent=(p.id==='player'?'Vos':'Falcon')+' · '+p.status+' · '+(Number.isFinite(p.officialSeconds)?p.officialSeconds.toFixed(3)+' s':'sin tiempo')+' · penalización '+(p.penaltySeconds||0)+' s';q('#v6-results-details').append(row);}
+ const stateNames={finished:'finalizó',dnf:'abandono',dq:'descalificado'};
+ q('#v6-results-details').replaceChildren();for(const p of info.final?.participants||[]){const row=document.createElement('li');row.textContent=(p.id==='player'?'Vos':'Falcon')+' · '+(stateNames[p.status]||p.status)+' · '+(Number.isFinite(p.officialSeconds)?p.officialSeconds.toFixed(3)+' s':'sin tiempo')+' · penalización '+(p.penaltySeconds||0)+' s';q('#v6-results-details').append(row);}
  const repeat=q('#v6-results-repeat');repeat.disabled=info.phase==='saving'||info.run?.status==='completed';repeat.textContent=info.phase==='save-error'?'Reintentar guardado':saved?'Siguiente etapa':'Reintentar etapa';
 }
 
@@ -526,9 +530,21 @@ function finishJourney(s,t){if(activeSession.completed)return;activeSession.comp
 function finishCompetition(s,t){if(activeSession.completed)return;activeSession.completed=true;sessionLoop.stop();
  const race=s.raw||{},officialSeconds=[race.totalWithPenalty,race.totalTime].find(value=>Number.isFinite(value)&&value>=0);
  const elapsed=Number.isFinite(officialSeconds)?officialSeconds*1000:t-activeSession.startTime,distance=Number.isFinite(race.raceProgress)&&race.raceProgress>=0?race.raceProgress:activeSession.distance;
+ const valid=activeSession.valid&&s.finished;
+ const reasons=s.finished?activeSession.reasons:[...activeSession.reasons,'TIEMPO LÍMITE SIN LLEGADA'];
+ let summary='Sin clasificación',main='—';
+ profile.championship.events++;
  // Match the HUD's progress ranking; equal endpoint progress is not a finish timestamp.
- const position=window.CockpitV5Core?.derivePosition?.(race)??(1+(Array.isArray(race.rivals)?race.rivals:[]).filter(r=>(Number(r.raceProgress)||0)>(Number(race.raceProgress)||0)).length);
- profile.championship.events++;profile.championship.points+=Math.max(1,8-position*2);if(position===1)profile.championship.wins++;addHistory(activeSession.definition.title,`Puesto ${position} · ${fmtTime(elapsed)} · ${vehicleClass()}.`,'Competencia');award({competencia:position===1?12:7,dominio:4,coleccion:position===1?4:1});applyWear(2);saveProfile();showResults({title:activeSession.definition.title,valid:activeSession.valid,main:`P${position}`,unit:'clasificación',maxSpeed:round(activeSession.maxSpeed),elapsed,distance,series:activeSession.series,reasons:activeSession.reasons,class:vehicleClass()})}
+ const rewards={dominio:4};
+ if(valid){
+  const position=window.CockpitV5Core?.derivePosition?.(race)??(1+(Array.isArray(race.rivals)?race.rivals:[]).filter(r=>(Number(r.raceProgress)||0)>(Number(race.raceProgress)||0)).length);
+  profile.championship.points+=Math.max(1,8-position*2);if(position===1)profile.championship.wins++;
+  summary=`Puesto ${position}`;main=`P${position}`;
+  rewards.competencia=position===1?12:7;rewards.coleccion=position===1?4:1;
+ }
+ addHistory(activeSession.definition.title,`${summary} · ${fmtTime(elapsed)} · ${vehicleClass()}.`,'Competencia');award(rewards);applyWear(2);saveProfile();
+ showResults({title:activeSession.definition.title,valid,main,unit:valid?'clasificación':'sin clasificación',maxSpeed:round(activeSession.maxSpeed),elapsed,distance,series:activeSession.series,reasons,class:vehicleClass()});
+}
 function applyWear(){globalThis.__asfaltoVehicleMaintenance?.flush();}
 function verdictFor(r){if(!r.valid)return `El intento no produjo una marca válida: ${(r.reasons||[]).join(', ').toLowerCase()}.`;if(r.title?.includes('Frenada')&&Number(r.main)<48)return'Frenada consistente. El auto quedó alineado.';if(r.maxSpeed>170)return'Buena recta; régimen correcto y caja precisa.';if(r.consistency>88)return'Salida limpia y repetible. La configuración trabaja pareja.';return'Intento válido. Hay margen para afinar técnica y puesta a punto.'}
 function showResults(r){

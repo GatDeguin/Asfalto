@@ -49,7 +49,13 @@ class RecordStoreV5{
 function ghostBracket(samples,value,key='s'){
   if(!Array.isArray(samples)||!samples.length||!Number.isFinite(value))return null;let lo=0,hi=samples.length-1;while(lo<hi){const mid=(lo+hi)>>1;if((samples[mid]?.[key]??0)<value)lo=mid+1;else hi=mid}return[Math.max(0,lo-1),lo];
 }
-function ghostTimeAtDistance(samples,distance){const br=ghostBracket(samples,distance,'s');if(!br)return null;const a=samples[br[0]],b=samples[br[1]],span=Math.max(1e-6,(b.s??0)-(a.s??0)),p=clamp((distance-(a.s??0))/span,0,1);return lerp(a.t??0,b.t??0,p)}
+function ghostTimeAtDistance(samples,distance){
+  const first=samples?.[0];
+  if(first?.t>.08&&distance<first.s)return null;
+  const br=ghostBracket(samples,distance,'s');if(!br)return null;
+  const a=samples[br[0]],b=samples[br[1]],span=Math.max(1e-6,(b.s??0)-(a.s??0)),p=clamp((distance-(a.s??0))/span,0,1);
+  return lerp(a.t??0,b.t??0,p);
+}
 function deltaAtDistance(samples,distance,currentTime){const ghostTime=ghostTimeAtDistance(samples,distance);return Number.isFinite(ghostTime)&&Number.isFinite(currentTime)?currentTime-ghostTime:null}
 
 class RaceEngineerV5{

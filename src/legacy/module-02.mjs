@@ -4835,6 +4835,8 @@ try {
 const RaceCore = (() => {
   const TAU = Math.PI * 2;
   const EPS = 1e-9;
+  const GHOST_SAMPLE_INTERVAL = 0.04;
+  const GHOST_SAMPLE_LIMIT = 4000;
 
   const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -5037,6 +5039,7 @@ const RaceCore = (() => {
         rivals: this._makeRivals(),
         ghostSamples: [],
         ghostAccumulator: 0,
+        ghostSampleInterval: GHOST_SAMPLE_INTERVAL,
         tireTemp: 0.72,
         tireWear: 0,
         cutDistance: 0,
@@ -5230,15 +5233,19 @@ const RaceCore = (() => {
     }
 
     _recordGhost(dt, speedMps, physicalPose) {
-      if (this.state.status !== 'RUNNING') return;
-      this.state.ghostAccumulator += dt;
-      if (this.state.ghostAccumulator < 0.04) return;
-      this.state.ghostAccumulator %= 0.04;
+      const state = this.state;
+      if (state.status !== 'RUNNING') return;
+      state.ghostAccumulator += dt;
+      if (state.ghostAccumulator < state.ghostSampleInterval) return;
+      state.ghostAccumulator %= state.ghostSampleInterval;
       const progress = physicalPose?.raceProgress ?? this.state.raceProgress;
-      // Published frames can retain a prefix of this recording. Append in
-      // place, but replace the array when dropping its oldest sample.
-      if (this.state.ghostSamples.length >= 4000) this.state.ghostSamples = this.state.ghostSamples.slice(-3999);
-      this.state.ghostSamples.push({
+      // Keep the start of a long lap while bounding storage. Replace the array
+      // at compaction so previously published frames retain their own samples.
+      if (state.ghostSamples.length >= GHOST_SAMPLE_LIMIT) {
+        state.ghostSamples = state.ghostSamples.filter((_, index) => index % 2 === 0);
+        state.ghostSampleInterval *= 2;
+      }
+      state.ghostSamples.push({
         t: this.state.totalTime - this.state.lapStartTime,
         s: this.track.closed === false ? clamp(progress, 0, this.track.length) : progress - this.state.completedLaps * this.track.length,
         lateral: physicalPose?.lateral ?? this.state.lateral,
@@ -5320,6 +5327,7 @@ const RaceCore = (() => {
       this.state.offroadTime = 0;
       this.state.ghostSamples = [];
       this.state.ghostAccumulator = 0;
+      this.state.ghostSampleInterval = GHOST_SAMPLE_INTERVAL;
       if ((this.track.closed === false || !['practice', 'sectors', 'speedTrap'].includes(this.settings.mode))
         && this.state.completedLaps >= this.settings.laps
         && this.state.status === 'RUNNING') this.finish('completed');
@@ -5485,7 +5493,11 @@ const RaceCore = (() => {
     getGhostPose(lapTime) {
       const ghost = this._ghost;
       if (!ghost || !ghost.samples?.length || !Number.isFinite(lapTime)) return null;
-      const t = this.track.closed === false ? clamp(lapTime, 0, ghost.lapTime || ghost.samples.at(-1).t || 0) : mod(lapTime, ghost.lapTime || ghost.samples.at(-1).t || 1);
+      const finishTime = ghost.lapTime || ghost.samples.at(-1).t || 0;
+      if (lapTime > finishTime) return null;
+      const t = Math.max(0, lapTime);
+      const first = ghost.samples[0];
+      if (first.t > GHOST_SAMPLE_INTERVAL * 2 && t < first.t) return null;
       const bracket = this._ghostBracket(t, 't');
       if (!bracket) return null;
       const [lo, hi] = bracket, a = ghost.samples[lo], b = ghost.samples[hi];
@@ -5497,6 +5509,8 @@ const RaceCore = (() => {
       const ghost = this._ghost;
       if (!ghost || !ghost.samples?.length || !Number.isFinite(distance)) return null;
       const s = this.track.closed === false ? clamp(distance, 0, this.track.length) : mod(distance, this.track.length);
+      const first = ghost.samples[0];
+      if (first.t > GHOST_SAMPLE_INTERVAL * 2 && s < first.s) return null;
       const bracket = this._ghostBracket(s, 's');
       if (!bracket) return null;
       const [lo, hi] = bracket, a = ghost.samples[lo], b = ghost.samples[hi];
@@ -5650,7 +5664,8 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
   }
   function formatDelta(seconds) {
-    if (!Number.isFinite(seconds) || Math.abs(seconds) < 0.0005) return '±0.000';
+    if (!Number.isFinite(seconds)) return '—';
+    if (Math.abs(seconds) < 0.0005) return '±0.000';
     return `${seconds > 0 ? '+' : '−'}${Math.abs(seconds).toFixed(3)}`;
   }
   function labelForCode(code) {
@@ -7989,7 +8004,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let minimapAccumulator=0;
   function updateHud(dt=0) {
     const state=lastState;ui.lap.textContent=`${Math.min(state.lap,simulation.settings.laps)}/${simulation.settings.laps}`;ui.time.textContent=formatTime(state.totalWithPenalty, '00:00.000');ui.best.textContent=formatTime(state.bestLapTime);
-    const ghost=simulation.getGhostPose(Math.max(0,state.totalTime-state.lapStartTime));let delta=0;if(ghost){const distance=track.shortestDistance(ghost.s,state.s);delta=-distance/Math.max(8,(Math.abs(feedback.speedMps)+Math.abs(ghost.speed||0))*.5);}ui.delta.textContent=formatDelta(delta);ui.delta.parentElement?.classList.toggle('positive',delta>0.0005);ui.delta.parentElement?.classList.toggle('negative',delta<-.0005);
+    const ghost=simulation.getGhostPose(Math.max(0,state.totalTime-state.lapStartTime));let delta=null;if(ghost){const distance=track.shortestDistance(ghost.s,state.s);delta=-distance/Math.max(8,(Math.abs(feedback.speedMps)+Math.abs(ghost.speed||0))*.5);}ui.delta.textContent=formatDelta(delta);ui.delta.parentElement?.classList.toggle('positive',delta>0.0005);ui.delta.parentElement?.classList.toggle('negative',delta<-.0005);
     ui.sector.textContent=`S${Math.min(track.checkpoints.length,state.nextCheckpointIndex+1)}`;const position=1+(state.rivals||[]).filter(r=>r.raceProgress>state.raceProgress).length;ui.position.textContent=`${position}/${(state.rivals?.length||0)+1}`;ui.surface.textContent=String(state.surface||'asphalt').toUpperCase();ui.surface.dataset.surface=state.surface||'asphalt';const offroad=!['asphalt','curb'].includes(state.surface);ui.offroad.classList.toggle('active',offroad);ui.offroad.classList.toggle('danger',state.surface==='barrier');
     ui.pause.disabled=['IDLE','FINISHED'].includes(state.status);ui.start.classList.toggle('active',['COUNTDOWN','RUNNING','PAUSED'].includes(state.status));
     if(state.status==='COUNTDOWN'){const number=Math.max(1,Math.ceil(state.countdown));if(number!==lastCountdownNumber){lastCountdownNumber=number;showMessage(String(number),{duration:0,countdown:true,announce:true});raceAudio.raceSignal('countdown');}}
