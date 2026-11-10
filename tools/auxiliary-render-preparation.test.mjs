@@ -26,7 +26,7 @@ test('cube prepares six target faces with immediate target and XR restoration',a
  await p;assert.deepEqual(faces,[0,1,2,3,4,5]);cube.dispose();
 });
 import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=0d0d50d032823ba5';
-import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=96bcbdd9426d53df';
+import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=995959bd0286867f';
 function captureFixture(){let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');const compiled=[],drawn=[],pending=[];
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(70,1,.1,100);camera.position.set(0,4,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const state=c=>({target,tone:r.toneMapping,clipping:r.clippingPlanes.length,layers:c.layers.mask,visible:scene.children.filter(o=>o.visible).map(o=>o.uuid),xr:r.xr.enabled,shadow:r.shadowMap.autoUpdate});
@@ -40,10 +40,18 @@ test('water first capture prepares exact pass with immediate restoration and dra
  assert.equal(reflection.capture(options),false);assert.equal(f.compiled.length,1);f.pending[0].resolve();await reflection.prepare(options);assert.equal(reflection.capture(options),true);assert.deepEqual(f.drawn[0],f.compiled[0]);assert.equal(uniforms.uAnWaterReflectReady.value,1);
  const next={...options,variantKey:'rain',nowMs:2000};assert.equal(reflection.capture(next),false);assert.equal(uniforms.uAnWaterReflectReady.value,0);reflection.dispose();f.pending[1].resolve();await Promise.resolve();assert.equal(reflection.diagnostics().preparation.status,'disposed');
 });
-test('mirror preparation restores exclusions and targets while awaiting both feeds',async()=>{
+test('mirror feeds share shader preparation and render to independent targets',async()=>{
  const f=captureFixture(),cockpit=new T.Group();f.scene.add(cockpit);const mirror=createCockpitMirrors({THREE:T,cockpitRoot:cockpit});const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};
  assert.equal(mirror.update(options),0);assert.equal(f.drawn.length,0);assert.equal(cockpit.visible,true);assert.equal(f.r.getRenderTarget(),null);const p=mirror.prepare(options);
- f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,2);assert.equal(cockpit.visible,true);f.pending[1].resolve();await p;assert.equal(mirror.update(options),2);assert.deepEqual(f.drawn,f.compiled);mirror.dispose();
+ f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,1);assert.equal(await p,true);assert.equal(mirror.update(options),2);
+ assert.deepEqual(f.drawn,[f.compiled[0],{...f.compiled[0],target:mirror.feeds.left.target}]);assert.equal(cockpit.visible,true);assert.equal(f.r.getRenderTarget(),null);mirror.dispose();
+});
+test('changing the layer of one mirror invalidates shared preparation and prepares both layer sets',async()=>{
+ const f=captureFixture(),mirror=createCockpitMirrors({THREE:T});const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};
+ const original=mirror.prepare(options);f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,1);assert.equal(await original,true);
+ mirror.feeds.left.camera.layers.enable(3);assert.equal(mirror.update(options),0);const replacement=mirror.prepare(options);
+ f.pending[1].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,3);f.pending[2].resolve();assert.equal(await replacement,true);
+ assert.equal(mirror.update(options),2);assert.deepEqual(f.drawn,f.compiled.slice(1));mirror.dispose();
 });
 test('leaving the cockpit cancels the outstanding mirror variant and skips hidden preparation',async()=>{
  const f=captureFixture(),mirrors=createCockpitMirrors({THREE:T});
@@ -84,7 +92,7 @@ test('mirror toggle retains the mapped shader and disabled preparation does not 
  const feed=mirrors.feeds.center,texture=feed.glass.material.map,version=feed.glass.material.version;
  mirrors.update({...options,enabled:false});assert.equal(feed.glass.material.map,texture);assert.equal(feed.glass.material.version,version);assert.equal(mirrors.diagnostics().enabled,false);
  await mirrors.prepare({...options,enabled:false});assert.equal(mirrors.diagnostics().enabled,false);assert.equal(f.compiled.length,0);
- const preparing=mirrors.prepare({...options,enabled:true});for(let i=0;i<2;i++){f.pending[i].resolve();await new Promise(r=>setImmediate(r));}await preparing;assert.equal(feed.glass.material.map,texture);assert.equal(feed.glass.material.version,version);mirrors.dispose();
+ const preparing=mirrors.prepare({...options,enabled:true});f.pending[0].resolve();await new Promise(r=>setImmediate(r));assert.equal(f.compiled.length,1);await preparing;assert.equal(feed.glass.material.map,texture);assert.equal(feed.glass.material.version,version);mirrors.dispose();
 });
 
 test('native compilation retains materials and renderer through concurrent cancellation/disposal',async()=>{

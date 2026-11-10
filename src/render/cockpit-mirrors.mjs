@@ -127,7 +127,11 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   }
   setQuality(quality);
 
-  const key=options=>[options.renderer,options.scene,options.quality||currentQuality,options.variantKey||''];
+  function passKey(id) {
+    const { camera, target } = feeds[id];
+    return target.isXRRenderTarget ? `${camera.layers.mask}:${target.texture.colorSpace}` : camera.layers.mask;
+  }
+  const key=options=>[options.renderer,options.scene,options.quality||currentQuality,options.variantKey||'',passKey('center'),passKey('left')];
   function cancelPendingPreparation(){
     if(preparation.diagnostics().status==='pending')preparation.invalidate();
   }
@@ -140,7 +144,16 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     }
     if(!options.renderer||!options.scene||!((typeof options.cameraPoses==='function'?options.cameraPoses():options.cameraPoses)||mirrorCameraPoses(THREE,options.carPose)))return Promise.resolve(false);
     setQuality(options.quality||currentQuality);
-    return preparation.prepare(key(options),async isCurrent=>{for(const id of ['center','left']){if(!isCurrent())return;await prepareBatchedPass(options.renderer,()=>update({...options,prepareOnly:id,force:true,cockpitVisible:true,enabled:true}),{signal:options.signal,isCurrent});}},{signal:options.signal});
+    const preparationKey = key(options);
+    // Three r180 selects the same programs for both offscreen views when they
+    // see the same layers. Camera pose, projection and target size are uniforms/state.
+    const passes = passKey('center') === passKey('left') ? ['center'] : ['center', 'left'];
+    return preparation.prepare(preparationKey,async isCurrent=>{
+      for(const id of passes){
+        if(!isCurrent())return;
+        await prepareBatchedPass(options.renderer,()=>update({...options,prepareOnly:id,force:true,cockpitVisible:true,enabled:true}),{signal:options.signal,isCurrent});
+      }
+    },{signal:options.signal});
   }
   function update(options={}) {
     const {renderer,scene,carPose,cameraPoses=null,cockpitVisible=true,enabled=true,quality:nextQuality=currentQuality,nowMs=globalThis.performance?.now?.()||Date.now(),force=false,captureSchedule=null,prepareOnly=null}=options;

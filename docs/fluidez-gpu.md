@@ -81,6 +81,29 @@ Sprint y Viaje muestran «Sin dato» en la consistencia mientras la actividad ca
 
 Las consultas GPU en 137 cuadros muestreados dieron 8,25 ms p95 para la captura principal del mundo, 5,64 ms para el reflejo de ribera y 5,28 ms para el retrovisor interior. Cada auxiliar se mide sólo en los cuadros en los que se ejecuta, por lo que esos percentiles se leen por separado. La suma de los renderizados medidos dio un p95 de 16,72 ms por cuadro muestreado y excluye comandos sin consulta.
 
+### Ensayos de geometría del terreno
+
+Se midieron los primeros 20 segundos conducidos del Sprint en cabina, entre unos 8 y 226 m. El perfilador leyó consultas GPU de WebGL2 aproximadamente cada nueve cuadros y contó los triángulos y envíos de Three en la captura principal del mundo. Los FPS corresponden a cuadros de escena enviados entre la primera y la última muestra. Tres controles en sesiones aisladas muestran la variación de esa medida.
+
+| Variante | Triángulos del terreno por captura | Envíos de Three | GPU mundo p95 | FPS medios |
+| --- | ---: | ---: | ---: | ---: |
+| Publicada, tres pasadas | 545.713 | 18 | 9,24–10,34 ms | 49,23–57,90 |
+| Sectores de 1.024 m, dos pasadas | 465.850–465.866 | 89,7–89,8 | 10,50–11,60 ms | 45,66–50,78 |
+| Sectores de 2.048 m | 470.244 | 38,1 | 9,57 ms | 52,80 |
+| Sectores de 4.096 m | 477.793 | 24,6 | 10,36 ms | 46,58 |
+| Sectores de 1.024 m agrupados con `WEBGL_multi_draw`, segunda pasada | 465.908 | 18 | 9,82 ms | 53,50 |
+| Mismo terreno con índices de la grilla de regreso ordenados en bloques de 8 × 8 | 545.713 | 18 | 9,73 ms | 51,39 |
+
+La división fina conservó triángulos, normales, UV y materiales. Al pasar de 18 a unos 90 envíos, ambas pasadas empeoraron el tiempo GPU del mundo. Los ensayos con agrupamiento y los de sectores más grandes carecen de una mejora repetida sobre la referencia. El reordenamiento conservó la geometría y el número de envíos. Sus cifras quedaron dentro de la variación del control y registró un salto de 167 ms. Se retiraron los prototipos del juego. Los contadores de hardware serían necesarios para atribuir un resultado a reutilización de vértices. [Rendimiento de la tubería gráfica de NVIDIA](https://developer.nvidia.com/gpugems/gpugems/part-v-performance-and-practicalities/chapter-28-graphics-pipeline-performance) · [Recursos de diseño orientado a datos](https://github.com/dbartolini/data-oriented-design)
+
+### Preparación compartida de retrovisores
+
+Three r180 compila los programas de ambos retrovisores con la misma escena, estado del renderizador y capas de cámara. La preparación usa un solo pase mientras coincida esa configuración. Cada espejo conserva su cámara, textura, resolución y frecuencia de actualización. Si las capas difieren, se preparan ambos pases antes de mostrar los reflejos.
+
+En los dos controles de 25 s, el espejo izquierdo recibió 1.866 llamadas nativas de preparación en cada ventana de conducción. Con el cambio recibió cero en las dos pasadas. Los dos reflejos estuvieron disponibles a los 18–22 ms desde el inicio de la medición, frente a 5,29–6,14 s en los controles. Las capturas muestran la ruta en ambos espejos. Los promedios de 49,23–56,04 FPS de los controles y 50,25 FPS de la pasada comparable con el cambio no acreditan una mejora de la cadencia general.
+
+La repetición de 78 s en calidad Baja cruzó el minuto con el cielo pasando de nublado a despejado y siguió conduciendo al iniciarse la transición a hora dorada. Promedió 56,20 FPS y no registró bloqueos, errores de navegador ni saltos de presentación superiores a 75 ms. El taller volvió a estar disponible 85 ms después de pulsar el botón. Esta ventana corresponde a un tramo inicial del Sprint en este equipo, con un ciclo de cielo configurado a 360 s. La suma de las consultas GPU por cuadro alcanzó 17,39 ms p95 en 488 cuadros muestreados. Los dos renderizados que escriben en `ASFALTO_COLOR_HDR` sumaron 5,05 ms p95 dentro de esa muestra.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.
@@ -89,7 +112,7 @@ Las consultas GPU en 137 cuadros muestreados dieron 8,25 ms p95 para la captura 
 
 ## Comprobaciones reproducibles
 
-- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 351 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
+- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 358 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
 - Configurar `PLAYWRIGHT_PACKAGE` si Playwright está fuera de la raíz y `CHROME_PATH` para indicar el Chrome de prueba. Ejecutar `node tools/roadtest-browser.mjs <directorio-de-evidencia>`. El 0–100 usa teclado, movimiento reducido y un perfil aislado. Verifica pausa, resultado y persistencia tras recargar.
 - Ejecutar `node tools/track-drive-browser.mjs <directorio-de-evidencia> [circuito] [--draw-detail]` con el mismo entorno. Abre los circuitos desde el taller y comprueba aceleración, pausa, reanudación y regreso. Al elegir un circuito, comprueba también que su escena sea la única solicitada en la primera salida. Guarda cadencia, GPU, tareas largas, preparación de shaders y capturas.
 - Ejecutar `node tools/water-optics.gpu.mjs <archivo-json>`. La prueba lee la absorción del fragmento en WebGL. A 2 m obtiene 0,275 perpendicular y 0,380 rasante, con cero en la orilla de profundidad cero y una llamada de dibujo en cada muestra.

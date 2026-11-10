@@ -16,7 +16,7 @@ import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?
 import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
-import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=1e9a7a8c8cbb1b7a';
+import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2f45e8b283df15f3';
 import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=006379522815e967';
 globalThis.__asfaltoBuildSelectedVehicleSpec=buildVehiclePhysicsSpec;
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
@@ -77,7 +77,7 @@ import { createRaceOpening } from '../game/race-opening.mjs?v=9237574ae1559f13';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=91598c822caef3be';
 import {createLightingEditor} from '../menu/lighting-editor.mjs?v=d15c0c71e5784bcd';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=46f93c06d3ef0012';
-import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=96bcbdd9426d53df';
+import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=995959bd0286867f';
 import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=34bee52b3be4e653';
 import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=710bd8d9f6760059';
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=844ffa3df7eb34e1';
