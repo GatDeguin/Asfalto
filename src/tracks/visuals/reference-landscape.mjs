@@ -1,15 +1,15 @@
-import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=0582cef83086d95c';
+import {loadHorconesDEM,addHorconesDEM} from './horcones-dem.mjs?v=c4edaa957788f7bd';
 import {planAustralCanopyStands,createForestImpostorGeometry,installAustralCanopyShader} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
-import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=ba691f7996493921';
+import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=260b3d9b5f9319b2';
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=2d3cbac4699e8c65';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=510589c52d2d24e8';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=9d7ddd559b41734b';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=f7542af8936a5036';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=d33414548db428b8';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
@@ -76,6 +76,7 @@ function metricUV(THREE, mesh, metres) {
 
 export function terrainProjection(material, metres, snowLine = 1e8, secondaryMaps = null) {
   const mountainSnow=Boolean(material.userData.asfaltoMountainSnow);
+  const tropicalSurface=material.userData.asfaltoRegion==='cataratas_iguazu'?(material.name==='MAT_basalt'?'basalt':material.name==='MAT_laterite'?'laterite':'forest'):null;
   material.onBeforeCompile = shader => {
     if(mountainSnow){
       shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float asfaltoMountainSnow;\nvarying float vMountainSnow;').replace('#include <begin_vertex>','#include <begin_vertex>\nvMountainSnow=asfaltoMountainSnow;');
@@ -133,8 +134,14 @@ vec3 landscapeSample(sampler2D tex, vec3 p, vec3 n) {
   float geologicalRegion=landscapeNoise(vLandscapeWorld.xz*.0028+vec2(27.1,8.3));
   float bedding=landscapeNoise(vec2(vLandscapeWorld.y*.018+landscapeNoise(vLandscapeWorld.xz*.004)*3.7,dot(vLandscapeWorld.xz,vec2(.0017,.0024))));
   float stratum=smoothstep(.32,.74,bedding)*(.3+.7*geologicalRegion);
-  vec3 mineralA=${material.userData.asfaltoRegion==='cuesta_lipan'?'vec3(.83,.76,.68)':material.userData.asfaltoRegion==='aconcagua_horcones'?'vec3(.84,.86,.88)':'vec3(.78,.85,.71)'};
+  vec3 mineralA=${material.userData.asfaltoRegion==='cuesta_lipan'?'vec3(.83,.69,.61)':material.userData.asfaltoRegion==='aconcagua_horcones'?'vec3(.84,.86,.88)':tropicalSurface==='basalt'?'vec3(.67,.76,.74)':tropicalSurface==='laterite'?'vec3(1.06,.81,.65)':'vec3(.78,.85,.71)'};
   landscapeColor*=mix(vec3(1.04,1.01,.96),mineralA,stratum*.66);
+  ${tropicalSurface==='basalt'?`// Basalt ledges and broad drainage streaks, in metres; no screen-space noise.
+  float basaltLedge=.5+.5*sin(vLandscapeWorld.y*.58+landscapeNoise(vLandscapeWorld.xz*.024)*1.4);
+  float basaltDrain=landscapeNoise(vLandscapeWorld.xz*.055)*(.25+.75*(1.0-abs(normalize(vLandscapeNormal).y)));
+  float basaltBandWeight=1.0-smoothstep(.65,2.5,fwidth(vLandscapeWorld.y*.58));
+  landscapeColor*=mix(1.0,mix(.73,1.04,smoothstep(.22,.75,basaltLedge)),basaltBandWeight);
+  landscapeColor=mix(landscapeColor,landscapeColor*vec3(.62,.81,.65),basaltDrain*.32);`:''}
   ${FOREST_TRACKS.has(material.userData.asfaltoRegion)?`float protectedMoss=smoothstep(.12,.72,normalize(vLandscapeNormal).y)*(1.0-smoothstep(.2,.8,dot(normalize(vLandscapeNormal),vec3(.82,0.,.57))))*landscapeNoise(vLandscapeWorld.xz*.15);landscapeColor=mix(landscapeColor,landscapeColor*vec3(.68,.83,.54),protectedMoss*.44);`:''}
   diffuseColor.rgb *= landscapeColor;
   float snowHeight = smoothstep(${Number(snowLine - 180).toFixed(2)}, ${Number(snowLine + 230).toFixed(2)}, vLandscapeWorld.y + (landscapeMacro.r - 0.5) * 410.0);
@@ -178,7 +185,7 @@ float roughnessFactor = roughness;
 #endif
 // ASFALTO_LANDSCAPE_NORMAL_END`);
   };
-  material.customProgramCacheKey = () => 'asfalto-landscape-v7-aspect-melt-' + metres + '-' + snowLine + '-' + Boolean(secondaryMaps)+'-'+(material.userData.asfaltoRegion||'backdrop')+'-'+mountainSnow;
+  material.customProgramCacheKey = () => 'asfalto-landscape-v8-regional-relief-' + metres + '-' + snowLine + '-' + Boolean(secondaryMaps)+'-'+(material.userData.asfaltoRegion||'backdrop')+'-'+mountainSnow+'-'+tropicalSurface;
 }
 
 export function improveAuthoredSurfaces(root, { THREE, id, textures, query, lengthM, roadField }) {
@@ -453,8 +460,9 @@ export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, l
   }
   rx *= clearance; rz *= clearance;
   const cols = layer===0?320:layer===1?224:160, rows = layer===0?48:layer===1?32:24, positions = [], indices = [], colors = [], snowRetention = [];
-  const palette = id === 'cuesta_lipan' ? ['#948777', '#82746b', '#b6a789'] : forest ? ['#8c9796', '#a1aaac', '#b4bfc4'] : ['#8b8272', '#756f68', '#aca18c'];
-  const baseColor = new THREE.Color();
+  const palette = id === 'cuesta_lipan' ? ['#b89879', '#806f72', '#d1ba91'] : id==='paso_garibaldi' ? ['#78837f','#65766f','#a6b1b3'] : id==='cataratas_iguazu' ? ['#49694d','#365742','#658267'] : ['#89958b','#6c8077','#b3b6ac'];
+  const [rock,shadow,sediment]=palette.map(color=>new THREE.Color(color));
+  const forestColor=new THREE.Color(id==='paso_garibaldi'?'#405b4d':'#516e4c'),white=new THREE.Color('#ffffff'),baseColor=new THREE.Color();
   const focus=query.sample(lengthM*.38).frame?.tangent||[0,0,1];
   const bearing=id==='aconcagua_horcones'?Math.atan2(focus[2],focus[0])-Math.PI/2:0;
   for (let row = 0; row <= rows; row++) for (let col = 0; col <= cols; col++) {
@@ -464,12 +472,13 @@ export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, l
     const {radius,falloff}=profile;
     const height = box.min.y - 120 + profile.height;
     positions.push(center.x + Math.cos(angle) * rx * radius, height, center.z + Math.sin(angle) * rz * radius);
-    baseColor.set(palette[0]).lerp(new THREE.Color(palette[1]),profile.rockBand*.65);
-    baseColor.lerp(new THREE.Color(palette[2]),Math.pow(falloff,2)*.38);
-    // Muted linear vertex tint: exposed strata, dark gullies and cool far ridges.
-    baseColor.multiplyScalar(.92+profile.rockBand*.16);
-    baseColor.lerp(new THREE.Color('#a4b9ca'),layer*.10);
-    baseColor.lerp(new THREE.Color('#ffffff'),.64); // linear tint over the rock albedo
+    baseColor.copy(rock).lerp(shadow,profile.rockBand*(id==='cuesta_lipan'?.57:.32));
+    baseColor.lerp(sediment,Math.pow(falloff,2)*.34);
+    if(forest)baseColor.lerp(forestColor,profile.vegetation*.58);
+    // Geometric drainage supplies large coherent tonal variation; it does not
+    // bake a sun direction, so the existing moving sun and weather still light it.
+    baseColor.multiplyScalar(1-profile.erosion*.20+profile.spur*.16);
+    baseColor.lerp(white,.48+layer*.065); // reduce far-layer contrast, in linear space
     colors.push(baseColor.r, baseColor.g, baseColor.b);
     if (row < rows && col < cols) {
       const a = row * (cols + 1) + col, b = a + cols + 1;
@@ -481,11 +490,11 @@ export function addMountainBackdrop(THREE, root, id, query, lengthM, textures, l
   geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
   geometry.setAttribute('asfaltoMountainSnow',new THREE.Float32BufferAttribute(snowRetention,1)); geometry.setIndex(indices); geometry.computeVertexNormals();
   const map = textures.rock_face?.diff || textures.aerial_rocks_04?.diff || textures.aerial_grass_rock?.diff || null;
-  const material = new THREE.MeshStandardMaterial({ map, color: layer===0?'#e5e0d7':layer===1?'#bec6c8':'#b8c5cd', vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.12, side: THREE.DoubleSide });
+  const material = new THREE.MeshStandardMaterial({ map, color: layer===0?'#e5e0d7':layer===1?'#c9d0ce':'#c3cfd5', vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.12, side: THREE.DoubleSide });
   material.userData.asfaltoRegion=id;
   material.userData.asfaltoVertexVariation=true;
   material.userData.asfaltoDistantMountain=true;
-  material.userData.asfaltoMountainSnow=id==='aconcagua_horcones';
+  material.userData.asfaltoMountainSnow=false;
   material.userData.asfaltoMountainLayer=layer;
   terrainProjection(material, forest ? 110 : 150, id === 'cuesta_lipan' ? 1e8 : box.min.y + (id === 'aconcagua_horcones' ? 2050 : id === 'paso_garibaldi' ? 800 : 1080));
   const mesh = new THREE.Mesh(geometry, material); mesh.name = layer===0?'ASFALTO_REGIONAL_MOUNTAIN_BACKDROP':'ASFALTO_REGIONAL_MOUNTAIN_BACKDROP_'+layer;mesh.userData.asfaltoDistantRidge={layer,triangles:indices.length/3};

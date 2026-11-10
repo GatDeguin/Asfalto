@@ -1,5 +1,6 @@
 // Distances and natural landmarks are located on the authored route, never on the return connector.
 import {instanceDetailTiles} from './roadside-details.mjs?v=e54c29bf9f974787';
+import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
 const random=n=>{const x=Math.sin(n*19.31+7.17)*45371.63;return x-Math.floor(x);};
 export function addRegionalWayfinding(T,root,{id,query,lengthM,heightAt,templates,textures,detailRange=null}){
   const group=new T.Group();group.name='ASFALTO_REGIONAL_WAYFINDING';root.updateMatrixWorld(true);group.matrix.copy(root.matrixWorld).invert();group.matrixAutoUpdate=false;
@@ -29,5 +30,6 @@ export function addRegionalWayfinding(T,root,{id,query,lengthM,heightAt,template
     }
   }
   root.add(group);root.userData.asfaltoRegionalLandmarks=landmarks;
-  return{kilometreMarkers:points.length,regionalLandmarks:landmarks};
+  const direction=addRouteDirection(T,root,{id,leg:'outbound',query,lengthM,heightAt,detailRange});
+  return{kilometreMarkers:points.length,regionalLandmarks:landmarks,routeDirectionCues:direction.cues.length};
 }

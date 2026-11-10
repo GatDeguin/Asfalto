@@ -12,7 +12,7 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
  const hud=doc.createElement('aside');hud.className='an-v7-drive-strip';hud.hidden=true;hud.setAttribute('aria-label','Instrumentos esenciales');hud.innerHTML='<span><b data-speed>0</b><small>km/h</small></span><span><b data-gear>N</b><small>marcha</small></span><p data-alert role="status" aria-live="polite"></p>';
  const live=doc.createElement('p');live.className='an-v7-live';live.setAttribute('role','status');live.setAttribute('aria-live','polite');
  const quality=doc.createElement('p');quality.className='an-v7-quality';quality.hidden=true;
- const load=doc.createElement('section');load.className='an-v7-load-state';load.hidden=true;load.setAttribute('aria-label','Estado de carga');load.innerHTML='<p role="status"></p><progress max="1" aria-label="Avance de la etapa"></progress><div><button type="button" data-retry hidden>Reintentar</button><button type="button" data-cancel>Volver al taller</button></div>';
+ const load=doc.createElement('section');load.className='an-v7-load-state';load.hidden=true;load.setAttribute('aria-label','Estado de carga');load.innerHTML='<p role="status"></p><progress max="1" aria-label="Avance de la etapa"></progress><div><button type="button" data-skip-departure hidden>Saltar secuencia</button><button type="button" data-retry hidden>Reintentar</button><button type="button" data-cancel>Volver al taller</button></div>';
  doc.body.append(hud,live,quality,load);
  const speedNode=hud.querySelector('[data-speed]'),gearNode=hud.querySelector('[data-gear]'),alertNode=hud.querySelector('[data-alert]');
  const text=(node,value)=>{if(node.textContent!==value)node.textContent=value;};
@@ -37,7 +37,44 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
   shouldBlockDrivingInput(event){return !flow.state.drivingInput||inputIsEditing(event?.target);},
   bindAudio(context,destination){audio?.dispose();audio=createV7InteractionSound({context,destination,getVolume:()=>doc.hidden?0:prefs.interactionVolume});return audio;},
   setQuality({label='',reason='',visible=false}={}){quality.hidden=!visible;quality.textContent=[label,reason].filter(Boolean).join(' · ');},
-  beginLoad({label='Preparando circuito',cancel=()=>{},retry=()=>{}}={}){const ticket=flow.begin('loading');loadTicket=ticket;const cinema=doc.querySelector('#an-session-loading');if(cinema&&!cinema.hidden)cinema.append(load);load.inert=false;load.hidden=false;load.dataset.state='loading';load.querySelector('p').textContent=label;load.querySelector('progress').removeAttribute('value');load.querySelector('[data-retry]').hidden=true;load.querySelector('[data-cancel]').disabled=false;load.querySelector('[data-cancel]').onclick=()=>{if(!ticket.isCurrent())return;load.querySelector('p').textContent='Cancelando la carga y restaurando la escena…';load.querySelector('[data-cancel]').disabled=true;load.querySelector('[data-retry]').hidden=true;cancel();};load.querySelector('[data-retry]').onclick=()=>{if(ticket.isCurrent())retry();};return{...ticket,stage(label,completed,total){if(!ticket.isCurrent())return;load.dataset.state='loading';load.querySelector('[data-retry]').hidden=true;load.querySelector('p').textContent=label;const bar=load.querySelector('progress');if(Number.isFinite(total)&&total>0&&Number.isFinite(completed))bar.value=Math.max(0,Math.min(1,completed/total));else bar.removeAttribute('value');},fail(message){if(!ticket.isCurrent())return;load.dataset.state='error';load.querySelector('p').textContent=String(message);load.querySelector('[data-retry]').hidden=false;},finish(phase='opening'){if(!ticket.commit(phase))return false;loadTicket=null;load.hidden=true;return true;}};},
+  beginLoad({label='Preparando circuito',cancel=()=>{},retry=()=>{},skipDeparture=null}={}){
+   const ticket=flow.begin('loading');loadTicket=ticket;
+   const cinema=doc.querySelector('#an-session-loading');
+   if(cinema&&!cinema.hidden)cinema.append(load);
+   const status=load.querySelector('p'),bar=load.querySelector('progress');
+   const skip=load.querySelector('[data-skip-departure]'),back=load.querySelector('[data-cancel]'),again=load.querySelector('[data-retry]');
+   load.inert=false;load.hidden=false;load.dataset.state='loading';
+   status.textContent=label;bar.removeAttribute('value');again.hidden=true;back.disabled=false;
+   skip.hidden=!skipDeparture;
+   skip.onclick=skipDeparture?()=>{if(ticket.isCurrent())skipDeparture();}:null;
+   back.onclick=()=>{
+    if(!ticket.isCurrent())return;
+    status.textContent='Cancelando la carga y restaurando la escena…';back.disabled=true;again.hidden=true;cancel();
+   };
+   again.onclick=()=>{if(ticket.isCurrent())retry();};
+   return {
+    ...ticket,
+    departureFinished(){
+     if(!ticket.isCurrent())return;
+     if(doc.activeElement===skip&&!back.disabled)back.focus({preventScroll:true});
+     skip.hidden=true;skip.onclick=null;
+    },
+    stage(label,completed,total){
+     if(!ticket.isCurrent())return;
+     load.dataset.state='loading';again.hidden=true;status.textContent=label;
+     if(Number.isFinite(total)&&Number.isFinite(completed)&&total>0)bar.value=Math.max(0,Math.min(1,completed/total));
+     else bar.removeAttribute('value');
+    },
+    fail(message){
+     if(!ticket.isCurrent())return;
+     load.dataset.state='error';status.textContent=String(message);again.hidden=false;
+    },
+    finish(phase='opening'){
+     if(!ticket.commit(phase))return false;
+     loadTicket=null;load.hidden=true;skip.hidden=true;skip.onclick=null;return true;
+    },
+   };
+  },
   showResult(data,host=doc.querySelector('#v6-results-metrics'),{showRaceTiming=true}={}){
    const result=resultSummary(data);if(!host)return result;
    let section=host.querySelector('.an-v7-result-facts');

@@ -1,9 +1,10 @@
 import { createRoutePreviewLoader } from './route-preview-loader.mjs?v=6e39a6240f2b3fa2';
 import { selectRoutePhoto } from './v7-route-catalog.mjs?v=4a4037fb3a06754c';
 import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { mountDriveRouteSheet } from './drive-route-sheet.mjs?v=e472bc8923892738';
 
 export function mountMenuRefinements({root,game}) {
-  let catalog=null, disposed=false;
+  let catalog=null, tracks=[], disposed=false;
   const catalogRequest=new AbortController();
   const views=[];
   const asset = name => new URL(`../../assets/menu/game-captures/${name}`, import.meta.url).href;
@@ -16,6 +17,7 @@ export function mountMenuRefinements({root,game}) {
     node.innerHTML='<img alt="" hidden decoding="async"><div class="an-route-placeholder" aria-hidden="true">Vista de la ruta</div><div class="an-route-miniature"></div><figcaption><strong></strong><span role="status"></span></figcaption>';
     panel.querySelector('.v6-button-row').before(node);
     const view={node,panel,track:root.querySelector(trackId),sky:root.querySelector(skyId),weather:root.querySelector(weatherId)};
+    if(panelId==='#v6-drive-panel')view.refreshSheet=mountDriveRouteSheet(node);
     view.loader=createRoutePreviewLoader({onState(state){
       const img=node.querySelector('img');img.hidden=state.status!=='ready';node.dataset.photoMatch=state.status==='ready'?'exact':state.status;
       node.setAttribute('aria-busy',String(state.status==='loading'));node.querySelector('.an-route-placeholder').hidden=state.status==='ready';
@@ -34,9 +36,11 @@ export function mountMenuRefinements({root,game}) {
   book.innerHTML='<summary>Cuaderno de pruebas <span></span></summary><div><p class="an-book-kicker">ASFALTO NACIONAL / ROAD TEST</p><h3></h3><p class="an-book-stats"></p><progress max="12" value="0" aria-label="Pruebas con ficha válida"></progress><ol></ol></div>';
   root.querySelector('#v6-roadtest-panel').append(book);
   function refresh() {
-    for (const {node,panel,track,sky,weather,loader} of views) {
+    if(disposed)return;
+    for (const {node,panel,track,sky,weather,loader,refreshSheet} of views) {
       const visible=root.dataset.anView==='section'&&panel.classList.contains('v6-active')&&!(panel.id==='v6-drive-panel'&&root.dataset.anStep==='modes')&&!document.hidden;
       if(!visible){loader.suspend();continue;}
+      refreshSheet?.(track.value,title(track),tracks.find(entry=>entry.id===track.value));
       const key=routePreviewKey(track.value,sky.value,weather.value),photo=selectRoutePhoto(catalog,track.value,sky.value,weather.value);
       node.querySelector('strong').textContent=title(track);
       void loader.select(key,photo?asset(photo.record.file):null);
@@ -61,6 +65,13 @@ export function mountMenuRefinements({root,game}) {
   }
   const observer=new MutationObserver(refresh);observer.observe(root.querySelector('#v6-test-cards'),{childList:true});
   root.addEventListener('change',refresh);root.addEventListener('click',refresh);document.addEventListener('visibilitychange',refresh);
+  fetch(new URL('../../tracks/registry.json',import.meta.url),{signal:catalogRequest.signal})
+    .then(response=>response.ok?response.json():null)
+    .then(registry=>{
+      if(disposed||!Array.isArray(registry?.tracks))return;
+      tracks=registry.tracks;
+      refresh();
+    }).catch(()=>{});
   fetch(asset('index.json'),{signal:catalogRequest.signal}).then(r=>{if(!r.ok)throw new Error('No se pudo cargar la vista de rutas');return r.json();}).then(data=>{if(!disposed){catalog=data;refresh();}}).catch(error=>{if(!disposed)for(const v of views)v.node.querySelector('figcaption span').textContent=error.message;});
   refresh();
   return {refresh,dispose(){disposed=true;catalogRequest.abort();for(const view of views)view.loader.dispose();document.removeEventListener('visibilitychange',refresh);observer.disconnect();root.removeEventListener('change',refresh);root.removeEventListener('click',refresh);}};

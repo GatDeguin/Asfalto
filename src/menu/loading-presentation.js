@@ -226,6 +226,16 @@
   document.addEventListener('keydown',event=>{
     if((pending.size||exiting) && !document.body.classList.contains('an-intro-open')) {
       event.preventDefault();event.stopImmediatePropagation();
+      const active=document.activeElement;
+      if(event.key==='Tab'){
+        const controls=[...overlay.querySelectorAll('button:not([disabled])')].filter(visible);
+        if(!controls.length)return;
+        const index=controls.indexOf(active),direction=event.shiftKey?-1:1;
+        const next=index<0?(event.shiftKey?controls.length-1:0):(index+direction+controls.length)%controls.length;
+        controls[next].focus({preventScroll:true});
+      }else if(!event.repeat&&(event.key==='Enter'||event.key===' ')&&active?.matches('button:not([disabled])')&&overlay.contains(active)&&visible(active)){
+        active.click();
+      }
     }
   },true);
   document.addEventListener('visibilitychange',reconcile);

@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=aef74622e732cf21';
-import {addDosLagosPostSupport} from '../src/tracks/visuals/dos-lagos-post-support.mjs?v=9098ebd9e517436c';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
+import {addDosLagosPostSupport} from '../src/tracks/visuals/dos-lagos-post-support.mjs?v=5ff0277b75f0fcae';
 
 test('Dos Lagos connects a detached post to the shoulder on both sides of a cut',()=>{
  const root=new T.Group(),material=new T.MeshStandardMaterial();

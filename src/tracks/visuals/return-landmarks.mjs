@@ -1,4 +1,5 @@
 import {instanceDetailTiles} from './roadside-details.mjs';
+import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
 
 const palette={
   dos_lagos:['#706a5a','#80765c','#33585a','#5e6547'],
@@ -77,31 +78,6 @@ function groundPatch(T,{query,heightAt,center,sM,kind,side},material){
   const mesh=new T.Mesh(geometry,material);mesh.name='RETURN_LANDMARK_'+kind;mesh.receiveShadow=true;return mesh;
 }
 
-function addChapterSigns(T,root,chapters,query,heightAt){
-  if(typeof document==='undefined')return 0;
-  const signs=new T.Group();signs.name='RETURN_WAYFINDING';
-  const stand=new T.BoxGeometry(.1,1.65,.1),metal=new T.MeshStandardMaterial({color:0x676c62,roughness:.86});
-  const plane=new T.PlaneGeometry(2.7,.82);
-  for(const chapter of chapters){
-    const q=query.sample(chapter.startM+Math.min(240,(chapter.endM-chapter.startM)*.12)),p=lateral(q,q.widthM*.5+2.8);
-    const h=heightAt(p[0],p[2]);if(!Number.isFinite(h)||Math.abs(h-q.position[1])>2.5)continue;
-    const canvas=document.createElement('canvas');canvas.width=384;canvas.height=112;
-    const ctx=canvas.getContext('2d');if(!ctx)continue;
-    ctx.fillStyle='#274742';ctx.fillRect(0,0,384,112);ctx.strokeStyle='#e1d9b8';ctx.lineWidth=3;ctx.strokeRect(7,7,370,98);
-    ctx.fillStyle='#ded9b7';ctx.font='700 16px sans-serif';ctx.textAlign='center';ctx.fillText('ASFALTO NACIONAL',192,36);
-    ctx.fillStyle='#fff7db';ctx.font='700 28px sans-serif';ctx.fillText(chapter.name,192,77,350);
-    const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;
-    const board=new T.Group();board.position.set(p[0],h-.035,p[2]);board.rotation.y=Math.atan2(-q.frame.tangent[0],-q.frame.tangent[2]);
-    const label=new T.Mesh(plane,new T.MeshStandardMaterial({map,color:0xffffff,roughness:.78}));
-    label.position.y=1.48;board.add(label);
-    for(const x of [-.93,.93]){const pole=new T.Mesh(stand,metal);pole.position.set(x,.82,-.07);board.add(pole);}
-    signs.add(board);
-  }
-  if(signs.children.length)root.add(signs);
-  else{stand.dispose();metal.dispose();plane.dispose();}
-  return signs.children.length;
-}
-
 export function addReturnLandmarks(T,root,{id,chapters,query,heightAt,ground}){
   if(!chapters.length)return null;
   const [dark,light,wet,dry]=palette[id],landmarks=planReturnLandmarks({id,chapters,query,heightAt});
@@ -124,6 +100,7 @@ export function addReturnLandmarks(T,root,{id,chapters,query,heightAt,ground}){
   }
   patches.forEach((material,i)=>{if(!used.has(i))material.dispose();});
   root.add(group);
+  const direction=addRouteDirection(T,root,{id,leg:'return',chapters,query,heightAt});
   return {sites:landmarks.map(({sM,kind,chapter,pieces})=>({sM,kind,chapter,pieces:pieces.length})),
-    signs:addChapterSigns(T,root,chapters,query,heightAt)};
+    signs:direction.cues.filter(cue=>cue.kind!=='delineator').length,direction};
 }

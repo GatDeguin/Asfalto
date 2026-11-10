@@ -1,4 +1,4 @@
-import { mountV7Experience } from './v7-experience.mjs?v=8871a8da59cce6a2';
+import { mountV7Experience } from './v7-experience.mjs?v=26a1693695363bd7';
 import { createRacePauseMenu } from './race-pause-menu.mjs?v=842b5a04c7f1c87d';
 import { createMenuMusic } from './menu-music.mjs?v=a4f79eee7063acc3';
 

@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=20fadee3f1fcfa74';
+import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=e5836232fe5a8a2d';
 import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=d3030bcc742688dc';
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=0031b73623852cfd';
 
 const vector=(x=0,y=0,z=0)=>({x,y,z,set(x,y,z){Object.assign(this,{x,y,z});},clone(){return vector(this.x,this.y,this.z);},copy(v){this.set(v.x,v.y,v.z);}});
 function fixture(t){
@@ -21,16 +22,17 @@ function fixture(t){
   }
   const phases=[],draws=[];
   const practical={isPointLight:true,intensity:140},tube={name:'MAT_Fluorescent_Emission',emissiveIntensity:3.2};
+  const exterior={visible:false};
   const view={enabled:true,fullWidth:1280,fullHeight:800,offsetX:80,offsetY:0,width:1200,height:800};
   const workshop={loaded:true,homeFrameReady:true,car:{position:vector(),quaternion:vector(),rotation:vector()},
     camera:{position:vector(),quaternion:vector(),view,fov:46,aspect:1.2,clearViewOffset(){this.view.enabled=false;},setViewOffset(){this.view.enabled=true;},updateProjectionMatrix(){},lookAt(){}},
     hemi:{intensity:1},key:{intensity:2},fill:{intensity:.5,position:vector(2,3,-4)},warm:{intensity:5},renderView:{isActive:()=>true,frame:draw=>draw()},
-    scene:{getObjectByName:name=>name==='Workshop_Detail_Pass_1973'?{traverse:fn=>fn(practical)}:null},workshopRoot:{traverse:fn=>fn({material:tube})},
+    scene:{getObjectByName:name=>name==='Workshop_Detail_Pass_1973'?{traverse:fn=>fn(practical)}:name==='E31_DepartureExterior'?exterior:null},workshopRoot:{traverse:fn=>fn({material:tube})},
     renderer:{domElement:{height:800},render:()=>assert.fail('Departure bypassed the prepared pass')},
     presentation:{getDepartureGate:()=>gate,setDepartureGate:value=>{gate=value;}},
     vehiclePresentation:{setLightMode:value=>{mode=value;},getLightingDiagnostics:()=>({mode}),update(){},
       beginDepartureCue:()=>({setFrame(values){lamp=values.headlamps;spin=values.wheelRotationRad;},restore(){lamp=spin=0;}})},
-    advancedGraphics:{render:()=>draws.push({gate,z:workshop.car.position.z,key:workshop.key.intensity,mode,lamp,spin,fade,position:workshop.camera.position.clone(),fov:workshop.camera.fov,fill:workshop.fill.intensity,practical:practical.intensity,tube:tube.emissiveIntensity})}};
+    advancedGraphics:{render:()=>draws.push({phase:phases.at(-1),gate,z:workshop.car.position.z,key:workshop.key.intensity,mode,lamp,spin,fade,position:workshop.camera.position.clone(),fov:workshop.camera.fov,fill:workshop.fill.intensity,practical:practical.intensity,tube:tube.emissiveIntensity,exterior:exterior.visible})}};
   const step=delta=>{time+=delta;const batch=[...frames.values()];frames.clear();for(const fn of batch)fn(time);};
   const play=(signal,settings={soundEnabled:false})=>playWorkshopDeparture(workshop,{signal,settings,onPhase:name=>phases.push(name),onFade:()=>fade++});
   const assertRestored=()=>{
@@ -39,6 +41,7 @@ function fixture(t){
     assert.equal(workshop.camera.view,view);assert.equal(view.enabled,true);assert.equal(workshop.camera.aspect,1.2);
     assert.equal(workshop.fill.position.z,-4);assert.equal(workshop.fill.intensity,.5);assert.equal(lamp,0);assert.equal(spin,0);
     assert.equal(practical.intensity,140);assert.equal(tube.emissiveIntensity,3.2);
+    assert.equal(exterior.visible,false);
   };
   return {workshop,frames,motion,phases,draws,step,play,assertRestored};
 }
@@ -47,6 +50,9 @@ test('the route uses its loading fallback until the workshop has rendered a fram
   const f=fixture(t);
   f.workshop.homeFrameReady=false;
   assert.equal(f.play(),null);
+  f.workshop.homeFrameReady=true;
+  f.workshop.deviceProfile={phone:true};
+  assert.equal(f.play(),null);
   f.assertRestored();
 });
 
@@ -54,24 +60,30 @@ test('a stalled frame preserves each phase and shows the car past the open gate'
   const f=fixture(t),done=f.play();
   f.step(16);f.step(8200);
   assert.deepEqual(f.phases,['Arrancando el motor…']);
-  for(let i=0;i<45&&f.frames.size;i++)f.step(90);
+  for(let i=0;i<85&&f.frames.size;i++)f.step(90);
   await done;
   assert.deepEqual(f.phases,['Arrancando el motor…','Apagando las luces del taller…','Levantando la cortina…','Saliendo del taller…']);
   assert.ok(f.draws.some(row=>row.gate===1&&row.z>6.5&&row.key===0&&row.lamp>.8&&row.spin<-10&&row.practical===0&&row.tube===0));
   f.assertRestored();
 });
 
-test('ignition, reveal and exit have distinct coverage, with a single fade at the threshold',async t=>{
+test('four sustained shots lead from ignition to a completed crossing before the fade',async t=>{
   const f=fixture(t),done=f.play();
-  for(let frame=0;frame<185&&f.frames.size;frame++)f.step(16.667);
+  for(let frame=0;frame<440&&f.frames.size;frame++)f.step(16.667);
   await done;
-  assert.ok(f.draws[0].position.z>2&&f.draws[0].position.y<1.35&&f.draws[0].fov<49);
-  assert.ok(f.draws.some(row=>row.gate>.1&&row.gate<.8&&row.position.z<-2&&row.fill>.5));
-  assert.ok(f.draws.at(-1).position.z>f.draws.find(row=>row.gate===1).position.z+2);
-  assert.equal(f.draws.find(row=>row.fade===1).gate,1);
-  assert.ok(f.draws.find(row=>row.fade===1).z>6.5);
+  const shots=f.phases.map(phase=>f.draws.filter(row=>row.phase===phase));
+  const [ignition,lights,gate,exit]=shots;
+  assert.ok(ignition.length>=60&&lights.length>=40&&gate.length>=90&&exit.length>=130);
+  assert.ok(ignition[0].position.z>2&&ignition[0].position.y<1.35&&ignition[0].fov<49);
+  assert.ok(lights.every(row=>row.gate===0&&row.position.z<-2));
+  assert.ok(lights.some(row=>row.practical===0&&row.lamp===1));
+  assert.ok(gate.some(row=>row.gate>.1&&row.gate<.8&&row.fov>lights.at(-1).fov+8&&row.fill>.5));
+  assert.ok(exit.at(-1).position.z>exit[0].position.z+5);
+  assert.ok(exit.some(row=>row.fade===0&&row.gate===1&&row.z>=9));
+  assert.ok([...gate,...exit].every(row=>row.exterior));
+  assert.ok(f.draws.find(row=>row.fade===1).z>=9);
   assert.equal(f.draws.at(-1).fade,1);
-  assert.ok(f.draws.length<180);
+  assert.ok(f.draws.length>=360&&f.draws.length<=421);
   f.assertRestored();
 });
 
@@ -79,7 +91,7 @@ test('canceling or enabling reduced motion restores the workshop even mid-depart
   const f=fixture(t);
   for(let i=0;i<20;i++){
     const controller=new AbortController(),done=f.play(controller.signal);
-    f.step(16);for(let frame=0;frame<10;frame++)f.step(100);
+    f.step(16);for(let frame=0;frame<(i===19?66:6+i*3);frame++)f.step(100);
     if(i===19){f.motion.matches=true;f.motion.dispatchEvent(new Event('change'));}
     else controller.abort();
     await done;
@@ -99,7 +111,14 @@ test('procedural voices start with the matching visible beats and close after ab
     createBiquadFilter(){return {frequency:this.param(),Q:this.param(),connect(next){return next;}};}
     createBuffer(_channels,length){return {getChannelData:()=>new Float32Array(length)};}
     createBufferSource(){return {start(){},stop(){},connect(next){return next;}};}
-    createOscillator(){const context=this;return {frequency:this.param(),start(){},stop(){context.clicks.push(f.phases.at(-1));},connect(next){return next;}};}
+    createOscillator(){
+      const context=this,frequency=this.param();
+      return {frequency,start(){},stop(when){
+        if(Number.isFinite(when))context.clicks.push({
+          frequency:frequency.value,phase:f.phases.at(-1),z:f.workshop.car.position.z,gate:f.workshop.presentation.getDepartureGate(),
+        });
+      },connect(next){return next;}};
+    }
     resume(){return Promise.resolve();}
     close(){this.state='closed';return Promise.resolve();}
   }
@@ -115,9 +134,11 @@ test('procedural voices start with the matching visible beats and close after ab
   assert.ok(audio.voices[0].value>0&&audio.voices[0].value<=.25);
   f.step(16);f.step(8200);
   assert.ok(audio.voices.some(voice=>voice.events.some(e=>e.phase==='Arrancando el motor…'&&e.value>0)));
-  for(let i=0;i<23;i++)f.step(90);
-  assert.ok(audio.clicks.includes('Apagando las luces del taller…'));
-  assert.ok(audio.clicks.includes('Levantando la cortina…'));
+  for(let i=0;i<68;i++)f.step(90);
+  assert.ok(audio.clicks.some(cue=>cue.frequency===220&&cue.phase==='Apagando las luces del taller…'));
+  assert.ok(audio.clicks.some(cue=>cue.frequency===308&&cue.phase==='Levantando la cortina…'&&cue.gate<1));
+  assert.ok(audio.clicks.some(cue=>cue.frequency===148&&cue.gate===1));
+  assert.ok(audio.clicks.some(cue=>cue.frequency===96&&cue.phase==='Saliendo del taller…'&&cue.z>=6.5&&cue.z<7.2));
   assert.ok(audio.voices.some(voice=>voice.events.some(e=>e.phase==='Saliendo del taller…'&&e.value>0)));
   controller.abort();await done;
   assert.equal(audio.state,'closed');
@@ -145,4 +166,28 @@ test('the prepared vehicle animates lamps and wheels without advancing driving s
   assert.equal(pivot.rotation.z,angle);
   assert.equal(material.emissiveIntensity,emission);
   view.dispose();
+});
+
+test('the departure exterior is one prepared draw, with continuous ground under the exit',async()=>{
+  const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
+  const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
+  const scene=new T.Scene(),workshopRoot=new T.Group();scene.add(workshopRoot);
+  const architecture=createWorkshopArchitectureE31(T,{scene,workshopRoot});
+  const exterior=scene.getObjectByName('E31_DepartureExterior');
+  assert.ok(exterior?.isMesh);
+  assert.equal(exterior.visible,false);
+  assert.equal(exterior.userData.asfaltoPrewarm,true);
+  assert.equal(exterior.userData.cameraCollision,false);
+  assert.equal(exterior.geometry.attributes.color.count,exterior.geometry.attributes.position.count);
+  assert.ok(exterior.geometry.index.count/3<750);
+  const floor=WORKSHOP_E31_LAYOUT.floorY;
+  for(const z of [6.50,9.45,11.70,16.20]){
+    const hit=new T.Raycaster(new T.Vector3(.11,2,z),new T.Vector3(0,-1,0)).intersectObject(exterior)[0];
+    assert.ok(hit&&Math.abs(hit.point.y-floor)<.015);
+  }
+  const look=new T.Raycaster(new T.Vector3(-.21,2.72,8),new T.Vector3(0,0,1)).intersectObject(exterior)[0];
+  assert.ok(look&&look.distance>9&&look.distance<20);
+  let disposed=0;exterior.geometry.addEventListener('dispose',()=>disposed++);
+  architecture.dispose();
+  assert.equal(disposed,1);
 });

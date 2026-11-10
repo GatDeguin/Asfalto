@@ -6,7 +6,7 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=aef74622e732cf21';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,

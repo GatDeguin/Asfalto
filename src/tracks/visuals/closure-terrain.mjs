@@ -1,8 +1,29 @@
 import {bakeSpatialField} from './offline-track-bake.mjs?v=67e9450828b29db5';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=aef74622e732cf21';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=d54d8a6cbf9e0c5c';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
 const terrainNode=o=>o.isMesh&&!o.userData?.asfaltoReplacedTerrain&&!/^(COLLISION_|ASFALTO_TERRAIN_SOURCE_OWNER|RETURN_)/.test(o.name||'')&&(/ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION/.test(o.name||'')||/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(o.material?.name||''));
+// Height, bearing and two scales for the middle ground. Keep the low Paraná
+// escarpments separate from the long Andean folds and the glacial basins.
+const returnRelief = {
+  dos_lagos: [162, .82, 630, 1050],
+  aconcagua_horcones: [485, -.41, 560, 1760],
+  cuesta_lipan: [364, .37, 370, 1220],
+  paso_garibaldi: [233, 1.12, 540, 930],
+  cataratas_iguazu: [84, -.76, 280, 710],
+};
+
+function landformHeight(kind, ridge, flank, layer, drainage) {
+  switch (kind) {
+    case 'shore': return .11 + .13 * ridge + .23 * flank;
+    case 'grove': return .24 + .22 * ridge + .31 * flank;
+    case 'lookout': return .16 + .57 * ridge + .20 * flank;
+    case 'cut': return .19 + .49 * ridge + .22 * layer;
+    case 'talus': return .23 + .50 * ridge + .25 * layer;
+    case 'wash': return .09 + .22 * flank + .32 * drainage;
+    default: return .20 + .42 * ridge + .23 * flank;
+  }
+}
 export function routeSpatialField(samples,cellM=300){
   const grid=new Map(),segments=[];
   for(let i=1;i<samples.length;i++){const a=samples[i-1],b=samples[i],record={a,b};segments.push(record);
@@ -55,23 +76,35 @@ export function createReturnLandscape(THREE,{samples,sourceSamples,sourceRoot,ma
   const heights=new Float32Array(count),sourceHeight=new Float32Array(count).fill(NaN),nearest=new Int32Array(count).fill(-1),queue=new Int32Array(count);let head=0,tail=0;
   for(let z=0;z<=nz;z++)for(let x=0;x<=nx;x++){const i=z*(nx+1)+x,wx=bounds.minX+x*dx,wz=bounds.minZ+z*dz,y=raw(wx,wz);if(Number.isFinite(y)){sourceHeight[i]=y;nearest[i]=i;queue[tail++]=i;}}
   while(head<tail){const i=queue[head++],x=i%(nx+1),z=Math.floor(i/(nx+1));for(const j of [x>0?i-1:-1,x<nx?i+1:-1,z>0?i-nx-1:-1,z<nz?i+nx+1:-1])if(j>=0&&nearest[j]<0){nearest[j]=nearest[i];queue[tail++]=j;}}
-  const forest=id==='dos_lagos'||id==='paso_garibaldi'||id==='cataratas_iguazu',mean=samples.reduce((n,s)=>n+s.position[1],0)/samples.length;
+  const mean=samples.reduce((n,s)=>n+s.position[1],0)/samples.length;
   const firstM=samples[0].sM,returnLength=samples.at(-1).sM-firstM;
-  const regionScale={dos_lagos:143,paso_garibaldi:188,cataratas_iguazu:72,cuesta_lipan:340,aconcagua_horcones:420}[id]||(forest?100:320);
-  const forms={shore:.46,grove:.85,lookout:1.14,cut:1.16,talus:1.23,wash:.59};
+  const [regionScale,bearing,ridgeM,flankM]=returnRelief[id]||[250,0,540,920];
+  const alongX=Math.cos(bearing),alongZ=Math.sin(bearing);
+  const underlayM=id==='cataratas_iguazu'?24:2;
   function regional(x,z,q){
     const at=q?clamp((q.sM-firstM)/returnLength*chapters.length-.5,0,Math.max(0,chapters.length-1)):0;
     const i=Math.floor(at),j=Math.min(chapters.length-1,i+1);
-    const a=forms[chapters[i]?.landscape]||1,b=forms[chapters[j]?.landscape]||1,form=a+(b-a)*smooth(at-i);
-    const ridges=Math.pow(.5+.5*Math.sin(x/450+Math.cos(z/570)+z/830),2);
-    const rolling=.44+.23*Math.sin(x/670+Math.sin(z/940))+.14*Math.cos(z/420-x/1150)+.21*ridges;
-    return(q?.height??mean)-12+regionScale*form*rolling;
+    const along=(x*alongX+z*alongZ)/ridgeM,across=(z*alongX-x*alongZ)/flankM;
+    const warp=Math.sin(across*.74+along*.22),crest=.5+.5*Math.sin(along+.94*warp);
+    const ridge=crest*crest,flank=.5+.5*Math.cos(across-.52*along);
+    const layer=.5+.5*Math.sin(along*.6+across*2.2+crest*.8);
+    const drainage=Math.abs(Math.sin(across*1.4+warp*.7));
+    const a=landformHeight(chapters[i]?.landscape,ridge,flank,layer,drainage);
+    const b=landformHeight(chapters[j]?.landscape,ridge,flank,layer,drainage);
+    // The far relief converges to the same datum and profile before the road
+    // lookup ends, so the last query cell does not create a contour or seam.
+    const nearby=q?1-smooth((q.distance-900)/1000):0;
+    const far=landformHeight(null,ridge,flank,layer,drainage);
+    const form=far+(a+(b-a)*smooth(at-i)-far)*nearby;
+    return mean+((q?.height??mean)-mean)*nearby-12+regionScale*form;
   }
   for(let z=0;z<=nz;z++)for(let x=0;x<=nx;x++){
-    const i=z*(nx+1)+x,wx=bounds.minX+x*dx,wz=bounds.minZ+z*dz,q=returnField(wx,wz,1900);let y=regional(wx,wz,q),known=nearest[i];
-    const underlayM=id==='cataratas_iguazu'?24:2;
-    if(Number.isFinite(sourceHeight[i]))y=sourceHeight[i]-underlayM;
-    else if(known>=0){const sx=known%(nx+1),sz=Math.floor(known/(nx+1)),d=Math.hypot((x-sx)*dx,(z-sz)*dz),u=smooth(d/1800);y=sourceHeight[known]-underlayM+(y-sourceHeight[known]+underlayM)*u;}
+    const i=z*(nx+1)+x,wx=bounds.minX+x*dx,wz=bounds.minZ+z*dz,q=returnField(wx,wz,1900),known=nearest[i];
+    let y=sourceHeight[i]-underlayM;
+    if(!Number.isFinite(y)){
+      y=regional(wx,wz,q);
+      if(known>=0){const sx=known%(nx+1),sz=Math.floor(known/(nx+1)),d=Math.hypot((x-sx)*dx,(z-sz)*dz),u=smooth(d/1800);y=sourceHeight[known]-underlayM+(y-sourceHeight[known]+underlayM)*u;}
+    }
     if(q){
       const clearance=Math.max(0,q.distance-q.widthM*.5-2);
       const valleyY=q.height-2+.25*(Math.sqrt(clearance*clearance+2200)-Math.sqrt(2200));

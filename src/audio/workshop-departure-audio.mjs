@@ -53,14 +53,18 @@ export function createWorkshopDepartureAudio(settings){
         if(id==='ignition')click(430,.11,.064);
         if(id==='lights')click(220,.14,.086);
         if(id==='gate')click(308,.19,.14);
+        if(id==='gate-stop')click(148,.19,.19);
+        if(id==='exit')click(176,.105,.085);
+        if(id==='threshold')click(96,.24,.19);
       },
-      update({elapsed,speed,gate,gateSpeed,fade}){
-        const starter=elapsed<.35?(1-clamp((elapsed-.21)/.14))*(.63+.37*Math.sin(elapsed*105)**2):0;
-        const catchAmount=clamp((elapsed-.19)/.24),motion=clamp(speed/9),lifting=clamp(gateSpeed/1.65);
+      update({elapsed,speed,gate,gateSpeed,throttle=0,fade}){
+        const starter=elapsed<.52?(1-clamp((elapsed-.34)/.18))*(.59+.41*Math.sin(elapsed*108)**2):0;
+        const catchAmount=clamp((elapsed-.30)/.32),motion=clamp(speed/6.2),lifting=clamp(gateSpeed/.88);
+        const load=clamp(motion*.72+throttle);
         target(crank.gain,starter*.24,.021);
-        target(engine.gain,catchAmount*(.14+motion*.19));
-        target(engine.source.frequency,24+catchAmount*18+motion*43,.047);
-        target(engine.filter.frequency,270+motion*265);
+        target(engine.gain,catchAmount*(.12+load*.23));
+        target(engine.source.frequency,24+catchAmount*18+load*44,.047);
+        target(engine.filter.frequency,245+load*310);
         target(roller.source.frequency,72+lifting*32);
         target(roller.gain,lifting*.12);
         target(slats.gain,lifting*(.049+.082*Math.sin(gate*93)**2),.025);

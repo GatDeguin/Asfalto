@@ -3,6 +3,7 @@ import {addSectorCollisionGuardrails} from './sector-collision-guardrails.mjs?v=
 // Regional details follow the read-only route and terrain. All additions are visual.
 import { applyPhotographicLeafCutout } from './regional-forest.mjs?v=b20261a5a12d8b0b';
 import { instanceDetailTiles } from './roadside-details.mjs?v=e54c29bf9f974787';
+import { withoutNearbyGenericWarnings } from './route-direction.mjs?v=45e8a4216d1415cc';
 const FOREST=new Set(['dos_lagos','paso_garibaldi']);
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const rand=n=>{const v=Math.sin(n*127.17+19.73)*43758.5453;return v-Math.floor(v);};
@@ -86,7 +87,8 @@ function signTexture(THREE,id,type,turn=-1){
   const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const c=canvas.getContext('2d');
   c.fillStyle=type==='curve'?'#dab85d':'#2b4940';c.fillRect(0,0,256,256);c.strokeStyle=type==='curve'?'#29291f':'#d0cec1';c.lineWidth=9;c.strokeRect(9,9,238,238);
   c.fillStyle=type==='curve'?'#242723':'#e8e2d0';c.textAlign='center';c.font='bold 72px sans-serif';
-  if(type==='curve'){if(turn>0){c.translate(256,0);c.scale(-1,1);}c.lineWidth=20;c.strokeStyle='#242723';c.beginPath();c.moveTo(62,189);c.lineTo(62,88);c.quadraticCurveTo(63,57,107,57);c.lineTo(185,57);c.stroke();c.beginPath();c.moveTo(157,25);c.lineTo(204,57);c.lineTo(157,90);c.fill();}
+  // The board faces upstream; positive heading change points right on its face.
+  if(type==='curve'){if(turn<0){c.translate(256,0);c.scale(-1,1);}c.lineWidth=20;c.strokeStyle='#242723';c.beginPath();c.moveTo(62,189);c.lineTo(62,88);c.quadraticCurveTo(63,57,107,57);c.lineTo(185,57);c.stroke();c.beginPath();c.moveTo(157,25);c.lineTo(204,57);c.lineTo(157,90);c.fill();}
   else{c.font='bold 41px sans-serif';c.fillText('MIRADOR',128,74);c.font='26px sans-serif';c.fillText(id==='dos_lagos'?'DOS LAGOS':id==='paso_garibaldi'?'GARIBALDI':id==='cuesta_lipan'?'CUESTA DE LIPÁN':'HORCONES',128,126);c.fillText('↗ 150 m',128,191);}
   // Sparse edge wear remains legible at cockpit distance.
   c.fillStyle='#6b655244';for(let i=0;i<42;i++)c.fillRect(rand(i)*256,rand(i+90)*256,2+rand(i+70)*5,1);
@@ -118,10 +120,11 @@ function addInfrastructure(THREE,group,{id,query,lengthM,heightAt,features,root,
   const intervalM=id==='aconcagua_horcones'?600:150,minimumTurn=id==='aconcagua_horcones'?.08:.62;
   const seenStations=new Set(markers.map(f=>Math.floor(f.sM/intervalM)));
   for(let s=140;s<lengthM-120;s+=110)if((!detailRange||s>=detailRange.startM&&s<detailRange.endM)&&Math.abs(curve(query,s,55))>minimumTurn&&!seenStations.has(Math.floor(s/intervalM))){markers.push({sM:Math.max(0,s-75),side:1});seenStations.add(Math.floor(s/intervalM));}
-  for(const f of markers){const q=query.sample(f.sM),position=yAt(q,(q.widthM||8)/2+2.9),y=heightAt(position[0],position[2]);if(Number.isFinite(y)&&Math.abs(y-position[1])<1.5)position[1]=y;const check=query.project?.(position);if(check&&check.distanceXZ<check.widthM/2+2.1)continue;const rot=Math.atan2(-q.frame.tangent[0],-q.frame.tangent[2]);signPosts.push({position:[position[0],position[1]+1.1,position[2]],scale:[.075,2.2,.075],rotation:0});signBoards.push({position:[position[0],position[1]+2.0,position[2]],scale:[.92,.92,.035],rotation:rot,turn:f.turn||Math.sign(curve(query,f.sM+75,55))});}
+  const cues=root.userData.asfaltoReturnLandmarks?.direction?.cues;
+  for(const f of withoutNearbyGenericWarnings(markers,cues)){const q=query.sample(f.sM),position=yAt(q,(q.widthM||8)/2+2.9),y=heightAt(position[0],position[2]);if(Number.isFinite(y)&&Math.abs(y-position[1])<1.5)position[1]=y;const check=query.project?.(position);if(check&&check.distanceXZ<check.widthM/2+2.1)continue;const rot=Math.atan2(-q.frame.tangent[0],-q.frame.tangent[2]);signPosts.push({position:[position[0],position[1]+1.1,position[2]],scale:[.075,2.2,.075],rotation:0});signBoards.push({position:[position[0],position[1]+2.0,position[2]],scale:[.92,.92,.035],rotation:rot,turn:f.turn||Math.sign(curve(query,f.sM+75,55))});}
   const metal=new THREE.MeshStandardMaterial({color:'#888c87',roughness:.6,metalness:.62}),stone=new THREE.MeshStandardMaterial({color:id==='cuesta_lipan'?'#826b50':'#616560',roughness:1});
   const box=new THREE.BoxGeometry(1,1,1);instanceDetailTiles(THREE,group,box,metal,posts,{name:'guard-post',distanceM:950});instanceDetailTiles(THREE,group,box,metal,rails,{name:'continuous-guardrail',distanceM:1400});instanceDetailTiles(THREE,group,box,metal,terminal,{name:'guard-terminal',distanceM:950});instanceDetailTiles(THREE,group,box,metal,signPosts,{name:'sign-post',distanceM:700});
-  for(const turn of [-1,1]){const boards=signBoards.filter(b=>Math.sign(b.turn||-1)===turn);if(!boards.length)continue;const map=signTexture(THREE,id,'curve',turn),mat=new THREE.MeshStandardMaterial({map,roughness:.68,color:'#ffffff',metalness:.08});instanceDetailTiles(THREE,group,box,mat,boards,{name:'curve-approach-'+(turn>0?'left':'right'),distanceM:800});}
+  for(const turn of [-1,1]){const boards=signBoards.filter(b=>Math.sign(b.turn||-1)===turn);if(!boards.length)continue;const map=signTexture(THREE,id,'curve',turn),mat=new THREE.MeshStandardMaterial({map,roughness:.68,color:'#ffffff',metalness:.08});instanceDetailTiles(THREE,group,box,mat,boards,{name:'curve-approach-'+(turn>0?'right':'left'),distanceM:800});}
   for(const f of features.filter(f=>f.kind==='drain')){
     const q=query.sample(f.sM),base=[...f.position];
     const channel=[];let direction=Number.isFinite(f.roadGrade)?[...f.flow]:[-f.side*q.frame.left[0],-f.side*q.frame.left[2]];

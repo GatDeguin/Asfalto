@@ -1,5 +1,108 @@
 // World metres after the legacy room import. Construction is reversible; source GLB stays intact.
 export const WORKSHOP_E31_LAYOUT=Object.freeze({floorY:.1883417943,inside:{left:-8.70165746,right:8.70165746,back:-5.86118786,front:5.94820445,ceiling:4.75359115},cabinet:{position:[-5.8,.1893417943,5.70],width:3.8,depth:.42},gate:{width:6.86,height:4.1,x:0,z:6.50},service:{width:1.265,height:2.10,x:8.765,z:3.835},lowShelf:{position:[-8.10,.1790055349,3.20],yaw:Math.PI/2},tealShiftX:-.36});
+
+function createDepartureExterior(T,floorY){
+ const positions=[],colors=[],indices=[],palette=new Map();
+ const color=hex=>{if(!palette.has(hex))palette.set(hex,new T.Color(hex));return palette.get(hex);};
+ const solid=hex=>()=>color(hex);
+ function quad(points,tone){
+  const start=positions.length/3;
+  for(const point of points){
+   positions.push(...point);
+   const {r,g,b}=tone(...point);colors.push(r,g,b);
+  }
+  indices.push(start,start+1,start+2,start,start+2,start+3);
+ }
+ const flat=(x0,x1,y,z0,z1,tone)=>quad([[x0,y,z0],[x0,y,z1],[x1,y,z1],[x1,y,z0]],tone);
+ const front=(x0,x1,y0,y1,z,tone)=>quad([[x0,y0,z],[x0,y1,z],[x1,y1,z],[x1,y0,z]],tone);
+ const ground=floorY-.001,curb=floorY+.11;
+ const between=(value,low,high)=>Math.max(0,Math.min(1,(value-low)/(high-low)));
+ const pools=[[-5.0,18.6],[6.1,19.4]];
+ const warmAt=(x,z)=>Math.max(...pools.map(([px,pz])=>Math.exp(-(((x-px)/2.9)**2+((z-pz)/3.25)**2))));
+
+ // The lane runs across the shot. The vehicle's straight exit stays on the apron.
+ const pavement=new T.Color();
+ const pavementTone=(x,_y,z)=>{
+  const concrete=color('#343943'),asphalt=color('#202631');
+  const patch=.04*(1+Math.sin(x*1.7+z*.84)*Math.cos(z*1.6-x*.64));
+  return pavement.copy(concrete).lerp(asphalt,between(z,10.9,12.15)).lerp(color('#645746'),warmAt(x,z)*.39)
+   .lerp(color('#171c27'),patch);
+ };
+ const streetX=[-28,-16,-10,-7,-5,-3,-1,1,3,6,8,10,16,28];
+ const streetZ=[6.24,6.53,7.8,9.82,11.66,12.35,14.8,16.5,17.7,21.4,28.5];
+ for(let j=1;j<streetZ.length;j++)for(let i=1;i<streetX.length;i++)
+  flat(streetX[i-1],streetX[i],ground,streetZ[j-1],streetZ[j],pavementTone);
+ for(const z of [7.8,9.82,11.66])flat(-10.8,10.8,ground+.0017,z-.012,z+.012,solid('#242831'));
+ for(const [x,z0,z1]of [[-2.54,6.54,7.8],[-1.23,7.8,9.82],[-2.03,9.82,11.66],[3.11,6.54,11.66]])
+  flat(x-.012,x+.012,ground+.0017,z0,z1,solid('#252a33'));
+ for(let i=1;i<streetX.length;i++){
+  const x0=streetX[i-1],x1=streetX[i];
+  front(x0,x1,ground,curb,17.73,(_x,y)=>y<curb?color('#2b313b'):color('#585762'));
+  flat(x0,x1,curb,17.73,20.65,(x,_y,z)=>pavementTone(x,0,z).lerp(color('#65616a'),.23));
+ }
+ for(const x of [-18,-14,-10,-6,-2,2,6,10,14,18])
+  flat(x-.009,x+.009,curb+.0015,17.74,20.5,solid('#31323c'));
+
+ // A few industrial bays, their returns and rooflines give the gate a real horizon.
+ const facade=new T.Color();
+ const facadeTone=(x,y)=>{
+  const near=Math.max(
+   Math.exp(-(((x+5)/2.3)**2+((y-floorY-3.8)/1.8)**2)),
+   Math.exp(-(((x-6.1)/2.4)**2+((y-floorY-4.0)/1.8)**2))
+  );
+  return facade.copy(color('#293240')).lerp(color('#394855'),between(y,floorY,floorY+6))
+   .lerp(color('#73614c'),near*.65);
+ };
+ function warehouse(x0,x1,z,height){
+  const top=floorY+height;
+  const bands=[curb,floorY+1.2,floorY+2.8,floorY+4.0,top];
+  const sections=Math.ceil((x1-x0)/2.6);
+  for(let i=0;i<sections;i++)for(let j=1;j<bands.length;j++){
+   const left=x0+(x1-x0)*i/sections,right=x0+(x1-x0)*(i+1)/sections;
+   front(left,right,bands[j-1],bands[j],z,facadeTone);
+  }
+  front(x0-.14,x1+.14,top-.18,top+.09,z-.09,solid('#46515d'));
+  quad([[x0,curb,z+3.2],[x0,top,z+3.2],[x0,top,z],[x0,curb,z]],solid('#293441'));
+  quad([[x1,curb,z],[x1,top,z],[x1,top,z+3.2],[x1,curb,z+3.2]],solid('#303b47'));
+ }
+ warehouse(-24,-10.6,23.0,6.65);
+ warehouse(-10.6,9.1,20.42,5.28);
+ warehouse(9.1,25,22.6,6.18);
+ for(const x of [-8.35,-2.05,3.40,8.37])
+  front(x-.12,x+.12,curb,floorY+5.17,20.31,solid('#4a4650'));
+ for(const x of [-5.08,.75,5.93]){
+  const z=20.40,width=1.88,bottom=curb+.03,top=floorY+3.17;
+  front(x-width-.17,x+width+.17,bottom-.01,top+.25,z-.07,solid('#514a44'));
+  front(x-width,x+width,bottom,top,z-.10,(_x,y)=>facade.copy(color('#252c35')).lerp(color('#424751'),between(y,bottom,top)));
+  for(let i=1;i<12;i++){
+   const y=bottom+(top-bottom)*i/12;
+   front(x-width,x+width,y,y+.015,z-.12,solid('#30343a'));
+  }
+  front(x-.62,x+.62,floorY+3.81,floorY+4.10,z-.13,solid(x>.5&&x<1?'#504b42':'#9e7850'));
+  for(const dx of [-.31,0,.31])front(x+dx-.019,x+dx+.019,floorY+3.81,floorY+4.10,z-.14,solid('#383a3b'));
+ }
+ for(const [x0,x1,height]of [[-21,-13,7.8],[-10,-3.9,6.58],[3.7,8.5,7.2],[9.8,17.5,8.3]]){
+  front(x0,x1,floorY,floorY+height,29,solid('#202c3d'));
+  front(x0+.65,x0+1.17,floorY+height,floorY+height+.87,29.1,solid('#243144'));
+ }
+ const sky=new T.Color();
+ const skyTone=(x,y)=>sky.copy(color('#354454')).lerp(color('#101725'),between(y,floorY+2,floorY+24))
+  .lerp(color('#4d4951'),Math.exp(-((x/23)**2))*(1-between(y,floorY+4,floorY+12))*.23);
+ for(const [y0,y1]of [[0,4],[4,8],[8,13],[13,24],[24,37]])for(const [x0,x1]of [[-64,-24],[-24,0],[0,24],[24,64]])
+  front(x0,x1,floorY+y0,floorY+y1,47,skyTone);
+
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));
+ geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+ geometry.setIndex(indices);
+ geometry.computeBoundingSphere();
+ const material=new T.MeshBasicMaterial({name:'E31_BakedNightStreet',vertexColors:true});
+ const exterior=new T.Mesh(geometry,material);
+ exterior.name='E31_DepartureExterior';exterior.visible=false;
+ Object.assign(exterior.userData,{asfaltoPrewarm:true,cameraCollision:false,pivotPainter:false});
+ return exterior;
+}
+
 export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LAYOUT.floorY}={}){
  const {scene,workshopRoot:source}=workshop,root=new T.Group(),staticRoot=new T.Group(),doorRoot=new T.Group(),owned=new Set(),changed=[],records=[];let disposed=false,gateOpen=0,serviceOpen=0;
  root.userData.pivotPainter=false;root.name='Workshop_Architecture_E31';staticRoot.name='E31_StaticConstruction';doorRoot.name='E31_OperableDoors';root.add(staticRoot,doorRoot);scene.add(root);source.updateWorldMatrix(true,true);
@@ -33,6 +136,8 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  box('E31_GateThreshold',[0,floorY-.018,6.15],[6.86,.036,.75],concrete);
  const apron=box('E31_ExteriorApron',[0,floorY-.064,9.17],[8.5,.12,6.0],concrete);
  apron.castShadow=false;
+ const exterior=createDepartureExterior(T,floorY);
+ root.add(exterior);owned.add(exterior.geometry);owned.add(exterior.material);
  const doorMin=3.2025,doorMax=4.4675,serviceTop=floorY+2.1;
  for(const [a,b,label]of [[I.back,doorMin,'Back'],[doorMax,I.front,'Front']])box('E31_ServiceWall_'+label,[8.85082873,(base+top)/2,(a+b)/2],[thickness,top-base,b-a],plaster);
  box('E31_ServiceLintel',[8.85082873,(serviceTop+top)/2,3.835],[thickness,top-serviceTop,1.265],plaster);
