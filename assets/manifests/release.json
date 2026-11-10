@@ -2747,7 +2747,7 @@
     {
       "path": "index.html",
       "bytes": 82123,
-      "sha256": "E05258C850DB25FD3B35C3FD7509AF87524FCF8B470AF91F2B58F9D2E792F44D"
+      "sha256": "A864BD2EA07D7997206389FCF80145CF4615E0CA0CA4FE2AC2F887C60E054059"
     },
     {
       "path": "release-version.json",
@@ -3147,7 +3147,7 @@
     {
       "path": "src/legacy/module-02.mjs",
       "bytes": 587857,
-      "sha256": "4B6F2E8A6EBCAB4C33BDBE8E121A1DD964086FBED3BD0038B4FA356DAD20DD9A"
+      "sha256": "7C926FBC5B213793B60097FF7C33842782FC71301F2E303CAE829A781F9193B6"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3431,8 +3431,8 @@
     },
     {
       "path": "src/render/authored-control-mounts.mjs",
-      "bytes": 3160,
-      "sha256": "6876D2D01ACAEEAED04090A3D5547D592ABEC408821C2DCA727FC78FE5B810F2"
+      "bytes": 7438,
+      "sha256": "16F321940F17B2ECCC34591EE439FAFAC4B65CAB8FCFC80F278EDE12B889767D"
     },
     {
       "path": "src/render/authored-vehicle-mirrors.mjs",
@@ -4542,7 +4542,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "FD25424B33CF6FE6859B4B465B6B2B30C12EEA53EF552F4353EB3B08F37EF894"
+      "sha256": "C137C5341D4A27766466DBEADB5B3190391211BCCDCF85AFB3527720D6DD3917"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4562,17 +4562,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "7BF68476C824B3E93715B313B6B4E21816FF3078D36BD3DF148131BCB899FE29"
+      "sha256": "F68470375B6C4D8C9AD521DCA0782A610F55F7CE3C372223108C604B2E716BBC"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "A6002A103A8C727EFC138B84359D23ED63234445D2B221A0BE9331568499D668"
+      "sha256": "1D6F8BCFDF1F0DB621A8F279F6A7945B8616EB1F36B3102752D8CECC735CE936"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "F1E8B0B278148CB0FFF19CDE4170799CEA0A6A7A3866F489D6A4A7B1412DF61B"
+      "sha256": "182CE0740A3BA22FCAC3246F22C5E7E7948508B51A22BFD55DB703BF5F3D39B8"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4792,12 +4792,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "7B36297FE44F2A47C02D540E2B087D48C957C70C8D689E8A0CDE647CFD24F735"
+      "sha256": "98A6431D8CD72DF55440B01B3C9A0F266542DF21CAF205F15144C275F2916D19"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "64729A626B91107C1D1F649C78396ADB76BE6B3A0A8128BF6329602DE172183B"
+      "sha256": "EC6E5D3E04E4D6D75E7B6C4CF9D405A47DED77D88B217B764284D8A23C55D50B"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5071,8 +5071,8 @@
     },
     {
       "path": "tools/vehicle-condition-appearance.test.mjs",
-      "bytes": 11856,
-      "sha256": "D3D57ECF48F058547718C153A49D89021705338790E479B7D26A4762E8AA23AC"
+      "bytes": 14118,
+      "sha256": "702C02D0D4C9B5C1485976FE823C5ABDC8966CB5048F0EE18587B288DB4D25DB"
     },
     {
       "path": "tools/vehicle-contact-occlusion.test.mjs",
@@ -5087,7 +5087,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "6FD4775A9594E3DCC272C0227D9ED225E68CB9132B01E7871096D585C11C7B7B"
+      "sha256": "3911F496FF675273B157A798C333A8E9EFA07724C5F7B189504AF95CF9B26827"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5122,7 +5122,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "6A4406767785871B84400091F54933C836A2A13D6E846594817E726E07D2F7E1"
+      "sha256": "4FE52F1921A80AE7CCC7282A5F3C54DF9F6C179A33F3CCC565A1AB160B800900"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -5436,6 +5436,6 @@
     }
   ],
   "fileCount": 1072,
-  "totalBytes": 999020794,
-  "inventorySha256": "1542387158F9A4FBCFCA950F4F94137DF2CB1188C87889E2C3B0BCF68686DEDB"
+  "totalBytes": 999027334,
+  "inventorySha256": "8731DBE674F155C6CBEA30F1EDF4A5617F266B8D739CCF390DD92EF0FD15E5B5"
 }

@@ -8,7 +8,7 @@ import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
-import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=6876d2d01acaeeae';
+import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=16f321940f17b2ec';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
@@ -178,6 +178,46 @@ test('authored gauges dim independently of the road lights, and restore the lega
   assert.equal(lamp.visible,true);
   assert.equal(lamp.parent,cockpit);
  }finally{equipment.dispose();view.dispose();}
+});
+
+test('the 3100 seats the original controls on its fascia and restores them when leaving the cockpit',()=>{
+ const cockpit=new T.Group(),root=new T.Group(),dash=new T.Group();
+ dash.name='pickup_3100_Exterior_LOD0';dash.rotation.y=.12;root.add(dash);
+ const material=new T.MeshBasicMaterial();
+ function mesh(parent,name,size,position){
+  const part=new T.Mesh(new T.BoxGeometry(...size),material);
+  part.name=name;part.position.fromArray(position);parent.add(part);return part;
+ }
+ mesh(dash,'pickup_3100_static_C3100_Paint_Turquoise',[.02,.09,.65],[-.155,.168,0]);
+ const lights=new T.Group(),ignition=new T.Group(),radio=new T.Group();
+ cockpit.add(lights,ignition,radio);
+ lights.position.set(-.5,.25,.4);radio.scale.setScalar(2);
+ const knob=mesh(lights,'Flared_Trapezoid_Knob',[.04,.03,.01],[0,0,.025]);
+ mesh(lights,'Retaining_Nut',[.03,.03,.01],[0,0,0]);
+ mesh(ignition,'ignition-lock-root',[.04,.04,.01],[0,0,0]);
+ mesh(ignition,'ignition-rotor',[.02,.02,.01],[0,0,.007]);
+ mesh(radio,'FACEPLATE',[.30,.06,.02],[0,0,.005]);
+ const screen=mesh(radio,'DISPLAY_SURFACE',[.15,.03,.003],[0,0,.017]);
+ const equipment=createAuthoredControlMounts(T,{lights,ignition,radio});
+ try{
+  for(let pass=0;pass<2;pass++){
+   equipment.attach(root,'pickup_3100');
+   const [light,key,receiver]=equipment.diagnostics().placements;
+   assert.ok([light,key,receiver].every(control=>control.supported));
+   assert.ok(light.point[2]>key.point[2]&&key.point[2]>receiver.point[2]);
+   assert.ok(receiver.point[1]>light.point[1]&&light.point[1]>key.point[1]);
+   root.updateWorldMatrix(true,true);
+   assert.ok(dash.worldToLocal(knob.getWorldPosition(new T.Vector3())).x>-.145);
+   assert.ok(dash.worldToLocal(screen.getWorldPosition(new T.Vector3())).x>-.14);
+   assert.equal(root.getObjectsByProperty('name','FunctionalCockpitEquipment').length,1);
+   assert.equal(root.getObjectsByProperty('name','Speaker grille slat').length,4);
+  }
+  equipment.attach(root,'chevy');
+  assert.equal(root.getObjectByName('FunctionalCockpitEquipment'),undefined);
+  assert.ok([lights,ignition,radio].every(control=>control.parent===cockpit));
+  assert.deepEqual(lights.position.toArray(),[-.5,.25,.4]);
+  assert.deepEqual(radio.scale.toArray(),[2,2,2]);
+ }finally{equipment.dispose();}
 });
 
 test('physical dirt responds to driving distance on the contacted surface',()=>{

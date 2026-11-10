@@ -8,7 +8,7 @@ test('tier changes settle water shaders immediately and newly streamed water inh
  const second=waterRoot();scene.add(second.root);effects.setTrack({id:'two',visualRoot:second.root});assert.equal(second.water.material.transmission,0);effects.setQualityTier('high');assert.ok(second.water.material.transmission>0);effects.dispose();for(const x of [first,second]){x.water.geometry.dispose();x.m.dispose();}
 });
 test('governor applies shader tier before resize can start asynchronous preparation',()=>{
- const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=4b6f2e8a6ebcab4c',import.meta.url),'utf8'),body=source.match(/function applyPerformanceTier\(\) \{([\s\S]*?)\n  \}/)[1],order=[];
+ const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=7c926fbc5b213793',import.meta.url),'utf8'),body=source.match(/function applyPerformanceTier\(\) \{([\s\S]*?)\n  \}/)[1],order=[];
  const fn=new Function('raceWeatherEffects','performanceState','options','falconPresentation','setSurfaceReliefQuality','isHighGraphicsQuality','MAX_SEGMENTS','drawDistance','behindDistance','visibleRoadStep',body);
  const player={setReducedRefraction:value=>order.push('player:'+value)},falcon={setReducedRefraction:value=>order.push('falcon:'+value)};
  fn({setQualityTier:t=>order.push('weather:'+t)},{qualityTier:'low'},{getPlayerPresentation:()=>player},falcon,()=>{},()=>false,1,1,1,1);
