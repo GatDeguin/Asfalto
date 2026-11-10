@@ -73,6 +73,10 @@ La instrumentación WebGL encontró cuatro mapas de roca y dos de vegetación su
 
 La auditoría de la escena confirmó que los propietarios pasaron de 42 a 21 objetos de textura. El navegador pidió los mismos 21 archivos en ambos casos. En ventanas de 18 s sin perfilador, los tres controles registraron saltos de 133–150 ms. Las dos pasadas con mapas compartidos quedaron por debajo de 75 ms. La cadencia varió de 41,7 a 52,7 FPS en los controles y de 44,0 a 52,8 FPS con la corrección.
 
+El atlas de franjas del Falcon se prepara al cargar el rival. La captura de referencia registró una subida de 14,2 ms durante la carrera. Con el cambio se registró una sola subida de 19,1 ms durante la carga y ninguna durante los 78 s observados en tiempo real. Esa pasada promedió 41,6 FPS entre la primera y la última muestra y tuvo un salto de 83,3 ms.
+
+Después de la ventana en tiempo real, el piloto de QA completó la vuelta de 22,7 km con pasos físicos de Rapier a 120 Hz, sin teletransportes ni recuperaciones. Se verificaron la clasificación, el regreso al taller y la persistencia del resultado tras recargar. La etapa de física acelerada se usa para validar el recorrido y se excluye de las cifras de cadencia. El aviso de guardado de la ficha de resultado pasó de 1,22 a 11,84 de contraste en las comprobaciones de 1280 y 390 píxeles de ancho. [Contraste mínimo del texto](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html)
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.

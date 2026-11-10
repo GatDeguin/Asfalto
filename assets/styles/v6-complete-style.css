@@ -84,3 +84,6 @@ body.v6-menu-open{overflow:hidden}body.v6-menu-open #settings-panel,body.v6-menu
  #settings-panel,#settings-panel.editor-active{top:max(8px,env(safe-area-inset-top));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 49px);height:auto;max-height:none}
  #settings-panel .settings-scroll{max-height:calc(100vh - max(8px,env(safe-area-inset-top)) - max(14px,env(safe-area-inset-bottom)) - 154px)}
 }
+
+#v6-results-progress .v6-note,
+#v6-results-progress .v6-note strong{color:inherit}

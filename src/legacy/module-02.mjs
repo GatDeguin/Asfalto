@@ -8521,6 +8521,17 @@ listen(window,'chevy:vehicle-config',(event)=>{
         rig=globalThis.AsfaltoV6Falcon.createFalconVisualRig(THREE,sourceRoot,manifest);
         presentation=await createVehiclePresentation(THREE,{vehicle:'falcon',modelRoot:rig.root,physicalCalibration:true,lightScene:scene,loadGlb:window.__asfaltoLoadVehicleModel,signal:modularHostInitialization.signal});
         assertRivalActive();
+        // The mirror can see this atlas before the main camera. Upload it while the rival is loading.
+        if(!renderer.getContext().isContextLost()){
+          const atlases=new Set();
+          presentation.root.traverse(mesh=>{
+            if(!mesh.isMesh)return;
+            for(const material of Array.isArray(mesh.material)?mesh.material:[mesh.material]){
+              if(material?.name==='Vehicle_StripeAtlas'&&material.map?.isTexture)atlases.add(material.map);
+            }
+          });
+          for(const atlas of atlases)renderer.initTexture(atlas);
+        }
         raceWorld.setFalconVisualRig(rig);
         raceWorld.setFalconPresentation(presentation);
         installed=true;

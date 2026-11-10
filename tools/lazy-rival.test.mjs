@@ -1,19 +1,30 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=87a1086e00966594',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=5ea69ec9157685f3',import.meta.url),'utf8');
 const block=source.match(/  let rivalVisualPromise=null;[\s\S]*?    return rivalVisualPromise;\r?\n  }/)[0];
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};};
-function fixture({decode,convert,present}={}){
- const stats={decode:0,convert:0,present:0,rig:0,installed:0,disposed:[],shutdown:false};
+function fixture({decode,convert,present,meshes=[],contextLost=false}={}){
+ const stats={decode:0,convert:0,present:0,rig:0,installed:0,disposed:[],uploaded:[],shutdown:false};
  const globalThis={AsfaltoV5PayloadCore:{async decodePayloadById(){stats.decode++;return decode?decode():new Uint8Array();}},AsfaltoV5GlbCore:{async completeGlbToObject(){stats.convert++;return convert?convert():{name:'source'};}},AsfaltoV6Falcon:{createFalconVisualRig(){stats.rig++;return{root:{name:'rig'}};}}};
  const window={__asfaltoVehiclePresentations:{chevy:{},falcon:null}};
  const modularHostInitialization={signal:new AbortController().signal,assertActive(){if(stats.shutdown)throw Error('shutdown');}};
- const ensure=new Function('globalThis','window','document','modularHostInitialization','createVehiclePresentation','raceWorld','disposeTrackObjectRoot','rivalAssetPipeline',`const THREE={},gunzipBase64=()=>{},trackGlbHelpers={},scene={},lightingEditor=null,modularRuntimeShutdown=null;${block};return ensureRivalVisual;`)(globalThis,window,{getElementById:()=>({textContent:'{}',dataset:{externalUrl:'fixture.glb',sha256:'fixture',bytes:'1'}})},modularHostInitialization,async()=>{stats.present++;return present?present():{dispose(){stats.disposed.push('presentation');}};},{setFalconVisualRig(){stats.installed++;},setFalconPresentation(){}},root=>{if(root)stats.disposed.push(root.name);},{async enqueue(){await globalThis.AsfaltoV5PayloadCore.decodePayloadById();return{scene:await globalThis.AsfaltoV5GlbCore.completeGlbToObject()};}});
+ const renderer={getContext:()=>({isContextLost:()=>contextLost}),initTexture(texture){assert.equal(stats.installed,0);stats.uploaded.push(texture);}};
+ const ensure=new Function('globalThis','window','document','modularHostInitialization','createVehiclePresentation','raceWorld','disposeTrackObjectRoot','rivalAssetPipeline','renderer',`const THREE={},gunzipBase64=()=>{},trackGlbHelpers={},scene={},lightingEditor=null,modularRuntimeShutdown=null;${block};return ensureRivalVisual;`)(globalThis,window,{getElementById:()=>({textContent:'{}',dataset:{externalUrl:'fixture.glb',sha256:'fixture',bytes:'1'}})},modularHostInitialization,async()=>{stats.present++;const view=present?await present():{dispose(){stats.disposed.push('presentation');}};return {...view,root:{traverse:visit=>meshes.forEach(visit)}};},{setFalconVisualRig(){stats.installed++;},setFalconPresentation(){}},root=>{if(root)stats.disposed.push(root.name);},{async enqueue(){await globalThis.AsfaltoV5PayloadCore.decodePayloadById();return{scene:await globalThis.AsfaltoV5GlbCore.completeGlbToObject()};}},renderer);
  return{ensure,stats,window};
 }
 test('Falcon stays unloaded until requested, concurrent races and restarts reuse it',async()=>{
  const gate=deferred(),f=fixture({decode:()=>gate.promise});assert.equal(f.stats.decode,0);const a=f.ensure(),b=f.ensure();assert.equal(f.stats.decode,1);gate.resolve(new Uint8Array());assert.equal(await a,await b);await f.ensure();assert.equal(f.stats.convert,1);assert.equal(f.stats.present,1);assert.equal(f.stats.installed,1);assert.ok(f.window.__asfaltoVehiclePresentations.falcon);
+});
+test('the installed Falcon shares one warmed stripe atlas across its materials',async()=>{
+ const atlas={isTexture:true},other={isTexture:true},stripe={name:'Vehicle_StripeAtlas',map:atlas};
+ const meshes=[{isMesh:true,material:[stripe,{name:'Other',map:other}]},{isMesh:true,material:stripe}];
+ const f=fixture({meshes});
+ await Promise.all([f.ensure(),f.ensure()]);await f.ensure();
+ assert.deepEqual(f.stats.uploaded,[atlas]);
+ const lost=fixture({meshes,contextLost:true});
+ await lost.ensure();
+ assert.deepEqual(lost.stats.uploaded,[]);
 });
 test('failed rival preparation cleans partial resources and can retry',async()=>{
  let attempts=0;const f=fixture({present:async()=>{if(++attempts===1)throw Error('load failed');return{dispose(){}};}});await assert.rejects(f.ensure(),/load failed/);assert.deepEqual(f.stats.disposed,['rig','source']);await f.ensure();assert.equal(f.stats.installed,1);assert.equal(f.stats.decode,2);
