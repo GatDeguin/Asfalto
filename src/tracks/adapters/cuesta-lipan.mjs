@@ -6,7 +6,7 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=4a7e306788ae0d39';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=9f256703646a3eaf';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -354,6 +354,7 @@ export function createCuestaLipanAdapter(dependencies) {
         current(tx);
       }
 
+      if(!closure)dependencies.prepareTrackApproaches?.({id:'cuesta_lipan',query:routeQuery,lengthM:route.lengthM,visualRoot:tx.visualRoot,collisionRoot:tx.collisionRoot});
       await dependencies.installVisualRoot(tx.visualRoot, { signal: tx.controller.signal });
       tx.visualInstalled = true;
       current(tx);

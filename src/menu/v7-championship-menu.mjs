@@ -12,7 +12,7 @@ export function mountChampionshipMenu(host){
  const story=el('p'),calendar=el('ol'),calendarDetails=el('details'),calendarTitle=el('summary','Calendario canónico y capítulos');calendarDetails.append(calendarTitle,calendar);
  const state=el('div'),configuration=el('details'),configTitle=el('summary','Configuración de inscripción'),configText=el('pre');configText.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px';configuration.append(configTitle,configText);
  const buttons=el('div','','v6-button-row'),enroll=el('button','Inscribir auto actual','v6-btn'),start=el('button','Comenzar etapa','v6-btn v6-btn-primary'),retry=el('button','Reintentar guardado','v6-btn'),back=el('button','Volver al taller','v6-btn');for(const b of [enroll,start,retry,back]){b.type='button';buttons.append(b);}
- root.replaceChildren(el('h3','Campeonato nacional'),el('p','Duelo físico contra Falcon. Una vuelta por etapa; 3 puntos al ganador y 1 al segundo, 2 por empate exacto. Se guarda entre etapas. El auto, la clase y las ayudas quedan fijados al inscribirse.'),select,story,calendarDetails,status,state,configuration,buttons);
+ root.replaceChildren(el('h3','Campeonato nacional'),el('p','Duelo físico contra Falcon. Una pasada de salida a meta por etapa. El duelo otorga 3 puntos al ganador y 1 al segundo, 2 por empate exacto. Se guarda entre etapas. El auto, la clase y las ayudas quedan fijados al inscribirse.'),select,story,calendarDetails,status,state,configuration,buttons);
  const store=createChampionshipProfileStore({getProfile:host.getProfile,replaceProfile:host.replaceProfile});
  const controller=createChampionshipSession({...host,store,requireFinalApi:true,onChange(info){render();host.onChange?.(info);}});
  function render(){

@@ -1,7 +1,7 @@
 import { createRoutePreviewLoader } from './route-preview-loader.mjs?v=6e39a6240f2b3fa2';
 import { selectRoutePhoto } from './v7-route-catalog.mjs?v=4a4037fb3a06754c';
 import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
-import { mountDriveRouteSheet } from './drive-route-sheet.mjs?v=e472bc8923892738';
+import { mountDriveRouteSheet } from './drive-route-sheet.mjs?v=8af0468b53b20f46';
 
 export function mountMenuRefinements({root,game}) {
   let catalog=null, tracks=[], disposed=false;
@@ -47,10 +47,11 @@ export function mountMenuRefinements({root,game}) {
       const map=node.querySelector('.an-route-miniature'), route=catalog?.routes?.[track.value];
       if(route&&map.dataset.track!==track.value) {
         map.dataset.track=track.value;map.replaceChildren();
-        const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 240 140');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Tramo de referencia y salida de ${title(track)}. ${route.caveat||'Trazado adaptado del juego; no es un mapa GPS.'}`);
+        const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 240 140');svg.setAttribute('role','img');svg.setAttribute('aria-label',`Recorrido de salida a meta de ${title(track)}. ${route.caveat||'Trazado adaptado del juego.'}`);
         const line=document.createElementNS(ns,'polyline');line.setAttribute('points',route.mapPoints.map(p=>p.join(',')).join(' '));svg.append(line);
         const start=route.mapPoints[0],dot=document.createElementNS(ns,'circle');dot.setAttribute('cx',start[0]);dot.setAttribute('cy',start[1]);dot.setAttribute('r','4');svg.append(dot);
-        const label=document.createElementNS(ns,'text');label.setAttribute('x','12');label.setAttribute('y','130');label.textContent='● SALIDA';svg.append(label);map.append(svg);const caveat=document.createElement('small');caveat.className='an-route-map-note';caveat.textContent='Tramo original · trazado adaptado';caveat.title=route.caveat||'No es un mapa GPS';map.append(caveat);
+        const [finishX,finishY]=route.mapPoints.at(-1),flag=document.createElementNS(ns,'rect');flag.setAttribute('x',finishX-3);flag.setAttribute('y',finishY-3);flag.setAttribute('width','6');flag.setAttribute('height','6');svg.append(flag);
+        const label=document.createElementNS(ns,'text');label.setAttribute('x','12');label.setAttribute('y','130');label.textContent='● SALIDA   ■ META';svg.append(label);map.append(svg);const caveat=document.createElement('small');caveat.className='an-route-map-note';caveat.textContent='Tramo original · trazado adaptado';caveat.title=route.caveat||'No es un mapa GPS';map.append(caveat);
       }
     }
     const profile=game.profile(), ids=[...root.querySelectorAll('#v6-test-cards [data-test-id]')].map(c=>c.dataset.testId);

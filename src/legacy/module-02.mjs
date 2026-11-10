@@ -30,6 +30,7 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=fc65cc9445589d6b';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c4baaeb1f89d1b0c';
@@ -64,7 +65,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=d9f326c1
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=064064e2b9003474';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=1b366163bbfc7326';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -92,7 +93,6 @@ import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840d
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=6a79200613bc5413';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=b311481c7155df85';
-import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=1c63772f8d903642';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
@@ -6115,7 +6115,7 @@ function updateRoutePresentation(renderFrame){
  if(distance<=245&&distance>=-22&&(status==='RUNNING'||status==='FINISHED')){
   if(!finishRoute)finishRoute=simulation.getRoadTestContext().routeQuery;
   const chart=renderFrame.projection?.referenceChart;
-  if(!finishMarker.isConfigured(chart))finishMarker.set(finishRoute.sample(Math.min(track.length-.001,finishAt)));
+  if(!finishMarker.isConfigured(chart))finishMarker.set(finishRoute.sample(track.closed ? Math.min(track.length-.001,finishAt) : finishAt));
  }
  finishMarker.update(distance,status);
  if(!driveTraffic?.route||status!=='RUNNING')return;
@@ -7903,6 +7903,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   applyPerformanceTier();
 
   function applyTheme({announce=false,rebuildGeometry=true}={}) {
+    ui.hud.toggleAttribute('data-point-to-point', track.closed === false);
     const palette=track.palette;
     skyUniforms.uTop.value.set(palette.skyTop);skyUniforms.uHorizon.value.set(palette.skyHorizon);
     terrainUniforms.uGround.value.set(palette.ground);terrainUniforms.uDirt.value.set(palette.dirt);terrainUniforms.uGrassBottom.value.set(palette.grassBottom);terrainUniforms.uGrassTop.value.set(palette.grassTop);terrainUniforms.uFogColor.value.set(palette.fog);
@@ -8460,7 +8461,6 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const activeTrackAdapter = await modularHostInitialization.waitFor(connectModularHost({
     trackId: deferredStartupAssets.initialTrackId||fallbackTrackId,
     fallbackTrackId,
-    prepareClosedRoute(sourceRoute,{id}={}){const closure=createClosedRoute(sourceRoute,{id});return {...closure,createRoots(materials={}){return closure.createRoots(THREE,materials);}};},
     async fetchBytes(url, { signal } = {}) {
       const response = await fetch(url, { signal, credentials: 'same-origin' });
       if (!response.ok) throw new Error('track request failed: ' + response.status + ' ' + url);
@@ -8482,6 +8482,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       root.name = label;
       return root;
     },
+    prepareTrackApproaches(context) { addTrackApproaches(THREE, context); },
     disposeObjectRoot(root) { return disposeTrackObjectRoot(root); },
     createCollisionProbe(root) {
       return globalThis.AsfaltoV5GlbCore.createCollisionProbe(THREE, root);

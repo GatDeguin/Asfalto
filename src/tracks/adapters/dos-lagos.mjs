@@ -5,8 +5,8 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=4a7e306788ae0d39';
-import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=28314e722abdbbbb';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=9f256703646a3eaf';
+import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=5598f70d0f105bb0';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({
@@ -953,6 +953,7 @@ export function createDosLagosAdapter(dependencies) {
       cumulative.created.collisionRoots += 1;
       try {
         if (closure) { const roots=attachClosedRouteRoots(closure, transaction.visualRoot, transaction.collisionRoot);await prepareReturnScenery(roots.visualRoot,{id:'dos_lagos',query:transaction.routeQuery,lengthM:transaction.normalizedRoute.lengthM,startM:sourceCanonical.lengthM,signal,sourceRoot:transaction.visualRoot});addDosLagosPostSupport(globalThis.__chevyV6Three||globalThis.THREE,transaction.visualRoot,transaction.routeQuery,transaction.normalizedRoute.lengthM); }
+        else dependencies.prepareTrackApproaches?.({id:'dos_lagos',query:sourceQuery,lengthM:sourceCanonical.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot});
       } finally {
         // A malformed optional closure can already have attached one root.
         // Count both owners before rollback so every allocated resource is released.

@@ -3,42 +3,41 @@
   "tracks": {
     "dos_lagos": {
       "file": "dos_lagos.bake.gz",
-      "bytes": 12039500,
-      "decodedBytes": 33024880,
-      "sha256": "d121a0a7fdc25d6b852eb8b2089e97f07a4f1384d10aee0a392d2d9f13ec3e09",
-      "entries": 220
+      "bytes": 8156317,
+      "decodedBytes": 14257236,
+      "sha256": "965f2c6680b0eff346f1f7688f38b88d02902a4ff3d3460aa321cd971508b5e9",
+      "entries": 218
     },
     "aconcagua_horcones": {
       "file": "aconcagua_horcones.bake.gz",
-      "bytes": 5792946,
-      "decodedBytes": 25359800,
-      "sha256": "637f96837787a915339b50f298790d8085701f3bc3c330ced765ca60f84d5d16",
-      "entries": 54
+      "bytes": 4269267,
+      "decodedBytes": 10162460,
+      "sha256": "350c4386e01eb6b029963ba8c8fb9a53af34bddcc79efde1b1748b34235cba91",
+      "entries": 52
     },
     "cuesta_lipan": {
       "file": "cuesta_lipan.bake.gz",
-      "bytes": 10882341,
-      "decodedBytes": 29980920,
-      "sha256": "b327f2e8d3679d910cd5ce4ec4fd2e8d3fc2c1554b90c4f43242629cca8057a6",
-      "entries": 139
+      "bytes": 5738337,
+      "decodedBytes": 8557012,
+      "sha256": "5167240d82fde9a46eef9d284e05a5e83b06fa5f01c13a1e8ecdff008b9c506f",
+      "entries": 137
     },
     "paso_garibaldi": {
       "file": "paso_garibaldi.bake.gz",
-      "bytes": 7269296,
-      "decodedBytes": 23891920,
-      "sha256": "93ac03a44ea9ae2506a6206f4989ebe1e7485e5d9fbc587c57e7f0c308cb1223",
-      "entries": 67
+      "bytes": 5832660,
+      "decodedBytes": 10123004,
+      "sha256": "c52add3feb5cf4cf12c5adc14c42e0061bf7961cc9c58157a54f0015c7cb5eab",
+      "entries": 65
     },
     "cataratas_iguazu": {
       "file": "cataratas_iguazu.bake.gz",
-      "bytes": 4444557,
-      "decodedBytes": 18519088,
-      "sha256": "03387d0dd4f9da105c23cfca878ad186e07c559cb5c58805e15c638e01c37e6d",
-      "entries": 773
+      "bytes": 1101861,
+      "decodedBytes": 1561044,
+      "sha256": "822b084f3b6ac13cbb58c526ec69784acd7b7fa55eb949db2d5fcc6fddd3ee4f",
+      "entries": 771
     }
   },
   "inputs": {
-    "src/tracks/visuals/closure-terrain.mjs": "2913422bf1e6d0ebb98dae7beae2b079a04ff5b587173114d3416f3d412b04ab",
     "src/tracks/visuals/terrain-refinement.mjs": "f1cd6e23a9ef1bd25b0fd1beac3a5122af90f58d7bf7592f38ad6537b31fb345",
     "src/tracks/visuals/forest-terrain-detail.mjs": "c7c0289881bcab1bb184febb9b834fcb08eefa2f195dad9771c040e47724068f",
     "src/render/surface-curvature.mjs": "b65bd00ab81d3d272a168edaa15cbfbdf4a2d7b30400fe5ee21f9bf42ae3696d",

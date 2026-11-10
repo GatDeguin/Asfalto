@@ -6,7 +6,7 @@ import '../src/legacy/asfalto-v6-physics-runtime.js?v=c5fde6a88e095b7b';
 const {createRouteSpatialIndex,projectToRoute,createProjectionTeleportToken}=globalThis.AsfaltoV6Physics;
 
 test('Dos Lagos projects a continuous crossing just south of the 150 m grid corner',()=>{
- const route=JSON.parse(readFileSync(new URL('../assets/extracted/asfalto-v5-dos-lagos-route/dos_lagos_route.json',import.meta.url),'utf8'));
+ const route=JSON.parse(readFileSync(new URL('../tracks/dos-lagos/route.json',import.meta.url),'utf8'));
  const index=createRouteSpatialIndex({
   samples:route.samples.map(({s,position:[x,y,z]})=>({s,x,y,z}))
  });

@@ -532,6 +532,9 @@ export async function loadSurfaceTextures(THREE, id, signal, sceneryOnly) {
       const maps = await settleAll(roles.map(role => load(name + '_' + role + (role === 'height' ? '.png' : '.jpg'), role === 'diff')));
       textures[name] = Object.fromEntries(roles.map((role, i) => [role, maps[i]]));
     });
+    if (id === 'cuesta_lipan' && sceneryOnly) tasks.push(settleAll(['aerial_asphalt_01', 'gravel_floor'].map(async name => {
+      textures[name] = {diff: await load(name + '_diff.jpg', true)};
+    })));
     if (FOREST_TRACKS.has(id)) tasks.push(settleAll([0, 1, 2].map(i => load('forest-canopy-' + i + '.png', true, false))).then(value => { textures.forest = value; }));
     if (FOREST_TRACKS.has(id)) tasks.push(settleAll([load('detail-bark.jpg', true), load('detail-leaf.jpg', true)]).then(([bark, leaf]) => { textures.detailBark = bark; textures.detailLeaf = leaf; }));
     await settleAll(tasks);
@@ -554,7 +557,7 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   }
   const keeper = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial());
   keeper.name = 'ASFALTO_VISUAL_RESOURCE_OWNER'; keeper.visible = false;
-  if(id==='dos_lagos'&&!sceneryOnly)keeper.asfaltoSurfaceTextures={...textures};
+  if((id==='dos_lagos'&&!sceneryOnly)||(id==='cuesta_lipan'&&sceneryOnly))keeper.asfaltoSurfaceTextures={...textures};
   for (let i = 0; i < owned.length; i++) keeper.material['asfaltoOwnedTexture' + i] = owned[i];
   // Make decoded model buffers reachable before any CPU decoration can throw.
   for (const [name, geometry] of templates || []) {

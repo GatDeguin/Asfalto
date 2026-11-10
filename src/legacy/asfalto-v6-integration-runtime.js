@@ -784,7 +784,8 @@
       if(visualTerrainAvailable&&/terrain|shoulder|ground/.test(name))return;
       if(visualShouldersAvailable&&/shoulder/.test(name))return;
       let material='unknown';
-      if(/guardrail|steel|metal|s\d+_collision_barrier_web_export/.test(name))material='metal';
+      if(/^collision_approach_(start|finish)_pavement$/.test(name))material='asphalt';
+      else if(/guardrail|steel|metal|s\d+_collision_barrier_web_export/.test(name))material='metal';
       else if(/rock|boulder|stone/.test(name))material='stone';
       else if(/concrete|retaining/.test(name))material='concrete';
       else if(/terrain|shoulder|ground/.test(name))material='soil';

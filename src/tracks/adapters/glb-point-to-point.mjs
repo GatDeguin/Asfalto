@@ -5,7 +5,7 @@ import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mj
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=4a7e306788ae0d39';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=9f256703646a3eaf';
 const ENV = new Set(['clear','overcast','golden','sunset','moonrise','night']);
 const freeze = (v,seen=new Set()) => { if (!v || typeof v !== 'object' || Object.isFrozen(v) || seen.has(v)) return v; seen.add(v); Object.values(v).forEach(child=>freeze(child,seen)); return Object.freeze(v); };
 const abortError = () => Object.assign(new Error('operation aborted'), { name: 'AbortError' });
@@ -239,6 +239,7 @@ export function createGlbPointToPointAdapter(dependencies, policy) {
       transaction.visualRoot=transaction.visualRoots[0]||null;
       transaction.collisionRoot=transaction.collisionRoots[0]||null;
       if(closure){const roots=attachClosedRouteRoots(closure,transaction.visualRoot,transaction.collisionRoot);await (policy.prepareReturnVisual||prepareReturnScenery)(roots.visualRoot,{id:expected.id,sourceRoot:transaction.visualRoot,query,lengthM:route.lengthM,startM:sourceRoute.lengthM,signal:transaction.controller.signal});current(transaction);}
+      else dependencies.prepareTrackApproaches?.({id:expected.id,query,lengthM:route.lengthM,visualRoot:transaction.visualRoot,collisionRoot:transaction.collisionRoot});
       for(const name of policy.requiredVisualNodes||[])if(!transaction.visualRoots.some(root=>named(root,name)))throw new TypeError('visual root missing required node '+name);
       for(const name of (policy.requiredCollisionNodes||expected.collisionNodes||[])){const required=transaction.collisionRoots.map(root=>named(root,name)).find(Boolean);if(!required)throw new TypeError('collision root missing required node '+name);if(!hasTriangleMesh(required))throw new TypeError('collision root required node lacks triangle mesh '+name);}
 

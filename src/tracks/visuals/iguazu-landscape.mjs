@@ -2,7 +2,7 @@ import {waterfallCameraProfile} from './regional-waterfall-camera.mjs?v=4147e1c2
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {createIguazuFern} from './regional-forest.mjs?v=b20261a5a12d8b0b';
 import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=ff9cd4eeb5bb9d5c';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=4a7e306788ae0d39';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=9f256703646a3eaf';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=88a5c279fc1ae5d5';
@@ -100,11 +100,38 @@ export async function prepareIguazuVisual(root,{query,lengthM,signal,THREE:T=glo
   root.userData.asfaltoIguazu.scenicSetpieces=addScenicSetpieces(T,root,{id:'cataratas_iguazu',leg:'outbound',query,lengthM,heightAt:dryGroundAt});
   return root.userData.asfaltoIguazu;
 }
+export function addIguazuApproachPlants(T, root, name, placements) {
+  const templates = sourceTemplates.get(root);
+  if (!templates) return;
+  const dummy = new T.Object3D(), scale = new T.Matrix4();
+  for (const family of ['tree', 'palmito']) {
+    const rows = placements.filter((_, i) => (i % 5 === 0) === (family === 'palmito'));
+    const parts = templates.filter(template => template.family === family).slice(0, 2);
+    if (!rows.length) continue;
+    parts.forEach(({geometry, material, local, scale: authoredScale}, part) => {
+      const mesh = new T.InstancedMesh(geometry, material, rows.length);
+      mesh.name = `${name}_${family}_${part}`;
+      mesh.receiveShadow = true;
+      scale.makeScale(...authoredScale.toArray()).multiply(local);
+      rows.forEach(({x, y, z, size, rotation}, i) => {
+        dummy.position.set(x, y, z);
+        dummy.rotation.y = rotation;
+        dummy.scale.setScalar(size);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix.multiply(scale));
+      });
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingSphere();
+      root.add(mesh);
+    });
+  }
+}
+
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   if(sourceRoot?.isObject3D&&sourceRoot.userData.asfaltoIguazu)sourceRoot.userData.asfaltoIguazu.ground=batchIguazuGround(T,sourceRoot);
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=4a7e306788ae0d39'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=9f256703646a3eaf'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   delete root.userData.asfaltoReturnHeightAt;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;

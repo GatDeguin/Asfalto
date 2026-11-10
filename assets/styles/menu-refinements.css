@@ -24,6 +24,7 @@
 .an-route-miniature svg { width:100%;height:auto; }
 .an-route-miniature polyline { stroke:#c9ceb8;stroke-width:2;fill:none;stroke-linejoin:round; }
 .an-route-miniature circle { fill:#ff722e;stroke:#0b0d09;stroke-width:2; }
+.an-route-miniature rect { fill:#f6dab5;stroke:#0b0d09;stroke-width:1.5; }
 .an-route-miniature text { font:10px system-ui,sans-serif;fill:#f6a363; }
 .an-drive-route-sheet {
   margin-top:16px;padding:clamp(12px,2vw,20px);color:var(--an-v7-paper);
@@ -39,7 +40,7 @@
 .an-drive-route-sheet h3 { margin:4px 0;font:clamp(22px,3.1vw,32px)/1.1 var(--an-title);text-transform:uppercase; }
 .an-drive-route-region,.an-drive-route-note { color:var(--an-v7-muted); }
 .an-drive-route-facts {
-  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
   margin:12px 0 6px;padding:10px 0;border-block:1px solid var(--an-v7-line);
 }
 .an-drive-route-facts dt { color:var(--an-v7-muted);font-size:11px;line-height:1.25; }
