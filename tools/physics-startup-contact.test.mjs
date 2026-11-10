@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 test('race startup snapshots typed contact storage as independent immutable arrays', () => {
-  const source=fs.readFileSync(new URL('../src/legacy/asfalto-v6-integration-runtime.js?v=2394b704e36164bb',import.meta.url),'utf8');
+  const source=fs.readFileSync(new URL('../src/legacy/asfalto-v6-integration-runtime.js?v=1530d2ef680a4fe8',import.meta.url),'utf8');
   const start=source.indexOf('    const initialWheelContacts = Object.freeze(');
   const end=source.indexOf('    const falconSpawn =',start);
   assert.ok(start>=0&&end>start,'actual browser-stack startup boundary exists');
@@ -32,7 +32,7 @@ test('race startup snapshots typed contact storage as independent immutable arra
 
 
 test('circuit selection preserves the original failure for the retry dialog', async () => {
-  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=13054b85f7583726',import.meta.url),'utf8');
+  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=47ce1b15d58c3df5',import.meta.url),'utf8');
   const start=source.indexOf('async function configureExistingGameReady('),end=source.indexOf('\nfunction persistPlayableRoute',start);
   assert.ok(start>=0&&end>start);
   const error=new Error('physics contact initialization failed');

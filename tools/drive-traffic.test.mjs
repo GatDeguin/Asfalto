@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=3cce59e8724fc388';
+import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=be8bee16cabf1aea';
 
 test('a trip gives each model two or three varied encounters, with one parking and one passing event', () => {
   const plan = createDriveTrafficPlan({lengthM: 22717, seed: 42});
@@ -20,6 +20,9 @@ test('a trip gives each model two or three varied encounters, with one parking a
   assert.ok(regular.every(event => event.speedMps <= 60 / 3.6));
   assert.equal(plan.filter(event => event.kind === 'parked').length, 1);
   assert.equal(plan.filter(event => event.kind === 'passing').length, 1);
+  const occupied=plan.filter(event=>event.passenger!=null);
+  assert.ok(occupied.length>0&&occupied.length<plan.length);
+  assert.ok(occupied.every(event=>event.passenger>=0&&event.passenger<6&&event.passenger!==event.driver));
   assert.ok(plan.every((event, i) => !i || event.atM - plan[i - 1].atM > 240));
 });
 

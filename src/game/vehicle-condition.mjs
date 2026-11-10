@@ -73,7 +73,7 @@ export function serviceVehicleCondition(value,id){
  if(id==='body')for(const zone of ZONES)c.damageZones[zone]=0;
  return c;
 }
-export function createVehicleConditionSession({vehicleId,condition,vehicleSpec,tankLiters=60}){
+export function createVehicleConditionSession({vehicleId,condition,vehicleSpec,tankLiters=vehicleSpec?.fuelCapacityLiters??60}){
  if(!VEHICLE_IDS.includes(vehicleId))throw new TypeError('Unknown vehicle');let current=normalizeVehicleCondition(condition),lastTick=null,lastFuel=0,samples=0,disposed=false;
  const fuel=createFuelObserver({displacementLiters:vehicleSpec?.engine?.displacementLiters||4.1,fuelMultiplier:vehicleSpec?.fuelMultiplier||1}),seenImpacts=new Set();
  function sample(frame){if(disposed||!frame.running||frame.qa)return;if(frame.tick===lastTick)return;

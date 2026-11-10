@@ -7,6 +7,10 @@
 #an-session-loading{z-index:19000}
 #v6-main-menu.an-cinematic-menu #v6-workshop-loading.an-cinema-loading{z-index:100}
 #an-session-loading[hidden],#loading.hidden,#v6-workshop-loading.v6-hidden{display:none!important}
+#an-session-loading[data-departure=true]{background:transparent;isolation:auto}
+#an-session-loading[data-departure=true] :is(.an-cinema-image,.an-cinema-film,.an-loading-card,.an-cinema-masthead){visibility:hidden}
+body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu :is(#v6-menu-sidebar,#v6-menu-content,.an-menu-footer,.an-vehicle-plate){visibility:hidden}
+body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-stage::before{background:none}
 .an-cinema-image,.an-cinema-film,.an-cinema-film video,.an-cinema-shade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .an-cinema-image{background-position:center;background-size:cover;transform:scale(1.025)}
 .an-cinema-film video{object-fit:cover;opacity:0;transition:opacity .65s ease;filter:saturate(.88) contrast(1.03);background:transparent}

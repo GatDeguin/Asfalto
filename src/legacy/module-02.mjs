@@ -18,7 +18,8 @@ import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
 import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2f45e8b283df15f3';
 import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=006379522815e967';
-globalThis.__asfaltoBuildSelectedVehicleSpec=buildVehiclePhysicsSpec;
+import {applyWorkshopPerformance,workshopPerformanceSetup} from '../game/workshop-performance.mjs?v=bc1ff950c62515a0';
+globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerformance(buildVehiclePhysicsSpec(base,id),setup);
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
 import {createAuxiliaryCaptureSchedule} from '../render/auxiliary-capture-schedule.mjs?v=35131d35093dabfc';
 import {installEmptyInstanceDrawGuard} from '../render/empty-instance-draw-guard.mjs?v=41a3cf08442da55f';
@@ -105,8 +106,8 @@ import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-d
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
-import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=3cce59e8724fc388';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=a5ba690433ebf38f';
+import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=be8bee16cabf1aea';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=d03d998c1000922a';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -6068,6 +6069,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     vehicleMaintenance:globalThis.__asfaltoVehicleMaintenance || null,
   RaceCore, THREE, track, settings: coreSettingsFromUi(), storage,
   vehicleProfile: getSelectedV6Profile(),
+  workshopSetup:workshopPerformanceSetup(globalThis.__chevyV6Complete?.profile?.()),
   chassisConfig: appliedChassisConfig,
   rivalCount: (ui.mode?.value || 'timeTrial') === 'race' ? 1 : 0,
   trackAdapter: activeTrack,
@@ -6124,7 +6126,8 @@ function updateRoutePresentation(dt, renderFrame){
  const projection=renderFrame.projection || lastState.projection || lastState;
  const cars=driveTraffic.traffic.update({progressM:progress,speedMps:Math.abs(feedback.speedMps||0),
   lateralM:projection.lateral||0,dt,passingAllowed:()=>Math.abs(track.sample(progress).curvature||0)<.008});
- driveTraffic.view.update(cars,driveTraffic.route.sample,progress);
+ const night=raceDayActive?raceDayClock.state.nightFactor:settings.skyId==='night'||settings.skyId==='moonrise'?1:settings.skyId==='sunset'?.28:0;
+ driveTraffic.view.update(cars,driveTraffic.route.sample,progress,night);
 }
 const roadTestCourse=createRoadTestCoursePresentation(THREE,{scene});
 let roadTestCourseUnsubscribe=null;
@@ -6150,6 +6153,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   v6InputAdapter.setChassisConfig(appliedChassisConfig);
   driverControlPipeline.reset();
   simulation.setVehicleProfile(physicsProfile);
+  simulation.setWorkshopSetup(workshopPerformanceSetup(event.detail));
   simulation.setChassisConfig(appliedChassisConfig);
   globalThis.__asfaltoVehiclePresentations?.chevy?.setChassisConfig?.(appliedChassisConfig);
 });

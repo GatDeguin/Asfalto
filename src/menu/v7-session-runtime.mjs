@@ -6,7 +6,7 @@ export function createSessionTransactionRunner({begin=()=>({}),onCancel=()=>{}}=
  async function run(load,metadata={}){
   cancel('superseded');const request={controller:new AbortController(),epoch:++epoch,decide:null,metadata};current=request;let success=false;
   const isCurrent=()=>current===request&&!request.controller.signal.aborted;
-  let presentation;try{presentation=begin({metadata,cancel:()=>{if(current===request)cancel();},retry:()=>{if(isCurrent())request.decide?.('retry');}})||{};}catch(error){if(current===request)current=null;request.controller.abort();throw error;}
+  let presentation;try{presentation=begin({metadata,signal:request.controller.signal,cancel:()=>{if(current===request)cancel();},retry:()=>{if(isCurrent())request.decide?.('retry');}})||{};}catch(error){if(current===request)current=null;request.controller.abort();throw error;}
   request.presentation=presentation;const signal=request.controller.signal;
   let abortListener;const canceled=new Promise(resolve=>{abortListener=()=>resolve({canceled:true});if(signal.aborted)abortListener();else signal.addEventListener('abort',abortListener,{once:true});});
   try{while(isCurrent()){

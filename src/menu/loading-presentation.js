@@ -118,13 +118,14 @@
     if(!document.hidden && !document.body.classList.contains('an-intro-open')) {
       top=candidates.find(s=>s.kind==='session') || candidates.find(s=>s.kind==='workshop') || candidates[0];
     }
-    for(const surface of surfaces) surface.activate(surface===top);
+    for(const surface of surfaces) surface.activate(surface===top&&surface.host.dataset.departure!=='true');
   }
   function sync() {
     const values=[...pending.values()],latest=values.at(-1);
     if(!latest)return;
     const scene=[...values].reverse().find(v=>v.scene)?.scene || 'separator';
-    sessionSurface.set(scene); sessionSurface.stage(latest.stage);
+    if(latest.departure)overlay.dataset.departure='true';else delete overlay.dataset.departure;
+    sessionSurface.set(scene); sessionSurface.stage(latest.departureStage||latest.stage);
     overlay.setAttribute('aria-label',latest.title);
   }
   function cancelExit() {
@@ -135,6 +136,7 @@
   }
   function restore() {
     overlay.hidden=true;overlay.setAttribute('aria-busy','false');
+    delete overlay.dataset.departure;
     sessionSurface.stop();document.body.classList.remove('an-loading-open');
     if(typeof background==='function')background();
     background=[];exiting=false;overlay.classList.remove('an-cinema-exit');
@@ -154,7 +156,12 @@
       document.body.classList.add('an-loading-open');
     }
     overlay.hidden=false;overlay.setAttribute('aria-busy','true');overlay.focus({preventScroll:true});
-    const key={};pending.set(key,{title,stage,scene:options.track||options.scene});sync();reconcile();
+    const key={};pending.set(key,{title,stage,scene:options.track||options.scene,departure:!!options.departure});
+    if(options.departure)void Promise.resolve(options.departure).finally(()=>{
+      const task=pending.get(key);
+      if(task){task.departure=false;task.departureStage=null;sync();reconcile();}
+    });
+    sync();reconcile();
     // Yield two paint opportunities before the caller starts expensive scene work.
     const painted=new Promise(resolve=>{
       let done=false;const finish=()=>{if(done)return;done=true;clearTimeout(timer);resolve();};
@@ -164,6 +171,7 @@
     return {
       painted,
       stage(text) {const task=pending.get(key);if(task){task.stage=text;sync();}},
+      departureStage(text){const task=pending.get(key);if(task?.departure){task.departureStage=text;sync();}},
       end() {
         if(!pending.delete(key))return Promise.resolve();
         if(pending.size){sync();return Promise.resolve();}

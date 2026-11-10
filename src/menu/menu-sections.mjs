@@ -3,7 +3,24 @@ import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=680bf8ce08be7
 import { testPresentationState } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
 import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
-const scene = name => new URL(`../../assets/menu/game-captures/${name === 'competencia' ? 'viaje-v7.webp' : `${name}.jpg`}`, import.meta.url).href;
+const scene = file => new URL(`../../assets/menu/game-captures/${file}`, import.meta.url).href;
+const routeScene=(track,sky='clear',weather='clear')=>`exact-${track}--${sky}--${weather}.webp`;
+const modeImages={drive:routeScene('dos_lagos','golden-hour'),tests:'conduccion.jpg',competition:routeScene('paso_garibaldi','sunset')};
+const sessionImages={free:routeScene('cataratas_iguazu'),journey:'viaje-v7.webp',practice:routeScene('cuesta_lipan','golden-hour')};
+const competitionImages={
+  sprint:'viaje-v7.webp',regularity:routeScene('cuesta_lipan','overcast'),
+  circuit:routeScene('dos_lagos','sunset'),timetrial:routeScene('paso_garibaldi','night'),
+  drag:routeScene('aconcagua_horcones','clear'),endurance:routeScene('cataratas_iguazu','overcast','rain'),
+  club:routeScene('dos_lagos','moonrise'),
+};
+const testImages={
+  accel100:'conduccion.jpg',accel160:routeScene('aconcagua_horcones','sunset'),
+  m500:routeScene('aconcagua_horcones','golden-hour'),m1000:routeScene('paso_garibaldi','overcast'),
+  brake100:routeScene('dos_lagos','overcast'),vmax:routeScene('aconcagua_horcones'),
+  recovery:routeScene('cuesta_lipan','golden-hour'),slalom:routeScene('cuesta_lipan','clear'),
+  turn:routeScene('dos_lagos','golden-hour'),wet:routeScene('cataratas_iguazu','overcast','rain'),
+  speedo:'instrumental.jpg',consumption:'viaje-v7.webp',
+};
 const TEST_ORDER = ['accel100', 'm500', 'm1000', 'brake100', 'vmax', 'recovery', 'accel160', 'slalom', 'turn', 'wet', 'speedo', 'consumption'];
 const TEST_KIND = { accel100:'Aceleración', accel160:'Aceleración', m500:'Aceleración', m1000:'Aceleración', brake100:'Frenado', vmax:'Velocidad', recovery:'En cuarta', slalom:'Precisión', turn:'Maniobra', wet:'Adherencia', speedo:'Instrumental', consumption:'Consumo' };
 const recordLabel = result => {
@@ -36,14 +53,14 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
   modes.setAttribute('aria-label', 'Elegí tu modo');
   modes.innerHTML = '<header class="an-mode-heading"><h2 tabindex="-1">Elegí tu modo</h2><p>Tres formas de vivir la pasión por el asfalto.</p></header><div class="an-mode-grid"></div>';
   const modeDefinitions = [
-    { id:'drive', title:'Conducción', image:'conduccion', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:`${root.querySelector('#v6-drive-route')?.options.length || 5} rutas`, last:'Libre · Viaje · Práctica' },
-    { id:'tests', title:'Pruebas', image:'instrumental', copy:'Poné a prueba al auto y superá tus marcas.', first:'2–8 min por prueba', second:'12 pruebas', last:'Aceleración · Frenado · Precisión' },
-    { id:'competition', title:'Competencia', image:'competencia', copy:'Compartí la ruta con rivales y contra el reloj.', first:'Según el evento', second:'7 formatos', last:'Club · Contrarreloj · Resistencia' },
+    { id:'drive', title:'Conducción', copy:'Manejá libremente y disfrutá del camino.', first:'A tu ritmo', second:`${root.querySelector('#v6-drive-route')?.options.length || 5} rutas`, last:'Libre · Viaje · Práctica' },
+    { id:'tests', title:'Pruebas', copy:'Poné a prueba al auto y superá tus marcas.', first:'2–8 min por prueba', second:'12 pruebas', last:'Aceleración · Frenado · Precisión' },
+    { id:'competition', title:'Competencia', copy:'Compartí la ruta con rivales y contra el reloj.', first:'Según el evento', second:'7 formatos', last:'Club · Contrarreloj · Resistencia' },
   ];
   for (const mode of modeDefinitions) {
     const button = document.createElement('button');
     button.type = 'button'; button.className = 'an-mode-card'; button.dataset.anMode = mode.id;
-    button.innerHTML = `<img src="${scene(mode.image)}" alt="" decoding="async"><span class="an-mode-icon">${svg(mode.id)}</span><span class="an-mode-card-body"><strong>${mode.title}</strong><span class="an-mode-copy">${mode.copy}</span><span class="an-mode-facts"><span><small>Duración</small>${mode.first}</span><span><small>Para elegir</small>${mode.second}</span><span>${mode.last}</span></span><span class="an-mode-enter">Elegir <b aria-hidden="true">→</b></span></span>`;
+    button.innerHTML = `<img src="${scene(modeImages[mode.id])}" alt="" decoding="async"><span class="an-mode-icon">${svg(mode.id)}</span><span class="an-mode-card-body"><strong>${mode.title}</strong><span class="an-mode-copy">${mode.copy}</span><span class="an-mode-facts"><span><small>Duración</small>${mode.first}</span><span><small>Para elegir</small>${mode.second}</span><span>${mode.last}</span></span><span class="an-mode-enter">Elegir <b aria-hidden="true">→</b></span></span>`;
     button.addEventListener('click', () => selectMode(mode.id));
     modes.querySelector('.an-mode-grid').append(button);
   }
@@ -51,7 +68,7 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
 
   const driveCards = root.querySelector('#v6-drive-cards');
   for (const card of driveCards.children) {
-    const name = { free:'conduccion', journey:'competencia', practice:'instrumental' }[card.dataset.driveMode];
+    const name = sessionImages[card.dataset.driveMode];
     const image = document.createElement('img'); image.src = scene(name); image.alt = ''; image.decoding = 'async'; image.className = 'an-session-image';
     card.prepend(image); card.classList.add('an-session-card');
   }
@@ -63,7 +80,8 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
   tests.append(layout); layout.append(testCards);
   const detail = document.createElement('section'); detail.className = 'an-test-detail'; detail.setAttribute('aria-label', 'Detalle de la prueba');
   detail.innerHTML = '<header class="an-test-vehicle"><div><strong data-selected-vehicle-label>Vehículo seleccionado</strong><span>Auto seleccionado para esta prueba</span></div></header><figure class="an-test-preview"><img alt="Vista del cockpit capturada en el juego" decoding="async"><figcaption>Captura del juego</figcaption></figure><div class="an-test-info"><section class="an-test-objective"><span class="an-detail-label">Objetivo</span><h3 id="an-test-title"></h3><p id="an-test-objective"></p></section><section class="an-test-record"><span class="an-detail-label">Mejor marca</span><strong id="an-test-record">Sin marca</strong><span id="an-test-attempts"></span></section><section><span class="an-detail-label">Condiciones</span><p id="an-test-conditions"></p></section><section><span class="an-detail-label">Progreso</span><p id="an-test-progress"></p></section></div>';
-  detail.querySelector('img').src = scene('pruebas');
+  const testImage=detail.querySelector('img');
+  testImage.alt='';
   const vehicleLabels = bindSelectedVehicleLabels({ root: detail, events: vehicleEvents, getVehicleId: () => game.workshop?.vehicleId });
   let disposed = false;
   let presentedTest = null;
@@ -95,7 +113,7 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
   function decorateCompetitions() {
     for (const card of competitions.children) {
       if (card.querySelector('.an-session-image')) continue;
-      const image = document.createElement('img'); image.src = scene(card.dataset.compId === 'drag' ? 'instrumental' : card.dataset.compId === 'timetrial' ? 'conduccion' : 'competencia'); image.alt = ''; image.decoding = 'async'; image.className = 'an-session-image';
+      const image = document.createElement('img'); image.src = scene(competitionImages[card.dataset.compId]||'competencia.jpg'); image.alt = ''; image.decoding = 'async'; image.className = 'an-session-image';
       card.prepend(image); card.classList.add('an-session-card');
     }
   }
@@ -133,6 +151,7 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
     const completed = new Set((profile.sheets || []).filter(sheet => sheet.valid === true && sheet.class === currentClass && availableCards.some(card => card.dataset.testId === sheet.testId)).map(sheet => sheet.testId)).size;
     text('#an-test-progress', `${completed} / ${availableCards.length} pruebas con ficha válida`);
     if (presentedTest !== display.dataset.testId) {
+      testImage.src=scene(testImages[display.dataset.testId]||'pruebas.jpg');
       if (presentedTest !== null) motion.enter(detail.querySelector('.an-test-info'), {local:true});
       presentedTest = display.dataset.testId;
     }

@@ -50,7 +50,10 @@ export function createDriveTrafficPlan({lengthM, seed, canPark = () => true}) {
     const regular = roster.pop();
     const jitter = (random() - .5) * (id===0||id===slotCount-1?.08:.32);
     return regular && {...regular, id, atM:station(id,jitter)};
-  }).filter(Boolean);
+  }).filter(Boolean).map((event,index)=>({
+    ...event,
+    passenger:(index+seed%3)%3===0 ? (event.driver+1+index%5)%6 : null,
+  }));
 }
 
 export function createDriveTraffic(plan, {lengthM}) {

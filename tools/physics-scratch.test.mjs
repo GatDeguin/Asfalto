@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 const context = vm.createContext({});
-vm.runInContext(readFileSync(new URL('../src/legacy/asfalto-v6-vehicle-model.js?v=e65d6a457c35c21a', import.meta.url), 'utf8'), context);
+vm.runInContext(readFileSync(new URL('../src/legacy/asfalto-v6-vehicle-model.js?v=097dce2916d04203', import.meta.url), 'utf8'), context);
 const core = context.AsfaltoV6VehicleCore;
 assert.equal(typeof core.createDynamicsScratch, 'function', 'core must expose per-session scratch');
 const scratch = core.createDynamicsScratch();

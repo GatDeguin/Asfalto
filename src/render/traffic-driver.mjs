@@ -8,10 +8,10 @@ const DRIVERS = [
 ];
 
 // All coordinates are in the car's real metre space. The hood is toward -X.
-export function createTrafficDriver(T, {eye, wheel, roofM}) {
+export function createTrafficDriver(T, {eye, wheel, roofM, passenger=false}) {
   const [ex,ey,ez]=eye, [wx,wy,wz]=wheel, headY=Math.min(ey+.018,roofM-.145);
   const root=new T.Group();
-  root.name='TrafficDriver';
+  root.name=passenger?'TrafficPassenger':'TrafficDriver';
   root.userData.asfaltoPrewarm=true;
   const sphere=new T.SphereGeometry(1,12,8).toNonIndexed();
   const scalp=new T.SphereGeometry(1,12,6,0,Math.PI*2,0,Math.PI*.52).toNonIndexed();
@@ -64,7 +64,7 @@ export function createTrafficDriver(T, {eye, wheel, roofM}) {
       return baked;
     });
   }
-  const driving=pose(false), parked=pose(true);
+  const parked=pose(true), driving=passenger?parked:pose(false);
   sphere.dispose();scalp.dispose();
   const meshes=palette.map((part,i)=>{
     const mesh=new T.Mesh(driving[i],new T.MeshStandardMaterial({roughness:.86}));
@@ -87,7 +87,7 @@ export function createTrafficDriver(T, {eye, wheel, roofM}) {
     dispose() {
       root.removeFromParent();root.clear();
       meshes.forEach(mesh=>mesh.material.dispose());
-      [...driving,...parked].forEach(geometry=>geometry.dispose());
+      for(const geometry of new Set([...driving,...parked]))geometry.dispose();
     },
   };
 }

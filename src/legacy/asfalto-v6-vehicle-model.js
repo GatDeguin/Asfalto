@@ -647,6 +647,22 @@
     return indexes;
   }
 
+  function distributeDriveTorque(out,wheels,drivetrain,torque,count,unloaded){
+    let bias=false;
+    if(unloaded&&count===2&&drivetrain.differential==='limited-slip'){
+      let groundedCount=0;
+      for(const wheel of wheels)if(wheel.axle===drivetrain.drivenAxle&&wheel.contact!==false&&finiteNumber(wheel.normalLoadN,0)>=100)groundedCount++;
+      bias=groundedCount===1;
+    }
+    for(let index=0;index<wheels.length;index++){
+      const wheel=wheels[index];
+      if(drivetrain.drivenAxle!=='all'&&wheel.axle!==drivetrain.drivenAxle)continue;
+      const grounded=wheel.contact!==false&&finiteNumber(wheel.normalLoadN,0)>=100;
+      const share=bias?(grounded?.75:.25):1/count;
+      out[index]=torque*share;
+    }
+  }
+
   function stepPowertrain(state, controls, wheels, dt, spec) {
     validateVehicleSpec(spec);
     const stepSeconds = finiteNumber(dt, 0);
@@ -692,7 +708,7 @@
       : engineTorqueNm * ratio * spec.gearbox.finalDrive * spec.drivetrain.efficiency
         * clutchEngagement * differentialFactor;
     const wheelDriveTorquesNm = [0, 0, 0, 0];
-    for (const index of driven) wheelDriveTorquesNm[index] = driveTorqueNm / driven.length;
+    distributeDriveTorque(wheelDriveTorquesNm,wheels,spec.drivetrain,driveTorqueNm,driven.length,openDiffUnloaded);
     // Coolant temperature is independent of clutch slip heat. The thermostat
     // opens above 80 C; radiator damage and measured wheel speed affect cooling.
     const engineCooling = clamp(finiteNumber(controls?.engineCoolingCondition, 1), 0.05, 1);
@@ -700,7 +716,7 @@
     const roadSpeedMps = meanWheelOmega * spec.wheelRadiusM;
     const thermalLoad = 0.28 + throttle * 0.55 + engineRpm / spec.engine.mechanicalLimitRpm * 0.22;
     const radiatorCooling = Math.max(0, previousEngineTemperature - 80) * 0.042
-      * engineCooling * (1 + Math.min(40, roadSpeedMps) / 45);
+      * engineCooling * (spec.engine.coolingMultiplier??1) * (1 + Math.min(40, roadSpeedMps) / 45);
     const engineTemperatureC = clamp(previousEngineTemperature
       + (thermalLoad + (controls?.engineFire === true ? 3 : 0) - radiatorCooling) * stepSeconds, -30, 220);
     const nextState = Object.freeze({
@@ -1268,7 +1284,7 @@ scratch.input.normalLoadN = input?.normalLoadN;
         * clutchEngagement * differentialFactor;
     const wheelDriveTorquesNm = out.wheelDriveTorquesNm;
     wheelDriveTorquesNm.fill(0);
-    for (let index = 0; index < wheels.length; index++) if (spec.drivetrain.drivenAxle === 'all' || wheels[index].axle === spec.drivetrain.drivenAxle) wheelDriveTorquesNm[index] = driveTorqueNm / drivenCount;
+    distributeDriveTorque(wheelDriveTorquesNm,wheels,spec.drivetrain,driveTorqueNm,drivenCount,openDiffUnloaded);
     // Coolant temperature is independent of clutch slip heat. The thermostat
     // opens above 80 C; radiator damage and measured wheel speed affect cooling.
     const engineCooling = clamp(finiteNumber(controls?.engineCoolingCondition, 1), 0.05, 1);
@@ -1276,7 +1292,7 @@ scratch.input.normalLoadN = input?.normalLoadN;
     const roadSpeedMps = meanWheelOmega * spec.wheelRadiusM;
     const thermalLoad = 0.28 + throttle * 0.55 + engineRpm / spec.engine.mechanicalLimitRpm * 0.22;
     const radiatorCooling = Math.max(0, previousEngineTemperature - 80) * 0.042
-      * engineCooling * (1 + Math.min(40, roadSpeedMps) / 45);
+      * engineCooling * (spec.engine.coolingMultiplier??1) * (1 + Math.min(40, roadSpeedMps) / 45);
     const engineTemperatureC = clamp(previousEngineTemperature
       + (thermalLoad + (controls?.engineFire === true ? 3 : 0) - radiatorCooling) * stepSeconds, -30, 220);
 copyFields(out.state, state);

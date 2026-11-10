@@ -756,7 +756,7 @@
     const baseVehicleSpec = vehicleProfile === 'restomod'
       ? vehicleCore.CHEVY_RESTOMOD_SPEC
       : vehicleCore.CHEVY_ORIGINAL_SPEC;
-    const vehicleSpec=root.__asfaltoBuildSelectedVehicleSpec?.(baseVehicleSpec,root.__asfaltoSelectedPlayerVehicle)||baseVehicleSpec;
+    const vehicleSpec=root.__asfaltoBuildSelectedVehicleSpec?.(baseVehicleSpec,root.__asfaltoSelectedPlayerVehicle,options.workshopSetup)||baseVehicleSpec;
     if (!vehicleSpec) {
       throw new Error('perfil fisico v6 incompleto');
     }
@@ -1527,6 +1527,14 @@
       this._browserOptions.chassisConfig = config;
       this._physicsSession?.setChassisConfig?.(config);
       return config ? { ...config } : null;
+    }
+
+    setWorkshopSetup(setup) {
+      if(JSON.stringify(setup)===JSON.stringify(this._browserOptions.workshopSetup))return false;
+      this._invalidatePhysicalObservers('workshop-performance-changed');
+      this._browserOptions.workshopSetup=setup;
+      if(this._physicalStack)this._disposePhysicalStackNow().catch(()=>{});
+      return true;
     }
 
     setVehicleProfile(value) {

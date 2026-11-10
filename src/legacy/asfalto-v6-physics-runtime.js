@@ -706,6 +706,15 @@
       this.core = options.core;
       this.baseSpec = options.spec;
       this.spec = options.spec;
+      const setup=options.spec.suspensionSetup;
+      const axle=(stock,damping)=>({
+        ...stock,
+        staticCompressionM:stock.staticCompressionM+setup.heightM,
+        damperBumpNsPm:stock.damperBumpNsPm*damping,
+        damperReboundNsPm:stock.damperReboundNsPm*damping,
+        antiRollRateNpm:stock.antiRollRateNpm*setup.antiRoll,
+      });
+      this.suspension=setup?{front:axle(SUSPENSION.front,setup.frontDamping),rear:axle(SUSPENSION.rear,setup.rearDamping)}:SUSPENSION;
       this.chassisConfig = null;
       this.absModulation = [1, 1, 1, 1];
       this.setChassisConfig(options.chassisConfig || null);
@@ -809,7 +818,7 @@
       for(let i=0;i<3;i++)out.point[i]=out.origin[i]+s.down[i]*distance;
       if(hit)normalizeInto(fromRapierInto(out.normal,hit.normal),AXIS_UP);
       else for(let i=0;i<3;i++)out.normal[i]=-s.down[i];
-      const setup=index<2?SUSPENSION.front:SUSPENSION.rear;
+      const setup=index<2?this.suspension.front:this.suspension.rear;
       d.compressionM[index]=hit?clamp(setup.staticCompressionM-(distance-this.spec.wheelRadiusM),0,SUSPENSION.maxTravelM):0;
       d.contact[index]=hit&&-dot(out.normal,s.down)>.2?1:0;
       d.compressionVelocityMps[index]=Number.isFinite(this.previousCompression[index])?(d.compressionM[index]-this.previousCompression[index])/FIXED_DT:0;
@@ -824,7 +833,7 @@
       a.centerSteerRad=clamp(finite(controls.steer,0),-max,max);a.wheelbaseM=this.spec.wheelbaseM;a.frontTrackM=this.spec.frontTrackM;
       this.core.computeAckermannInto(s.ackermann,a);
       for(let i=0;i<4;i++)this._wheelContact(i,rotation,s.translation,i===0?s.ackermann.frontLeftRad:i===1?s.ackermann.frontRightRad:0);
-      for(let i=0;i<4;i+=2){const setup=i===0?SUSPENSION.front:SUSPENSION.rear,c=s.couplingInput;
+      for(let i=0;i<4;i+=2){const setup=i===0?this.suspension.front:this.suspension.rear,c=s.couplingInput;
         c.leftCompressionM=d.compressionM[i];c.rightCompressionM=d.compressionM[i+1];
         c.antiRollRateNpm=setup.antiRollRateNpm;c.rigidCouplingRateNpm=setup.rigidCouplingRateNpm;c.rigidAxle=setup.rigidAxle;
         this.core.computeAxleCouplingInto(s.coupling,c);
@@ -835,7 +844,7 @@
 
     _prepareWheelLoads(contacts) {
       const input=this.scratch.suspensionInput,d=this.scratch.contactData;
-      for(let i=0;i<4;i++) {const c=contacts[i],setup=i<2?SUSPENSION.front:SUSPENSION.rear;
+      for(let i=0;i<4;i++) {const c=contacts[i],setup=i<2?this.suspension.front:this.suspension.rear;
         input.contact=(d.contact[i]!==0);input.springRateNpm=setup.springRateNpm;input.damperBumpNsPm=setup.damperBumpNsPm;input.damperReboundNsPm=setup.damperReboundNsPm;
         input.compressionM=d.compressionM[i];input.compressionVelocityMps=d.compressionVelocityMps[i];input.bumpStopStartM=SUSPENSION.bumpStopStartM;input.maxTravelM=SUSPENSION.maxTravelM;
         this.core.computeSuspensionForceInto(c.suspension,input);

@@ -313,6 +313,8 @@ export async function enhanceWorkshop(workshop, { loadHdr, loadDetails } = {}) {
   const presentation = {
     configure,prepareCollection,
     setDoors({gate=0,service=0}={}){architecture.setGateOpen(gate);architecture.setServiceOpen(service);workshop.cameraConstraint?.refresh();invalidateProbe();return architecture.diagnostics();},
+    getDepartureGate:()=>architecture?.diagnostics().gateOpen??0,
+    setDepartureGate:value=>architecture?.setGateOpen(value),
     invalidateContact, getContactShadowDiagnostics:()=>contactShadow?.diagnostics(),
     setCollection(items=[]){collectionItems=items;return collection?.setCollection(items);},
     // Earned memories are borrowed from the album lease. Rebuild before the host
