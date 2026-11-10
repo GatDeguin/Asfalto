@@ -1,4 +1,4 @@
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=0d60824a2ee0ea4d';
 import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 let instanceCount = 0;

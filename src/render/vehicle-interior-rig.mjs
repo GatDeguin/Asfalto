@@ -1,4 +1,4 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {installClassicCabinSurfaces} from './classic-cabin-surfaces.mjs?v=bedb052169ac4ef1';
 import {installClassicCabinTrim} from './classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createSS250InteriorControls} from './ss250-interior-controls.mjs?v=88ce0aa6a33d0690';

@@ -1,8 +1,8 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
-import {createVehiclePresentation} from './vehicle-presentation.mjs?v=ab88f664f1efd6ee';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
+import {createVehiclePresentation} from './vehicle-presentation.mjs?v=a10017b2e2c64441';
 import {createWorkshopInspection} from './workshop-inspection.mjs?v=f49feba020fb38ff';
 import {createWorkshopChassis} from './workshop-chassis.mjs?v=13b36eb3a7d8a770';
-import {createWorkshopEngine} from './workshop-engine.mjs?v=c6e874ceb1322468';
+import {createWorkshopEngine} from './workshop-engine.mjs?v=dc843a5408a70fa5';
 export async function prepareWorkshopVehicle(T,workshop,vehicle) {
  const parent=workshop.car,stage=new T.Group();stage.name=`WorkshopVehicle_${vehicle}`;stage.userData.vehicleSelectionMount=true;stage.visible=false;parent.add(stage);let presentation,committed=false,released=false;
  try{presentation=await createVehiclePresentation(T,{vehicle,lodLevels:[0],modelRoot:stage,loadGlb:globalThis.__asfaltoLoadVehicleModel,paintColor:getVehicleDefinition(vehicle)?.defaultPaint||workshop.paintColor||globalThis.__chevyPaintColor||'#d66a24'});presentation.setEnvironment(workshop.presentation?.getRoomEnvironment()||null);}catch(error){stage.removeFromParent();throw error;}

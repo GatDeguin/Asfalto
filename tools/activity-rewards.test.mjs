@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createChampionshipClassificationLedger } from '../src/game/championship-classification.mjs';
 import { buildActivityReceipt, createActivityRewardStore, getActivityRouteAwards } from '../src/menu/activity-rewards.mjs?v=684503a891f85e8a';
-import { getEarnedDisplayItems } from '../src/menu/v7-earned-collection.mjs?v=83a20891fa8b1ee6';
+import { getEarnedDisplayItems } from '../src/menu/v7-earned-collection.mjs?v=d29fd9886d233552';
 
 const session = { resultId: 'activity-1', sessionSequence: 17, type: 'journey', trackId: 'dos_lagos', vehicleId: 'chevy', class: 'Histórica', startedAt: '2026-11-10T10:00:00.000Z' };
 const observation = { qa: false, sessionSequence: 17 };
@@ -88,7 +88,7 @@ test('solo competitions award a completed objective without inventing a podium',
 });
 
 test('routes without authored trap bounds still register a physical speed pass', () => {
-  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=9dead12ab110f46b', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=b6e078e9acc6d2bd', import.meta.url), 'utf8');
   const method = source.slice(source.indexOf('    _updateSpeedTrap('), source.indexOf('    _recordGhost('));
   const update = new Function(`return ({${method}})._updateSpeedTrap;`)();
   const trap = { active: false, peakMps: 0, attempts: 0, bestKmh: 0 };

@@ -1,9 +1,10 @@
-import { getVehicleDefinition } from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import { getVehicleDefinition } from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import { VEHICLE_VISUAL_CALIBRATION } from './vehicle-physical-calibration.mjs?v=dc9a8e2b14a2b21c';
 import { releaseVehicleModel } from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
-import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=17327ea46d639db9';
+import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=5539b087de767880';
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
 import { createTrafficDriver } from './traffic-driver.mjs?v=6a52e1173920be49';
+import { isHighBeamLens, vehicleLensIntensity } from './vehicle-lighting.mjs?v=5a49d3e7dc4a2630';
 
 function release(model) {
   const materials = new Set();
@@ -132,8 +133,8 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       if (!node.isMesh) return;
       const substitute = material => {
         if (!material) return material;
-        if(material.emissive&&/headlamp|headlight|vidrio_faro/i.test(material.name)){
-          material.emissive.setHex(0xffe5af);material.emissiveIntensity=1.35;frontLenses++;
+        if(material.emissive&&!isHighBeamLens(material)&&/headlamp|headlight|vidrio_faro/i.test(material.name)){
+          material.emissive.setHex(0xffe5af);material.emissiveIntensity=vehicleLensIntensity(material,1.35);frontLenses++;
         }
         if(material.emissive&&/brakelens|tail.?light|optica_trasera/i.test(material.name)){
           material.emissive.setHex(0xf52b12);material.emissiveIntensity=.72;rearLenses++;

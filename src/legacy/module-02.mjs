@@ -8,7 +8,7 @@ import {isRenderPreparationPending,getRenderPreparationDiagnostics} from '../ren
 import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=5e689f9c17d50329';
 import {createVehicleTemplateReference} from '../render/vehicle-template-reference.mjs?v=713b9fc276b6e3ef';
 import {vehicleTemplateReference} from '../runtime/vehicle-template-reference.mjs?v=f8e39a699ce36cce';
-import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=77b2d654849ff0e7';
+import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=4ac03e5fd1c2f96a';
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=a89bf393617af8a7';
 import {createLazyCockpitOriginals,createCockpitEditorActivation} from '../render/lazy-cockpit-originals.mjs?v=17231b23f171e518';
 import {resolveRenderBudget} from '../render/render-budget.mjs?v=cbd3e7911fbec8e0';
@@ -16,8 +16,8 @@ import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?
 import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
-import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2f45e8b283df15f3';
-import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=27935546d06dacda';
+import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=aa450990c2ef45f4';
+import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=c305fb230b0c0a0b';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../game/workshop-performance.mjs?v=bc1ff950c62515a0';
 globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerformance(buildVehiclePhysicsSpec(base,id),setup);
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
@@ -28,7 +28,8 @@ import {prepareSoundscapeBanks} from '../audio/prepare-soundscape-banks.mjs?v=ec
 import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=6238a1d93547777f';
 import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBindings} from '../render/phone-display-reference.mjs?v=d4d0fda34cf3cf8e';
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
-import {attributeStorage,createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
+import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
+import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c4baaeb1f89d1b0c';
@@ -57,7 +58,7 @@ import {bindSharedInstanceWindows} from '../tracks/seam-copy-factory.mjs?v=24bdf
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=6f67b1dbf7ea22a5';
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=ec10ff29633a1e47';
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
-import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=639ddc5e384ba6e0';
+import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=2cb0605f3be95739';
 import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=daeee784ccbcdb5d';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
@@ -76,7 +77,7 @@ import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=8489d14
 import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=24f25fcf48eeb844';
 import { createRaceOpening } from '../game/race-opening.mjs?v=9237574ae1559f13';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=91598c822caef3be';
-import {createLightingEditor} from '../menu/lighting-editor.mjs?v=d15c0c71e5784bcd';
+import {createLightingEditor} from '../menu/lighting-editor.mjs?v=e50675addf5a2773';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=46f93c06d3ef0012';
 import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=995959bd0286867f';
 import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=34bee52b3be4e653';
@@ -86,11 +87,11 @@ import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=5
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=cd3b096c06d47fea';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=759eba2a6de85a5f';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=94842d75edc4b020';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=ab88f664f1efd6ee';
-import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=a10017b2e2c64441';
+import { createPlayerDriver } from '../render/player-driver.mjs?v=b311481c7155df85';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=1c63772f8d903642';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
@@ -108,7 +109,7 @@ import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f98693
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
 import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=0583e108bf35b4e5';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=44d4ba6f65de40c7';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=493df828efb369d8';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -1627,38 +1628,8 @@ function parseGlb(bytes) {
   return { json, bin };
 }
 
-const COMPONENTS = {
-  5120: { Ctor: Int8Array, bytes: 1 },
-  5121: { Ctor: Uint8Array, bytes: 1 },
-  5122: { Ctor: Int16Array, bytes: 2 },
-  5123: { Ctor: Uint16Array, bytes: 2 },
-  5124: { Ctor: Int32Array, bytes: 4 },
-  5125: { Ctor: Uint32Array, bytes: 4 },
-  5126: { Ctor: Float32Array, bytes: 4 }
-};
-const TYPE_SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
-
 function makeAttribute(THREE, json, bin, accessorIndex) {
-  const accessor = json.accessors[accessorIndex];
-  const bufferView = json.bufferViews[accessor.bufferView];
-  const component = COMPONENTS[accessor.componentType];
-  if (!component) throw new Error(`Component type no soportado: ${accessor.componentType}`);
-  const itemSize = TYPE_SIZE[accessor.type];
-  const byteOffset = (bufferView.byteOffset || 0) + (accessor.byteOffset || 0);
-  const strideBytes = bufferView.byteStride || itemSize * component.bytes;
-  const strideElements = strideBytes / component.bytes;
-  const absoluteOffset = bin.byteOffset + byteOffset;
-
-  if (strideElements === itemSize) {
-    const array = new component.Ctor(bin.buffer, absoluteOffset, accessor.count * itemSize);
-    return new THREE.BufferAttribute(attributeStorage(array,runtimeDeviceProfile.phone), itemSize, !!accessor.normalized);
-  }
-
-  const totalElements = Math.floor(bufferView.byteLength / component.bytes);
-  const array = new component.Ctor(bin.buffer, bin.byteOffset + (bufferView.byteOffset || 0), totalElements);
-  const interleaved = new THREE.InterleavedBuffer(attributeStorage(array,runtimeDeviceProfile.phone), strideElements);
-  const attributeOffset = (accessor.byteOffset || 0) / component.bytes;
-  return new THREE.InterleavedBufferAttribute(interleaved, itemSize, attributeOffset, !!accessor.normalized);
+  return makeGlbAttribute(THREE, json, bin, accessorIndex, runtimeDeviceProfile.phone);
 }
 
 function samplerToThree(THREE, value, fallback) {

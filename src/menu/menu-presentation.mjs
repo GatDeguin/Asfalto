@@ -1,9 +1,9 @@
 import { bindIntroBrand } from './intro-brand.mjs?v=5e76abd6e80e002a';
 import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=f36bc97c0e56dd91';
-import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=ce01700d91df7d0a';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=0d60824a2ee0ea4d';
 import { initialMenuState, reduceMenu } from './menu-state.mjs?v=56c7046fc4b119fb';
 import { createIntroSession } from './intro-player.mjs?v=bf81b1e13c8d583d';
-import { mountMenuSections } from './menu-sections.mjs?v=45a0b67f9a441b90';
+import { mountMenuSections } from './menu-sections.mjs?v=7b68da90e8888410';
 import { mountMenuRefinements } from './menu-refinements.mjs?v=00df4d9b7c8f37e5';
 import { mountWorkshopService } from './workshop-service.mjs?v=5703aaf5208743b2';
 import { fitMenuCar } from './menu-refinement-state.mjs?v=063b3cd332035f9f';

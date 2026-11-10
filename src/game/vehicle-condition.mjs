@@ -1,4 +1,4 @@
-import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {createFuelObserver} from './fuel-observer.mjs?v=c8691a04c5e062fe';
 export const VEHICLE_CONDITION_KEYS=Object.freeze(['engine','oil','brakes','tires','body','paint','fuel','steering','suspension','drivetrain','gearbox']);
 export const VEHICLE_IDS=Object.freeze(['chevy',...Object.values(VEHICLE_CATALOG).filter(v=>v.selectable||v.supportsPersistentCondition).map(v=>v.id)]);

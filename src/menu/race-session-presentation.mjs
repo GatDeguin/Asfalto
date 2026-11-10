@@ -1,5 +1,5 @@
 import { mountV7Experience } from './v7-experience.mjs?v=26a1693695363bd7';
-import { createRacePauseMenu } from './race-pause-menu.mjs?v=842b5a04c7f1c87d';
+import { createRacePauseMenu } from './race-pause-menu.mjs?v=bf825346d7cfee3f';
 import { createMenuMusic } from './menu-music.mjs?v=a4f79eee7063acc3';
 
 const body = document.body;

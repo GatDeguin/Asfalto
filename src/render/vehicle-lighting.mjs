@@ -1,6 +1,8 @@
 // Projectors are scene-owned so cockpit hiding the exterior cannot hide the road light.
 const MODES=Object.freeze({off:{candela:0,rangeM:0,angle:.32,aimM:40,dropM:.8,lens:0,tail:0},position:{candela:0,rangeM:0,angle:.32,aimM:40,dropM:.8,lens:.18,tail:.13},low:{candela:6200,rangeM:100,angle:.34,aimM:40,dropM:.82,lens:1.35,tail:.16},high:{candela:14500,rangeM:185,angle:.21,aimM:120,dropM:.45,lens:2.15,tail:.16}});
 export const VEHICLE_LIGHT_MODES=Object.freeze(Object.keys(MODES));
+export const isHighBeamLens=material=>material.name==='SS250_HeadlampHigh';
+export const vehicleLensIntensity=(material,intensity)=>material.name==='BA57_HeadlampPosition'?Math.min(intensity,.24):intensity;
 export const VEHICLE_LIGHT_CALIBRATION_DEFAULTS=Object.freeze({enabled:true,intensityScale:1,color:null,distanceScale:1,angleDeg:null,penumbra:null,decay:2,castShadow:null,aimHorizontalDeg:0,aimVerticalDeg:0});
 const CALIBRATION_LIMITS={intensityScale:[0,5],distanceScale:[.1,3],angleDeg:[1,80],penumbra:[0,1],decay:[0,4],aimHorizontalDeg:[-30,30],aimVerticalDeg:[-20,20]};
 function calibrated(value,previous){
@@ -26,7 +28,7 @@ function texture(T,kind){
  const map=new T.DataTexture(data,n,n,T.RGBAFormat);map.minFilter=map.magFilter=T.LinearFilter;map.needsUpdate=true;return map;
 }
 export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=[],lampAnchor=[-.9452,.006,.267]}={}){
- let mode='off',beamMode='low',nightAmount=0,disposed=false,active=true,brake=0,lastQuality='balanced',calibration={...VEHICLE_LIGHT_CALIBRATION_DEFAULTS};const headlampColors=new Map(headlamps.map(m=>[m,m.emissive?.clone()]));const filament={candela:0,lens:0,tail:0};const beams=[],halos=[],maps=[];
+ let mode='off',beamMode='low',nightAmount=0,disposed=false,active=true,brake=0,lastQuality='balanced',calibration={...VEHICLE_LIGHT_CALIBRATION_DEFAULTS};const headlampColors=new Map(headlamps.map(m=>[m,m.emissive?.clone()]));const highOnly=new Set(headlamps.filter(isHighBeamLens));const filament={candela:0,lens:0,tail:0,highLens:0};const beams=[],halos=[],maps=[];
  const origin=new T.Vector3(),forward=new T.Vector3(),up=new T.Vector3(),toCamera=new T.Vector3(),target=new T.Vector3(),aimForward=new T.Vector3(),aimRight=new T.Vector3();
  let rig=null;
  if(scene?.add){
@@ -39,7 +41,7 @@ export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=
  }
  function apply(){
   const gain=active?1:0,beamGain=gain*(calibration.enabled?calibration.intensityScale:0);
-  const c=MODES[beamMode];for(const m of headlamps){m.emissiveIntensity=beamGain*filament.lens*(1+nightAmount*.45);if(m.emissive){if(calibration.color)m.emissive.set(calibration.color);else if(headlampColors.get(m))m.emissive.copy(headlampColors.get(m));}}
+  const c=MODES[beamMode];for(const m of headlamps){m.emissiveIntensity=beamGain*vehicleLensIntensity(m,highOnly.has(m)?filament.highLens:filament.lens)*(1+nightAmount*.45);if(m.emissive){if(calibration.color)m.emissive.set(calibration.color);else if(headlampColors.get(m))m.emissive.copy(headlampColors.get(m));}}
   for(const m of brakes)m.emissiveIntensity=gain*(filament.tail*(1+nightAmount*.3)+brake*(1.15+nightAmount*.30));
   // Keep shader light/shadow counts stable across beam modes; dark beams retain their maps without rendering them.
   for(const [i,light]of beams.entries()){light.visible=active&&calibration.enabled;light.intensity=beamGain*filament.candela;light.color.set(calibration.color||0xffedcc);light.distance=c.rangeM*calibration.distanceScale;light.angle=calibration.angleDeg===null?c.angle:calibration.angleDeg*Math.PI/180;light.penumbra=calibration.penumbra??(beamMode==='high'?.65:.38);light.decay=calibration.decay;light.map=beamMode==='high'?light.userData.highMap:light.userData.lowMap;light.castShadow=light.visible&&lastQuality!=='eco'&&(calibration.castShadow??i===0);const shadowActive=light.castShadow&&light.intensity>0;if(shadowActive&&!light.shadow.autoUpdate)light.shadow.needsUpdate=true;if(!shadowActive)light.shadow.needsUpdate=false;light.shadow.autoUpdate=shadowActive;light.shadow.camera.far=Math.max(1,light.distance);halos[i].visible=beamGain>0&&filament.lens>.002;}
@@ -55,7 +57,7 @@ export function createVehicleLighting(T,{vehicle,root,scene,headlamps=[],brakes=
    if(disposed)return false;
    active=sample.active!==false;if(typeof sample.quality==='string')lastQuality=sample.quality;
    nightAmount=Number.isFinite(sample.nightAmount)?clamp(sample.nightAmount):/night|noche/i.test(sample.phase||'')?1:/dusk|dawn|amanecer|atardecer/i.test(sample.phase||'')?.55:0;
-   brake=clamp(sample.brake);const dt=clamp(Number.isFinite(sample.dt)?sample.dt:1/60,0,.1);for(const key of Object.keys(filament)){const goal=MODES[mode][key],tau=goal>filament[key]?.08:.12;filament[key]+=(goal-filament[key])*(1-Math.exp(-dt/tau));if(Math.abs(filament[key]-goal)<.0001)filament[key]=goal;}apply();if(!rig)return true;
+   brake=clamp(sample.brake);const dt=clamp(Number.isFinite(sample.dt)?sample.dt:1/60,0,.1);for(const key of Object.keys(filament)){const goal=key==='highLens'?(mode==='high'?MODES.high.lens:0):MODES[mode][key],tau=goal>filament[key]?.08:.12;filament[key]+=(goal-filament[key])*(1-Math.exp(-dt/tau));if(Math.abs(filament[key]-goal)<.0001)filament[key]=goal;}apply();if(!rig)return true;
    root.updateWorldMatrix(true,false);forward.set(-1,0,0).transformDirection(root.matrixWorld);up.set(0,1,0).transformDirection(root.matrixWorld);const c=MODES[beamMode];
    for(const [i,light]of beams.entries()){
     origin.set(lampAnchor[0],lampAnchor[1],light.userData.side*lampAnchor[2]).applyMatrix4(root.matrixWorld);light.position.copy(origin);aimForward.copy(forward).applyAxisAngle(up,-calibration.aimHorizontalDeg*Math.PI/180);aimRight.crossVectors(aimForward,up).normalize();target.copy(aimForward).multiplyScalar(c.aimM).addScaledVector(up,-c.dropM).applyAxisAngle(aimRight,calibration.aimVerticalDeg*Math.PI/180).add(origin);light.target.position.copy(target);light.shadow.camera.up.copy(up);

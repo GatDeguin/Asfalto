@@ -1,13 +1,13 @@
 import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
-import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=17327ea46d639db9';
-import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=a1b97d36e9d0f9ab';
-import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
+import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=5539b087de767880';
+import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=5834aed01a3c9f7f';
+import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=c2ea69acda3ee7c3';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
-import {getVehicleDefinition} from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
-import {createVehicleLighting} from './vehicle-lighting.mjs?v=cbf59234f390cc3e';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
+import {createVehicleLighting,isHighBeamLens,vehicleLensIntensity} from './vehicle-lighting.mjs?v=5a49d3e7dc4a2630';
 import {createVehiclePhysicalCalibration} from './vehicle-physical-calibration.mjs?v=dc9a8e2b14a2b21c';
 // Surface/animation presentation only. The physical chassis, collision hull,
 // original wheel rig and independently saved cockpit remain caller-owned.
@@ -254,7 +254,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       const wheels=tiers.flatMap(tier=>Object.entries(tier.wheels).map(([id,pivot])=>({
         pivot,spin:pivot.rotation.z,steer:pivot.rotation.y,order:pivot.rotation.order,front:id.startsWith('front'),
       })));
-      const headlights=headlamps.map(material=>[material,material.emissiveIntensity]);
+      const headlights=headlamps.filter(material=>!isHighBeamLens(material)).map(material=>[material,material.emissiveIntensity]);
       const rearLights=brakes.map(material=>[material,material.emissiveIntensity]);
       let restored=false;
       return {
@@ -264,7 +264,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
             if(front)pivot.rotation.set(pivot.rotation.x,steer-steeringRad,spin+wheelRotationRad,'YXZ');
             else pivot.rotation.z=spin+wheelRotationRad;
           }
-          for(const [material,intensity] of headlights)material.emissiveIntensity=intensity+headlamps*1.65;
+          for(const [material,intensity] of headlights)material.emissiveIntensity=intensity+vehicleLensIntensity(material,headlamps*1.65);
           for(const [material,intensity] of rearLights)material.emissiveIntensity=intensity+headlamps*(.12+.84*brake);
         },
         restore(){

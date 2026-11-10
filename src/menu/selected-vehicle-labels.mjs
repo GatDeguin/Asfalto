@@ -1,4 +1,4 @@
-import { VEHICLE_CATALOG } from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import { VEHICLE_CATALOG } from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 
 const FALLBACK = 'Vehículo seleccionado';
 function definition(id, catalog) {

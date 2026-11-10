@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {createVehicleLighting} from '../src/render/vehicle-lighting.mjs?v=cbf59234f390cc3e';
+import {createVehicleLighting} from '../src/render/vehicle-lighting.mjs?v=5a49d3e7dc4a2630';
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
 function setup(){const root=new T.Group(),scene=new T.Scene();scene.add(root);return{scene,api:createVehicleLighting(T,{vehicle:'chevy',root,scene})}}
@@ -13,3 +13,34 @@ test('dark headlights retain shadow map but skip shadow rendering and resume on 
 test('inactive calibration eco and dispose keep their intended shadow and lifecycle controls',()=>{const{api,scene}=setup();api.setMode('low');settle(api);api.setActive(false);assert.ok(api.getLights().every(l=>!l.visible&&!l.castShadow&&!l.shadow.autoUpdate&&l.intensity===0));assert.equal(api.diagnostics().visibleBeams,0);api.setActive(true);assert.equal(api.getLights()[0].shadow.autoUpdate,true);api.update({quality:'eco'});assert.ok(api.getLights().every(l=>!l.castShadow&&!l.shadow.autoUpdate));api.setCalibration({castShadow:true});api.update({quality:'balanced'});assert.ok(api.getLights().every(l=>l.castShadow));api.setCalibration({enabled:false});assert.equal(api.diagnostics().visibleBeams,0);assert.ok(api.getLights().every(l=>!l.shadow.autoUpdate));api.dispose();assert.equal(scene.children.length,1);assert.equal(api.update(),false);assert.equal(api.dispose(),false)});
 
 test("disposing a lit rig removes lights and reports no visible beams",()=>{const{api}=setup();api.setMode("low");settle(api);api.dispose();assert.equal(api.diagnostics().visibleBeams,0);assert.ok(api.getLights().every(l=>!l.visible&&!l.shadow.autoUpdate));});
+
+test('the 400 lights the outer sealed beams in low and adds the inner pair in high',()=>{
+ const root=new T.Group(),scene=new T.Scene();scene.add(root);
+ const outer=new T.MeshStandardMaterial({name:'SS250_HeadlampOuter'}),inner=new T.MeshStandardMaterial({name:'SS250_HeadlampHigh'});
+ const api=createVehicleLighting(T,{vehicle:'chevy_400_1957',root,scene,headlamps:[outer,inner]});
+ try{
+  api.setMode('low');settle(api);
+  assert.ok(outer.emissiveIntensity>0);assert.equal(inner.emissiveIntensity,0);
+  api.setMode('high');settle(api);
+  assert.equal(inner.emissiveIntensity,outer.emissiveIntensity);
+  assert.equal(api.diagnostics().visibleBeams,2);
+  api.setMode('low');api.update({dt:.016});
+  assert.ok(inner.emissiveIntensity>0,'the inner filaments fade out');
+  settle(api);assert.equal(inner.emissiveIntensity,0);assert.ok(outer.emissiveIntensity>0);
+  api.setMode('off');settle(api);assert.equal(outer.emissiveIntensity,0);
+ }finally{api.dispose();outer.dispose();inner.dispose();}
+});
+
+test('the Bel Air position lenses keep their low intensity alongside the road beams',()=>{
+ const root=new T.Group(),scene=new T.Scene();scene.add(root);
+ const main=new T.MeshStandardMaterial({name:'BA57_HeadlampGlass'}),marker=new T.MeshStandardMaterial({name:'BA57_HeadlampPosition'});
+ const api=createVehicleLighting(T,{vehicle:'belair_1957',root,scene,headlamps:[main,marker]});
+ try{
+  api.setMode('position');settle(api);
+  assert.ok(marker.emissiveIntensity>0);
+  assert.equal(api.diagnostics().visibleBeams,0);
+  api.setMode('high');settle(api);
+  assert.ok(main.emissiveIntensity>marker.emissiveIntensity*5);
+  api.setMode('off');settle(api);assert.equal(marker.emissiveIntensity,0);
+ }finally{api.dispose();main.dispose();marker.dispose();}
+});

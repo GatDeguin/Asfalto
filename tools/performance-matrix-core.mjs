@@ -1,4 +1,4 @@
-import {VEHICLE_CATALOG} from '../src/render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {VEHICLE_CATALOG} from '../src/render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 export const TRACK_IDS=['dos_lagos','aconcagua_horcones','cuesta_lipan','paso_garibaldi','cataratas_iguazu'];
 export const ENVIRONMENTS=[{skyId:'clear',weather:'clear'},{skyId:'night',weather:'clear'},{skyId:'overcast',weather:'rain'},{skyId:'night',weather:'rain'},{skyId:'clear',weather:'clear'}];
 export function matrixCases({durationSeconds=60}={}){

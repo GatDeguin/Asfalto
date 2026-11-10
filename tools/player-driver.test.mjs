@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
-import {VEHICLE_CATALOG} from '../src/render/vehicle-catalog.mjs';
-import {createPlayerDriver,playerDriverSeat} from '../src/render/player-driver.mjs?v=a3c74be7a204ea16';
+import {VEHICLE_CATALOG} from '../src/render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
+import {createPlayerDriver,playerDriverSeat} from '../src/render/player-driver.mjs?v=b311481c7155df85';
 import {createVehicleCameraRig} from '../src/game/vehicle-camera-rig.mjs?v=93a85b29944b9925';
 
 test('each selectable exterior seats its driver below the roof and articulates both hands',()=>{

@@ -133,7 +133,7 @@ export function vehicleConditionSurface(materialName='',objectName=''){
  if(/headlamp|faro|BrakeLens|LampLens|Optica|Window_seals|Burletes/i.test(materialName))return 'mounted';
  if(/glass|vidrio/i.test(materialName))return 'glass';
  if(/Paint|StripeAtlas|Black_lacquer|SatinStripe|Franjas_Negro|ReferenceIvoryEnamel|RoofIvory/i.test(materialName))return 'paint';
- if(/Underbody|Underframe|Chassis|Chasis|Bastidor|Inner_fender|Panel_gap|Grille|Bumper|Paragolpe/i.test(materialName+' '+objectName))return 'structure';
+ if(/Underbody|Underframe|Chassis|Chasis|Bastidor|Inner_fender|Panel_gap|Grille|Bumper|Paragolpe|BodyTrim/i.test(materialName+' '+objectName))return 'structure';
  if(/_static_(?:Vehicle|BA57|C3100)_Chrome|^0[12]_(?:Carroceria|Opticas).*_Cromo/i.test(objectName))return 'structure';
  return null;
 }

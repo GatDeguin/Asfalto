@@ -1,5 +1,5 @@
 import {PROFILE_KEY,withProfileWriteLock,profileRevision,readPersistentProfile} from '../runtime/profile-persistence.mjs?v=34c8f093c015eb86';
-import {validateRoadTestReceipt,freezeRoadTestData,roadTestResultSheet} from './v7-roadtest-receipts.mjs?v=b2a818b5bf186307';
+import {validateRoadTestReceipt,freezeRoadTestData,roadTestResultSheet} from './v7-roadtest-receipts.mjs?v=dcb56ddf32510097';
 import {applyWorkshopProgress,ROAD_TEST_TOKENS} from './activity-rewards.mjs?v=684503a891f85e8a';
 export {roadTestResultSheet};
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);

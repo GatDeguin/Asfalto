@@ -1,4 +1,4 @@
-import {getVehicleDefinition} from './vehicle-catalog.mjs';
+import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {VEHICLE_VISUAL_CALIBRATION} from './vehicle-physical-calibration.mjs';
 import {createTrafficDriver} from './traffic-driver.mjs?v=6a52e1173920be49';
 

@@ -1,4 +1,4 @@
-import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {AWARDS} from './v7-championship-catalog.mjs?v=250778123f1c9e7f';
 import {FUEL_MODEL_ID} from '../game/fuel-observer.mjs?v=c8691a04c5e062fe';
 // Selectable presentation identity only; the catalog does not establish historical physics calibration.

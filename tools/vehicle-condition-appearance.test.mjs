@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=ab88f664f1efd6ee';
-import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
-import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
-import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
+import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=c2ea69acda3ee7c3';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=a10017b2e2c64441';
+import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=56be296de9a809d6';
+import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=90a703f379ef0e55';
+import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=ff12bfc087dcb530';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=2cb0605f3be95739';
 

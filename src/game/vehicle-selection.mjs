@@ -1,4 +1,4 @@
-import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import {VEHICLE_CATALOG} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 // Load every affected view before committing a selection. Superseded requests
 // release staged GPU objects and cannot overwrite the user's latest choice.
 export function createVehicleSelection({initial='chevy',ids=Object.values(VEHICLE_CATALOG).filter(v=>v.selectable).map(v=>v.id),defaultVehicle='chevrolet_1969',prepare,storage=globalThis.__asfaltoV7Storage,onState=()=>{}}={}) {

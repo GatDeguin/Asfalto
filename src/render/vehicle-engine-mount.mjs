@@ -1,4 +1,4 @@
-import { getVehicleDefinition } from './vehicle-catalog.mjs?v=1fb2dbf31facc389';
+import { getVehicleDefinition } from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 
 // Coordinates are in the exterior presentation root; the supplied engine is in
 // metres. Its cylinder block center is the mounting datum, not its asymmetric box.

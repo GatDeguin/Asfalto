@@ -1,4 +1,4 @@
-import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=61c610d9fab7d4bf';
+import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=4ac03e5fd1c2f96a';
 /** Workshop choices can commit before the race runtime exists. Apply the latest choice before driving. */
 export function createDeferredRaceVehicle({getCockpit=()=>globalThis.__cockpit}={}){let selected=initialVehicle(),applied=null;
  async function prepare(id){const cockpit=getCockpit();if(!cockpit?.ready)return{commit(){selected=id;},dispose(){}};const stage=await cockpit.preparePlayerVehicle(id);return{commit(){stage.commit();selected=applied=id;},dispose(){stage.dispose();}};}
