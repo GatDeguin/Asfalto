@@ -230,7 +230,7 @@ function mount() {
       introFetch = fetch(url).then(response => { if (!response.ok) throw new Error('Intro no disponible'); return response.json(); })
         .then(manifest => {
           if (!manifest.src || !['animatic','final'].includes(manifest.kind)) throw new Error('Manifiesto de intro inválido');
-          introManifest = { ...manifest, src: new URL(manifest.src, url).href, poster: manifest.poster ? new URL(manifest.poster, url).href : '' };
+          introManifest = { ...manifest, src: new URL(manifest.src, url).href };
           replay.firstChild.textContent = manifest.finalVideoAvailable ? 'Ver intro ' : 'Ver animática ';
           return introManifest;
         }).finally(() => { introFetch = null; });
@@ -257,7 +257,6 @@ function mount() {
       const manifest = await getIntroManifest();
       if (request !== introRequest) return;
       clearTimeout(loadTimer);
-      video.poster = manifest.poster;
       video.volume = .7;
       intro.querySelector('.an-intro-kind').textContent = manifest.finalVideoAvailable ? '' : 'Asfalto Nacional · Animática';
       intro.querySelector('.an-intro-kind').hidden = !!manifest.finalVideoAvailable;
@@ -274,11 +273,14 @@ function mount() {
   }
   function onIntroPlaying() {
     if (intro.hidden) return;
+    video.classList.add('an-intro-video-ready');
     notice.hidden = true; resume.hidden = !video.muted;
     if (video.muted) resume.textContent = 'Activar sonido';
     else if (document.activeElement === resume) skip.focus({ preventScroll: true });
   }
   video.addEventListener('playing', onIntroPlaying);
+  video.addEventListener('loadeddata', () => video.classList.add('an-intro-video-ready'));
+  video.addEventListener('emptied', () => video.classList.remove('an-intro-video-ready'));
   video.addEventListener('waiting', () => {
     if (intro.hidden) return;
     notice.textContent = 'Cargando el siguiente tramo…'; notice.hidden = false;

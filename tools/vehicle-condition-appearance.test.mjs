@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=d3030bcc742688dc';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=5edc5e39f9584ccc';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';

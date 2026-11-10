@@ -2061,13 +2061,13 @@
     },
     {
       "path": "assets/styles/loading-presentation.css",
-      "bytes": 9149,
-      "sha256": "68262FD89062C2D92E07DEAF0CE057DB15DF03A9C431BD71D733373C909AE285"
+      "bytes": 9974,
+      "sha256": "4C6D63AE9A05EDD8F6470CC4930596639981820BD3C18D9FEB989257EC2BC7CE"
     },
     {
       "path": "assets/styles/menu-presentation.css",
-      "bytes": 50063,
-      "sha256": "6A3B7FDCB554E77085ABF7260D7970AE97D852BF29E8C6A8F82A0375D310C13E"
+      "bytes": 50111,
+      "sha256": "C30E791A4B20721B525A673F0A62A40DC3632364A19FFF44C280C54BCD90BB4B"
     },
     {
       "path": "assets/styles/menu-refinements.css",
@@ -2746,8 +2746,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 82304,
-      "sha256": "DA13918073DEA6AC9629CED13CB2561A8B1B986F1F9AD3B6DA596E8F52AFDE39"
+      "bytes": 82123,
+      "sha256": "E6D7E325B5C414C47B474A1036D3E6965B34B5914EAF11224DD4B32B29404E08"
     },
     {
       "path": "release-version.json",
@@ -3147,12 +3147,12 @@
     {
       "path": "src/legacy/module-02.mjs",
       "bytes": 587715,
-      "sha256": "51952D663DB370089425980AF42F31F9AC35957176B9623BDDA5D3002956BA6D"
+      "sha256": "2389ABC1FC16A736A9BD03D3E73DF529F0B9584342938F09946B156BA624EB74"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
       "bytes": 140951,
-      "sha256": "41B47FFC888F58EA3BA181D52CC6B7F39012F8AE2C8B652244E9DEED6FD48848"
+      "sha256": "AEF58D14976D524791AF95F36FF1D6E053888FFF2AE29C961FE51CA7DFA9524B"
     },
     {
       "path": "src/menu/activity-rewards.mjs",
@@ -3186,8 +3186,8 @@
     },
     {
       "path": "src/menu/loading-presentation.js",
-      "bytes": 15986,
-      "sha256": "1888C1E9F6BE52A49059C517E3F6FC428B51065E18D0BB698D4B69CEEB145AF0"
+      "bytes": 14901,
+      "sha256": "9FCEE554CEFACCE748183EEBD59235F544A45CA41157D7E0D25AE28B068647C4"
     },
     {
       "path": "src/menu/menu-music.mjs",
@@ -3196,8 +3196,8 @@
     },
     {
       "path": "src/menu/menu-presentation.mjs",
-      "bytes": 21997,
-      "sha256": "BCDD7D70995169DA41C9325035FD7FB42B6E907D8E35EB94927B0B8B25F80358"
+      "bytes": 22125,
+      "sha256": "9FB8C57B1FE9A3F48560A503AC34B95547F0F1BB97A59257F163C91350B7293E"
     },
     {
       "path": "src/menu/menu-refinement-state.mjs",
@@ -3856,8 +3856,8 @@
     },
     {
       "path": "src/render/vehicle-presentation.mjs",
-      "bytes": 31269,
-      "sha256": "D3030BCC742688DC839027B3B8DC944A119891CCB515A93E124BC9DBF1C727C3"
+      "bytes": 31608,
+      "sha256": "5EDC5E39F9584CCCE87B06954F9FFB4BF464459338B0F963B0B4FF022C38DD21"
     },
     {
       "path": "src/render/vehicle-resource-pool.mjs",
@@ -3981,8 +3981,8 @@
     },
     {
       "path": "src/render/workshop-architecture-e31.mjs",
-      "bytes": 24256,
-      "sha256": "0031B73623852CFDA9E576A9079E8491B474EB5EBDBCE822CD1AA837EFE1B932"
+      "bytes": 24910,
+      "sha256": "E487A58AA1BF61EDC4A8EF77E46A83397F63EAC6FE46893000650270AA2A1B7E"
     },
     {
       "path": "src/render/workshop-camera-constraint.mjs",
@@ -4006,8 +4006,8 @@
     },
     {
       "path": "src/render/workshop-departure.mjs",
-      "bytes": 9129,
-      "sha256": "E5836232FE5A8A2D4E3D308ABA8A9AF868C651E0100F72FA98B5FD740FF9D7B6"
+      "bytes": 10437,
+      "sha256": "D21CD95E25016D6E7B3D4B20973474D261CDB57897DD442F066506E7BEC5810A"
     },
     {
       "path": "src/render/workshop-detail-pass.mjs",
@@ -4032,7 +4032,7 @@
     {
       "path": "src/render/workshop-presentation.mjs",
       "bytes": 24524,
-      "sha256": "82DE8F4CF4AC5135674990107D66BB24B117784E9398E23C05EF4DDF8D10F5FE"
+      "sha256": "72160AEF424A3A1753DB51F6D9B95A4ECBA8434901CA19E0D5554F8AE1959A89"
     },
     {
       "path": "src/render/workshop-probe-guard.mjs",
@@ -4052,7 +4052,7 @@
     {
       "path": "src/render/workshop-vehicle-selection.mjs",
       "bytes": 2613,
-      "sha256": "CAB87F831935115E32BA6F3D41E4C1F55ED94C8ABB987D554A0A1F8FB2096940"
+      "sha256": "4FADFF781291996AFDDA60AF0EE58C1C346D556741860F750C8D67ADBC0F4C3A"
     },
     {
       "path": "src/render/workshop-vertex-colors.mjs",
@@ -4527,7 +4527,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "2A60E8C0CA0C04064D725340004C19192E46A15F05BCFEE2535B7F6513CF27E1"
+      "sha256": "2A23FD0961FDF9BE33588462CE3954A3611382588D26498A47A8A276F86FFD42"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4547,17 +4547,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "705F8A572DFFDCA76D32B08ACEA60A78D2CEA7E2AEB8C2D80DEE938779B19669"
+      "sha256": "E58C6C0194440390B86D1DB166AFABEB997B38945EBAD3F4F99BEF0446E5D80D"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "0B4603B5C4B47D0F116F1F66C960CECD0D6E41E4509087E1D17ECBC90039C454"
+      "sha256": "F37E89253D5394A4AFFD43790F8EC021CD3DF218B42575CB4EFB16B38E831FC6"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "A8598E47A372178349859E62828A2E940AFC9E6124661C609A54CC60396F176F"
+      "sha256": "1766E9222CC5FFAE929982C449A5D7B2F61B955FF9091096E0F7CAA5D574E135"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4777,12 +4777,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "5C5CBB8042BAF4C7A36896300C98B98D27B6405A0B8C4F3232968278D6E1743A"
+      "sha256": "CD1494F3025B03CDAD45AF8C70B6417910381ED63E7256C347F832D3F9E11D48"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "0BED5088E0AFAE77F56BC6FE3725EEA12101C9A9C1CED46E82B3B450F792C0CC"
+      "sha256": "57733DB63DDB7CF2CB37D7F3D77C381542D0796F10B5CCA267D983855504BA51"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -4837,7 +4837,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "D34AD9F34FD43709638EB2E5CBB9103FE9183CEB7801AEACEC5A566326DCD86B"
+      "sha256": "3AA545AD98EC6213C1216E82A11A8F00C917BF53E2A066C7E98174374B77F451"
     },
     {
       "path": "tools/player-driver.test.mjs",
@@ -4922,7 +4922,7 @@
     {
       "path": "tools/session-result-consistency.test.mjs",
       "bytes": 5330,
-      "sha256": "0494051BCB2E01E3EC60C4915899275711447E323E3F35EF8683A30A5C948234"
+      "sha256": "C38807E523844CAAACFD7F698F70BDB5AE41E1DCE8CFCB7EC74C8DD3C8673210"
     },
     {
       "path": "tools/spatial-antialias.gpu.mjs",
@@ -4987,7 +4987,7 @@
     {
       "path": "tools/v7-earned-collection.test.mjs",
       "bytes": 4665,
-      "sha256": "7D8F3D9B265D6AC788CE8127992311655CE32231E12EBD7EBEF4033B67A55F11"
+      "sha256": "735D4AFD9DE1D7D7C7EDCE7EAC82B88F9416729A10AE56063A24C0AAD86BA796"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -5052,7 +5052,7 @@
     {
       "path": "tools/vehicle-condition-appearance.test.mjs",
       "bytes": 7132,
-      "sha256": "1C93131B001EC93A2375C8B679B7F7D22BEDD2141F9F66A23370FC8A469D5B46"
+      "sha256": "02F2C2F837853D4B34B6C7DB300D3EC7136AAD94E2076A8E9B11E1841A49074F"
     },
     {
       "path": "tools/vehicle-contact-occlusion.test.mjs",
@@ -5067,7 +5067,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "69B53AFE7ADED76DC13618DACC26746A2938B2952D747601554B68C6B2632514"
+      "sha256": "9A916A2724AF8602C06641FCF1371E72D04EAD8F3549DE2FF3568688F30495C8"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5077,7 +5077,7 @@
     {
       "path": "tools/vehicle-surface-program-cache.test.mjs",
       "bytes": 2852,
-      "sha256": "D33D9AB68D37A820A4A9F33B8FB4E15D782DF3F8C5FB756CCEFB1ADCC6891D7C"
+      "sha256": "A1E7024B39E064809D8183D384290B9F690D23CCAFBA9107271CAD4D4AD3B5E7"
     },
     {
       "path": "tools/vehicle-template-reference.test.mjs",
@@ -5102,12 +5102,12 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "AC2C9D14F74DE681D5D8E505807CCE0D8BCE84E0AE5EF1F17CE20F4589C3BBC8"
+      "sha256": "9D18D9531AAA50207A988479712A7B76F6E89B92B888745E7DD7DDCACC8C34EB"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
-      "bytes": 12319,
-      "sha256": "CA65DFB6B0DA657C25A3481C2A186B69D22CEF0D6DAF423406CF28F8C484DB45"
+      "bytes": 12944,
+      "sha256": "EB157A495305CF7AA0DD4F41CCBA7CFEB421FE57CC4E9CAD645A91D8939601B3"
     },
     {
       "path": "tools/workshop-performance.test.mjs",
@@ -5416,6 +5416,6 @@
     }
   ],
   "fileCount": 1068,
-  "totalBytes": 998964925,
-  "inventorySha256": "36AA5A770FC89F5BFF6D96C46B33BEAE6171FCE6DEF0B86AE0457AB928EB09AF"
+  "totalBytes": 998967586,
+  "inventorySha256": "EF4503686005D124327A8D63518A6582AD8B8C8D9268EF72C6277231B3E5A3A9"
 }

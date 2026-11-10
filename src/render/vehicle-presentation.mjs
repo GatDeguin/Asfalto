@@ -251,20 +251,27 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     setActive(value){return lighting.setActive(value);},
     beginDepartureCue(){
       if(disposed)return null;
-      const wheels=tiers.flatMap(tier=>Object.values(tier.wheels).map(pivot=>[pivot,pivot.rotation.z]));
+      const wheels=tiers.flatMap(tier=>Object.entries(tier.wheels).map(([id,pivot])=>({
+        pivot,spin:pivot.rotation.z,steer:pivot.rotation.y,order:pivot.rotation.order,front:id.startsWith('front'),
+      })));
       const headlights=headlamps.map(material=>[material,material.emissiveIntensity]);
       const rearLights=brakes.map(material=>[material,material.emissiveIntensity]);
       let restored=false;
       return {
-        setFrame({wheelRotationRad,headlamps,brake}){
+        setFrame({wheelRotationRad,steeringRad=0,headlamps,brake}){
           if(restored||disposed)return;
-          for(const [pivot,angle] of wheels)pivot.rotation.z=angle+wheelRotationRad;
+          for(const {pivot,spin,steer,front} of wheels){
+            if(front)pivot.rotation.set(pivot.rotation.x,steer-steeringRad,spin+wheelRotationRad,'YXZ');
+            else pivot.rotation.z=spin+wheelRotationRad;
+          }
           for(const [material,intensity] of headlights)material.emissiveIntensity=intensity+headlamps*1.65;
           for(const [material,intensity] of rearLights)material.emissiveIntensity=intensity+headlamps*(.12+.84*brake);
         },
         restore(){
           if(restored)return;restored=true;
-          for(const [pivot,angle] of wheels)pivot.rotation.z=angle;
+          for(const {pivot,spin,steer,order} of wheels){
+            pivot.rotation.set(pivot.rotation.x,steer,spin,order);
+          }
           for(const [material,intensity] of [...headlights,...rearLights])material.emissiveIntensity=intensity;
         },
       };

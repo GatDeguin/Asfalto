@@ -1,9 +1,25 @@
 :root{--an-load-ink:#090d0d;--an-load-paper:#f6eddc;--an-load-muted:#c1b9a7;--an-load-orange:#f1783d;--an-cinema-margin:clamp(24px,5.2vw,100px)}
-#loading.an-cinema-loading,#an-session-loading,#v6-main-menu.an-cinematic-menu #v6-workshop-loading.an-cinema-loading{
+#an-session-loading,#v6-main-menu.an-cinematic-menu #v6-workshop-loading.an-cinema-loading{
  position:fixed;inset:0;width:100%;height:100%;max-width:none;margin:0;padding:0;border:0;border-radius:0;
  display:block;overflow:hidden;background:var(--an-load-ink);color:var(--an-load-paper);text-align:left;outline:0;isolation:isolate;
 }
-#loading.an-cinema-loading{z-index:18000}
+#loading.an-boot-cover,#an-intro{
+ background:#090b0e url('../loading/workshop.jpg') center / contain no-repeat;
+}
+#loading.an-boot-cover{
+ position:fixed;inset:0;z-index:18000;display:block;color:var(--an-load-paper);
+}
+.an-boot-wordmark{
+ position:absolute;top:max(20px,calc(env(safe-area-inset-top) + 12px));left:var(--an-cinema-margin);
+ display:grid;gap:4px;text-transform:uppercase;text-shadow:0 2px 12px #000;
+}
+.an-boot-wordmark strong{font:clamp(28px,4vw,58px)/1 var(--an-title,Impact,sans-serif)}
+.an-boot-wordmark span{color:#ffd0a2;font:700 11px/1.4 system-ui,sans-serif;letter-spacing:.18em}
+.an-boot-cover #loading-text{
+ position:absolute;bottom:max(24px,calc(env(safe-area-inset-bottom) + 12px));left:var(--an-cinema-margin);
+ margin:0;padding:6px 10px;border-left:2px solid var(--an-load-orange);
+ background:#090b0ee8;font:600 13px/1.5 system-ui,sans-serif;
+}
 #an-session-loading{z-index:19000}
 #v6-main-menu.an-cinematic-menu #v6-workshop-loading.an-cinema-loading{z-index:100}
 #an-session-loading[hidden],#loading.hidden,#v6-workshop-loading.v6-hidden{display:none!important}

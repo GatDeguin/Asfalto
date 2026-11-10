@@ -1,7 +1,9 @@
 import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=3a496d07b10b1b49';
 
 const LIGHTS=1.24, GATE=2.17, GATE_OPEN=3.91, ROLL=3.80, EXIT=3.98;
-const THRESHOLD_Z=6.50, END_Z=9.45, ROLL_END=6.44, FADE=6.42, END=6.70;
+const THRESHOLD_Z=6.50, TURN_Z=9.55, TURN_RADIUS=4.80, STREET_RUN=2.8;
+const TURN_LENGTH=TURN_RADIUS*Math.PI/2;
+const ROLL_END=8.55, FADE=8.58, END=8.88;
 const phases=[
   [0,'ignition','Arrancando el motor…'],
   [LIGHTS,'lights','Apagando las luces del taller…'],
@@ -15,7 +17,7 @@ function smooth(value){
   return t*t*(3-2*t);
 }
 
-function frameCamera(camera,car,elapsed,travel,shot){
+function frameCamera(camera,car,elapsed,straightProgress,streetProgress,shot){
   if(shot===0){
     // A low front quarter shows the grille and the filaments coming up.
     const push=smooth(elapsed/LIGHTS);
@@ -34,11 +36,15 @@ function frameCamera(camera,car,elapsed,travel,shot){
     camera.position.set(lerp(4.10,3.64,reveal),lerp(1.39,1.58,reveal),lerp(-4.10,-3.73,reveal));
     camera.lookAt(.09,1.56,lerp(2.60,3.47,reveal));
     camera.fov=54;
+  }else if(streetProgress===0){
+    camera.position.set(lerp(2.80,1.83,straightProgress),lerp(1.14,1.59,straightProgress),-4.34+5.94*straightProgress);
+    camera.lookAt(car.x*.35,lerp(1.03,1.33,straightProgress),car.z+.62);
+    camera.fov=lerp(48,46,straightProgress);
   }else{
-    // Stay in the garage as the whole car clears the threshold.
-    camera.position.set(lerp(2.80,1.83,travel),lerp(1.14,1.59,travel),-4.34+5.94*travel);
-    camera.lookAt(car.x*.35,lerp(1.03,1.33,travel),car.z+.62);
-    camera.fov=lerp(48,46,travel);
+    // Cut to the sidewalk once the rear has cleared the jamb. Lead the car down the street.
+    camera.position.set(lerp(3.85,-1.6,streetProgress),lerp(1.62,1.96,streetProgress),lerp(8.48,10.3,streetProgress));
+    camera.lookAt(car.x-.72*streetProgress,1.22,car.z+.55*(1-streetProgress));
+    camera.fov=lerp(51,46,streetProgress);
   }
   camera.updateProjectionMatrix();
 }
@@ -71,8 +77,10 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
   const contactPosition=contact?.position.clone(),contactRotation=contact?.quaternion.clone();
   const vehicleCue=vehiclePresentation?.beginDepartureCue?.();
   const sound=createWorkshopDepartureAudio(settings);
-  let raf=0,lastFrame=null,elapsed=0,phaseIndex=-1,finished=false,lastGate=gate,lastDistance=0,ending=false;
+  let raf=0,lastFrame=null,elapsed=0,phaseIndex=-1,finished=false,lastGate=gate,lastDistance=0,lastTurn=0,ending=false;
   const departureYaw=Math.PI/2-(vehiclePresentation?.root?.rotation.y||0);
+  const straightDistance=Math.max(0,TURN_Z-position.z);
+  const streetDistance=TURN_LENGTH+STREET_RUN;
   car.rotation.set(0,departureYaw,0);
   if(exterior)exterior.visible=true;
   contact?.rotateZ(yaw-departureYaw);
@@ -133,12 +141,23 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         if(gateDelta)presentation.setDepartureGate(nextGate);
         if(gateDelta>0&&nextGate===1)sound.phase('gate-stop');
         const rollout=clamp((elapsed-ROLL)/(ROLL_END-ROLL));
-        const travel=rollout*rollout*(1.85-.85*rollout),distance=Math.max(0,END_Z-position.z)*travel;
-        car.position.x=position.x*(1-travel);car.position.z=position.z+distance;
+        const distance=(straightDistance+streetDistance)*rollout*rollout*(1.85-.85*rollout);
+        const straightProgress=straightDistance>0?clamp(distance/straightDistance):1;
+        const streetTravel=Math.max(0,distance-straightDistance);
+        const turn=Math.min(Math.PI/2,streetTravel/TURN_RADIUS);
+        // The car leaves along +Z, so its right is world -X.
+        car.position.x=position.x*(1-straightProgress)-TURN_RADIUS*(1-Math.cos(turn))-Math.max(0,streetTravel-TURN_LENGTH);
+        car.position.z=position.z+Math.min(distance,straightDistance)+TURN_RADIUS*Math.sin(turn);
+        car.rotation.y=departureYaw-turn;
         if(position.z+lastDistance<THRESHOLD_Z&&car.position.z>=THRESHOLD_Z)sound.phase('threshold');
-        if(contact)contact.position.set(contactPosition.x+car.position.x-position.x,contactPosition.y,contactPosition.z+distance);
-        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,headlamps:smooth((elapsed-.51)/.29),brake:1-smooth((elapsed-ROLL)/.26)});
-        frameCamera(camera,car.position,elapsed,travel,phaseIndex);
+        if(contact){
+          contact.position.set(contactPosition.x+car.position.x-position.x,contactPosition.y,contactPosition.z+car.position.z-position.z);
+          contact.rotateZ(turn-lastTurn);
+        }
+        lastTurn=turn;
+        const steer=.46*smooth((distance-straightDistance+.55)/1.1)*(1-smooth((streetTravel-TURN_LENGTH+.55)/1.1));
+        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps:smooth((elapsed-.51)/.29),brake:1-smooth((elapsed-ROLL)/.26)});
+        frameCamera(camera,car.position,elapsed,straightProgress,clamp(streetTravel/streetDistance),phaseIndex);
         const fade=smooth((elapsed-FADE)/(END-FADE));
         if(elapsed>=FADE&&!ending){ending=true;onFade();}
         if(finished)return;

@@ -13,6 +13,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#090b0e">
 <title>Asfalto Nacional v8</title>
+<link rel="preload" as="image" href="./assets/loading/workshop.jpg">
 <link rel="stylesheet" href="./assets/styles/inline-01.css?v=9fd75e0552b8a5f1">
 
 
@@ -23,15 +24,15 @@
 <link id="cockpit-v5-style" rel="stylesheet" href="./assets/styles/cockpit-v5-style.css?v=35511bdadc4b211a">
 
 <link id="v6-complete-style" rel="stylesheet" href="./assets/styles/v6-complete-style.css?v=cec3a158061b331d">
-<link rel="stylesheet" href="./assets/styles/menu-presentation.css?v=6a3b7fdcb554e770">
+<link rel="stylesheet" href="./assets/styles/menu-presentation.css?v=c30e791a4b20721b">
 <link rel="stylesheet" href="./assets/styles/race-pause-menu.css?v=662e80a63a6b6c62">
 <link rel="stylesheet" href="./assets/styles/lighting-editor.css?v=61452d5af7cb2059">
-<link rel="stylesheet" href="./assets/styles/loading-presentation.css?v=68262fd89062c2d9">
+<link rel="stylesheet" href="./assets/styles/loading-presentation.css?v=4c6d63ae9a05edd8">
 <link rel="stylesheet" href="./assets/styles/semantic-motion.css?v=521b7f9f53618121">
 <script src="./src/runtime/modal-inert.js?v=130a2433cdd96837"></script>
-<script src="./src/menu/loading-presentation.js?v=1888c1e9f6be52a4"></script>
+<script src="./src/menu/loading-presentation.js?v=9fcee554cefacce7"></script>
 <script type="module" src="./src/menu/race-session-presentation.mjs?v=7bf78b3815623b1d"></script>
-<script type="module" src="./src/menu/menu-presentation.mjs?v=bcdd7d70995169da"></script>
+<script type="module" src="./src/menu/menu-presentation.mjs?v=9fb8c57b1fe9a3f4"></script>
 
 <meta name="chevy-hud-3d-build" content="1.0.0">
 <link id="chevy-hud-3d-style" rel="stylesheet" href="./assets/styles/chevy-hud-3d-style.css?v=30d6f69365d17294">
@@ -74,6 +75,10 @@
 <link rel="stylesheet" href="./assets/styles/mobile-menu.css?v=d2e0a7a93dd5646f">
 </head>
 <body>
+<div id="loading" class="an-boot-cover" aria-busy="true">
+  <div class="an-boot-wordmark"><strong>Asfalto Nacional</strong><span>Argentina · 1973</span></div>
+  <p id="loading-text" role="status" aria-live="polite">Preparando el taller…</p>
+</div>
 <main id="app">
   <div id="scene-background" aria-hidden="true"><img id="scene-background-image" alt=""></div>
   <section id="viewport" aria-label="Vista 3D del cockpit"></section>
@@ -356,13 +361,12 @@
   <div class="race-touch-pedals"><button id="race-touch-handbrake" data-race-action="handbrake" type="button" aria-label="Freno de mano">F.M.</button><button id="race-touch-brake" data-race-action="brake" type="button">FRENO</button><button id="race-touch-accelerate" data-race-action="accelerate" type="button">GAS</button></div>
 </div>
 
-  <div id="loading"><div class="an-loading-card"><span class="an-loading-kicker">ASFALTO NACIONAL / 1973</span><div class="an-loading-gauge" aria-hidden="true"><span class="an-loading-needle"></span><b>RPM</b></div><h2>Todo empieza en el taller</h2><p id="loading-text" class="an-loading-stage" role="status" aria-live="polite">Preparando el auto y la ruta…</p><div class="an-loading-road" aria-hidden="true"><i></i></div><span class="an-loading-caption">La próxima curva te espera.</span></div></div>
   <div id="error" hidden role="alert"></div>
 </main>
 <script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
 <script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
 <script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
-<script type="module" src="./src/legacy/module-02.mjs?v=51952d663db37008"></script>
+<script type="module" src="./src/legacy/module-02.mjs?v=2389abc1fc16a736"></script>
 
 
 
@@ -559,7 +563,7 @@
 </div>
 
 
-<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=41b47ffc888f58ea"></script>
+<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=aef58d14976d5247"></script>
 
 
 <canvas id="chevy-hud-webgl-canvas" aria-hidden="true"></canvas>

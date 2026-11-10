@@ -20,7 +20,7 @@ function createDepartureExterior(T,floorY){
  const pools=[[-5.0,18.6],[6.1,19.4]];
  const warmAt=(x,z)=>Math.max(...pools.map(([px,pz])=>Math.exp(-(((x-px)/2.9)**2+((z-pz)/3.25)**2))));
 
- // The lane runs across the shot. The vehicle's straight exit stays on the apron.
+ // The lane runs across the shot, beyond the approach to the gate.
  const pavement=new T.Color();
  const pavementTone=(x,_y,z)=>{
   const concrete=color('#343943'),asphalt=color('#202631');
@@ -28,7 +28,7 @@ function createDepartureExterior(T,floorY){
   return pavement.copy(concrete).lerp(asphalt,between(z,10.9,12.15)).lerp(color('#645746'),warmAt(x,z)*.39)
    .lerp(color('#171c27'),patch);
  };
- const streetX=[-28,-16,-10,-7,-5,-3,-1,1,3,6,8,10,16,28];
+ const streetX=[-64,-16,-10,-7,-5,-3,-1,1,3,6,8,10,16,28];
  const streetZ=[6.24,6.53,7.8,9.82,11.66,12.35,14.8,16.5,17.7,21.4,28.5];
  for(let j=1;j<streetZ.length;j++)for(let i=1;i<streetX.length;i++)
   flat(streetX[i-1],streetX[i],ground,streetZ[j-1],streetZ[j],pavementTone);
@@ -68,6 +68,14 @@ function createDepartureExterior(T,floorY){
  warehouse(-24,-10.6,23.0,6.65);
  warehouse(-10.6,9.1,20.42,5.28);
  warehouse(9.1,25,22.6,6.18);
+ front(-57,-36,curb,floorY+5.9,24.7,solid('#273442'));
+ front(-36,-24,curb,floorY+6.3,23.8,solid('#313d49'));
+ front(-36,-24,floorY+6.12,floorY+6.30,23.74,solid('#45515b'));
+ for(const x of [-43,-31]){
+  const z=x<-36?24.65:23.75;
+  front(x-1.9,x+1.9,curb,floorY+2.9,z,solid('#202933'));
+  front(x-.54,x+.54,floorY+3.5,floorY+3.8,z,solid('#786148'));
+ }
  for(const x of [-8.35,-2.05,3.40,8.37])
   front(x-.12,x+.12,curb,floorY+5.17,20.31,solid('#4a4650'));
  for(const x of [-5.08,.75,5.93]){
@@ -90,6 +98,9 @@ function createDepartureExterior(T,floorY){
   .lerp(color('#4d4951'),Math.exp(-((x/23)**2))*(1-between(y,floorY+4,floorY+12))*.23);
  for(const [y0,y1]of [[0,4],[4,8],[8,13],[13,24],[24,37]])for(const [x0,x1]of [[-64,-24],[-24,0],[0,24],[24,64]])
   front(x0,x1,floorY+y0,floorY+y1,47,skyTone);
+ // The turning camera sees down the street, past the side of the original sky plane.
+ for(const [y0,y1]of [[0,4],[4,8],[8,13],[13,24],[24,37]])for(const [z0,z1]of [[-40,0],[0,24],[24,47]])
+  quad([[-64,floorY+y0,z0],[-64,floorY+y1,z0],[-64,floorY+y1,z1],[-64,floorY+y0,z1]],(_x,y,z)=>skyTone(-64,y,z));
 
  const geometry=new T.BufferGeometry();
  geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));

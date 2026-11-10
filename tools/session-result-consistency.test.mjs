@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as activityRewards from '../src/menu/activity-rewards.mjs?v=684503a891f85e8a';
 
-const source=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=41b47ffc888f58ea',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=aef58d14976d5247',import.meta.url),'utf8');
 const resultFunctions=source.slice(source.indexOf('function finishJourney('),source.indexOf('function applyWear('));
 
 async function finishActivity(activity,{valid=true,finished=true,reasons=[]}={}){

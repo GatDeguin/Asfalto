@@ -4,7 +4,6 @@
 (() => {
   const assetRoot = new URL('../../assets/loading/', document.currentScript.src);
   const scenes = Object.freeze({
-    boot: {film:'workshop',title:'Todo empieza\nen el taller',region:'ARGENTINA / 1973',line:'Hay historias que se escriben en la ruta.',chapter:'PRÓLOGO'},
     workshop: {film:'workshop',title:'El taller',region:'MECÁNICA NACIONAL / 1973',line:'Cada detalle prepara la próxima salida.',chapter:'EL ORIGEN'},
     vehicle: {film:'ignition',title:'Carácter propio',region:'COLECCIÓN / 1973',line:'Una nueva máquina. La misma pasión.',chapter:'MECÁNICA'},
     return: {film:'return',title:'De vuelta\na casa',region:'EL TALLER / 1973',line:'Toda ruta deja una historia.',chapter:'ENTRE RUTAS'},
@@ -23,15 +22,10 @@
   const url = (film,ext) => new URL(film+'.'+ext,assetRoot).href;
   const visible = el => el.isConnected && !el.hidden && !el.classList.contains('hidden') &&
     !el.classList.contains('v6-hidden') && getComputedStyle(el).visibility !== 'hidden' && el.getClientRects().length > 0;
-  function createSurface(host, kind, statusId = '') {
-    const preserved = statusId && document.getElementById(statusId);
+  function createSurface(host, kind) {
     host.classList.add('an-cinema-loading');
     host.innerHTML = '<div class="an-cinema-image" aria-hidden="true"></div><div class="an-cinema-film" aria-hidden="true"><video muted playsinline preload="none" disablepictureinpicture></video><video muted playsinline preload="none" disablepictureinpicture></video></div><div class="an-cinema-shade" aria-hidden="true"></div><div class="an-cinema-masthead" aria-hidden="true"><span class="an-cinema-mark"><i></i><i></i></span><span>ASFALTO<br>NACIONAL</span><b>1973</b></div><div class="an-loading-card"><p class="an-loading-kicker"></p><h2 class="an-loading-title"></h2><p class="an-loading-caption"></p></div><div class="an-cinema-footer"><span class="an-loading-tachometer" aria-hidden="true"><i></i><b>RPM</b></span><span class="an-cinema-chapter"></span><span class="an-cinema-rule" aria-hidden="true"></span><p class="an-loading-stage" role="status" aria-live="polite">Preparando…</p></div><div class="v6-progress" aria-hidden="true"><i></i></div>';
     const brandImage=document.createElement('img');brandImage.src=new URL('../brand/asfalto-nacional-v7.webp',assetRoot).href;brandImage.alt='Asfalto Nacional';brandImage.width=2172;brandImage.height=724;host.querySelector('.an-cinema-masthead').replaceChildren(brandImage);
-    if (preserved) {
-      host.querySelector('.an-loading-stage').replaceWith(preserved);
-      preserved.className = 'an-loading-stage';
-    } else if (statusId) host.querySelector('.an-loading-stage').id = statusId;
     const videos = [...host.querySelectorAll('video')];
     const backdrop = host.querySelector('.an-cinema-image');
     let scene, active = 0, running = false, swapTimer = null, stalledTimer = null, longTimer = null, epoch = 0, crossfading = false;
@@ -51,8 +45,7 @@
       } catch { if(version===epoch) fallback(); return false; }
     }
     function start() {
-      // Boot immediately hands off to workshop; its poster avoids fetching the same movie twice.
-      if(kind==='boot' || running || !scene || stillOnly())return;
+      if(running || !scene || stillOnly())return;
       running=true; active=0; const version=++epoch;
       videos[0].src=url(scene.film,'mp4'); videos[0].muted=true;
       // A second decoder is opened only when the first loop is nearly complete.
@@ -206,19 +199,9 @@
   function completeBoot({menuReady=false,workshopReady=false,technicalFallback=false}={}) {
     if(!menuReady||(!workshopReady&&!technicalFallback))return false;
     const element=document.getElementById('loading');if(element){element.hidden=true;element.classList.add('hidden');element.setAttribute('aria-busy','false');}
-    for(const surface of [...surfaces])if(surface.kind==='boot')surface.dispose();
     reconcile();return true;
   }
   function boot() {
-    const element=document.getElementById('loading');
-    if(element) {
-      const surface=createSurface(element,'boot','loading-text');surface.set('boot');
-      const observer=new MutationObserver(()=>{
-        if(!visible(element)){surface.dispose();observer.disconnect();}
-        reconcile();
-      });
-      observer.observe(element,{attributes:true,attributeFilter:['class','hidden','style']});
-    }
     const observer=new MutationObserver(reconcile);
     observer.observe(document.body,{attributes:true,attributeFilter:['class']});
     reconcile();
