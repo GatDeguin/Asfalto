@@ -3,12 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=c54673f2600fae60';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=6d551d1fa521d5c5';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
-import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=16f321940f17b2ec';
+import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=93f9f9d8fb0e4a39';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
@@ -217,6 +217,65 @@ test('the 3100 seats the original controls on its fascia and restores them when 
   assert.ok([lights,ignition,radio].every(control=>control.parent===cockpit));
   assert.deepEqual(lights.position.toArray(),[-.5,.25,.4]);
   assert.deepEqual(radio.scale.toArray(),[2,2,2]);
+ }finally{equipment.dispose();}
+});
+
+test('the Bel Air has two spokes and one horn ring on the live steering pivot',()=>{
+ const model=new T.Group(),workshop=new T.Group();
+ const chrome=new T.Group();
+ chrome.name='belair_1957_steeringWheel_True_BA57_Chrome';chrome.userData.steeringWheel=true;
+ chrome.add(new T.Mesh(new T.BoxGeometry(.03,.1,.1),new T.MeshStandardMaterial()));
+ const ivory=chrome.clone();ivory.name='belair_1957_steeringWheel_True_BA57_Upholstery_Ivory';
+ model.add(chrome,ivory);
+ const view=installVehiclePresentation(T,{vehicle:'belair_1957',modelRoot:workshop,lods:[model]});
+ try{
+  const wheel=model.getObjectByName('BelAir2434_SteeringDetail');
+  assert.equal(wheel?.getObjectsByProperty('name','BelAir2434_Spoke').length,2);
+  assert.ok(wheel.getObjectByName('BelAir2434_HornRing'));
+  assert.equal(chrome.visible,false);
+  assert.equal(ivory.visible,true);
+  assert.equal(wheel.parent,ivory.parent);
+  const rest=wheel.parent.quaternion.clone();
+  view.update({snapshot:{controls:{steer:.3}}});
+  assert.ok(rest.angleTo(wheel.parent.quaternion)>1);
+ }finally{view.dispose();}
+ assert.equal(chrome.visible,true);
+ assert.equal(model.getObjectByName('BelAir2434_SteeringDetail'),undefined);
+});
+
+test('the Delco front preserves seven clickable radio controls and restores the donor on swap',()=>{
+ const cockpit=new T.Group(),model=new T.Group(),radio=new T.Group();
+ const material=new T.MeshBasicMaterial(),geometry=new T.BoxGeometry(.1,.05,.01);
+ const legacy=new T.Mesh(geometry,material);legacy.name='FACEPLATE';radio.add(legacy);cockpit.add(radio);
+ const names=['POWER_VOLUME','PREVIOUS','REWIND','PLAY_PAUSE','FORWARD','NEXT','TUNING_SEEK'];
+ const controls=names.map((name,index)=>{
+  const control=new T.Group();control.name='CTRL_'+name;control.position.set(index*.01,-.01,.07);
+  control.userData.radioBasePosition=control.position.clone();
+  control.add(new T.Mesh(geometry,material));radio.add(control);return control;
+ });
+ const equipment=createAuthoredControlMounts(T,{radio});
+ try{
+  for(let pass=0;pass<2;pass++){
+   equipment.attach(model,'pickup_3100');
+   const dial=radio.getObjectByName('Delco986443_Dial');
+   assert.ok(dial);
+   assert.equal(legacy.visible,false);
+   for(const control of controls){
+    assert.equal(control.children[0].visible,false);
+    assert.equal(control.children.filter(child=>child.visible).length,1);
+    assert.ok(control.position.y>dial.position.y);
+   }
+   assert.equal(radio.getObjectsByProperty('name','Delco986443_Dial').length,1);
+  }
+  equipment.attach(model,'belair_1957');
+  assert.equal(radio.getObjectByName('Delco986443_Dial'),undefined);
+  assert.equal(legacy.visible,true);
+  for(const [index,control] of controls.entries()){
+   assert.deepEqual(control.userData.radioBasePosition.toArray(),[index*.01,-.01,.07]);
+   assert.ok(control.position.equals(control.userData.radioBasePosition));
+   assert.equal(control.children.length,1);
+   assert.equal(control.children[0].visible,true);
+  }
  }finally{equipment.dispose();}
 });
 

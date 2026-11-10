@@ -3,9 +3,10 @@ import {installClassicCabinSurfaces} from './classic-cabin-surfaces.mjs?v=bedb05
 import {installClassicCabinTrim} from './classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createSS250InteriorControls} from './ss250-interior-controls.mjs?v=88ce0aa6a33d0690';
 import {installSS250InstrumentGlass} from './ss250-instrument-glass.mjs?v=e200ae68ce6dcce2';
+import {installBelAirSteeringDetail} from './bel-air-steering-detail.mjs?v=40ca6b75e619e296';
 import {installChevrolet400Finish,installHeritageHornBadge,installHeritageInteriorDetail} from './heritage-interior-detail.mjs?v=da4f2a284a5c6c12';
 export function installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetail=true}){
- const definition=getVehicleDefinition(vehicle),pivots=[],axis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
+ const definition=getVehicleDefinition(vehicle),pivots=[],steeringDetails=[],axis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
  const pickupSpokeIndex=vehicle==='pickup_3100'?new T.Quaternion().setFromAxisAngle(axis,35*Math.PI/180):null;
  for(const model of lods){
   const meshes=[];model.traverse(n=>{if(n.userData?.steeringWheel)meshes.push(n);});
@@ -18,6 +19,12 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetai
    // Index the pickup's spokes away from its two gauges when driving straight.
    if(pickupSpokeIndex){node.position.applyQuaternion(pickupSpokeIndex);node.quaternion.premultiply(pickupSpokeIndex);}
   }
+  if(vehicle==='belair_1957'){
+   const spokes=pivot.getObjectByName('belair_1957_steeringWheel_True_BA57_Chrome');
+   const rim=pivot.getObjectByName('belair_1957_steeringWheel_True_BA57_Upholstery_Ivory');
+   const rimMesh=rim?.getObjectByProperty('isMesh',true);
+   if(spokes&&rimMesh)steeringDetails.push(installBelAirSteeringDetail(T,pivot,axis,spokes,rimMesh));
+  }
   pivots.push(pivot);
  }
  const ss400=root.getObjectByName('SS250_PhysicalInterior_R53');
@@ -25,7 +32,7 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetai
  const glass=ss?installSS250InstrumentGlass(T,root):null;
  const finish=ss400?installChevrolet400Finish(ss400):null;
  const detail=['belair_1957','pickup_3100'].includes(vehicle)?installHeritageInteriorDetail(T,{root:lods[0],vehicle}):null;
- const badge=detail?installHeritageHornBadge(T,pivots[0],axis,vehicle):null;
+ const badge=detail&&!steeringDetails.length?installHeritageHornBadge(T,pivots[0],axis,vehicle):null;
  const trim=ss400||detail?installClassicCabinTrim(T,lods[0],vehicle):null;
  const surfaces=cabinSurfaceDetail&&(ss400||detail)?installClassicCabinSurfaces(T,lods[0],vehicle):null;
  const visible=n=>{for(let p=n;p;p=p.parent)if(!p.visible)return false;return true;};
@@ -61,7 +68,7 @@ export function installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetai
   },
   getSteeringTargets:()=>[...pivots,...(ss?[root.getObjectByName('SS250_WheelAssembly')]:[])].filter(n=>n&&visible(n)),
   getPedalTarget(type){return ss?root.getObjectByName(type==='brake'?'SS250_BrakePedalPivot':'SS250_ThrottlePedalPivot'):null;},
-  diagnostics:()=>({vehicle,disposed,steering:pivots.length,hornBadge:!!badge,trimFittings:trim?.fittings??0,surfaces:surfaces?.diagnostics(),ss250:ss?.diagnostics(),finish:finish?.diagnostics(),lights,instrumentPower,detail:detail?.diagnostics(),last}),
-  dispose(){if(disposed)return;disposed=true;surfaces?.dispose();trim?.dispose();badge?.dispose();ss?.dispose();finish?.dispose();glass?.dispose();detail?.dispose();}
+  diagnostics:()=>({vehicle,disposed,steering:pivots.length,hornBadge:!!badge||steeringDetails.length>0,trimFittings:trim?.fittings??0,surfaces:surfaces?.diagnostics(),ss250:ss?.diagnostics(),finish:finish?.diagnostics(),lights,instrumentPower,detail:detail?.diagnostics(),last}),
+  dispose(){if(disposed)return;disposed=true;surfaces?.dispose();trim?.dispose();badge?.dispose();for(const steering of steeringDetails)steering.dispose();ss?.dispose();finish?.dispose();glass?.dispose();detail?.dispose();}
  };
 }

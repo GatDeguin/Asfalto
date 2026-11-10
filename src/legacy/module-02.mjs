@@ -58,7 +58,7 @@ import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=6f67b1db
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=ec10ff29633a1e47';
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
 import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=639ddc5e384ba6e0';
-import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=16f321940f17b2ec';
+import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=93f9f9d8fb0e4a39';
 import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=daeee784ccbcdb5d';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
@@ -89,7 +89,7 @@ import { createChevyPaintController } from '../render/chevy-paint-controller.mjs
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=c54673f2600fae60';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=6d551d1fa521d5c5';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=1c63772f8d903642';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
@@ -785,6 +785,8 @@ function createCockpitRadioController({
   function syncVisualState(state, render = true) {
     if (disposed) return;
     viewState = state;
+    mount.userData.radioPowered = state.powered;
+    mount.userData.updateRadioFace?.(state);
     const frame = displayApi.createRadioDisplayFrame({
       state,
       mediaDuration: radio.getMediaDiagnostics().duration,
@@ -857,6 +859,7 @@ function createCockpitRadioController({
     pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(pointer, camera);
     for (const intersection of raycaster.intersectObject(root, true)) {
+      if (!visibleInScene(intersection.object)) continue;
       const control = findControl(intersection.object);
       if (control) return control;
     }

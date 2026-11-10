@@ -1,3 +1,5 @@
+import {installDelco986443Face} from './delco-986443-face.mjs?v=08b7614f2c31dd4e';
+
 // Coordinates are measured in the shipped dash meshes. The 400 uses the R53
 // dashboard frame (+Y faces the driver); the other two use their vehicle LOD0.
 // Layout references: Automundo 185, GM Truck Specifications 1953 sheet 117,
@@ -62,13 +64,14 @@ function seatOnDash(T,frame,targets,point,normal){
 // Move the real controls and their input targets as one object. Keep the
 // legacy layout available when the same controls are used in the other Chevy.
 export function createAuthoredControlMounts(T,parts){
-  let active=null,placements=[];
+  let active=null,radioFace=null,placements=[];
   const owned=new Set(),hidden=[];
   const saved=Object.entries(parts).filter(([,node])=>node).map(([id,node])=>({
     id,node,parent:node.parent,position:node.position.clone(),quaternion:node.quaternion.clone(),
     scale:node.scale.clone(),visible:node.visible,
   }));
   function restore(){
+    radioFace?.dispose();radioFace=null;
     for(const s of saved){
       s.parent.add(s.node);
       s.node.position.copy(s.position);s.node.quaternion.copy(s.quaternion);s.node.scale.copy(s.scale);
@@ -148,6 +151,7 @@ export function createAuthoredControlMounts(T,parts){
         if(spec)s.node.position.z=(s.id==='radio'?.004:.002)-reference.max.z*factor;
         if(s.id==='radio'){
           addRadioMount(host,spec,id);
+          if(id==='pickup_3100')radioFace=installDelco986443Face(T,s.node);
           if(is400){
             const donor=frame.getObjectByName('SS250_RadioControlGrip');
             if(donor){hidden.push([donor,donor.visible]);donor.visible=false;}
