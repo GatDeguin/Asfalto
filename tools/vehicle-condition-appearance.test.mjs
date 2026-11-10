@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=3c5cafe81e30151f';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=f4c2fc8aab0894f5';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=23d1e7f259ba8f73';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f107479f0202bca';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
+import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=6876d2d01acaeeae';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
@@ -100,6 +101,25 @@ test('Bel Air fuel gauge follows the current car’s persistent fuel, including 
    assert.equal(gauge().ratio,fuel/100);
   }
  }finally{view.dispose();}
+});
+
+test('classic glovebox trim seats on its donor and releases its own mesh and material',()=>{
+ const model=new T.Group(),dash=new T.Group();
+ dash.name='SS250_DashboardAssembly';model.add(dash);
+ assert.equal(installClassicCabinTrim(T,model,'chevy_400_1957').fittings,0);
+ const donor=new T.Mesh(new T.BoxGeometry(.319,.012,.123),new T.MeshStandardMaterial());
+ donor.name='SS250_GloveboxDoor';donor.position.set(.5165,.025,-.0025);dash.add(donor);
+ const trim=installClassicCabinTrim(T,model,'chevy_400_1957');
+ assert.equal(trim.fittings,1);
+ const plaque=dash.getObjectByName('Chevrolet400GloveboxPlate');
+ assert.ok(Math.abs(plaque.parent.position.y-.0315)<1e-6);
+ let disposals=0;
+ plaque.geometry.addEventListener('dispose',()=>disposals++);
+ plaque.material.addEventListener('dispose',()=>disposals++);
+ trim.dispose();
+ assert.equal(disposals,2);
+ assert.deepEqual(dash.children,[donor]);
+ donor.geometry.dispose();donor.material.dispose();
 });
 
 test('authored gauges dim independently of the road lights, and restore the legacy cabin lamp on exit',()=>{

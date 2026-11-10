@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=d21cd95e25016d6e';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=f4c2fc8aab0894f5';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=23d1e7f259ba8f73';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=e487a58aa1bf61ed';
 
 const vector=(x=0,y=0,z=0)=>({x,y,z,set(x,y,z){Object.assign(this,{x,y,z});},clone(){return vector(this.x,this.y,this.z);},copy(v){this.set(v.x,v.y,v.z);}});

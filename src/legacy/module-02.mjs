@@ -17,7 +17,7 @@ import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233f
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
 import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2f45e8b283df15f3';
-import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=006379522815e967';
+import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=27935546d06dacda';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../game/workshop-performance.mjs?v=bc1ff950c62515a0';
 globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerformance(buildVehiclePhysicsSpec(base,id),setup);
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
@@ -89,7 +89,7 @@ import { createChevyPaintController } from '../render/chevy-paint-controller.mjs
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=f4c2fc8aab0894f5';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=23d1e7f259ba8f73';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=d657732de9ad22f3';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';

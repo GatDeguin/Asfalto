@@ -10,7 +10,11 @@ export function authoredCockpitAnchors(id){
  const s=d.calibration,scaleX=s.wheelbaseM/(s.sourceRearX-s.sourceFrontX),scaleY=(s.heightM-s.radiusM)/(s.sourceRoof-s.sourceWheelY),scaleZ=(s.frontTrackM+s.rearTrackM)/4/s.sourceHalfTrack;
  const offsetX=s.wheelbaseM*(1-s.frontWeight)+s.sourceFrontX*scaleX,offsetY=s.radiusM-s.cgHeightM-s.sourceWheelY*scaleY;
  const transform=p=>[offsetX-p[0]*scaleX,offsetY+p[1]*scaleY,-p[2]*scaleZ];
- return {lookDownDeg:review?18:Math.max(10,d.cockpitLookDownDeg||0),cockpit:transform(review?SS250_REVIEW_EYE:d.cockpitEyeSource),hood:transform([-.34,.245,0])};
+ const cockpit=transform(review?SS250_REVIEW_EYE:d.cockpitEyeSource);
+ // Move the pickup viewpoint within the bench seat to clear the tachometer.
+ // This is a camera offset in chassis metres; the driver rig uses the original eye anchor.
+ if(id==='pickup_3100')cockpit[2]+=.16;
+ return {lookDownDeg:review?18:Math.max(10,d.cockpitLookDownDeg||0),cockpit,hood:transform([-.34,.245,0])};
 }
 
 export function authoredWindshieldMount(T,presentation,id){
