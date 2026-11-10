@@ -5664,13 +5664,13 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   const modularRaceCueStyle = document.createElement("style"); modularRaceCueStyle.id = "modular-race-cue-style"; modularRaceCueStyle.textContent = "#modular-race-cue{position:fixed;z-index:80;right:max(18px,env(safe-area-inset-right));top:max(18px,env(safe-area-inset-top));max-width:min(280px,42vw);padding:8px 11px;border-left:3px solid #d7b36a;background:rgba(10,12,12,.82);color:#f7edd7;font:700 12px/1.2 system-ui;letter-spacing:.08em;text-transform:uppercase;opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .16s,transform .16s}#modular-race-cue.show{opacity:1;transform:none}#modular-race-cue[data-spawn-parking-hold=true]{left:50%;right:auto;top:112px;max-width:min(430px,46vw);transform:translateX(-50%);text-align:center;font-size:11px}@media(prefers-reduced-motion:reduce){#modular-race-cue{transition:none}}"; document.head.appendChild(modularRaceCueStyle);
 
   let messageTimer = 0;
-  function showMessage(text, { duration = 1200, kind = '', countdown = false, announce = true } = {}) {
+  function showMessage(text, { duration = 1200, kind = '', countdown = false, announce = true, drivingCue = false } = {}) {
     window.clearTimeout(messageTimer);
     ui.message.textContent = text;
     ui.message.className = `race-message show${kind ? ` ${kind}` : ''}${countdown ? ' countdown' : ''}`;
     if (announce) ui.live.textContent = text;
     const phase=countdown?'countdown':text==='¡LARGÁ!'?'green':text.startsWith('META ·')?'finish':'';
-    const criticalRaceCue = phase || /PAUSA|RECUPERACIÓN/.test(text);
+    const criticalRaceCue = drivingCue || phase || /PAUSA|RECUPERACIÓN/.test(text);
     modularRaceCue.dataset.phase=phase;
     modularRaceCue.textContent=criticalRaceCue?(countdown?`LARGADA · ${text}`:text):"";
     modularRaceCue.classList.toggle("show",!!criticalRaceCue);
@@ -5798,6 +5798,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     if(globalThis.__asfaltoV7Experience?.shouldBlockDrivingInput(event))return;
     const formControl = event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement;
     if (formControl) return;
+    if (event.code === 'KeyR' && options.getTransmissionMode?.() === 'automatic') return;
     const action = bindingActionForCode(event.code);
     if (!action) return;
     if (['steerLeft', 'steerRight', 'accelerate', 'brake', 'clutch', 'handbrake', 'lookBack'].includes(action)) {
@@ -8326,7 +8327,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   }
 
   return {
-    update,getInput,getControlGate,start,pause,resume,togglePause,recover,selectCircuit,setSettings,setSettingsOpen,getState,getCameraMotion,
+    update,getInput,getControlGate,showMessage,start,pause,resume,togglePause,recover,selectCircuit,setSettings,setSettingsOpen,getState,getCameraMotion,
     getForwardGearCount:()=>v6InputAdapter.profile.gearCount,
     ...(isAsfaltoV5Qa ? { debugSetRaceState, debugDrivePhysicalRoute, debugTeleportPhysicalVehicle } : {}),
     setFalconPresentation(controller){
@@ -9177,7 +9178,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     });
   }
 
-  function requestGear(rawTarget, source = 'manual') {
+  function requestGear(rawTarget, source = 'manual', speedMps = vehicle.speedMps) {
     const target = String(rawTarget).toUpperCase();
     if (!GEAR_POSITIONS[target]) return false;
     if (Number(target) > (Number(raceWorld.getV6Diagnostics?.().forwardGears) || 4)) {
@@ -9196,7 +9197,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       return true;
     }
 
-    const validation = evaluateShift(target, vehicle.speedMps, Math.sign(vehicle.speedMps) || 1);
+    const validation = evaluateShift(target, speedMps);
     if (!validation.allowed) {
       gearState.blockedReverseUntil = performance.now() + 1150;
       gearState.blockedReason = validation.reason;
@@ -9478,11 +9479,25 @@ listen(window,'chevy:vehicle-config',(event)=>{
       updateKeyUi();
     }
     const gear = gearKeyMap[event.code];
-    if (gear && !event.repeat && gameSettings.transmissionMode === 'manual') {
+    if (!gear || event.repeat) return;
+    if (gameSettings.transmissionMode === 'automatic') {
+      if (gear !== 'R' || event.ctrlKey || event.metaKey || event.altKey || menuOpen || gearState.path) return;
+      const gate = raceWorld.getControlGate();
+      if (gate.status !== 'RUNNING' || gate.blockDriving) return;
       event.preventDefault();
       void ensureAudioStarted();
-      requestGear(gear, 'manual');
+      const velocity = raceWorld.getRenderFrame().currentSnapshot?.chassis?.linearVelocity;
+      // Check ground speed in either direction, even if the car is sideways to the route.
+      const speed = velocity ? Math.hypot(velocity[0], velocity[2]) : Math.abs(vehicle.speedMps);
+      const target = gearState.gear === 'R' ? '1' : 'R';
+      if (!requestGear(target, 'automatic', target === 'R' ? speed : -speed)) {
+        raceWorld.showMessage('Frená para cambiar de sentido', {drivingCue: true});
+      }
+      return;
     }
+    event.preventDefault();
+    void ensureAudioStarted();
+    requestGear(gear, 'manual');
   }, { passive: false });
 
   window.addEventListener('keyup', (event) => {

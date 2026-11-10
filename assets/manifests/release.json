@@ -2746,8 +2746,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 82123,
-      "sha256": "47F4468E9D01A449C8A162BE09744CBBA0FCC750EEE6CDB46A64296F36BBF621"
+      "bytes": 82097,
+      "sha256": "21E15051D557755F4645DA4AC598450E2433C76AE35F2A4C9D98B79911B130B0"
     },
     {
       "path": "release-version.json",
@@ -3146,8 +3146,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 587323,
-      "sha256": "EDA2FEC59BE0D554FA7A881C29E27683E22ED6E4F92806BACF9D841BB04B6829"
+      "bytes": 588270,
+      "sha256": "7B21E76C06DD16C4B6A32A226FAFEC87CDAC21E6F83D9A51F4687A70BDF187B7"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -4577,7 +4577,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "F47689A47C29BEF499CEFC98266AD663CA096C681E98B991497FC30DB6164AD7"
+      "sha256": "940DFA3C8158FA3111E6765E4EAC712E251FC9E844AA82B809EC8697F406BE0B"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4597,17 +4597,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "723C3E9E58BCA4212BA6D71AA4922602D60A6EC55320791447B0EDB722948E00"
+      "sha256": "90AF36A681113F7E675CAF114804C387F81E80577911E14265EBD7CB4F93F9B7"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "25614891679A29C1AF3F300A0DFE539D82CD6F381462D56392C5580660E01157"
+      "sha256": "4CBEAE16FA115E60995F3134EC0F083800815A77A436E27D9499171BB741403E"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "C4266D849167D8CE0A26F69F000B892C4A285FA4C0074A91CC979248373E8D1A"
+      "sha256": "82863588AEA58BAA9BBD9FF20772B41720E00159361EB9305F43B0F9C70625A2"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4618,6 +4618,11 @@
       "path": "tools/authored-vehicle-mirrors.test.mjs",
       "bytes": 1512,
       "sha256": "BB8BB0CB65E3EB0488A57D71C37BC30DC02D6AF66883FA5D20816F1F18ECBB84"
+    },
+    {
+      "path": "tools/automatic-reverse.test.mjs",
+      "bytes": 4285,
+      "sha256": "777243890C6E18956029A4F92223B19F926A04290B59CA7BC6B5A12D2D668236"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
@@ -4842,12 +4847,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "CBDBBFC58270C7C88A8817FB4AEEBB825835BB4366C9D9626924811094545BD5"
+      "sha256": "7A3C80BF26B911397EBDB22AD1743C13F5084A06771DF6CA5015D38A7404444D"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "C5475E56338B528BBA27E4492514E656F4DCF8EDE994545AE098D6C599DE4E02"
+      "sha256": "DAB73EAC4F2258181C4337047871047AE3D25193EE166B177F074826F6F5B561"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5147,7 +5152,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "72F2E6EE18760F33EFBF0D6B6C72F1BF7DD684B14B5BC3375B26705A0B060EEC"
+      "sha256": "4CFCFE471C30FDE7464435A285A7C0307F883E2713F5F87093F205B025B6345C"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5182,7 +5187,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "FBA3E508BB5AE409766D180B57DC629BB0C6ED9781C4054655026D270E806DD6"
+      "sha256": "F95F062ADCB73906E5CF9ADA2E9516E9658DED49D53A210598EA52C983DC9848"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -5495,7 +5500,7 @@
       "sha256": "2BDAA73AE349BB2786F1B64FAE245E3EE26EA1BDE9B8C90E20BCB6323298AF45"
     }
   ],
-  "fileCount": 1084,
-  "totalBytes": 997179192,
-  "inventorySha256": "99F21806E06551ACD144A5496D19BE06BFF0F3C3801F9F02D50F719FA3A9BC25"
+  "fileCount": 1085,
+  "totalBytes": 997184398,
+  "inventorySha256": "6D1698BCA8B8824A5D9B23AB78EB4230CEEF1EE9E886BBCB0D95A76038563FC9"
 }
