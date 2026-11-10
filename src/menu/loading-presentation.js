@@ -124,7 +124,13 @@
     const values=[...pending.values()],latest=values.at(-1);
     if(!latest)return;
     const scene=[...values].reverse().find(v=>v.scene)?.scene || 'separator';
-    if(latest.departure)overlay.dataset.departure='true';else delete overlay.dataset.departure;
+    if(latest.departure){
+      overlay.dataset.departure='true';
+      overlay.dataset.departurePhase=latest.departurePhase||'ignition';
+      if(latest.departureFade)overlay.dataset.departureFade='true';else delete overlay.dataset.departureFade;
+    }else{
+      delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
+    }
     sessionSurface.set(scene); sessionSurface.stage(latest.departureStage||latest.stage);
     overlay.setAttribute('aria-label',latest.title);
   }
@@ -136,7 +142,7 @@
   }
   function restore() {
     overlay.hidden=true;overlay.setAttribute('aria-busy','false');
-    delete overlay.dataset.departure;
+    delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
     sessionSurface.stop();document.body.classList.remove('an-loading-open');
     if(typeof background==='function')background();
     background=[];exiting=false;overlay.classList.remove('an-cinema-exit');
@@ -171,7 +177,8 @@
     return {
       painted,
       stage(text) {const task=pending.get(key);if(task){task.stage=text;sync();}},
-      departureStage(text){const task=pending.get(key);if(task?.departure){task.departureStage=text;sync();}},
+      departureStage(text,phase){const task=pending.get(key);if(task?.departure){task.departureStage=text;task.departurePhase=phase;sync();}},
+      fadeDeparture(){const task=pending.get(key);if(task?.departure){task.departureFade=true;sync();}},
       end() {
         if(!pending.delete(key))return Promise.resolve();
         if(pending.size){sync();return Promise.resolve();}

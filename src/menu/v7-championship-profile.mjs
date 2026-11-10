@@ -1,10 +1,19 @@
-import {createRun,beginStage,cancelStage,acceptStage,resumeRun} from './v7-championship-state.mjs?v=54514a098688545f';
-import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=d14e43cdb1271985';
+import {createRun,beginStage,cancelStage,acceptStage,resumeRun,earnedAwards} from './v7-championship-state.mjs?v=54514a098688545f';
+import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=83a20891fa8b1ee6';
 import {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock,profileRevision} from '../runtime/profile-persistence.mjs?v=34c8f093c015eb86';
+import {RACE_WIN_TOKENS,CHAMPIONSHIP_WIN_TOKENS} from './activity-rewards.mjs?v=684503a891f85e8a';
 export {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock};
 const clone=x=>structuredClone(x),revision=p=>p?.motorsportV7?.revision||0;
 function extension(profile){const old=profile.motorsportV7;if(old&&old.schema!=='asfalto-motorsport/v1')throw new Error('Unsupported motorsport profile');return old||{schema:'asfalto-motorsport/v1',revision:0,activeRunId:null,runs:{},awards:{},memories:{}};}
 function completedIds(runs){const ids=[];for(const run of Object.values(runs)){try{const valid=resumeRun(run);if(valid.status==='completed')ids.push(valid.championshipId);}catch{}}return ids;}
+function championshipTokens(run,action){
+ if(action.type!=='accept')return 0;
+ const receipt=run.accepted.find(row=>row.resultId===action.receipt.resultId);
+ if(!receipt)return 0;
+ const stagePrize=receipt.classification.some(row=>row.entrantId==='player'&&row.win)?RACE_WIN_TOKENS:0;
+ const cupPrize=run.status==='completed'&&run.accepted.at(-1)===receipt&&earnedAwards(run).some(award=>award.kind==='cup')?CHAMPIONSHIP_WIN_TOKENS:0;
+ return stagePrize+cupPrize;
+}
 export function applyChampionshipProfileAction(profile,action){
  const ext=extension(profile);let run;
  if(action.type==='memory'){
@@ -27,6 +36,7 @@ export function applyChampionshipProfileAction(profile,action){
   if(run===current)return profile;
  }
  const draft=clone(profile),next=clone(ext);next.runs[run.id]=run;next.activeRunId=run.id;next.revision=revision(profile)+1;
+ const tokensAwarded=championshipTokens(run,action);if(tokensAwarded){draft.workshopTokens=(Number(draft.workshopTokens)||0)+tokensAwarded;next.tokenAwards={...next.tokenAwards,[action.receipt.resultId]:tokensAwarded};}
  if(action.type==='failure'){const history=next.failedAttempts||[];next.failedAttempts=[...history,{runId:run.id,attemptId:action.attemptId,reason:String(action.reason||'Intento no válido'),at:action.at}].slice(-30);}
  draft.motorsportV7=next;
  // Recompute from validated receipts; stored counters or award IDs cannot unlock objects.
@@ -40,12 +50,12 @@ export function createChampionshipProfileStore({storage=globalThis.__asfaltoV7St
   const current=getProfile(),raw=storage.getItemPersistent(key),disk=raw===null?null:JSON.parse(raw);
   if(profileRevision(disk)!==profileRevision(current)){
    // An uncertain disk success may be retried with the same result ID, never duplicated.
-   if(intent.type==='accept'){try{const restored=resumeRun(disk.motorsportV7.runs[intent.runId]);if(restored.accepted.some(r=>r.resultId===intent.receipt.resultId&&r.attemptId===intent.receipt.attemptId&&r.stageId===intent.receipt.stageId)){replaceProfile(freezeReceipts(disk));pending=null;return{profile:disk,changed:false,persisted:true,recovered:true};}}catch{}}
+   if(intent.type==='accept'){try{const restored=resumeRun(disk.motorsportV7.runs[intent.runId]);if(restored.accepted.some(r=>r.resultId===intent.receipt.resultId&&r.attemptId===intent.receipt.attemptId&&r.stageId===intent.receipt.stageId)){replaceProfile(freezeReceipts(disk));pending=null;return{profile:disk,changed:false,persisted:true,recovered:true,tokensAwarded:disk.motorsportV7.tokenAwards?.[intent.receipt.resultId]||0};}}catch{}}
    throw new Error('Profile revision conflict; reload the saved profile');
   }
-  const draft=applyChampionshipProfileAction(current,intent);if(draft===current){pending=null;return{profile:current,changed:false,persisted:true};}
+  const draft=applyChampionshipProfileAction(current,intent);const tokensAwarded=intent.type==='accept'?draft.motorsportV7.tokenAwards?.[intent.receipt.resultId]||0:0;if(draft===current){pending=null;return{profile:current,changed:false,persisted:true,tokensAwarded};}
   draft.storageRevision=(disk?.storageRevision||0)+1;storage.setItemPersistent(key,JSON.stringify(draft));
-  freezeReceipts(draft);replaceProfile(draft);pending=null;return{profile:draft,changed:true,persisted:true};
+  freezeReceipts(draft);replaceProfile(draft);pending=null;return{profile:draft,changed:true,persisted:true,tokensAwarded};
  }));queue=task.catch(()=>{});return task.catch(error=>{pending={action:intent,error:String(error.message||error)};throw error;});}
  return Object.freeze({transact,retryPending(){if(!pending)return Promise.resolve(null);return transact(pending.action);},diagnostics:()=>({pending:!!pending,error:pending?.error||null,action:pending?.action.type||null}),clearPending(){pending=null;}});
 }

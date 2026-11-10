@@ -6,6 +6,7 @@
   const EPSILON = 1e-9;
   const MAX_FRAME_SECONDS = 0.25;
   const FALSE_START_PENALTY_SECONDS = 2;
+  const DRIVE_TRAFFIC_CONTACT_RADIUS_SQ = 60 ** 2;
 
   function finite(value, fallback) {
     return Number.isFinite(value) ? value : fallback;
@@ -811,14 +812,23 @@
     let sceneCollisionLayer = null;
     let physicsSession = null;
     let rivalSession = null;
+    const driveTrafficBodies = new Map();
+    let driveTrafficTick = 0;
     let disposalStarted = false;
     let disposalPromise = null;
+    function clearDriveTraffic() {
+      if (!driveTrafficBodies.size) return;
+      for (const {body} of driveTrafficBodies.values()) playerWorld.removeRigidBody(body);
+      driveTrafficBodies.clear();
+      physicsSession.reserveImpactContacts();
+    }
     function disposeOwnedStack() {
       if (disposalStarted) return disposalPromise.then(() => false);
       disposalStarted = true;
       disposalPromise = (async () => {
         const failures = [];
         const cleanupSteps = [
+          clearDriveTraffic,
           () => physicsSession?.dispose?.(),
           () => rivalSession?.dispose?.(),
           () => sceneCollisionLayer?.dispose?.(),
@@ -1064,6 +1074,47 @@
       resolveFalconContact();
       return physicsSession.getSnapshot();
     };
+    function syncDriveTraffic(poses, snapshot) {
+      if (disposalStarted) return;
+      const playerPosition=snapshot?.chassis?.position;
+      if (!playerPosition || !poses.length) {clearDriveTraffic();return;}
+      const tick=++driveTrafficTick;
+      let changed=false;
+      for (const {id,position,rotation,hull} of poses) {
+        const [x,y,z]=position;
+        const distanceSq=(x-playerPosition[0])**2+(y-playerPosition[1])**2+(z-playerPosition[2])**2;
+        if (!(distanceSq<=DRIVE_TRAFFIC_CONTACT_RADIUS_SQ)) continue;
+        let record=driveTrafficBodies.get(id);
+        if (!record) {
+          const [qx,qy,qz,qw]=rotation;
+          const orientation={x:qx,y:qy,z:qz,w:qw};
+          const body=playerWorld.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased()
+            .setTranslation(x,y,z).setRotation(orientation));
+          const [hx,hy,hz]=hull.halfExtents,[cx,cy,cz]=hull.center;
+          const radius=Math.min(.14,hx*.4,hy*.4,hz*.4);
+          const collider=playerWorld.createCollider(RAPIER.ColliderDesc.roundCuboid(hx-radius,hy-radius,hz-radius,radius)
+            .setTranslation(cx,cy,cz).setFriction(.14).setRestitution(.06),body);
+          collider.asfaltoContactMaterial='vehicle-metal';
+          collider.asfaltoTrafficId='traffic:'+id;
+          record={body,position:{x,y,z},orientation,tick};
+          driveTrafficBodies.set(id,record);
+          changed=true;
+        } else {
+          const [qx,qy,qz,qw]=rotation;
+          const p=record.position,q=record.orientation;
+          if(p.x!==x||p.y!==y||p.z!==z){p.x=x;p.y=y;p.z=z;record.body.setNextKinematicTranslation(p);}
+          if(q.x!==qx||q.y!==qy||q.z!==qz||q.w!==qw){q.x=qx;q.y=qy;q.z=qz;q.w=qw;record.body.setNextKinematicRotation(q);}
+          record.tick=tick;
+        }
+      }
+      for (const [id,record] of driveTrafficBodies) {
+        if (record.tick===tick) continue;
+        playerWorld.removeRigidBody(record.body);
+        driveTrafficBodies.delete(id);
+        changed=true;
+      }
+      if (changed) physicsSession.reserveImpactContacts();
+    }
     const rival = {
       physicsSession: rivalSession,
       setActive(active) {
@@ -1107,6 +1158,8 @@
       physicsSession,
       rival,
       trackAdapter,
+      syncDriveTraffic,
+      clearDriveTraffic,
       refreshSceneColliders:options=>{const changed=sceneCollisionLayer?.refresh(options);if(changed){physicsSession.reserveImpactContacts();rivalSession.reserveImpactContacts();}return changed;},
       transformReferenceFrame(transform, reference={}) {
         if(disposalStarted)throw new Error('physical stack is disposed');
@@ -1127,6 +1180,7 @@
         dynamicBodyCount: 2,
         vehicleColliderCount: physicsSession.colliders.length + rivalSession.colliders.length,
         contactProxyCount: 1,
+        get driveTrafficColliders(){return driveTrafficBodies.size;},
         triangleCount: authoredSolidTriangleCount + routeTriangles.triangleCount,
         authoredBoundaryTriangleCount,
         authoredSolidTriangleCount,
@@ -1188,6 +1242,7 @@
         ...options, vehicleProfile: this._vehicleProfile, chassisConfig: this._chassisConfig,
       };
       this._physicalStack = null;
+      this._driveTrafficProvider = null;
       this._physicsTrackAdapter = null;
       this._rival = null;
       this._rivalLastState = null;
@@ -1263,6 +1318,14 @@
       return Object.freeze({sessionSequence:this._physicalSessionSequence,qa:this._physicalQAMutated,referenceChart:this._referenceChart});
     }
 
+    setDriveTrafficProvider(provider) {
+      if (this._driveTrafficProvider===provider) return;
+      const previous=this._driveTrafficProvider;
+      this._driveTrafficProvider=provider;
+      this._physicalStack?.clearDriveTraffic?.();
+      previous?.clear();
+    }
+
     getRoadTestContext() {
       const adapter=this._physicsTrackAdapter,sequence=this._physicalSessionSequence;
       if(this._disposed||!this._physicsSession?.spec||typeof adapter?.samplePhysicalRoute!=='function')throw new Error('Physical road-test context is not prepared');
@@ -1336,6 +1399,7 @@
       Object.assign(this,history);this._projection=projection;this._rivalLastState=rivalState;this._lastSafeFrame=safe?freezeDeep(safe):null;
       // RecoveryGuard caches only scalar separation/distances/timers, all rigid-transform invariants.
       this._referenceChart=referenceChart;this._referenceFrameSequence++;
+      this._driveTrafficProvider?.rebase();
       if(this._physicalObservers.size){
         const axes=[[1,0,0],[0,1,0],[0,0,1]].map(v=>transform.vector(v)),origin=transform.point([0,0,0]);
         const event=freezeDeep({referenceChart,previousChart,matrix:[...axes[0],0,...axes[1],0,...axes[2],0,...origin,1]});
@@ -1364,6 +1428,8 @@
     _teleportPlayer(frame, velocity) {
       const teleport = this._physicsSession?.teleport;
       if (typeof teleport !== 'function') return undefined;
+      this._physicalStack?.clearDriveTraffic?.();
+      this._driveTrafficProvider?.clear();
       const snapshot = teleport.call(this._physicsSession, frame, velocity);
       this._playerTeleportCount += 1;
       return snapshot;
@@ -1470,6 +1536,7 @@
       const session = this._physicsSession;
       const rival = this._rival;
       const hadPhysicalStack = Boolean(stack || session || rival || this._prepared);
+      this.setDriveTrafficProvider(null);
       this._stackAbortController?.abort(new Error('physical stack disposed'));
       this._stackAbortController = null;
       this._physicalStack = null;
@@ -1623,6 +1690,7 @@
     configure(settings) {
       const observedSettings=this._physicalObservers.size?JSON.stringify(this._rules.settings):null;
       this._rules.configure({ ...(settings || {}), rivalCount: 0 });
+      if(this._rules.settings.mode!=='practice')this.setDriveTrafficProvider(null);
       if(observedSettings!==null&&observedSettings!==JSON.stringify(this._rules.settings))this._invalidatePhysicalObservers('rules-configuration-changed');
       this._syncRivalActive();
       this.settings = this._rules.settings;
@@ -1634,6 +1702,7 @@
       this._championshipLedger?.cancel();
       this._championshipLedger = null;
       if (!track) throw new TypeError('selectTrack requiere un circuito');
+      this.setDriveTrafficProvider(null);
       this._invalidatePhysicalObservers('track-changed');
       this.track = track;
       this._rules.selectTrack(track);
@@ -1671,6 +1740,7 @@
     start({ initialGear } = {}) {
       const persistentDamage=this._vehicleMaintenance?.begin({vehicleSpec:this._physicsSession?.spec});
       if (this._championshipOptions && (!this._rival || this._rules.settings.mode !== 'race')) throw new Error('Championship requires the prepared physical Falcon in race mode');
+      this.setDriveTrafficProvider(null);
       this._invalidatePhysicalObservers('session-restarted');
       this._physicalSessionSequence++;
       this._physicalQAMutated = false;
@@ -2101,6 +2171,10 @@
       const previous = this._projection;
       this._previousSnapshot = this._currentSnapshot || this._snapshot;
       const statusBefore = this._rules.state.status;
+      if(statusBefore==='RUNNING'&&this._driveTrafficProvider){
+        const poses=this._driveTrafficProvider.advance(previous,FIXED_DT);
+        this._physicalStack?.syncDriveTraffic?.(poses,this._snapshot);
+      }
       if (this._rival
         && this._rules.settings.mode === 'race'
         && statusBefore === 'RUNNING'
@@ -2180,6 +2254,7 @@
       }
 
       if (!projected.rejected) this._projection = current;
+      if(this._driveTrafficProvider&&this._rules.state.status==='FINISHED')this.setDriveTrafficProvider(null);
       this._syncRulesMotion(this._projection);
       if (!this._championshipLedger || statusBefore !== 'RUNNING') {
         this.state = this._publish(this._projection, this._snapshot, projected.rejected);

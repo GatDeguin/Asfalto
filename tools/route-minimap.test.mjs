@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createRouteMinimapGeometry } from '../src/ui/route-minimap.mjs?v=4ea627b08927281c';
+import { createRouteMinimapGeometry } from '../src/ui/route-minimap.mjs?v=119e35ca50740c45';
 
 function route(points, closed = false) {
   const length = points.at(-1)[0];

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=be8bee16cabf1aea';
+import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=0583e108bf35b4e5';
 
 test('a trip gives each model two or three varied encounters, with one parking and one passing event', () => {
   const plan = createDriveTrafficPlan({lengthM: 22717, seed: 42});

@@ -1,11 +1,12 @@
 import {getRoadTestDisplayItems} from './v7-roadtest-receipts.mjs?v=b2a818b5bf186307';
 import {AWARDS as AWARD_CATALOG} from './v7-championship-catalog.mjs?v=250778123f1c9e7f';
 import {resumeRun,earnedAwards} from './v7-championship-state.mjs?v=54514a098688545f';
+import {getActivityRouteAwards} from './activity-rewards.mjs?v=684503a891f85e8a';
 export {AWARD_CATALOG};
 /** Read-only reconstruction. Legacy counters, sheets, photos and unvalidated medal IDs are ignored. */
 export function getEarnedDisplayItems(profile){
  const storedRuns=profile?.motorsportV7?.runs,runs=storedRuns&&typeof storedRuns==='object'&&!Array.isArray(storedRuns)?storedRuns:{};
- const found=new Map(getRoadTestDisplayItems(profile).map(item=>[item.id,item]));
+ const found=new Map([...getRoadTestDisplayItems(profile),...getActivityRouteAwards(profile)].map(item=>[item.id,item]));
  for(const candidate of Object.values(runs)){
   try{
    const run=resumeRun(candidate);

@@ -70,3 +70,97 @@ test('actual player to Falcon contact exports a measured vehicle impact',async t
   assert.ok(event.relativeVelocityMps[0]>15);
   assert.ok(event.localPointM[0]>0);
 });
+
+const trafficHull={center:[0,.55,0],halfExtents:[2.2,.35,.87]};
+const trafficPose=(id,x,z,rotation=[0,0,0,1])=>({id,position:[x,.03,z],rotation,hull:trafficHull});
+
+test('parked route traffic collides only at its visible offset and removal frees the lane',async t=>{
+  const stack=await setup();
+  t.after(()=>stack.dispose());
+  const player=stack.physicsSession,car=trafficPose(1,30,3.6);
+  player.teleport({x:19,y:.65,z:0},{x:24,y:0,z:0});
+  for(let i=0;i<70;i++){
+    stack.syncDriveTraffic([car],player.getSnapshot());
+    player.step(1/120,{});
+  }
+  assert.ok(player.body.translation().x>31);
+  assert.equal(player.getSnapshot().impacts.length,0);
+  player.reset({spawn:{x:19,y:.65,z:3.6}});
+  player.body.setLinvel({x:24,y:0,z:0},true);
+  for(let i=0;i<70&&!player.getSnapshot().impact;i++){
+    stack.syncDriveTraffic([car],player.getSnapshot());
+    player.step(1/120,{});
+  }
+  const hit=player.getSnapshot().impacts.at(-1);
+  assert.ok(hit?.impulseNs>1000);
+  assert.equal(hit.otherId,'traffic:1');
+  assert.equal(hit.material,'vehicle-metal');
+  assert.ok(player.body.linvel().x<15);
+  stack.syncDriveTraffic([],player.getSnapshot());
+  assert.equal(stack.diagnostics.driveTrafficColliders,0);
+  player.reset({spawn:{x:19,y:.65,z:3.6}});
+  player.body.setLinvel({x:24,y:0,z:0},true);
+  for(let i=0;i<70;i++)player.step(1/120,{});
+  assert.ok(player.body.translation().x>31);
+  assert.equal(player.getSnapshot().impacts.length,0);
+});
+
+test('oncoming traffic contributes its actual speed to the solver impact and keeps one collider',async t=>{
+  const stack=await setup();
+  t.after(()=>stack.dispose());
+  const player=stack.physicsSession;
+  player.teleport({x:20,y:.65,z:0},{x:12,y:0,z:0});
+  for(let i=0;i<100&&!player.getSnapshot().impact;i++){
+    stack.syncDriveTraffic([trafficPose(8,39-i*15/120,0,[0,1,0,0])],player.getSnapshot());
+    player.step(1/120,{});
+    assert.equal(stack.diagnostics.driveTrafficColliders,1);
+  }
+  const hit=player.getSnapshot().impacts.at(-1);
+  assert.equal(hit?.otherId,'traffic:8');
+  assert.ok(hit.relativeVelocityMps[0]>23);
+});
+
+test('an overtaking vehicle can strike the player from behind when it moves into the lane',async t=>{
+  const stack=await setup();
+  t.after(()=>stack.dispose());
+  const player=stack.physicsSession;
+  player.teleport({x:50,y:.65,z:1},{x:6,y:0,z:0});
+  for(let i=0;i<112&&!player.getSnapshot().impact;i++){
+    const side=-1.4+2.4*Math.max(0,Math.min(1,(i-25)/45));
+    stack.syncDriveTraffic([trafficPose(11,34+i*28/120,side)],player.getSnapshot());
+    player.step(1/120,{});
+  }
+  const hit=player.getSnapshot().impacts.at(-1);
+  assert.equal(hit?.otherId,'traffic:11');
+  assert.ok(hit.relativeVelocityMps[0]<-14);
+  assert.ok(hit.localPointM[0]<-1);
+});
+
+test('traffic follows the player world through a reference chart change',async t=>{
+  const stack=await setup();
+  t.after(()=>stack.dispose());
+  const player=stack.physicsSession;
+  player.teleport({x:20,y:.65,z:0},{x:23,y:0,z:0});
+  stack.syncDriveTraffic([trafficPose(14,32,0)],player.getSnapshot());
+  const point=([x,y,z])=>[x-1000,y+5,z+300];
+  const transform={point,vector:value=>Array.from(value),rotation:value=>Array.from(value)};
+  stack.transformReferenceFrame(transform,{referenceChart:1});
+  assert.equal(stack.diagnostics.driveTrafficColliders,1);
+  for(let i=0;i<70&&!player.getSnapshot().impact;i++)player.step(1/120,{});
+  const hit=player.getSnapshot().impacts.at(-1);
+  assert.equal(hit?.otherId,'traffic:14');
+  assert.ok(hit.relativeVelocityMps[0]>15);
+});
+
+test('traffic leaving the view or entering a discontinuity cannot leave a distant collider',async t=>{
+  const stack=await setup();
+  t.after(()=>stack.dispose());
+  const player=stack.physicsSession;
+  player.teleport({x:20,y:.65,z:0});
+  stack.syncDriveTraffic([trafficPose(9,100,0)],player.getSnapshot());
+  assert.equal(stack.diagnostics.driveTrafficColliders,0);
+  stack.syncDriveTraffic([trafficPose(9,35,0)],player.getSnapshot());
+  assert.equal(stack.diagnostics.driveTrafficColliders,1);
+  stack.clearDriveTraffic();
+  assert.equal(stack.diagnostics.driveTrafficColliders,0);
+});

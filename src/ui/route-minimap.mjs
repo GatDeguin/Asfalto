@@ -88,17 +88,17 @@ export function createRouteMinimapGeometry() {
   return { update };
 }
 
-function strokeRoad(ctx, points, count, originX, originY, scale, color) {
+function strokeRoad(ctx, points, count, originX, originY, scale, color, lineWidth) {
   if (count < 2) return;
   ctx.beginPath();
   ctx.moveTo(originX + points[0] * scale, originY + points[1] * scale);
   for (let i = 2; i < count * 2; i += 2) {
     ctx.lineTo(originX + points[i] * scale, originY + points[i + 1] * scale);
   }
-  ctx.lineWidth = 6;
-  ctx.strokeStyle = '#090b0c';
+  ctx.lineWidth = lineWidth + 2.5;
+  ctx.strokeStyle = '#080706';
   ctx.stroke();
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = lineWidth;
   ctx.strokeStyle = color;
   ctx.stroke();
 }
@@ -150,8 +150,8 @@ export function createRouteMinimap(canvas, win = window) {
       const scale = Math.min((originY - 5) / AHEAD_M, (width - 12) / 410);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      strokeRoad(ctx, frame.behind, frame.behindCount, originX, originY, scale, '#827c70');
-      strokeRoad(ctx, frame.ahead, frame.aheadCount, originX, originY, scale, '#f7e7c8');
+      strokeRoad(ctx, frame.behind, frame.behindCount, originX, originY, scale, '#989189', 1.65);
+      strokeRoad(ctx, frame.ahead, frame.aheadCount, originX, originY, scale, '#f7f5ef', 2.5);
 
       const markerSize = height < 70 ? 5.5 : 8;
       ctx.save();
@@ -163,10 +163,10 @@ export function createRouteMinimap(canvas, win = window) {
       ctx.lineTo(0, markerSize * .34);
       ctx.lineTo(-markerSize * .68, markerSize * .68);
       ctx.closePath();
-      ctx.fillStyle = '#ff994c';
+      ctx.fillStyle = '#ff6500';
       ctx.fill();
       ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#221008';
+      ctx.strokeStyle = '#2c1206';
       ctx.stroke();
       ctx.restore();
     },

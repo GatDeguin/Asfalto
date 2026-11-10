@@ -99,5 +99,5 @@ export function createDriveTraffic(plan, {lengthM}) {
     }
     return active;
   }
-  return {update, diagnostics:() => ({scheduled:plan.length, triggered:cursor, next:plan[cursor]?.kind||null, active:active.map(car => ({...car}))})};
+  return {update, clearActive(){active.length=0;}, diagnostics:() => ({scheduled:plan.length, triggered:cursor, next:plan[cursor]?.kind||null, active:active.map(car => ({...car}))})};
 }

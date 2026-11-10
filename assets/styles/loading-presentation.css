@@ -9,8 +9,37 @@
 #an-session-loading[hidden],#loading.hidden,#v6-workshop-loading.v6-hidden{display:none!important}
 #an-session-loading[data-departure=true]{background:transparent;isolation:auto}
 #an-session-loading[data-departure=true] :is(.an-cinema-image,.an-cinema-film,.an-loading-card,.an-cinema-masthead){visibility:hidden}
+#an-session-loading[data-departure=true] .an-cinema-shade{
+ background:radial-gradient(ellipse at 52% 47%,transparent 48%,#04060865 100%),linear-gradient(0deg,#040608d9,transparent 21%);
+}
+#an-session-loading[data-departure=true] .an-cinema-shade::after{
+ border-block:clamp(15px,5.1vh,52px) solid #050708;
+ box-shadow:none;
+}
+#an-session-loading[data-departure=true] .an-cinema-footer{
+ display:flex;bottom:calc(clamp(19px,6.6vh,72px) + env(safe-area-inset-bottom));gap:12px;
+}
+#an-session-loading[data-departure=true] :is(.an-cinema-chapter,.an-loading-tachometer){display:none}
+#an-session-loading[data-departure=true] .an-cinema-rule{width:25px}
+#an-session-loading[data-departure-phase=gate] .an-cinema-rule,#an-session-loading[data-departure-phase=exit] .an-cinema-rule{
+ background:linear-gradient(90deg,#bcd7e4,#e4eaf322);
+}
+#an-session-loading[data-departure=true] .an-loading-stage{
+ position:static;width:auto;height:auto;margin:0;clip-path:none;white-space:normal;max-width:none;
+ color:#f6eddc;font:600 11px/1.35 system-ui,sans-serif;letter-spacing:.11em;text-transform:uppercase;text-shadow:0 1px 8px #030405;
+}
+#an-session-loading[data-departure=true]::after{
+ content:'';position:absolute;inset:0;background:var(--an-load-ink);opacity:0;transition:opacity .18s linear;pointer-events:none;
+}
+#an-session-loading[data-departure-fade=true]::after{opacity:1}
 body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu :is(#v6-menu-sidebar,#v6-menu-content,.an-menu-footer,.an-vehicle-plate){visibility:hidden}
 body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-stage::before{background:none}
+body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-stage{
+ inset:0;width:100%;height:100%;
+}
+body:has(#an-session-loading[data-departure=true]:not([hidden])) #v6-main-menu #v6-workshop-canvas{
+ inset:0;width:100%;height:100%;
+}
 .an-cinema-image,.an-cinema-film,.an-cinema-film video,.an-cinema-shade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .an-cinema-image{background-position:center;background-size:cover;transform:scale(1.025)}
 .an-cinema-film video{object-fit:cover;opacity:0;transition:opacity .65s ease;filter:saturate(.88) contrast(1.03);background:transparent}

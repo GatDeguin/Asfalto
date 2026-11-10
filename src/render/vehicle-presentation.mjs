@@ -249,6 +249,26 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
     setEngineBayVisible(value,{includeAncillaries=false}={}){if(disposed)return false;engineBayVisible=!!value;engineBayNodes.forEach(node=>{node.visible=engineBayVisible;});if(includeAncillaries){engineAncillariesVisible=!!value;engineBayAncillaryNodes.forEach(node=>{node.visible=engineAncillariesVisible;});}return true;},
     setHoodOpen(amount){if(disposed)return false;hoodAmount=clamp(amount);hoods.forEach(p=>{p.rotation.z=-hoodAmount*1.04;});return true;},
     setActive(value){return lighting.setActive(value);},
+    beginDepartureCue(){
+      if(disposed)return null;
+      const wheels=tiers.flatMap(tier=>Object.values(tier.wheels).map(pivot=>[pivot,pivot.rotation.z]));
+      const headlights=headlamps.map(material=>[material,material.emissiveIntensity]);
+      const rearLights=brakes.map(material=>[material,material.emissiveIntensity]);
+      let restored=false;
+      return {
+        setFrame({wheelRotationRad,headlamps,brake}){
+          if(restored||disposed)return;
+          for(const [pivot,angle] of wheels)pivot.rotation.z=angle+wheelRotationRad;
+          for(const [material,intensity] of headlights)material.emissiveIntensity=intensity+headlamps*1.65;
+          for(const [material,intensity] of rearLights)material.emissiveIntensity=intensity+headlamps*(.12+.84*brake);
+        },
+        restore(){
+          if(restored)return;restored=true;
+          for(const [pivot,angle] of wheels)pivot.rotation.z=angle;
+          for(const [material,intensity] of [...headlights,...rearLights])material.emissiveIntensity=intensity;
+        },
+      };
+    },
     setHeadlights(on){return lighting.setMode(on?'low':'off');},
     setLightMode(mode){interiorRig.setLights(mode!=='off');return lighting.setMode(mode);},
     setLightingCalibration:value=>lighting.setCalibration(value),getLightingCalibration:()=>lighting.getCalibration(),getLightingDiagnostics:()=>lighting.diagnostics(),

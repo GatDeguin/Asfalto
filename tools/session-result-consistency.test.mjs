@@ -1,47 +1,56 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import * as activityRewards from '../src/menu/activity-rewards.mjs?v=684503a891f85e8a';
 
-const source=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=212b3eb64a2560b3',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=ae6c81ebdf22532a',import.meta.url),'utf8');
 const resultFunctions=source.slice(source.indexOf('function finishJourney('),source.indexOf('function applyWear('));
 
-function finishActivity(activity,{valid=true,finished=true,reasons=[]}={}){
- const activeSession={completed:false,valid,distance:1200,maxSpeed:100,startTime:0,series:[],reasons,definition:{title:'Sprint de club'}};
- const profile={journey:{km:0,routes:[]},championship:{events:0,points:0,wins:0}};
- const results=[],history=[],awards=[];
- const scope={activeSession,profile,sessionLoop:{stop(){}},dateStamp:()=>'',round:Math.round,q:()=>({value:'dos_lagos'}),addHistory(_title,entry){history.push(entry);},award(points){awards.push(points);},applyWear(){},saveProfile(){},showResults:result=>results.push(result),vehicleClass:()=> 'Histórica',fmtTime:()=>'',window:{}};
+async function finishActivity(activity,{valid=true,finished=true,reasons=[]}={}){
+ const isRace=activity==='competition';
+ const activityReceiptBase={type:activity,resultId:'result',sessionSequence:1,trackId:'dos_lagos',vehicleId:'chevy',class:'Histórica',startedAt:'2026-01-01T00:00:00Z',...(isRace?{title:'Sprint de club',competitionId:'sprint',mode:'race'}:{})};
+ const activeSession={completed:false,valid,distance:1200,maxSpeed:100,startTime:0,series:[],reasons,definition:{title:'Sprint de club'},activityReceiptBase};
+ let profile={workshopTokens:100,journey:{km:0,routes:[]},championship:{events:0,points:0,wins:0}},disk=JSON.stringify(profile);
+ const results=[];
+ const activityRewardStore=activityRewards.createActivityRewardStore({storage:{getItemPersistent:()=>disk,setItemPersistent(_key,value){disk=value;}},getProfile:()=>profile,replaceProfile:next=>{profile=next;},withLock:fn=>Promise.resolve().then(fn)});
+ const final={complete:true,valid:true,fixedHz:120,participants:[{id:'player',status:'finished',valid:true,checkpointComplete:true,officialSeconds:12,finishTick:1440},{id:'falcon',status:'finished',valid:true,checkpointComplete:true,officialSeconds:13,finishTick:1560}]};
+ const world={getPhysicalObservationState:()=>({qa:false,sessionSequence:1}),getFinalClassification:()=>final,pause(){}};
+ const scope={activeSession,activityRewards,activityRewardStore,sessionLoop:{stop(){}},round:Math.round,applyWear(){},clearLocalCompetitionClassification(){},showResults:result=>results.push(result),vehicleClass:()=> 'Histórica',window:{__cockpit:{raceWorld:world}},location:{search:''}};
  const finish=new Function('scope',`with(scope){${resultFunctions};return {journey:finishJourney,competition:finishCompetition};}`)(scope);
- finish[activity]({finished,raw:{totalTime:12,raceProgress:1200}},12000);
- assert.equal(results.length,1);
- return {result:results[0],profile,history,awards};
+ const state={finished,raw:{status:finished?'FINISHED':'RUNNING',finishReason:finished?'completed':null,totalTime:12,raceProgress:1200,completedLaps:finished?1:0,track:{id:'dos_lagos',length:1200}}};
+ finish[activity](state,12000);finish[activity](state,12000);
+ await new Promise(resolve=>setImmediate(resolve));
+ return {result:results.at(-1),results,profile};
 }
 
-for(const activity of ['journey','competition'])test(activity+' omits unmeasured consistency',()=>{
- const {result}=finishActivity(activity);
+for(const activity of ['journey','competition'])test(activity+' omits unmeasured consistency and publishes the confirmed reward',async()=>{
+ const {result,results}=await finishActivity(activity);
  assert.equal(result.distance,1200);
  assert.equal(Object.hasOwn(result,'consistency'),false);
+ assert.equal(results.length,2);
+ assert.equal(results[0].saving,true);
+ assert.match(result.progress, /fichas obtenidas/);
 });
 
-test('valid competition finish records a rank and awards championship points',()=>{
- const {result,profile,history,awards}=finishActivity('competition');
+test('valid competition finish records a physical rank and awards points once',async()=>{
+ const {result,profile}=await finishActivity('competition');
  assert.equal(result.valid,true);
  assert.equal(result.main,'P1');
  assert.deepEqual(profile.championship,{events:1,points:6,wins:1});
- assert.match(history[0],/Puesto 1/);
- assert.ok(awards[0].competencia>0);
+ assert.match(profile.history[0].copy,/Puesto 1/);
+ assert.equal(profile.workshopTokens,105);
 });
 
 for(const attempt of [
  {name:'invalid finish',valid:false,finished:true,reasons:['PENALIZACIÓN'],reason:'PENALIZACIÓN'},
- {name:'time limit without a finish',valid:true,finished:false,reasons:[],reason:'TIEMPO LÍMITE SIN LLEGADA'},
-])test(`${attempt.name} records the attempt without a rank, win or points`,()=>{
- const {result,profile,history,awards}=finishActivity('competition',attempt);
+ {name:'time limit without a finish',valid:true,finished:false,reasons:[],reason:'Tiempo límite sin completar el objetivo'},
+])test(`${attempt.name} shows no rank and records no reward`,async()=>{
+ const {result,profile}=await finishActivity('competition',attempt);
  assert.equal(result.valid,false);
  assert.equal(result.main,'—');
  assert.ok(result.reasons.includes(attempt.reason));
- assert.deepEqual(profile.championship,{events:1,points:0,wins:0});
- assert.match(history[0],/Sin clasificación/);
- assert.deepEqual(awards,[{dominio:4}]);
+ assert.deepEqual(profile.championship,{events:0,points:0,wins:0});
+ assert.equal(profile.workshopTokens,100);
 });
 
 test('the championship sheet uses the measured speed, route distance and Spanish result states',()=>{

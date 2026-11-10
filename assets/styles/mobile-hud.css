@@ -1,6 +1,8 @@
 /* Phone presentation only. The PC HUD retains its authored 3D renderer. */
 body.an-phone-hud #chevy-hud-webgl-canvas{display:none!important}
-body.an-phone-hud .chevy-hud-host[data-render-state=mobile]{opacity:1;aspect-ratio:auto;filter:none;border:1px solid #d9e0e62e;border-top-color:#ffffff59;border-radius:7px;background:linear-gradient(145deg,#1c2835e8,#07101bea);box-shadow:inset 0 1px #ffffff15,inset 0 -2px #0007,0 4px 12px #0005;overflow:hidden}
+body.an-phone-hud{--chevy-phone-hud-face:linear-gradient(145deg,#1c2835e8,#07101bea)}
+body.an-phone-hud .chevy-hud-host[data-render-state=mobile],
+body.an-phone-hud #chevy-hud-navigation{opacity:1;aspect-ratio:auto;filter:none;border:1px solid #d9e0e62e;border-top-color:#ffffff59;border-radius:7px;background:var(--chevy-phone-hud-face);box-shadow:inset 0 1px #ffffff15,inset 0 -2px #0007,0 4px 12px #0005;overflow:hidden}
 body.an-phone-hud #chevy-hud-objective,body.an-phone-hud #chevy-hud-timer{top:max(8px,env(safe-area-inset-top));height:62px}
 body.an-phone-hud #chevy-hud-objective{left:max(8px,env(safe-area-inset-left));width:47%}
 body.an-phone-hud #chevy-hud-timer{right:max(8px,env(safe-area-inset-right));width:45%}
@@ -11,7 +13,12 @@ body.an-phone-hud #chevy-hud-timer .chevy-hud-copy{inset:8px 10px;display:flex;f
 body.an-phone-hud #chevy-hud-timer-label{font-size:10px}
 body.an-phone-hud #chevy-hud-timer-value{font-size:20px}
 body.an-phone-hud #chevy-hud-navigation,body.an-phone-hud #chevy-hud-telemetry{bottom:calc(max(8px,env(safe-area-inset-bottom)) + var(--an-mobile-controls-height,0px));height:65px}
-body.an-phone-hud #chevy-hud-navigation{left:max(8px,env(safe-area-inset-left));width:max(31%,130px);padding:4px;gap:5px;grid-template-columns:minmax(0,1fr) 63px}
+body.an-phone-hud #chevy-hud-navigation{
+ --chevy-nav-glass:#101923;
+ left:max(8px,env(safe-area-inset-left));width:max(31%,130px);padding:5px 7px;gap:5px;grid-template-columns:minmax(0,1fr) 63px;
+ background:repeating-linear-gradient(135deg,#ffffff05 0 1px,transparent 1px 4px),var(--chevy-phone-hud-face)
+}
+body.an-phone-hud #chevy-hud-navigation::before,body.an-phone-hud #chevy-hud-navigation::after{content:none}
 body.an-phone-hud .chevy-hud-navigation-copy{justify-content:flex-end;gap:2px;padding-bottom:2px}
 body.an-phone-hud .chevy-hud-navigation-label{display:none}
 body.an-phone-hud #chevy-hud-telemetry{right:max(8px,env(safe-area-inset-right));width:60%}
@@ -22,7 +29,7 @@ body.an-phone-hud #chevy-hud-statuses{left:10px;right:10px;bottom:9px;font-size:
 @media(orientation:landscape){body.an-phone-hud #chevy-hud-objective{width:29%;height:50px}body.an-phone-hud #chevy-hud-timer{width:23%;height:50px}body.an-phone-hud #chevy-hud-navigation{width:clamp(132px,22vw,190px);height:56px}body.an-phone-hud #chevy-hud-telemetry{width:32%;height:54px}body.an-phone-hud #chevy-hud-statuses{font-size:8px;bottom:6px}}
 
 /* Speed is primary on a phone; distance remains a separate, labelled value. */
-body.an-phone-hud #an-mobile-speed{position:absolute;left:0;top:0;display:flex;align-items:baseline;gap:3px;color:#fff;font:800 19px/1.05 ui-monospace,monospace;white-space:nowrap}
+body.an-phone-hud #an-mobile-speed{position:absolute;left:0;top:0;display:flex;align-items:baseline;gap:3px;color:#fff;font:800 19px/1.05 var(--chevy-hud-digits);white-space:nowrap}
 body.an-phone-hud #an-mobile-speed span{font:700 8px/1 system-ui,sans-serif;color:#d6d1c7}
 body.an-phone-hud #chevy-hud-navigation-value{font-size:11px}
 body.an-phone-hud #chevy-hud-navigation-mode{font-size:7px}

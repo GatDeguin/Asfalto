@@ -31,6 +31,8 @@ export function createWorkshopArchitectureE31(T,workshop,{floorY=WORKSHOP_E31_LA
  }
  box('E31_GateHeadGuide',[0,gateTop+.015,6.36],[7.02,.055,.06],steel);
  box('E31_GateThreshold',[0,floorY-.018,6.15],[6.86,.036,.75],concrete);
+ const apron=box('E31_ExteriorApron',[0,floorY-.064,9.17],[8.5,.12,6.0],concrete);
+ apron.castShadow=false;
  const doorMin=3.2025,doorMax=4.4675,serviceTop=floorY+2.1;
  for(const [a,b,label]of [[I.back,doorMin,'Back'],[doorMax,I.front,'Front']])box('E31_ServiceWall_'+label,[8.85082873,(base+top)/2,(a+b)/2],[thickness,top-base,b-a],plaster);
  box('E31_ServiceLintel',[8.85082873,(serviceTop+top)/2,3.835],[thickness,top-serviceTop,1.265],plaster);

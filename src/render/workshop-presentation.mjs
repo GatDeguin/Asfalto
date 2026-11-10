@@ -1,6 +1,6 @@
 import {prepareCubeCamera,registerRenderPreparation} from './pass-preparation.mjs?v=258173b4dba723d7';
 import {createRoomProbeGuard} from './workshop-probe-guard.mjs?v=6358f00e9243d166';
-import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=7165790883a68c4d';
+import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from './workshop-architecture-e31.mjs?v=b2a8dacd5f227b52';
 import {createWorkshopLivedInE31} from './workshop-lived-in-e31.mjs?v=f1285705fbb028e1';
 import {createWorkshopContactShadow} from './workshop-contact-shadow.mjs?v=2e31137f87c36ece';
 import { createWorkshopCollection } from './workshop-collection.mjs?v=abd9e9f27b941233';

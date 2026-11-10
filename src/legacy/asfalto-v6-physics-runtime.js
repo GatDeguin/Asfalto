@@ -960,7 +960,7 @@
         const force=-(.5*density*spec.aero.dragCoefficient*spec.aero.frontalAreaM2*planarSpeed*planarSpeed+spec.massKg*9.81*.015*clamp(finite(e.rollingResistanceMultiplier,1),.5,2));
         s.resistance[0]=s.velocity[0]/planarSpeed*force;s.resistance[2]=s.velocity[2]/planarSpeed*force;this.body.addForce(rapierInto(s.force,s.resistance),true);}
       fromRapierInto(s.angularVelocity,this.body.angvel(s.rapierAngular));this.world.step(this.impactEvents||undefined);this.timeSeconds+=FIXED_DT;if(this.ignitionState==='starting')this.ignitionState='running';
-      const hadImpact=this._captureStaticImpacts(s.velocity,s.angularVelocity);
+      const hadImpact=this._captureImpacts(s.velocity,s.angularVelocity);
       const wear=s.wear;wear.engineRpm=this.powertrainState.engineRpm;wear.engineTemperatureC=finite(this.powertrainState.engineTemperatureC,this.powertrainState.temperatureC);wear.frontBrakeTemperatureC=this.brakeState.frontTemperatureC;wear.rearBrakeTemperatureC=this.brakeState.rearTemperatureC;wear.clutchSlipPowerW=Math.abs(this.powertrainState.clutchSlipRadps*powertrain.engineTorqueNm);wear.shiftShock=0;wear.bottomOut=bottomOut;
       this.core.applyMechanicalWearInto(this.damage,this.damage,wear,FIXED_DT);
       const ch=snapshot.chassis,q=this.body.rotation(s.rapierRotation);fromRapierInto(ch.position,this.body.translation(s.rapierTranslation));ch.rotation[0]=q.x;ch.rotation[1]=q.y;ch.rotation[2]=q.z;ch.rotation[3]=q.w;
@@ -1008,9 +1008,13 @@
           fromRapierInto(s.impactLocal,flipped?manifold.localContactPoint2(0,s.rapierLocal):manifold.localContactPoint1(0,s.rapierLocal));
           rotateInto(s.impactPoint,s.impactLocal,own.rotation(s.rapierOtherRotation));fromRapierInto(s.impactOrigin,own.translation(s.rapierOrigin));
           for(let k=0;k<3;k++)s.impactPoint[k]+=s.impactOrigin[k];this._impactHasPoint=true;
+          if(this._impactOtherMoving){
+            fromRapierInto(s.impactNormal,manifold.normal(s.rapierNormal));
+            if(flipped)for(let k=0;k<3;k++)s.impactNormal[k]*=-1;
+          }
         };
         this._registerImpactCollider=collider=>{if(this._impactRegistry.has(collider.handle))return;
-          const record={index:this._impactRecords.length,handle:collider.handle,point:[0,0,0],impulseNs:0,speed:0,tangentSpeed:0,material:'unknown',tick:-1,lastTime:-Infinity};
+          const record={index:this._impactRecords.length,handle:collider.handle,point:[0,0,0],relativeVelocity:[0,0,0],impulseNs:0,speed:0,tangentSpeed:0,material:'unknown',otherId:'world',tick:-1,lastTime:-Infinity,latched:false};
           this._impactRegistry.set(collider.handle,record);this._impactRecords.push(record);};
       }
       if(!this._inImpactDrain) {
@@ -1029,23 +1033,34 @@
       const a=event.collider1(),b=event.collider2(),ownHandle=this._impactOwnHandles.has(a)?a:this._impactOwnHandles.has(b)?b:null;
       if(ownHandle===null)return;
       const own=this.world.getCollider(ownHandle),other=this.world.getCollider(ownHandle===a?b:a);
-      if(!other||(other.parent()&&!other.parent().isFixed()))return;
+      const otherBody=other?.parent(),trafficId=other?.asfaltoTrafficId;
+      if(!other||(otherBody&&!otherBody.isFixed()&&!trafficId))return;
       let record=this._impactRegistry.get(other.handle);
       // Compatibility for external callers adding colliders without the lifecycle hook.
       // Browser integration reserves at scene refresh; this fallback is exceptional/cold.
       if(!record){this.reserveImpactContacts();record=this._impactRegistry.get(other.handle);if(!record)return;}
       const s=this.scratch,impulse=Math.max(0,finite(event.totalForceMagnitude(),0))*FIXED_DT;
       fromRapierInto(s.impactNormal,event.maxForceDirection(s.rapierNormal));
-      this._impactOwn=own;this._impactHasPoint=false;this.world.contactPair(own,other,this._impactManifold);
+      this._impactOwn=own;this._impactHasPoint=false;this._impactOtherMoving=Boolean(trafficId);this.world.contactPair(own,other,this._impactManifold);
       if(!this._impactHasPoint)return;
       const p=s.impactPoint,c=s.impactCenter,w=s.angularVelocity,v=s.velocity,rx=p[0]-c[0],ry=p[1]-c[1],rz=p[2]-c[2];
       vectorInto(s.impactVelocity,v[0]+w[1]*rz-w[2]*ry,v[1]+w[2]*rx-w[0]*rz,v[2]+w[0]*ry-w[1]*rx);
-      const speed=Math.abs(dot(s.impactVelocity,s.impactNormal));
-      if(record.tick!==this.timeSeconds){record.tick=this.timeSeconds;record.impulseNs=0;record.speed=0;record.tangentSpeed=0;this._activeImpactIndices[this._activeImpactCount++]=record.index;}
-      record.impulseNs+=impulse;record.speed=Math.max(speed,record.speed);record.material=other.asfaltoContactMaterial||'unknown';
-      const tangentSpeed=Math.sqrt(Math.max(0,dot(s.impactVelocity,s.impactVelocity)-speed*speed));
+      if(trafficId){
+        const velocity=otherBody.velocityAtPoint(rapierInto(s.rapierLocal,p),s.rapierOrigin);
+        s.impactVelocity[0]-=velocity.x;s.impactVelocity[1]-=velocity.y;s.impactVelocity[2]-=velocity.z;
+      }
+      const projectedSpeed=dot(s.impactVelocity,s.impactNormal);
+      const speed=trafficId?Math.max(0,projectedSpeed):Math.abs(projectedSpeed);
+      if(record.tick!==this.timeSeconds){
+        if(this.timeSeconds-record.tick>.08)record.latched=false;
+        record.tick=this.timeSeconds;record.impulseNs=0;record.speed=0;record.tangentSpeed=0;this._activeImpactIndices[this._activeImpactCount++]=record.index;
+      }
+      if(!trafficId||speed>=record.speed)for(let k=0;k<3;k++){
+        record.point[k]=p[k];record.relativeVelocity[k]=s.impactVelocity[k];
+      }
+      record.impulseNs+=impulse;record.speed=Math.max(speed,record.speed);record.material=other.asfaltoContactMaterial||'unknown';record.otherId=trafficId||'world';
+      const tangentSpeed=Math.sqrt(Math.max(0,dot(s.impactVelocity,s.impactVelocity)-projectedSpeed*projectedSpeed));
       record.tangentSpeed=Math.max(record.tangentSpeed,tangentSpeed);
-      for(let k=0;k<3;k++)record.point[k]=p[k];
     }
 
     _contactLocalPoint(point,out) {
@@ -1055,7 +1070,7 @@
       return rotateInto(out,s.impactLocal,s.impactRotation);
     }
 
-    _captureStaticImpacts(linearVelocity, angularVelocity) {
+    _captureImpacts(linearVelocity, angularVelocity) {
       if(!this.impactEvents||!this.world.contactPair)return false;
       const s=this.scratch;fromRapierInto(s.impactCenter,this.body.translation(s.rapierTranslation));
       // Inputs ordinarily already alias s.velocity/angularVelocity.
@@ -1068,10 +1083,12 @@
         if(c.material!=='soil'&&c.material!=='unknown'&&c.tangentSpeed>Math.max(3,c.speed*1.8)&&power>scrapePower) {
           strongestScrape=c;scrapePower=power;
         }
-        if(c.impulseNs<this.spec.massKg*.65||c.speed<2||this.timeSeconds-c.lastTime<.3)continue;
+        const traffic=c.otherId!=='world';
+        if(c.impulseNs<this.spec.massKg*(traffic?.18:.65)||c.speed<(traffic?.6:2)||this.timeSeconds-c.lastTime<.3||(traffic&&c.latched))continue;
         this._contactLocalPoint(c.point,s.impactInput.localPointM);
-        s.impactInput.impulseNs=c.impulseNs;s.impactInput.otherId='world';s.impactInput.material=c.material;s.impactInput.relativeVelocityMps=s.velocity;
-        c.lastTime=this.timeSeconds;this._applyImpactMutable(s.impactInput);impacted=true;
+        s.impactInput.impulseNs=c.impulseNs;s.impactInput.otherId=c.otherId;s.impactInput.material=c.material;
+        s.impactInput.relativeVelocityMps=traffic?c.relativeVelocity:s.velocity;
+        c.lastTime=this.timeSeconds;c.latched=traffic;this._applyImpactMutable(s.impactInput);impacted=true;
       }
       if(strongestScrape){
         const local=this._contactLocalPoint(strongestScrape.point,s.impactLocal),scrape=s.scrapeContact;
@@ -1231,7 +1248,7 @@
     teleport(spawn, linearVelocity = { x: 0, y: 0, z: 0 }) {
       if (this.disposed) throw new Error('VehiclePhysicsSession disposed');
       this.scratch.scrapeContact.timeSeconds=-Infinity;
-      for(const record of this._impactRecords){record.lastTime=-Infinity;record.tick=-1;}
+      for(const record of this._impactRecords){record.lastTime=-Infinity;record.tick=-1;record.latched=false;}
       this.impactEvents?.clear();
       const yaw = finite(spawn?.yawRad, 0);
       const suppliedRotation = Array.isArray(spawn?.rotation) && spawn.rotation.length >= 4

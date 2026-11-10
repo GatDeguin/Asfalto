@@ -5,7 +5,7 @@ import { createMenuMusic } from './menu-music.mjs?v=a4f79eee7063acc3';
 const body = document.body;
 const world = () => globalThis.__cockpit?.raceWorld;
 const game = () => globalThis.__chevyV6Complete;
-let settingsFromPause = false, introAudioAllowed = true, resumeRadio = false, disposed = false;
+let settingsFromPause = false, introAudioAllowed = true, resumeRadio = false, disposed = false, departureMix = false;
 let visitedRace = false, restartMenuMusic = false;
 const audio = document.createElement('audio');
 audio.dataset.asfaltoAudio = 'menu'; audio.hidden = true;
@@ -49,7 +49,7 @@ function syncAudio() {
   if (!silent && resumeRadio) { resumeRadio = false; if (state?.powered && !state.playing) radio.dispatch({type:'TOGGLE_PLAYBACK'}); }
   globalThis.__cockpit?.refreshAudioGate?.();
   const settings = globalThis.__cockpit?.getState?.().settings;
-  music.setVolume(settings?.soundEnabled === false ? 0 : .32 * (settings?.masterVolume ?? 1));
+  music.setVolume(settings?.soundEnabled === false ? 0 : (departureMix ? .075 : .32) * (settings?.masterVolume ?? 1));
   const menuAudioActive = inMenu && introAudioAllowed && !body.classList.contains('an-intro-open') && !document.hidden;
   music.setActive(menuAudioActive, { restart:menuAudioActive && restartMenuMusic });
   if (menuAudioActive) restartMenuMusic = false;
@@ -86,6 +86,7 @@ globalThis.__asfaltoRacePresentation = Object.freeze({
   requestPause, closePause,
   isOpen:pause.isOpen,
   setMenuAudioActive(value) { introAudioAllowed = !!value; syncAudio(); },
+  setDepartureAudioMix(value) { departureMix = !!value; syncAudio(); },
   syncAudio,
   diagnostics() { return { pauseOpen:pause.isOpen(), music:music.diagnostics() }; },
   dispose() {

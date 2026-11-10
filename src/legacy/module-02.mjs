@@ -89,7 +89,7 @@ import { createChevyPaintController } from '../render/chevy-paint-controller.mjs
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=5f0cdca18bb3e1e6';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=557eb1a362f3f91f';
-import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=520277a6490cae4d';
+import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=d3030bcc742688dc';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=a3c74be7a204ea16';
 import { createClosedRoute } from '../tracks/visuals/route-closure.mjs?v=08ac3d0601782090';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
@@ -107,8 +107,8 @@ import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-d
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
-import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=be8bee16cabf1aea';
-import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=4956b0f663168a60';
+import {createDriveTraffic,createDriveTrafficPlan} from '../game/drive-traffic.mjs?v=0583e108bf35b4e5';
+import {createDriveTrafficView} from '../render/drive-traffic-view.mjs?v=27d41a7e17146544';
 import {createRaceWeatherCycle} from '../environment/race-weather-cycle.mjs?v=ba1d2e90c9442cc3';
 import { resolveSurfaceCondition } from '../physics/surface-conditions.mjs?v=9072f717b1be437c';
 import { createEnvironmentSelectController, environmentPresetForLegacySettings, legacySettingsForEnvironmentPreset } from '../ui/environment-select-controller.mjs?v=d0d35889f6a55e1f';
@@ -5209,13 +5209,18 @@ const RaceCore = (() => {
     }
 
     _updateSpeedTrap(previousProgress, nextProgress, speedMps) {
-      if (this.settings.mode !== 'speedTrap' || nextProgress <= previousProgress || !this.track.speedTrap) return;
+      if (this.settings.mode !== 'speedTrap' || nextProgress <= previousProgress) return;
       const trap = this.state.speedTrap;
       const length = this.track.length;
+      const authored = this.track.speedTrap;
+      const hasAuthoredBounds = Number.isFinite(authored?.start) && Number.isFinite(authored?.end)
+        && authored.start >= 0 && authored.end > authored.start && authored.end <= length;
+      const startOffset = hasAuthoredBounds ? authored.start : Math.min(400, length * .4);
+      const endOffset = hasAuthoredBounds ? authored.end : Math.min(500, length * .5);
       const lapBase = Math.floor(previousProgress / length) * length;
       for (const base of [lapBase, lapBase + length]) {
-        const start = base + this.track.speedTrap.start;
-        const end = base + this.track.speedTrap.end;
+        const start = base + startOffset;
+        const end = base + endOffset;
         if (previousProgress < start && nextProgress >= start) {
           trap.active = true;
           trap.peakMps = Math.max(0, speedMps);
@@ -6096,7 +6101,9 @@ function prepareStartSignal(){
  });
 }
 function clearDriveTraffic(){
- driveTraffic?.view.dispose();driveTraffic=null;
+ const previous=driveTraffic;driveTraffic=null;
+ simulation.setDriveTrafficProvider(null);
+ previous?.view.dispose();
 }
 async function prepareDriveTraffic(mode,signal){
  if(mode!=='free'&&mode!=='journey')return;
@@ -6106,12 +6113,26 @@ async function prepareDriveTraffic(mode,signal){
   return row.width>=5&&Math.abs(row.curvature||0)<.008&&Math.abs(row.bank||0)<.10;
  }});
  const view=createDriveTrafficView(THREE,{scene,loadGlb:window.__asfaltoLoadVehicleModel,prepareTexture:texture=>renderer.initTexture(texture)});
- const session={view,traffic:createDriveTraffic(plan,{lengthM:track.length}),route:null,...(isAsfaltoV5Qa?{plan}:{})};
+ const session={view,traffic:createDriveTraffic(plan,{lengthM:track.length}),route:null,cars:[],poses:[],...(isAsfaltoV5Qa?{plan}:{})};
  driveTraffic=session;
  try{await view.prepare(plan,signal);signal?.throwIfAborted();}
  catch(error){if(driveTraffic===session)clearDriveTraffic();throw error;}
 }
-function updateRoutePresentation(dt, renderFrame){
+function installDriveTraffic(session,route){
+ session.route=route;
+ simulation.setDriveTrafficProvider({
+  advance(projection,dt){
+   const progress=projection.raceProgress;
+   session.cars=session.traffic.update({progressM:progress,speedMps:Math.abs(projection.speedAlongRouteMps||0),
+    lateralM:projection.lateral||0,dt,passingAllowed:()=>Math.abs(track.sample(projection.s).curvature||0)<.008});
+   session.poses=session.view.stage(session.cars,route.sample);
+   return session.poses;
+  },
+  rebase(){session.poses=session.view.stage(session.cars,route.sample);},
+  clear(){session.traffic.clearActive();session.cars=[];session.poses=[];session.view.update([],0);},
+ });
+}
+function updateRoutePresentation(renderFrame){
  const status=lastState.status, progress=lastState.raceProgress;
  const finishAt=track.checkpoints.at(-1)??track.length;
  const distance=finishAt+track.length*(Math.max(1,simulation.settings.laps)-1)-progress;
@@ -6122,11 +6143,8 @@ function updateRoutePresentation(dt, renderFrame){
  }
  finishMarker.update(distance,status);
  if(!driveTraffic?.route||status!=='RUNNING')return;
- const projection=renderFrame.projection || lastState.projection || lastState;
- const cars=driveTraffic.traffic.update({progressM:progress,speedMps:Math.abs(feedback.speedMps||0),
-  lateralM:projection.lateral||0,dt,passingAllowed:()=>Math.abs(track.sample(progress).curvature||0)<.008});
  const night=raceDayActive?raceDayClock.state.nightFactor:settings.skyId==='night'||settings.skyId==='moonrise'?1:settings.skyId==='sunset'?.28:0;
- driveTraffic.view.update(cars,driveTraffic.route.sample,progress,night);
+ driveTraffic.view.update(driveTraffic.poses,progress,night);
 }
 const roadTestCourse=createRoadTestCoursePresentation(THREE,{scene});
 let roadTestCourseUnsubscribe=null;
@@ -8031,7 +8049,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if(request!==raceStartRequest)throw new DOMException('Otra largada reemplazó esta preparación','AbortError');
     finishDriveLap=driving;
     const initialGear=options.getTransmissionMode?.()==='automatic'?1:0;
-    closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();if(driveTraffic)driveTraffic.route=finishRoute;lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=Math.ceil(lastState.countdown||3);ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(lastCountdownNumber),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
+    closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();if(driveTraffic)installDriveTraffic(driveTraffic,finishRoute);lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=Math.ceil(lastState.countdown||3);ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(lastCountdownNumber),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
     });}catch(error){if(request===raceStartRequest&&driveTraffic&&!driveTraffic.route)clearDriveTraffic();throw error;}
   }
   function pause({reason='pause'}={}) {simulation.pause();lastState=simulation.getState();ui.pause.textContent='▶';ui.pause.setAttribute('aria-label','Reanudar carrera');showMessage('PAUSA',{duration:0});clearInputs();onInputCaptureRelease('pause');driverControlPipeline.reset();window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason}}));return getState();}
@@ -8159,7 +8177,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     // Presentation reads the current published frame. Public getState() still
     // returns a detached snapshot, including the recorded ghost when asked.
     lastState=simulation.state;updateFalconVisual();feedback=checkRivalCollision(feedback);lastState=simulation.state;maxSpeedMps=Math.max(maxSpeedMps,Math.abs(feedback.speedMps||0));
-    updateRoutePresentation(dt,renderFrame);
+    updateRoutePresentation(renderFrame);
     if(feedback.surface!==lastSurface){lastSurface=feedback.surface;if(!['asphalt','curb'].includes(lastSurface))showMessage(lastSurface==='barrier'?'BARRERA':String(lastSurface).toUpperCase(),{duration:500,kind:lastSurface==='barrier'?'danger':'',announce:false});}
     updateSkyAndWeather(dt);updateActiveTrackScene();
     if (currentSnapshot?.chassis && playerVisualBody) {

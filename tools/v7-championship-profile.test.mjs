@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=dcc35a15848eab73';
+import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=44a3420c39cbb347';
 const entrant={vehicleId:'chevy',class:'Histórica',configurationHash:'config',configuration:{parts:{brakes:'original'}}};
 const enroll={type:'enroll',id:'run',championshipId:'cinco_horizontes',entrant,at:'2026-09-09T12:00:00Z'};
 const base=()=>({name:'Jugador',parts:{brakes:'original'},championship:{points:99,events:10,wins:3},sheets:[{id:'old'}]});
@@ -11,3 +11,18 @@ test('canceled attempt cannot accept a late physical receipt',()=>{let p=applyCh
 test('uncertain disk success is recovered idempotently without publishing duplicate rewards',async()=>{let profile=base(),disk=JSON.stringify(profile),uncertain=false,writes=0;const store=createChampionshipProfileStore({storage:{getItemPersistent:()=>disk,setItemPersistent(_k,v){disk=v;writes++;if(uncertain)throw Error('verification transport failed');return v;}},getProfile:()=>profile,replaceProfile:p=>profile=p,withLock:fn=>fn()});await store.transact(enroll);await store.transact({type:'begin',runId:'run',attemptId:'a'});uncertain=true;await assert.rejects(store.transact({type:'accept',runId:'run',receipt:receipt(profile)}));assert.equal(profile.motorsportV7.runs.run.nextStageIndex,0);const count=writes;uncertain=false;const result=await store.retryPending();assert.equal(result.recovered,true);assert.equal(writes,count);assert.equal(profile.motorsportV7.runs.run.nextStageIndex,1);});
 test('corrupted accepted receipt is rejected before opening another stage',()=>{let p=applyChampionshipProfileAction(base(),enroll);p=applyChampionshipProfileAction(p,{type:'begin',runId:'run',attemptId:'a'});p=applyChampionshipProfileAction(p,{type:'accept',runId:'run',receipt:receipt(p)});p.motorsportV7.runs.run.accepted[0].qa=true;assert.throws(()=>applyChampionshipProfileAction(p,{type:'begin',runId:'run',attemptId:'b'}),/receipt/);});
 test('photo references require saved arrival, carry no pixels and never grant another award',()=>{let p=applyChampionshipProfileAction(base(),enroll);assert.throws(()=>applyChampionshipProfileAction(p,{type:'memory',runId:'run',receiptId:'none',id:'bad',status:'saved'}));p=applyChampionshipProfileAction(p,{type:'begin',runId:'run',attemptId:'a'});p=applyChampionshipProfileAction(p,{type:'accept',runId:'run',receipt:receipt(p)});const awards=structuredClone(p.motorsportV7.awards),action={type:'memory',runId:'run',receiptId:'result',id:'stage-photo:run:result',status:'saved'},next=applyChampionshipProfileAction(p,action);assert.deepEqual(next.motorsportV7.awards,awards);assert.deepEqual(Object.keys(next.motorsportV7.memories[action.id]),['id','runId','receiptId','status','selected']);assert.equal(applyChampionshipProfileAction(next,action),next);assert.equal(applyChampionshipProfileAction(next,{...action,status:'deleted'}).motorsportV7.runs.run.nextStageIndex,1);});
+
+test('confirmed stage wins and the final cup award fichas once',async()=>{
+ const f=fixture();await f.store.transact(enroll);
+ let finalAction;
+ for(let index=0;index<5;index++){
+  await f.store.transact({type:'begin',runId:'run',attemptId:`attempt-${index}`});
+  const run=f.profile.motorsportV7.runs.run,stage=run.schedule[index];
+  finalAction={type:'accept',runId:'run',receipt:{...receipt(f.profile),resultId:`result-${index}`,stageId:stage.id,trackId:stage.trackId,skyId:stage.skyId,weather:stage.weather}};
+  const accepted=await f.store.transact(finalAction);assert.equal(accepted.tokensAwarded,index===4?15:5);
+ }
+ assert.equal(f.profile.workshopTokens,35);
+ assert.ok(f.profile.motorsportV7.awards['cup:cinco_horizontes']);
+ const duplicate=await f.store.transact(finalAction);assert.equal(duplicate.changed,false);
+ assert.equal(f.profile.workshopTokens,35);
+});

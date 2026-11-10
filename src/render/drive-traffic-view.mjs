@@ -23,9 +23,11 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
   root.userData.visualOnly = true;
   scene.add(root);
   const entries = new Map(), errors = [], warmedTextures = new Set();
+  const poses=[];
   const controller = new AbortController();
   let disposed = false;
   const x = new T.Vector3(), y = new T.Vector3(), z = new T.Vector3(), left = new T.Vector3(), basis = new T.Matrix4();
+  const posePosition=new T.Vector3(),poseRotation=new T.Quaternion();
   function spokeGeometry(count) {
     const positions = [], normals = [];
     for (let i = 0; i < count; i++) {
@@ -66,6 +68,32 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
   const tires = [0x171819, 0x262628, 0x15181c].map(color => new T.MeshStandardMaterial({color, roughness:.92}));
   const rims = [0xd3d1c6, 0x494b4c, 0xbc934f].map(color => new T.MeshStandardMaterial({color, metalness:.72, roughness:.27, side:T.DoubleSide}));
   const brakes = [0x851a17, 0xb39b63, 0x3a3d47].map(color => new T.MeshStandardMaterial({color, roughness:.48}));
+
+  function measureHull(model,spec) {
+    const bounds=new T.Box3(),paintBounds=new T.Box3(),part=new T.Box3();
+    model.updateWorldMatrix(true,true);
+    model.traverseVisible(node=>{
+      if(!node.isMesh||!node.geometry||/antenna|mirror|espejo|mastil/i.test(node.name))return;
+      const geometry=node.geometry;
+      if(!geometry.boundingBox)geometry.computeBoundingBox();
+      part.copy(geometry.boundingBox).applyMatrix4(node.matrixWorld);
+      bounds.union(part);
+      const materials=Array.isArray(node.material)?node.material:[node.material];
+      if(materials.some(m=>/paint|barniz|lacquer/i.test(m?.name||'')))paintBounds.union(part);
+    });
+    if(bounds.isEmpty())throw new Error('Traffic model has no exterior geometry');
+    const min=bounds.min,max=bounds.max;
+    // The lower shell supplies bumper and side contact. Keep cabin accessories
+    // out of the road-level collision envelope.
+    min.y=Math.max(min.y,spec.radiusM*.56);
+    max.y=Math.min(max.y,spec.heightM*.76);
+    if(!paintBounds.isEmpty()){
+      min.z=Math.max(min.z,paintBounds.min.z-.045);
+      max.z=Math.min(max.z,paintBounds.max.z+.045);
+    }
+    if(max.x<=min.x||max.y<=min.y||max.z<=min.z)throw new Error('Traffic model has no body footprint');
+    return {center:bounds.getCenter(new T.Vector3()).toArray(),halfExtents:bounds.getSize(new T.Vector3()).multiplyScalar(.5).toArray()};
+  }
 
   function makeVehicle(model, id, canCarryPassenger) {
     const def = getVehicleDefinition(id), spec = def.calibration || VEHICLE_VISUAL_CALIBRATION[id];
@@ -133,6 +161,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     });
     replacedGlass.forEach(material=>material.dispose());
     group.add(model, lamps);
+    const hull=measureHull(model,spec);
     const sourceAnchor = (point) => [point[0]*scale,point[1]*scale-ground,point[2]*scale];
     const eye = def.cockpitEyeSource ? sourceAnchor(def.cockpitEyeSource) : [.39,spec.heightM-.245,.40];
     const wheel = def.steeringCenterSource ? sourceAnchor(def.steeringCenterSource) : [eye[0]-.46,eye[1]-.29,eye[2]];
@@ -192,7 +221,8 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       wheelViews.push({spin, tire, lip, hub, spokes, caliper, radius});
     }
     root.add(group);
-    return {model, group, paint, lamps, driver, passenger, wheelViews, lastId:null, drawn:false,
+    return {model, group, paint, lamps, driver, passenger, wheelViews, lastId:null, drawn:false, selected:false,
+      pose:{id:null,car:null,position:[0,0,0],rotation:[0,0,0,1],hull},
       halfLength,runningLights:{front:frontLenses||2,rear:rearLenses||2,positions:true}};
   }
 
@@ -236,25 +266,37 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     }
   }
 
-  function update(cars, sample, playerProgress, night=0) {
-    for (const entry of entries.values()) entry.drawn = false;
-    for(const projector of projectors)projector.intensity=0;
-    let beamIndex=0;
+  function stage(cars, sample) {
+    poses.length=0;
+    for (const entry of entries.values()) entry.selected=false;
     for (const car of cars) {
       const entry = entries.get(car.model);
-      if (!entry || entry.drawn) continue;
-      const route = sample(car.progressM), {group, lamps, wheelViews} = entry;
+      if (!entry || entry.selected) continue;
+      const route=sample(car.progressM),pose=entry.pose;
       x.fromArray(route.frame.tangent).multiplyScalar(-car.direction);
       y.fromArray(route.frame.normal);
       z.crossVectors(x, y).normalize();
       basis.makeBasis(x, y, z);
-      group.quaternion.setFromRotationMatrix(basis);
+      poseRotation.setFromRotationMatrix(basis).toArray(pose.rotation);
       const half = route.widthM / 2;
       // In the physical chart the stored lateral vector points to the
       // driver's right when facing increasing route progress.
       const offset = car.kind === 'parked' ? half + .48 : car.side * Math.min(2.2, half * .52);
-      group.position.fromArray(route.position).addScaledVector(left.fromArray(route.frame.left), offset);
-      group.position.addScaledVector(y, .03);
+      posePosition.fromArray(route.position).addScaledVector(left.fromArray(route.frame.left), offset);
+      posePosition.addScaledVector(y,.03).toArray(pose.position);
+      pose.id=car.id;pose.car=car;entry.selected=true;poses.push(pose);
+    }
+    return poses;
+  }
+
+  function update(trafficPoses, playerProgress, night=0) {
+    for (const entry of entries.values()) entry.drawn = false;
+    for(const projector of projectors)projector.intensity=0;
+    let beamIndex=0;
+    for (const {car,position,rotation} of trafficPoses) {
+      const entry=entries.get(car.model),{group,lamps,wheelViews}=entry;
+      group.position.fromArray(position);
+      group.quaternion.fromArray(rotation);
       if (entry.lastId !== car.id) applyVariant(entry, car);
       lamps.visible = !!car.hazards;
       entry.driver.root.visible=Math.abs(car.progressM-playerProgress)<82;
@@ -275,7 +317,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
   }
 
   return {
-    prepare, update,
+    prepare, stage, update,
     diagnostics:() => ({models:[...entries.keys()], drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id),
       drivers:[...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id])=>id),
       passengers:[...entries].filter(([,e])=>e.drawn&&e.passenger?.root.visible).map(([id])=>id),
@@ -288,6 +330,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       root.removeFromParent();
       for (const entry of entries.values()) {entry.driver.dispose();entry.passenger?.dispose();release(entry.model);}
       entries.clear();
+      poses.length=0;
       warmedTextures.clear();
       root.clear();
       projectors.forEach(light=>light.dispose());

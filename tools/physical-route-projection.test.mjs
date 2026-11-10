@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import '../src/legacy/asfalto-v6-physics-runtime.js?v=e817906186bc4788';
+import '../src/legacy/asfalto-v6-physics-runtime.js?v=c5fde6a88e095b7b';
 
 const {createRouteSpatialIndex,projectToRoute,createProjectionTeleportToken}=globalThis.AsfaltoV6Physics;
 
