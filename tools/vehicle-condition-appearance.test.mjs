@@ -8,7 +8,7 @@ import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=4f
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=3960803c4e868c79';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=7d8cf1fdcc8f4382';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
-import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=93f9f9d8fb0e4a39';
+import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=3c28329877564ebc';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
@@ -275,6 +275,67 @@ test('the Delco front preserves seven clickable radio controls and restores the 
    assert.ok(control.position.equals(control.userData.radioBasePosition));
    assert.equal(control.children.length,1);
    assert.equal(control.children[0].visible,true);
+  }
+ }finally{equipment.dispose();}
+});
+
+test('the SS 250 seats an analog radio above the grille and restores it before fitting the Delco',()=>{
+ const cockpit=new T.Group(),root=new T.Group(),dash=new T.Group(),radio=new T.Group();
+ dash.name='SS250_DashboardAssembly';root.add(dash);cockpit.add(radio);
+ const material=new T.MeshBasicMaterial();
+ function mesh(parent,name,size,position){
+  const part=new T.Mesh(new T.BoxGeometry(...size),material);
+  part.name=name;part.position.fromArray(position);parent.add(part);return part;
+ }
+ mesh(dash,'SS250_FormedSteelDash',[1.45,.06,.36],[0,.026,0]);
+ const grip=mesh(dash,'SS250_RadioControlGrip',[.020,.008,.020],[.085,.070,-.036]);
+ const grille=mesh(dash,'SS250_SpeakerGrille',[.236,.009,.040],[.190,.044,.024]);
+ const original=mesh(radio,'FACEPLATE',[.200,.060,.010],[0,0,.073]);
+ mesh(radio,'DISPLAY_SURFACE',[.096,.019,.001],[0,.007,.085]);
+ const names=['POWER_VOLUME','PREVIOUS','REWIND','PLAY_PAUSE','FORWARD','NEXT','TUNING_SEEK'];
+ const controls=names.map((name,index)=>{
+  const control=new T.Group();control.name='CTRL_'+name;control.position.set(index*.01,-.018,.079);
+  control.userData.radioBasePosition=control.position.clone();
+  mesh(control,'Original input mesh',[.012,.012,.010],[0,0,0]);radio.add(control);return control;
+ });
+ const equipment=createAuthoredControlMounts(T,{radio});
+ try{
+  for(let pass=0;pass<2;pass++){
+   equipment.attach(root,'chevy_400_1957');
+   const dial=radio.getObjectByName('SS250_RadioAnalogDial');
+   const needle=radio.getObjectByName('SS250_RadioNeedle');
+   assert.ok(dial&&needle);
+   assert.equal(original.visible,false);
+   assert.equal(grip.visible,false);
+   assert.equal(grille.visible,true);
+   assert.equal(root.getObjectByName('Radio inset'),undefined);
+   assert.equal(equipment.diagnostics().placements[0].supported,true);
+   assert.equal(radio.getObjectsByProperty('name','SS250_RadioAnalogDial').length,1);
+   const volume=dash.worldToLocal(controls[0].getWorldPosition(new T.Vector3()));
+   assert.ok(Math.abs(volume.x-grip.position.x)<.001&&Math.abs(volume.z-grip.position.z)<.001);
+   for(const control of controls.slice(1,-1)){
+    assert.ok(control.position.y<dial.position.y);
+    assert.ok(control.getObjectByName('SS250_RadioPreset')?.visible);
+    assert.equal(control.getObjectByName('Original input mesh').visible,false);
+   }
+   const standby=dial.material.emissiveIntensity;
+   radio.userData.updateRadioFace({powered:true,tracks:[{},{}],currentIndex:0});
+   const first=needle.position.x;
+   radio.userData.updateRadioFace({powered:true,tracks:[{},{}],currentIndex:1});
+   assert.ok(needle.position.x>first&&dial.material.emissiveIntensity>standby);
+  }
+  equipment.attach(root,'pickup_3100');
+  assert.equal(radio.getObjectByName('SS250_RadioAnalogDial'),undefined);
+  assert.ok(radio.getObjectByName('Delco986443_Dial'));
+  assert.equal(grip.visible,true);
+  equipment.attach(root,'belair_1957');
+  assert.equal(radio.getObjectByName('Delco986443_Dial'),undefined);
+  assert.equal(radio.userData.updateRadioFace,undefined);
+  assert.equal(original.visible,true);
+  for(const [index,control] of controls.entries()){
+   assert.deepEqual(control.position.toArray(),[index*.01,-.018,.079]);
+   assert.ok(control.position.equals(control.userData.radioBasePosition));
+   assert.equal(control.children.length,1);
   }
  }finally{equipment.dispose();}
 });

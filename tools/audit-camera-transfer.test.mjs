@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=45a12cf7fcd1bfae',import.meta.url),'utf8');
+const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=2106d3adcd35a95b',import.meta.url),'utf8');
 const start=source.indexOf("    onVehicleReset({ speedMps = 0, gear = 'N', reason } = {}) {");
 const end=source.indexOf('    onInputCaptureRelease()',start);
 const method=source.slice(start,end).trim().replace(/,$/,'');

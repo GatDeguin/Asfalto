@@ -1,4 +1,5 @@
-import {installDelco986443Face} from './delco-986443-face.mjs?v=08b7614f2c31dd4e';
+import {installDelco986443Face} from './delco-986443-face.mjs?v=4d8e4fb7be97f44a';
+import {installSS250RadioFace} from './ss250-radio-face.mjs?v=fcb4ae19d389cad0';
 
 // Coordinates are measured in the shipped dash meshes. The 400 uses the R53
 // dashboard frame (+Y faces the driver); the other two use their vehicle LOD0.
@@ -150,7 +151,8 @@ export function createAuthoredControlMounts(T,parts){
         s.node.position.copy(center).multiplyScalar(-factor);
         if(spec)s.node.position.z=(s.id==='radio'?.004:.002)-reference.max.z*factor;
         if(s.id==='radio'){
-          addRadioMount(host,spec,id);
+          if(is400)radioFace=installSS250RadioFace(T,s.node);
+          if(!is400||!radioFace)addRadioMount(host,spec,id);
           if(id==='pickup_3100')radioFace=installDelco986443Face(T,s.node);
           if(is400){
             const donor=frame.getObjectByName('SS250_RadioControlGrip');

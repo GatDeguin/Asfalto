@@ -2747,7 +2747,7 @@
     {
       "path": "index.html",
       "bytes": 82123,
-      "sha256": "65C503FB5C258C9DA49A8AB5184277FC2D4827F913909C3BAF294A74AC1288BE"
+      "sha256": "12987033CD8DB7AA65D9A89B7F1B21B565908A8308D18393B9005569DDBB4266"
     },
     {
       "path": "release-version.json",
@@ -3147,7 +3147,7 @@
     {
       "path": "src/legacy/module-02.mjs",
       "bytes": 588009,
-      "sha256": "45A12CF7FCD1BFAEF953853DC3753BBFB34E9F70AB3EF2648EEC4E752F1CBE51"
+      "sha256": "2106D3ADCD35A95B056E4B6369D24A087B56F8476ECA233AF5E5A1B7DC8CDFE9"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3431,8 +3431,8 @@
     },
     {
       "path": "src/render/authored-control-mounts.mjs",
-      "bytes": 7654,
-      "sha256": "93F9F9D8FB0E4A39194563928D5742B4A6F0239093AF12DC1635BDB33D380FAA"
+      "bytes": 7819,
+      "sha256": "3C28329877564EBC19CC9EF8B735B2731010A81297FF74CB24EBE74EBA6524A8"
     },
     {
       "path": "src/render/authored-vehicle-mirrors.mjs",
@@ -3485,6 +3485,11 @@
       "sha256": "CA49AE66900D0ED167011E890574DD888397AE73E267309343FDE5C75B1DFBC3"
     },
     {
+      "path": "src/render/classic-radio-face.mjs",
+      "bytes": 3407,
+      "sha256": "A2EEA130A3B8576794FEC1D9C37568985D7FFCF216A32BB3B50DB9E093ADD195"
+    },
+    {
       "path": "src/render/cockpit-animator.mjs",
       "bytes": 6886,
       "sha256": "EE8C18D00412AD91B693A39C5EF46AA959E0504B62F154CD220360AD991FA391"
@@ -3521,8 +3526,8 @@
     },
     {
       "path": "src/render/delco-986443-face.mjs",
-      "bytes": 4682,
-      "sha256": "08B7614F2C31DD4E5283FE556DAD7C286E6DE70551405858542969E203E8ACAC"
+      "bytes": 2787,
+      "sha256": "4D8E4FB7BE97F44AAA4435766B4579B31F363E6C5DCFABEB52E8255A7BC24088"
     },
     {
       "path": "src/render/demand-vehicle-lods.mjs",
@@ -3793,6 +3798,11 @@
       "path": "src/render/ss250-interior-review.mjs",
       "bytes": 610,
       "sha256": "57F067FF26CE09F21CCA48708E54504D36162D5028388309D0221CC517947B32"
+    },
+    {
+      "path": "src/render/ss250-radio-face.mjs",
+      "bytes": 4192,
+      "sha256": "FCB4AE19D389CAD0D90A82EE3E2A710F5209DB731BDA582F8E6DAF2CE34579C6"
     },
     {
       "path": "src/render/ss250-speed-pointer.mjs",
@@ -4552,7 +4562,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "90C2B5862F2BE23C619A0738BF24C0BD0E7812890FBA501BAB9E553D7B503E49"
+      "sha256": "EB10434FCA99075AA9B2396BA9EF3ED0C5B79487A268F1D8A4FCB12425640C7E"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4572,17 +4582,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "5AF62EB4682E276145A0E0081A58CC4FBD5495423CE9D0E82CB97B6AF069DA17"
+      "sha256": "D117ACCBDC9638D89B31E48103115582FCE1850A8FFDF52B95EB8D0C8F43183E"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "F8EB56958B4D876B21086897638A32D3948CBB846E02329CC481F1F35353DA4D"
+      "sha256": "7452B00D690424A306F3DBE8AE096B718A395A146E2E70FD76011A225A7EB723"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "53C8DB1D5488DED8E68499B3AB4CDBC4BD7047E5501F28ABB67E45D2E59A1C9B"
+      "sha256": "6714B19FFF116BD487F349929193916881EEDEBABAA123A4BD759597135AB396"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -4802,12 +4812,12 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "B24B4AAD10B0882F725155336FA68CDDC5B53D98C2911811CF4B1AE64140B3B7"
+      "sha256": "600235DE6435DE6E4478EE7C978C7D96DB19C9B6F9792B42ACB82F3746F7A084"
     },
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 14434,
-      "sha256": "E43E873ED0F086DACF1201584A6225ED4ED38E770BD2108B149F4A4899BCB9CC"
+      "sha256": "6400FDE8A2F936F360282E27650504F00CC3562672474F424D8116316450E6BD"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5081,8 +5091,8 @@
     },
     {
       "path": "tools/vehicle-condition-appearance.test.mjs",
-      "bytes": 17101,
-      "sha256": "14CF1A8A329F16EC6919A11DE2DF42C2C4002B60245F245FC7D02C80BE3E046C"
+      "bytes": 20444,
+      "sha256": "6305D5DEE57CD29AD617FCDE9F646C78A6D5EE0FE86C4CB3414EBEC07371BA6C"
     },
     {
       "path": "tools/vehicle-contact-occlusion.test.mjs",
@@ -5097,7 +5107,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3062,
-      "sha256": "7923B10194B3A03E0F4463E9D808927E4983D0BE435A48BF3C7DFA21C1F32A15"
+      "sha256": "DAB3E20936BBD172A99993978B130263CE20C066FDF85E370B4EB2DC1A55345E"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5132,7 +5142,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "33EE7D0993E05B55BDC7CD92DABD044768882FA328F13530D78424E7E9678598"
+      "sha256": "079EFDEEE5571CF6F4F28ACE96F56B9B450410F645D4E97C14E0829E02201B1A"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -5445,7 +5455,7 @@
       "sha256": "2BDAA73AE349BB2786F1B64FAE245E3EE26EA1BDE9B8C90E20BCB6323298AF45"
     }
   ],
-  "fileCount": 1074,
-  "totalBytes": 999038721,
-  "inventorySha256": "6731AABB4410270D5F04CCE5CA77CB72A652EF737B03D99DADC8CDD8C3808799"
+  "fileCount": 1076,
+  "totalBytes": 999047933,
+  "inventorySha256": "BB9BE42340DE1719627F7814E11C431C0E77CBF74FFAAAEFBA9C13268A94E151"
 }
