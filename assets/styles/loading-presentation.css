@@ -25,6 +25,8 @@
 #an-session-loading[hidden],#loading.hidden,#v6-workshop-loading.v6-hidden{display:none!important}
 #an-session-loading[data-departure=true]{background:transparent;isolation:auto}
 #an-session-loading[data-departure=true] :is(.an-cinema-image,.an-cinema-film,.an-loading-card,.an-cinema-masthead){visibility:hidden}
+#an-session-loading[data-handoff=true]{background:#000}
+#an-session-loading[data-handoff=true] :is(.an-cinema-image,.an-cinema-film,.an-cinema-shade,.an-loading-card,.an-cinema-masthead,.an-cinema-footer){visibility:hidden}
 #an-session-loading[data-departure=true] .an-cinema-shade{
  background:radial-gradient(ellipse at 52% 47%,transparent 48%,#04060865 100%),linear-gradient(0deg,#040608d9,transparent 21%);
 }

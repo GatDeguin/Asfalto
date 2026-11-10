@@ -1,5 +1,15 @@
 # Movimiento semántico — Asfalto Nacional v8
 
+## Salida del taller y presentación del circuito
+
+La salida del taller conserva el control de la presentación desde la puerta hasta el fundido a negro. Las cargas internas pueden actualizar su estado en paralelo. Cuando termina la secuencia, el cargador mantiene el negro hasta 500 ms con el estado y la opción de cancelar disponibles. Si la pista entrega su primer cuadro durante esa ventana, el relevo es directo. La película puede iniciar al vencer la ventana mientras la preparación siga pendiente. Cerrar o reemplazar la carga cancela esa espera.
+
+Dos Lagos y Cuesta de Lipán usan sus planos de presentación existentes con un recorrido de cámara de cinco segundos. Cada cámara conserva el punto de interés y cambia de posición y campo visual con aceleración y desaceleración suaves. Lipán encuadra una curva del primer sector, alrededor del metro 560, que ya está cargado en la largada. La banda deja libres el minimapa, los instrumentos y el botón para saltar. En móvil horizontal se coloca entre los grupos del HUD.
+
+Pausar conserva el punto del recorrido. Saltar inicia el fundido desde la posición actual. Activar movimiento reducido cancela la presentación y permite seguir con el estado real de la carrera. La señal de cuenta regresiva comienza al salir del plano exterior. La posición física del vehículo y la cuenta regresiva pertenecen al juego. El movimiento de cámara y los 500 ms de relevo pertenecen a la presentación.
+
+La comprobación en Chrome 157 con ANGLE/D3D11 y RTX 3060 Ti observó la secuencia completa de puerta, motor, luces, cortina, giro y calle antes de reproducir el video. En la segunda entrada a Dos Lagos la pista apareció directamente. Al retener el manifiesto de Lipán, el video apareció con la carga todavía pendiente. Se comprobó el desplazamiento con capturas temporales de ambos circuitos y el título de Lipán en móvil emulado a 390 × 844 y 844 × 390. Quedan tirones en preparación fría. El perfil de CPU identificó refinamiento del terreno y la traza WebGL registró una consulta de primer uso de shader de 1,42 s.
+
 ## Contexto y alcance observado
 
 La base elegida es `Asfalto_Nacional_v8`: su README la identifica como base actual. Hay versiones anteriores y copias de publicación fuera de ella; no se sincronizan ni publican en esta tarea. No hay repositorio Git en este checkout ni AGENTS.md aplicable. Antes de modificar, se guardó copia de los archivos afectados en `../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/before/`.
@@ -72,22 +82,22 @@ Comandos desde esta carpeta, sin build: `node server.mjs` o `INICIAR_JUEGO.bat`.
 
 Pruebas reproducibles: `node tools/semantic-motion-browser.mjs contracts`, `css`, `app`, `touch` y `driving` (cada modo es un argumento separado). Usa Playwright ya instalado: primero resuelve `playwright` local, después el runtime del entorno. En otro equipo pueden indicarse `ASFALTO_PLAYWRIGHT_PACKAGE` (ruta a package.json del runtime con Playwright) y `CHEVY_CHROME_EXECUTABLE`. No se agregó dependencia al juego. `baseline` se ejecutó antes de implementar; ejecutarlo ahora mide el código actual, no recrea la referencia anterior.
 
-En el workspace los reportes quedan fuera del directorio servido; esta publicación conserva una copia de los reportes y nueve capturas esenciales en `docs/motion-evidence`. Evidencia publicada: [carpeta de evidencia](motion-evidence/). El harness usa fixtures explícitos para probar el componente de pausa, los tokens y selectores CSS reales; los modos app/touch/driving ejecutan la aplicación real. No se presenta el fixture como una carrera ni una operación real de carga.
+Reportes fuera del directorio servido: [carpeta de evidencia](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/). El harness usa fixtures explícitos para probar el componente de pausa, los tokens y selectores CSS reales; los modos app/touch/driving ejecutan la aplicación real. No se presenta el fixture como una carrera ni una operación real de carga.
 
 | Ejecución observada | Resultado |
 |---|---|
-| [Contratos](motion-evidence/contracts/report.json) | 18 comprobaciones: entrada, foco, fondo inert, Escape/confirmación, interrupción a 0/50/98%, veinte aperturas/cierres, veinte montajes/desmontajes, reducción dinámica del sistema/app, fallback sin WAAPI, limpieza sin promesas rechazadas no manejadas |
-| [Política CSS](motion-evidence/css/report.json) | 8 comprobaciones: presión de navegación/Volver sin transform, pseudo-elementos y host estáticos con ambas clases de app y preferencia del sistema |
-| [Aplicación](motion-evidence/app/report.json) | 16 comprobaciones: perfil, última intención, efecto conectado al evento real, datos del detalle, cancelación al navegar, seis secciones con reducción, veinte regresos, teclado, resize/orientación y sin desborde del documento |
-| [Tacto](motion-evidence/touch/report.json) | 5 comprobaciones: hasTouch/isMobile, selección de 500 m, preparación y regreso por tap, sin errores JS |
-| [Carrera real](motion-evidence/driving/report.json) | 6 comprobaciones: salida por UI a RUNNING, pausa física, cancelación de reinicio, continuación, pausa reducida con foco, regreso preservando vehículo; sin errores JS |
+| [Contratos](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/contracts/report.json) | 18 comprobaciones: entrada, foco, fondo inert, Escape/confirmación, interrupción a 0/50/98%, veinte aperturas/cierres, veinte montajes/desmontajes, reducción dinámica del sistema/app, fallback sin WAAPI, limpieza sin promesas rechazadas no manejadas |
+| [Política CSS](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/css/report.json) | 8 comprobaciones: presión de navegación/Volver sin transform, pseudo-elementos y host estáticos con ambas clases de app y preferencia del sistema |
+| [Aplicación](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/app/report.json) | 16 comprobaciones: perfil, última intención, efecto conectado al evento real, datos del detalle, cancelación al navegar, seis secciones con reducción, veinte regresos, teclado, resize/orientación y sin desborde del documento |
+| [Tacto](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/touch/report.json) | 5 comprobaciones: hasTouch/isMobile, selección de 500 m, preparación y regreso por tap, sin errores JS |
+| [Carrera real](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/driving/report.json) | 6 comprobaciones: salida por UI a RUNNING, pausa física, cancelación de reinicio, continuación, pausa reducida con foco, regreso preservando vehículo; sin errores JS |
 | `node --test tools/*.test.mjs` | **307/317 pasan, 10 fallan**. La suite general no está aprobada. Log completo: `unit-suite.log` |
 
 Los cinco modos finales suman **53 comprobaciones de navegador**, sin errores JS ni peticiones HTTP externas observadas. Esto es cobertura de estos recorridos, no auditoría completa de accesibilidad o de todos los circuitos.
 
 ### Fallos previos identificados
 
-Reproducidos de forma aislada, con archivos fuente/test idénticos por SHA256 al inventario recibido: [auditoría](motion-evidence/unrelated-failures-audit.json), `unrelated-failures.log`.
+Reproducidos de forma aislada, con archivos fuente/test idénticos por SHA256 al inventario recibido: [auditoría](../../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/unrelated-failures-audit.json), `unrelated-failures.log`.
 
 - `lazy-rival.test.mjs`: cuatro fallos — Falcon stays unloaded; failed rival preparation; shutdown during conversion; shutdown during presentation. El fixture extrae código actual que usa `rivalAssetPipeline`, pero no define ese objeto (ReferenceError); aún espera el decode anterior.
 - `render-preparation.test.mjs`: seis fallos — prepare capture contexts grading=false/true; nested prepare failure async=false/true; fog topology exponential=false/true. El fixture de renderer no provee soporte HDR que el código actual requiere para entrar en el pass; falla con niebla original 1 frente a 2000, 4/80 frente a 2000/4000 o densidad .012 frente a 0. No se modificaron renderer, física ni fixtures previos para ocultar estos fallos.
@@ -126,7 +136,3 @@ Nuevos: `src/menu/semantic-motion.mjs`, `assets/styles/semantic-motion.css`, est
 Dependencias/producto: **cero añadidas**, sin fuentes, medios, conexiones remotas ni cambios de datos. El incremento de entrega queda registrado junto al resultado de `node tools/verify-v8-release.mjs --write` y su verificación independiente en `release-verification.json` fuera de la carpeta servida.
 
 Pendiente: Safari/Firefox, dispositivos físicos, lector de pantalla, zoom de navegador (el viewport recibido aún restringe user-scalable), cambios de fuentes/recurso tardío, toda la gama de errores operativos y sesiones completas de competencia en cada circuito. Los temporizadores y transiciones 3D originales no se sustituyeron; esta tarea no certifica toda la animación de la aplicación ni cumplimiento WCAG completo.
-
-### Verificación de esta publicación
-
-El checkout de `gh-pages` vuelve a pasar los 18 contratos de pausa, las 8 comprobaciones CSS y la integridad del inventario. Al ejecutar la suite general en este checkout pasan **306/317**, con **11 fallos**: los diez ya descritos y `physics-runtime-scratch.test.mjs`, que depende de una copia histórica ubicada fuera del repositorio (`../Reports/Asfalto_Nacional_v8/runtime-gpu-2026-09-27/before/`). Esa copia existe en el workspace de desarrollo, pero no en el checkout de publicación; falla con ENOENT. Se conserva el test y se informa la limitación, sin declarar aprobada la suite. Log: [publication-unit-suite.log](motion-evidence/publication-unit-suite.log). El workflow de GitHub mantiene la suite completa.

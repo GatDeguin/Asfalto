@@ -116,9 +116,43 @@ body.v6-menu-open .an-cockpit-light-panel,body.an-race-pause-visible .an-cockpit
 
 .an-workshop-vehicle-select{display:grid;grid-template-columns:auto minmax(200px,1fr);align-items:center;gap:8px 18px;padding:12px 16px;margin:0 0 16px;border:1px solid #8c734747;background:#191b19}.an-workshop-vehicle-select label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:#c9b896}.an-workshop-vehicle-select select{width:100%;min-height:42px;padding:8px 12px;background:#101310;color:#e8dfcf;border:1px solid #9b835e;border-radius:3px;font:inherit}.an-workshop-vehicle-select [role=status]{grid-column:1/-1;font-size:12px;color:#aaa99c}.an-workshop-vehicle-select[aria-busy=true] [role=status]::before{content:"";display:inline-block;width:11px;height:11px;margin-right:8px;border:2px solid #bca778;border-right-color:transparent;border-radius:50%;animation:an-vehicle-loading .7s linear infinite}@keyframes an-vehicle-loading{to{transform:rotate(360deg)}}@media(max-width:600px){.an-workshop-vehicle-select{grid-template-columns:1fr}.an-workshop-vehicle-select select{min-width:0}}@media(prefers-reduced-motion:reduce){.an-workshop-vehicle-select[aria-busy=true] [role=status]::before{animation:none}}
 
-.an-race-opening{position:fixed;inset:0;z-index:45;pointer-events:none}.an-race-opening[hidden],body.v6-menu-open .an-race-opening{display:none}.an-race-opening-veil{position:absolute;inset:0;background:#050705}.an-race-opening-caption{position:absolute;left:5vw;right:5vw;bottom:8vh;display:flex;align-items:center;gap:20px;padding:22px 26px;background:#0a100ce8;border-left:5px solid #f26427;color:#f1eadb}.an-race-opening-caption[hidden]{display:none}.an-race-opening-caption span{font:11px/1.4 system-ui;letter-spacing:.16em;color:#cf9770}.an-race-opening-caption strong{font:clamp(20px,3vw,40px)/1.1 system-ui;flex:1}.an-race-opening-caption button{pointer-events:auto;padding:12px 18px;min-height:44px;border:1px solid #ddd3;background:#1c251c;color:inherit;cursor:pointer}@media(max-width:720px){.an-race-opening-caption{flex-wrap:wrap}.an-race-opening-caption span{width:100%}.an-race-opening-caption strong{font-size:22px}.an-race-opening-caption button{font-size:12px}}
-
-body.an-race-opening-active .race-message,body.an-race-opening-active #v6-objective-hud{visibility:hidden}
+.an-race-opening{position:fixed;inset:0;z-index:9997;pointer-events:none}
+.an-race-opening[hidden],body.v6-menu-open .an-race-opening{display:none}
+.an-race-opening-veil{position:absolute;inset:0;background:#050705}
+.an-race-opening-caption{
+ position:absolute;inset-inline-start:max(5vw,calc(env(safe-area-inset-left) + 14px));
+ bottom:max(27vh,calc(env(safe-area-inset-bottom) + 170px));box-sizing:border-box;
+ width:min(550px,calc(100% - max(10vw,env(safe-area-inset-left) + env(safe-area-inset-right) + 28px)));
+ display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:clamp(12px,2vw,28px);row-gap:4px;
+ padding:12px clamp(14px,2vw,22px);color:#f6ecdf;background:linear-gradient(100deg,#16120fee,#0c0c0bec);
+ border-inline-start:4px solid var(--chevy-hud-orange,#ff6500);border-block:1px solid #ffe1ba29;
+ box-shadow:0 10px 26px #0005;
+}
+.an-race-opening-caption[hidden]{display:none}
+.an-race-opening-caption span{font:650 10px/1.4 system-ui;letter-spacing:.14em;color:#f2b886}
+.an-race-opening-caption strong{grid-column:1;font:700 clamp(22px,2.7vw,38px)/1.07 "Arial Narrow","Roboto Condensed",system-ui,sans-serif;overflow-wrap:anywhere}
+.an-race-opening-caption button{
+ grid-column:2;grid-row:1/span 2;pointer-events:auto;min-height:44px;padding:6px 10px;
+ border:1px solid #dab59070;border-radius:3px;background:#2a2119;color:inherit;font:650 12px/1.15 system-ui;cursor:pointer;
+}
+.an-race-opening-caption button:focus-visible{outline:2px solid #ffd099;outline-offset:3px}
+.an-race-opening-caption kbd{margin-inline-start:7px;color:#e5bc9a;font:10px/1 system-ui}
+@media(pointer:coarse){.an-race-opening-caption kbd{display:none}}
+@media(max-width:680px) and (orientation:portrait){
+ .an-race-opening-caption{bottom:max(34vh,calc(env(safe-area-inset-bottom) + 235px))}
+}
+@media(max-height:500px) and (orientation:landscape){
+ .an-race-opening-caption{bottom:max(31vh,calc(env(safe-area-inset-bottom) + 108px));width:min(480px,80vw);padding-block:8px}
+ .an-race-opening-caption strong{font-size:clamp(19px,4vw,30px)}
+ body.an-phone-hud .an-race-opening-caption{
+  top:calc(max(8px,env(safe-area-inset-top)) + 58px);bottom:auto;width:auto;
+  inset-inline-start:calc(max(8px,env(safe-area-inset-left)) + clamp(132px,22vw,190px) + 8px);
+  inset-inline-end:calc(max(8px,env(safe-area-inset-right)) + 32vw + 8px);
+  column-gap:8px;padding-inline:10px;
+ }
+ body.an-phone-hud .an-race-opening-caption strong{font-size:clamp(18px,3.1vw,26px)}
+}
+body.an-race-opening-active :is(.race-message,#v6-objective-hud,#modular-race-cue[data-phase=countdown],#race-camera-control){visibility:hidden}
 /* Photographing the cabinet requires the rendered shelf lighting to stay visible. */
 #v6-main-menu.an-cinematic-menu.an-collection-inspection[data-an-photo=true] #v6-workshop-stage::before { background:none; }
 #v7-earned-album { margin-top:1rem; max-width:100%; }

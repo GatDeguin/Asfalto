@@ -30,7 +30,7 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=9759e92494196433';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=316b3f706432ad30';
 import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=4f7deb4bf592efe1';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
@@ -66,7 +66,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=71fd8b3c5ff8b8db';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=201b5b26658c9678';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -77,8 +77,8 @@ import { createChevyWheelVisualRig } from '../game/chevy-wheel-visual-rig.mjs?v=
 import { createRaceCameraEntrance, sampleCockpitEntrance } from '../game/race-camera-entrance.mjs?v=8938b40b749fe337';
 import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=8489d143ec0504d3';
 import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=24f25fcf48eeb844';
-import { createRaceOpening } from '../game/race-opening.mjs?v=9237574ae1559f13';
-import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=91598c822caef3be';
+import { createRaceOpening } from '../game/race-opening.mjs?v=463e5f3d50f43451';
+import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=f860033bfd2b09bd';
 import {createLightingEditor} from '../menu/lighting-editor.mjs?v=e50675addf5a2773';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=a299ea81213424be';
 import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=abe009d1250a2cb2';
@@ -5665,6 +5665,11 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
   const modularRaceCueStyle = document.createElement("style"); modularRaceCueStyle.id = "modular-race-cue-style"; modularRaceCueStyle.textContent = "#modular-race-cue{position:fixed;z-index:80;right:max(18px,env(safe-area-inset-right));top:max(18px,env(safe-area-inset-top));max-width:min(280px,42vw);padding:8px 11px;border-left:3px solid #d7b36a;background:rgba(10,12,12,.82);color:#f7edd7;font:700 12px/1.2 system-ui;letter-spacing:.08em;text-transform:uppercase;opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .16s,transform .16s}#modular-race-cue.show{opacity:1;transform:none}#modular-race-cue[data-spawn-parking-hold=true]{left:50%;right:auto;top:112px;max-width:min(430px,46vw);transform:translateX(-50%);text-align:center;font-size:11px}@media(prefers-reduced-motion:reduce){#modular-race-cue{transition:none}}"; document.head.appendChild(modularRaceCueStyle);
 
   let messageTimer = 0;
+  function clearRaceCue(){
+    window.clearTimeout(messageTimer);
+    ui.message.className='race-message';modularRaceCue.classList.remove('show');modularRaceCue.textContent='';
+    delete modularRaceCue.dataset.phase;
+  }
   function showMessage(text, { duration = 1200, kind = '', countdown = false, announce = true, drivingCue = false } = {}) {
     window.clearTimeout(messageTimer);
     ui.message.textContent = text;
@@ -5675,7 +5680,7 @@ function createAdvancedRaceWorld(THREE, scene, options = {}) {
     modularRaceCue.dataset.phase=phase;
     modularRaceCue.textContent=criticalRaceCue?(countdown?`LARGADA · ${text}`:text):"";
     modularRaceCue.classList.toggle("show",!!criticalRaceCue);
-    if (duration > 0) messageTimer = window.setTimeout(() => { ui.message.className = 'race-message'; modularRaceCue.classList.remove("show"); modularRaceCue.textContent = "";delete modularRaceCue.dataset.phase; }, duration);
+    if (duration > 0) messageTimer = window.setTimeout(clearRaceCue, duration);
   }
 
   const bindingButtons = Array.from(document.querySelectorAll('[data-binding]'));
@@ -8027,14 +8032,22 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if(request!==raceStartRequest)throw new DOMException('Otra largada reemplazó esta preparación','AbortError');
     finishDriveLap=driving;
     const initialGear=options.getTransmissionMode?.()==='automatic'?1:0;
-    closeResults();clearInputs();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();if(driveTraffic)installDriveTraffic(driveTraffic,finishRoute);lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=Math.ceil(lastState.countdown||3);ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;raceAudio.raceSignal('countdown');showMessage(String(lastCountdownNumber),{duration:0,countdown:true});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
+    closeResults();clearInputs();clearRaceCue();driverControlPipeline.reset();onVehicleReset({reason:'race-start',speedMps:0,gear:initialGear===0?'N':'1'});falconPresentation?.resetCondition();simulation.configure(coreSettingsFromUi());simulation.start({initialGear});prepareStartSignal();if(driveTraffic)installDriveTraffic(driveTraffic,finishRoute);lastState=simulation.getState();maxSpeedMps=0;resultShownForFinish=false;falseStartApplied=false;lastCountdownNumber=null;ui.start.blur();ui.start.classList.add('active');ui.start.textContent='REINICIAR';ui.pause.disabled=false;window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason:'start'}}));return getState();
     });}catch(error){if(request===raceStartRequest&&driveTraffic&&!driveTraffic.route)clearDriveTraffic();throw error;}
   }
   function pause({reason='pause'}={}) {simulation.pause();lastState=simulation.getState();ui.pause.textContent='▶';ui.pause.setAttribute('aria-label','Reanudar carrera');showMessage('PAUSA',{duration:0});clearInputs();onInputCaptureRelease('pause');driverControlPipeline.reset();window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status,reason}}));return getState();}
   function retryRaceAudioFromGesture(){if(document.hidden||!document.body.classList.contains('v6-driving')||document.body.classList.contains('v6-menu-open')||document.body.classList.contains('an-race-paused'))return;void raceAudio.ensureStarted().catch(()=>{});}
   listen(window,'pointerdown',retryRaceAudioFromGesture,{passive:true});
   listen(window,'keydown',retryRaceAudioFromGesture);
-  function resume() {if(options.beforeResume?.()===false)return getState();modularRaceCue.classList.remove("show");modularRaceCue.textContent="";simulation.resume();lastState=simulation.getState();ui.pause.textContent='Ⅱ';ui.pause.setAttribute('aria-label','Pausar carrera');showMessage(lastState.status==='COUNTDOWN'?String(Math.ceil(lastState.countdown)):'REANUDAR',{duration:650,countdown:lastState.status==='COUNTDOWN'});window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status}}));retryRaceAudioFromGesture();return getState();}
+  function resume() {
+    if(options.beforeResume?.()===false)return getState();
+    clearRaceCue();simulation.resume();lastState=simulation.getState();
+    ui.pause.textContent='Ⅱ';ui.pause.setAttribute('aria-label','Pausar carrera');
+    const countdown=lastState.status==='COUNTDOWN';
+    if(!options.isCameraIntroductionActive?.())showMessage(countdown?String(Math.ceil(lastState.countdown)):'REANUDAR',{duration:650,countdown});
+    window.dispatchEvent(new CustomEvent('asfalto:race-state',{detail:{status:lastState.status}}));
+    retryRaceAudioFromGesture();return getState();
+  }
   function togglePause() {if(['IDLE','FINISHED'].includes(simulation.state.status))return getState();return simulation.state.status==='PAUSED'?resume():pause();}
   function recover() {if(simulation.state.status==='COUNTDOWN')return getState();simulation.requestRecovery('manual','backspace');lastState=simulation.getState();processLatestEvent();return getState();}
 
@@ -8077,7 +8090,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const ghost=simulation.getGhostPose(Math.max(0,state.totalTime-state.lapStartTime));let delta=null;if(ghost){const distance=track.shortestDistance(ghost.s,state.s);delta=-distance/Math.max(8,(Math.abs(feedback.speedMps)+Math.abs(ghost.speed||0))*.5);}ui.delta.textContent=formatDelta(delta);ui.delta.parentElement?.classList.toggle('positive',delta>0.0005);ui.delta.parentElement?.classList.toggle('negative',delta<-.0005);
     ui.sector.textContent=`S${Math.min(track.checkpoints.length,state.nextCheckpointIndex+1)}`;const position=1+(state.rivals||[]).filter(r=>r.raceProgress>state.raceProgress).length;ui.position.textContent=`${position}/${(state.rivals?.length||0)+1}`;ui.surface.textContent=String(state.surface||'asphalt').toUpperCase();ui.surface.dataset.surface=state.surface||'asphalt';const offroad=!['asphalt','curb'].includes(state.surface);ui.offroad.classList.toggle('active',offroad);ui.offroad.classList.toggle('danger',state.surface==='barrier');
     ui.pause.disabled=['IDLE','FINISHED'].includes(state.status);ui.start.classList.toggle('active',['COUNTDOWN','RUNNING','PAUSED'].includes(state.status));
-    if(state.status==='COUNTDOWN'){const number=Math.max(1,Math.ceil(state.countdown));if(number!==lastCountdownNumber){lastCountdownNumber=number;showMessage(String(number),{duration:0,countdown:true,announce:true});raceAudio.raceSignal('countdown');}}
+    if(state.status==='COUNTDOWN'&&!globalThis.__asfaltoRacePresentationHeld&&!options.isCameraIntroductionActive?.()){const number=Math.max(1,Math.ceil(state.countdown));if(number!==lastCountdownNumber){lastCountdownNumber=number;showMessage(String(number),{duration:0,countdown:true,announce:true});raceAudio.raceSignal('countdown');}}
     if(state.status==='RUNNING'&&lastCountdownNumber!==0){lastCountdownNumber=0;}
     updateStartLights();minimapAccumulator+=dt;if(minimapAccumulator>.09){minimapAccumulator%=.09;drawMinimap();}
   }
@@ -9896,9 +9909,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
       : vehicleCameraRig.reset(cameraFrame);
     raceCameraInitialized = Boolean(lastPhysicalCameraPose);
     const openingPaused=raceWorld.isPaused||!!globalThis.__asfaltoRacePresentationHeld;
-    const opening=cameraOpening.step(frameDt,{paused:openingPaused});
+    const reducedMotion=!!ignitionMotionPreference?.matches||documentFlags.reducedMotion;
+    const opening=cameraOpening.step(frameDt,{paused:openingPaused,reducedMotion});
     cameraOpeningOverlay.update(opening,raceWorld.track.name);
-    if(ignitionMotionPreference?.matches||documentFlags.reducedMotion)cameraEntrance.cancel();
+    if(reducedMotion)cameraEntrance.cancel();
     const entry = cameraEntrance.step(opening.blocking?0:frameDt, { currentMode:mode, paused:openingPaused });
     cockpitEntranceRoot.position.set(0,0,0);
     if (entry.active && !opening.blocking) {
@@ -10028,7 +10042,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const common={renderer,scene,camera,quality:raceWorld.getPerformanceTier(),variantKey,signal,enabled:raceWorld.rearviewEnabled};
     await raceWorld.prepareWaterReflections({...common,excludeRoots:[cockpit,...(compositionEditor?.renderOverlays||[])]});
     signal?.throwIfAborted();
-    if(variantKey!==renderPreparationVariant()||raceCameraState.current!=='cockpit')return;
+    if(variantKey!==renderPreparationVariant()||raceCameraState.current!=='cockpit'||!cockpit.visible)return;
     await cockpitMirrors.prepare({...common,carPose:raceWorld.getRenderFrame(),cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null});
     signal?.throwIfAborted();
   }
@@ -10132,12 +10146,13 @@ listen(window,'chevy:vehicle-config',(event)=>{
     try{withFrameMatrices(scene,()=>{
     const captureNow=performance.now(),captureQuality=raceWorld.getPerformanceTier();
     const captureSchedule=!visualPrecompileInProgress?auxiliaryCaptureSchedule:null;
-    captureSchedule?.beginFrame(captureNow,{quality:captureQuality,mirrors:raceCameraState.current==='cockpit'&&raceWorld.rearviewEnabled});
+    const mirrorsVisible=cockpit.visible&&raceCameraState.current==='cockpit';
+    captureSchedule?.beginFrame(captureNow,{quality:captureQuality,mirrors:mirrorsVisible&&raceWorld.rearviewEnabled});
     markFirstFrame('Primer cuadro: reflejos del agua');
     const waterCaptured=raceWorld.renderWaterReflections({renderer,scene,camera,quality:captureQuality,variantKey:shaderVariant,nowMs:captureNow,captureSchedule,excludeRoots:[cockpit,...(compositionEditor?.renderOverlays||[])]});
     if(!waterCaptured)captureSchedule?.skip('water');
     markFirstFrame('Primer cuadro: espejos');
-    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:raceCameraState.current==='cockpit', cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null, enabled:raceWorld.rearviewEnabled, quality:captureQuality, variantKey:shaderVariant, nowMs:captureNow, captureSchedule });
+    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:mirrorsVisible, cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null, enabled:raceWorld.rearviewEnabled, quality:captureQuality, variantKey:shaderVariant, nowMs:captureNow, captureSchedule });
     markFirstFrame('Primer cuadro: render del mundo y cockpit');
     colorGrading.render(()=>advancedGraphics.renderOutput(()=>{const restore=raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()});try{cockpitRenderPass.render();}finally{restore?.();}}));
     });publishPresentedRacePhoto();actualSceneFrames++;actualSceneTimestampMs=performance.now();markFirstFrame('Cuadro enviado a GPU');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}

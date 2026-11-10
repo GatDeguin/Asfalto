@@ -20,11 +20,17 @@ export function regionalCameraProfiles({id,query,lengthM=query.lengthM}){
     const q=query.sample(clamp(sM,0,lengthM)),t=query.sample(clamp(sM+lookAhead,0,lengthM));
     return {key,sM:q.sM??sM,position:q.position.map((v,i)=>v+q.frame.left[i]*side-q.frame.tangent[i]*back+(i===1?height:0)),target:t.position.map((v,i)=>v+(i===1?3:0)),fov};
   };
-  const reviewedOpening={
-    dos_lagos:{sM:8320,position:[633.8158511,96.73373,-5546.1372001],target:[1120.0559448,28.5,-5715.8297787],fov:55,evidence:'weather/world-audio/dos_lagos-shore-1.png'},
-    cuesta_lipan:{sM:5320,position:[662.6197463451695,621.229648362015,4222.534221270718],target:[843.321389,380.252305,4017.238369],fov:48,evidence:'circuits/after-v3/03-lipan-hairpin.png'}
-  }[id];
-  return Object.freeze({id,openingDurationS:7.5,...(reviewedOpening&&reviewedOpening.sM<=lengthM?{openingShot:Object.freeze({...reviewedOpening,status:'rendered_reviewed'})}:{}),views:[
+  let reviewedOpening;
+  if(id==='dos_lagos'){
+    reviewedOpening={sM:8320,position:[633.8158511,96.73373,-5546.1372001],positionEnd:[669,103,-5510],target:[1120.0559448,28.5,-5715.8297787],fov:55,fovEnd:52,evidence:'weather/world-audio/dos_lagos-shore-1.png'};
+  }else if(id==='cuesta_lipan'){
+    // Frame the first bend inside the sector installed before race entry.
+    const openingS=Math.min(560,lengthM*.3);
+    const start=view('opening',openingS,-68,62,45,174,52);
+    const end=view('opening',openingS,-54,55,27,174,49);
+    reviewedOpening={...start,positionEnd:end.position,fovEnd:end.fov};
+  }
+  return Object.freeze({id,openingDurationS:5,...(reviewedOpening&&reviewedOpening.sM<=lengthM?{openingShot:Object.freeze({...reviewedOpening,status:'rendered_reviewed'})}:{}),views:[
     view('start',Math.min(120,lengthM*.05),id==='dos_lagos'?-52:28,id==='cuesta_lipan'?80:22,40,100,48),
     view(id==='cuesta_lipan'?'hairpin':id==='dos_lagos'?'lake-overlook':id==='aconcagua_horcones'?'ravine':'wet-forest',heroS,id==='cuesta_lipan'?140:FOREST.has(id)?-55:75,id==='cuesta_lipan'?260:FOREST.has(id)?28:15,80,id==='aconcagua_horcones'?550:140,48),
     view('panorama',id==='aconcagua_horcones'?lengthM*.72:heroS+180,id==='cuesta_lipan'?-340:160,id==='cuesta_lipan'?540:140,240,id==='aconcagua_horcones'?1600:160,52),

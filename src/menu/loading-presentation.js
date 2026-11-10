@@ -15,6 +15,7 @@
     cataratas_iguazu: {film:'ignition',title:'Cataratas\ndel Iguazú',region:'SELVA ATLÁNTICA / MISIONES',line:'La selva espera. El viaje empieza al girar la llave.',chapter:'05 / DESTINOS'},
   });
   const surfaces = new Set(), pending = new Map();
+  const departureHandoffMs = 500;
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const reduced = () => motion.matches || (document.body?.classList.contains('v6-reduce-motion') || document.body?.classList.contains('an-v7-reduce-motion'));
   const stillOnly = () => reduced() || navigator.connection?.saveData;
@@ -33,6 +34,7 @@
     function release() {
       epoch++; running=false; clearSwap(); clearTimeout(stalledTimer);
       for (const video of videos) { video.pause(); video.classList.remove('is-playing'); if(video.hasAttribute('src')) { video.removeAttribute('src'); video.load(); } }
+      if(scene)host.dataset.media='poster';
     }
     function fallback() { release(); host.dataset.media = 'poster'; }
     async function play(index, version) {
@@ -98,7 +100,14 @@
         reconcile();
       },
       stage(text) { const node=host.querySelector('.an-loading-stage');if(node)node.textContent=text; },
-      activate(value) { host.dataset.needleRunning=String(value&&!reduced());if(value && !stillOnly())start(); else if(running)release(); },
+      activate(value,canStart=true) {
+        host.dataset.needleRunning=String(value&&!reduced());
+        if(!value||stillOnly()){
+          if(running)release();
+          return;
+        }
+        if(canStart)start();
+      },
       stop() { host.dataset.needleRunning='false';release();clearTimeout(longTimer);delete host.dataset.longWait; },
       dispose() { this.stop();surfaces.delete(this); },
     };
@@ -111,23 +120,28 @@
     if(!document.hidden && !document.body.classList.contains('an-intro-open')) {
       top=candidates.find(s=>s.kind==='session') || candidates.find(s=>s.kind==='workshop') || candidates[0];
     }
-    for(const surface of surfaces) surface.activate(surface===top&&surface.host.dataset.departure!=='true');
+    for(const surface of surfaces) {
+      const {departure,handoff}=surface.host.dataset;
+      surface.activate(surface===top&&departure!=='true'&&handoff!=='true',surface.kind!=='session'||!exiting);
+    }
   }
   function sync() {
-    const values=[...pending.values()],latest=values.at(-1);
+    const values=[...pending.values()].reverse(),latest=values[0];
     if(!latest)return;
-    const scene=[...values].reverse().find(v=>v.scene)?.scene || 'separator';
-    if(latest.departure){
+    const visual=values.find(v=>v.departure||v.handoff)||latest;
+    const scene=visual.scene||values.find(v=>v.scene)?.scene||'separator';
+    if(visual.departure){
       overlay.dataset.departure='true';
-      overlay.dataset.departurePhase=latest.departurePhase||'door';
-      if(latest.departureFade)overlay.dataset.departureFade='true';else delete overlay.dataset.departureFade;
-      overlay.style.setProperty('--an-departure-fade',latest.departureFade||0);
+      overlay.dataset.departurePhase=visual.departurePhase||'door';
+      if(visual.departureFade)overlay.dataset.departureFade='true';else delete overlay.dataset.departureFade;
+      overlay.style.setProperty('--an-departure-fade',visual.departureFade||0);
     }else{
       delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
       overlay.style.removeProperty('--an-departure-fade');
     }
-    sessionSurface.set(scene); sessionSurface.stage(latest.departureStage||latest.stage);
-    overlay.setAttribute('aria-label',latest.title);
+    if(visual.handoff)overlay.dataset.handoff='true';else delete overlay.dataset.handoff;
+    sessionSurface.set(scene); sessionSurface.stage(visual.departureStage||latest.stage);
+    overlay.setAttribute('aria-label',visual.title);
   }
   function cancelExit() {
     clearTimeout(exitTimer);
@@ -137,7 +151,7 @@
   }
   function restore() {
     overlay.hidden=true;overlay.setAttribute('aria-busy','false');
-    delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;
+    delete overlay.dataset.departure;delete overlay.dataset.departurePhase;delete overlay.dataset.departureFade;delete overlay.dataset.handoff;
     overlay.style.removeProperty('--an-departure-fade');
     sessionSurface.stop();document.body.classList.remove('an-loading-open');
     if(typeof background==='function')background();
@@ -159,10 +173,18 @@
     }
     overlay.hidden=false;overlay.setAttribute('aria-busy','true');overlay.focus({preventScroll:true});
     const key={};pending.set(key,{title,stage,scene:options.track||options.scene,departure:!!options.departure});
-    if(options.departure)void Promise.resolve(options.departure).finally(()=>{
+    function finishDeparture(){
       const task=pending.get(key);
-      if(task){task.departure=false;task.departureStage=null;sync();reconcile();}
-    });
+      if(!task)return;
+      task.departure=false;task.departureStage=null;
+      // Hold the garage's final black frame for a direct cut when the track is ready.
+      if(!stillOnly()){
+        task.handoff=true;
+        task.handoffTimer=setTimeout(()=>{task.handoff=false;sync();reconcile();},departureHandoffMs);
+      }
+      sync();reconcile();
+    }
+    if(options.departure)void Promise.resolve(options.departure).then(finishDeparture,finishDeparture);
     sync();reconcile();
     // Yield two paint opportunities before the caller starts expensive scene work.
     const painted=new Promise(resolve=>{
@@ -178,14 +200,16 @@
         const task=pending.get(key);
         if(!task?.departure)return;
         task.departureFade=opacity;
-        if([...pending.keys()].at(-1)===key){
+        if([...pending.values()].reverse().find(v=>v.departure||v.handoff)===task){
           overlay.dataset.departureFade='true';
           overlay.style.setProperty('--an-departure-fade',opacity);
         }
       },
       end() {
+        const task=pending.get(key);
         if(!pending.delete(key))return Promise.resolve();
-        if(pending.size){sync();return Promise.resolve();}
+        clearTimeout(task.handoffTimer);
+        if(pending.size){sync();reconcile();return Promise.resolve();}
         exiting=true;overlay.classList.add('an-cinema-exit');
         return new Promise(resolve=>{
           exitResolve=resolve;

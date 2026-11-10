@@ -1,5 +1,5 @@
 import {createForestImpostorGeometry} from './regional-canopy-stand.mjs?v=4e2c6dc3fe25ef44';
-import {addIguazuApproachPlants} from './iguazu-landscape.mjs?v=4c81e25195c5f805';
+import {addIguazuApproachPlants} from './iguazu-landscape.mjs?v=5f804e330d93cc6c';
 import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=657ba3796dce7370';
 
 // The access roads are scene geometry. The route query still spans the two official gates.

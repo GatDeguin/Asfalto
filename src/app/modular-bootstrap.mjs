@@ -1,11 +1,11 @@
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
-import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=28d420d6d60ed1dd";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=7f47156733104f7b";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=55704a4fba9c1278";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=f5ff6967c99d3520";
+import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=eccd919a19478d09";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=fb3f0c22e096d264";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=b5e169947b7946d5";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=3c7cd8baa53147cd";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=e134750c443182c9";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=a294053d5fcb7a4d";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
