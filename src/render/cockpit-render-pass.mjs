@@ -7,17 +7,32 @@ import {compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=25
 const INTERIOR_MASK = 1 << 30;
 
 export function createCockpitRenderPass({ renderer, scene, camera, cockpit, overlays = [], renderWorld = () => renderer.render(scene,camera), prepareWorld = compile => compile(), prepareInterior = compile => compile() }) {
-  const masks = [], visibility = [];
+  const masks = [], visibility = [], temporarilyHidden = [];
   let dirty=true,disposed=false,rebuilds=0,revision=0;
-  const observed=new Set(),lights=[],interiorNodes=[];
+  const observed=new Set(),lights=[],interiorNodes=[],worldBranches=[];
   const invalidate=()=>{dirty=true;revision++;};
-  function clearMembership(){for(const node of observed){node.removeEventListener('childadded',invalidate);node.removeEventListener('childremoved',invalidate);}observed.clear();lights.length=interiorNodes.length=0;}
+  function clearMembership(){for(const node of observed){node.removeEventListener('childadded',invalidate);node.removeEventListener('childremoved',invalidate);}observed.clear();lights.length=interiorNodes.length=worldBranches.length=0;}
   function membership(){
     if(!dirty)return;
     clearMembership();
     const observe=node=>{if(observed.has(node))return;observed.add(node);node.addEventListener('childadded',invalidate);node.addEventListener('childremoved',invalidate);};
     scene.traverse(node=>{observe(node);if(node.isLight)lights.push(node);});
-    for(const root of [cockpit,...overlays])root.traverse(node=>{observe(node);interiorNodes.push(node);});
+    const interiorRoots=new Set([cockpit,...overlays]);
+    for(const root of interiorRoots)root.traverse(node=>{observe(node);interiorNodes.push(node);});
+    const ancestors=new Set();
+    for(const node of [...interiorRoots,...lights]){
+      for(let parent=node;parent&&!ancestors.has(parent);parent=parent.parent)ancestors.add(parent);
+    }
+    // Three tests layers per object and still visits children of a layer mismatch.
+    // Stop traversal at the root of each world branch without cabin objects or lights.
+    function findWorldBranches(node){
+      if(interiorRoots.has(node))return;
+      for(const child of node.children){
+        if(ancestors.has(child))findWorldBranches(child);
+        else worldBranches.push(child);
+      }
+    }
+    findWorldBranches(scene);
     dirty=false;rebuilds++;
   }
   const isolate = node => { masks.push(node, node.layers.mask); node.layers.mask = INTERIOR_MASK; };
@@ -95,9 +110,16 @@ export function createCockpitRenderPass({ renderer, scene, camera, cockpit, over
         renderer.autoClear = false;
         if (renderer.info) renderer.info.autoReset = false;
         if (renderer.shadowMap) { renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false; }
+        for(const root of worldBranches){
+          if(!root.visible)continue;
+          temporarilyHidden.push(root);
+          root.visible=false;
+        }
         renderer.clearDepth();
         renderer.render(scene, camera);
       } finally {
+        for(const root of temporarilyHidden)root.visible=true;
+        temporarilyHidden.length=0;
         for (let i=masks.length-2;i>=0;i-=2) masks[i].layers.mask=masks[i+1];
         for (let i=0;i<visibility.length;i+=2) visibility[i].visible=visibility[i+1];
         cockpit.visible = true;

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=4dc1dfe6ae29fbad';
+import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=759eba2a6de85a5f';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -17,8 +17,8 @@ function fixture() {
     clearDepth(){ this.depth=Infinity; calls.push('clear-depth'); },
     render(s,c){
       if(this.autoClear)this.depth=Infinity;
-      const visible=[];s.traverseVisible(n=>{if(n.layers.test(c.layers))visible.push(n);});
-      calls.push({visible,background:s.background,environment:s.environment,shadows:this.shadowMap.autoUpdate});
+      const visited=[],visible=[];s.traverseVisible(n=>{visited.push(n);if(n.layers.test(c.layers))visible.push(n);});
+      calls.push({visited,visible,background:s.background,environment:s.environment,shadows:this.shadowMap.autoUpdate});
       for(const n of visible)if(n.isMesh&&n.userData.depth<this.depth){this.depth=n.userData.depth;this.pixel=n;}
     },
   };
@@ -60,11 +60,33 @@ test('new interior meshes and lights are included without changing hidden object
   assert.equal(newMesh.layers.mask,16);assert.equal(newMesh.visible,false);assert.equal(newLight.layers.mask,1);
 });
 
+test('interior skips whole world branches and rebuilds when a branch gains or loses a light',()=>{
+  const f=fixture(), terrain=new THREE.Group(), trees=new THREE.Group(), tree=new THREE.Mesh(), lamp=new THREE.PointLight();
+  f.scene.add(terrain);terrain.add(trees);trees.add(tree);
+  const pass=createCockpitRenderPass(f);
+  pass.render();
+  assert.ok(f.calls[0].visited.includes(tree));
+  assert.ok(!f.calls.at(-1).visited.includes(terrain));
+  assert.equal(terrain.visible,true);
+  terrain.add(lamp);
+  pass.render();
+  assert.ok(f.calls.at(-1).visible.includes(lamp));
+  assert.ok(!f.calls.at(-1).visited.includes(trees));
+  terrain.visible=false;
+  pass.render();
+  assert.ok(!f.calls.at(-1).visible.includes(lamp));
+  assert.equal(terrain.visible,false);
+  terrain.visible=true;lamp.removeFromParent();
+  pass.render();
+  assert.ok(!f.calls.at(-1).visited.includes(terrain));
+  pass.dispose();
+});
+
 for(const failAt of [1,2])test(`render failure in pass ${failAt} restores all shared state`,()=>{
   const f=fixture(), render=f.renderer.render.bind(f.renderer), background=f.scene.background;
   let count=0;f.renderer.render=(...args)=>{render(...args);if(++count===failAt)throw new Error('gpu failure');};
   assert.throws(()=>createCockpitRenderPass({...f,overlays:[f.guide]}).render(),/gpu failure/);
-  assert.equal(f.cockpit.visible,true);assert.equal(f.guide.visible,true);
+  assert.equal(f.cockpit.visible,true);assert.equal(f.guide.visible,true);assert.equal(f.road.visible,true);
   for(const n of [f.camera,f.cockpit,f.dash,f.light])assert.equal(n.layers.mask,1);
   assert.equal(f.scene.background,background);assert.equal(f.renderer.autoClear,true);
   assert.equal(f.renderer.shadowMap.autoUpdate,true);assert.equal(f.renderer.shadowMap.needsUpdate,true);

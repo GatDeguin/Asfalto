@@ -104,6 +104,12 @@ En los dos controles de 25 s, el espejo izquierdo recibió 1.866 llamadas nativa
 
 La repetición de 78 s en calidad Baja cruzó el minuto con el cielo pasando de nublado a despejado y siguió conduciendo al iniciarse la transición a hora dorada. Promedió 56,20 FPS y no registró bloqueos, errores de navegador ni saltos de presentación superiores a 75 ms. El taller volvió a estar disponible 85 ms después de pulsar el botón. Esta ventana corresponde a un tramo inicial del Sprint en este equipo, con un ciclo de cielo configurado a 360 s. La suma de las consultas GPU por cuadro alcanzó 17,39 ms p95 en 488 cuadros muestreados. Los dos renderizados que escriben en `ASFALTO_COLOR_HDR` sumaron 5,05 ms p95 dentro de esa muestra.
 
+### Recorrido de escena en el pase de cabina
+
+El pase interior conserva sus capas, luces y profundidad. Al cambiar la jerarquía de la escena se identifican los grupos sin objetos de cabina, guías del editor ni luces. Se omite la visita a esos grupos durante el dibujo interior y se restaura su visibilidad al salir, incluso si el renderizador falla. La vista exterior sigue dibujando el mundo completo.
+
+En dos controles y dos pruebas alternadas de 25 s en Dos Lagos, el p95 de GPU del pase interior fue de 6,77–7,33 ms en los controles y 4,79–5,54 ms con la poda. El tiempo medio de CPU dentro de la llamada de renderizado interior fue de 3,70–3,74 ms y 3,23–3,41 ms, respectivamente. Los cuadros de escena enviados pasaron de 47,30–48,12 FPS a 52,38–57,16 FPS en esas cuatro ventanas instrumentadas. Las capturas del mismo tramo muestran el tablero, la ruta y ambos reflejos. Las pruebas cubren una luz que se añade o retira dentro de un grupo, visibilidad previa y restauración tras una excepción.
+
 ## Regresiones corregidas
 
 - En la primera salida a Iguazú se pedía antes el GLB de Dos Lagos, de 24,2 MB. El arranque utiliza ahora la escena seleccionada. En una sesión aislada con el mismo perfilador, la entrada bajó de 27,70 a 19,54 segundos. Al simular un HTTP 503 en la primera petición, el juego preparó Dos Lagos como respaldo, recuperó la selección de Iguazú y permitió conducir. Cancelar con el GLB retenido devolvió el control al taller. Tras completar la carga pendiente, una nueva salida a Dos Lagos se inició correctamente.
@@ -112,7 +118,7 @@ La repetición de 78 s en calidad Baja cruzó el minuto con el cielo pasando de 
 
 ## Comprobaciones reproducibles
 
-- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 358 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
+- Ejecutar `node --test` con los archivos `tools/*.test.mjs` según el shell. Pasaron las 359 pruebas locales, incluidas proyección física, historial, arranque, ciclo de vida de espejos, selección por cámara, superficies agrupadas y restauración de materiales.
 - Configurar `PLAYWRIGHT_PACKAGE` si Playwright está fuera de la raíz y `CHROME_PATH` para indicar el Chrome de prueba. Ejecutar `node tools/roadtest-browser.mjs <directorio-de-evidencia>`. El 0–100 usa teclado, movimiento reducido y un perfil aislado. Verifica pausa, resultado y persistencia tras recargar.
 - Ejecutar `node tools/track-drive-browser.mjs <directorio-de-evidencia> [circuito] [--draw-detail]` con el mismo entorno. Abre los circuitos desde el taller y comprueba aceleración, pausa, reanudación y regreso. Al elegir un circuito, comprueba también que su escena sea la única solicitada en la primera salida. Guarda cadencia, GPU, tareas largas, preparación de shaders y capturas.
 - Ejecutar `node tools/water-optics.gpu.mjs <archivo-json>`. La prueba lee la absorción del fragmento en WebGL. A 2 m obtiene 0,275 perpendicular y 0,380 rasante, con cero en la orilla de profundidad cero y una llamada de dibujo en cada muestra.
