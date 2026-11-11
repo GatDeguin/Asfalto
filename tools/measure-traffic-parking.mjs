@@ -4,7 +4,7 @@ import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mj
 import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs?v=4e5a55f83b79f7c1';
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=62f7607723a931ca';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=30a528c61c10745d';
 import '../src/legacy/asfalto-v5-glb-runtime.js';
 
 const out=process.argv[2];

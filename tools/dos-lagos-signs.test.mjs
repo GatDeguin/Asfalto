@@ -6,9 +6,9 @@ import { readCircuitSource } from './fixtures/closed-circuit-source.mjs';
 import { decodeGlbDocument, parseGlbContainer } from '../src/runtime/glb-decode-worker.mjs?v=4e5a55f83b79f7c1';
 import { makeGlbAttribute } from '../src/runtime/glb-accessors.mjs';
 import { createRouteQuery } from '../src/tracks/route-query.mjs';
-import { addDosLagosPostSupport } from '../src/tracks/visuals/dos-lagos-post-support.mjs?v=236b22d89e158025';
-import { prepareDosLagosSigns } from '../src/tracks/visuals/dos-lagos-signs.mjs?v=ea29bcf64bc69b48';
-import { terrainHeightSampler } from '../src/tracks/visuals/reference-landscape.mjs?v=62f7607723a931ca';
+import { addDosLagosPostSupport } from '../src/tracks/visuals/dos-lagos-post-support.mjs?v=18ce66c786808c77';
+import { prepareDosLagosSigns } from '../src/tracks/visuals/dos-lagos-signs.mjs?v=fe86c890cfd4a00a';
+import { terrainHeightSampler } from '../src/tracks/visuals/reference-landscape.mjs?v=30a528c61c10745d';
 
 const name = 'ASFALTO_DOS_LAGOS_AUTHORED_SIGNS';
 

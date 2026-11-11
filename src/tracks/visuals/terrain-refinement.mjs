@@ -39,6 +39,7 @@ export function refineTerrainSurface(THREE,mesh,options={},refineMissing){
     try{
       const geometry=new THREE.BufferGeometryLoader().parse(saved.geometry);
       if(!geometry.attributes.position||!geometry.attributes.normal)throw Error('invalid baked geometry');
+      geometry.userData.asfaltoBakeKey=key;
       if(saved.terrainMeshlets)registerTerrainMeshlets(geometry,saved.terrainMeshlets);
       return installRefinedTerrain(THREE,mesh,geometry,saved.result);
     }catch{} // A stale or malformed optional artifact uses the authored path.

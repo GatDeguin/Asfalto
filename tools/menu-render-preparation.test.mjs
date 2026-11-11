@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {waitForSignal} from '../src/runtime/abortable.mjs?v=c91114c944607feb';import {createSessionTransactionRunner} from '../src/menu/v7-session-runtime.mjs?v=70b376bd29cce8c2';
-const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=e07c155d46bc4f28',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=bb5ec8193025aa90',import.meta.url),'utf8');
+const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=c9789b8329b3176c',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=bb5ec8193025aa90',import.meta.url),'utf8');
 const extract=(s,start,end)=>s.slice(s.indexOf(start),s.indexOf(end,s.indexOf(start))).trim();
 const bind=(source,scope)=>new Function('scope',`with(scope){return (${source});}`)(scope);
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};const tick=()=>new Promise(r=>setImmediate(r));

@@ -7,7 +7,7 @@ import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {encodeBinaryBake,BAKE_SCHEMA} from '../src/tracks/visuals/bake-binary-codec.mjs?v=9a206fac5b81dd7a';
 import {prepareBinaryPayload} from './bake-tooling.mjs?v=08383d8a84ffdff4';
-import {bakeTerrainMeshlets} from './build-terrain-meshlets.mjs?v=efb2df9b9dd6246f';
+import {bakeTerrainMeshlets} from './build-terrain-meshlets.mjs?v=144162be656b62c1';
 import {startServer} from '../server.mjs?v=d5132a06b199d493';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const {chromium}=createRequire(process.env.PLAYWRIGHT_PACKAGE||import.meta.url)('playwright');
@@ -16,7 +16,7 @@ const reference=referenceFlag<0?null:path.resolve(process.argv[referenceFlag+1])
 if(reference)fs.mkdirSync(reference,{recursive:true});
 const out=path.join(root,'assets/tracks/offline-bake');fs.mkdirSync(out,{recursive:true});
 const manifest={schema:BAKE_SCHEMA,tracks:{},inputs:{}};
-for(const file of ['src/tracks/visuals/terrain-refinement.mjs?v=fc7a19840d23b542','src/tracks/visuals/terrain-refinement-solver.mjs?v=eeee2ed24d0fed64','src/tracks/visuals/forest-terrain-detail.mjs?v=8e17cf50d6fbaefc','src/render/surface-curvature.mjs?v=4c6fa9c0ecb6bbe6','src/render/terrain-meshlets.mjs','tools/build-terrain-meshlets.mjs'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
+for(const file of ['src/tracks/visuals/terrain-refinement.mjs?v=95030aee7f9229d2','src/tracks/visuals/terrain-refinement-solver.mjs?v=eeee2ed24d0fed64','src/tracks/visuals/forest-terrain-detail.mjs?v=8e17cf50d6fbaefc','src/render/surface-curvature.mjs?v=4c6fa9c0ecb6bbe6','src/render/terrain-meshlets.mjs','tools/build-terrain-meshlets.mjs'].map(file=>file.split('?')[0]))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');
 for(const e of JSON.parse(fs.readFileSync(path.join(root,'tracks/registry.json'))).tracks){const file=path.join('tracks',e.manifest);if(fs.existsSync(path.join(root,file)))manifest.inputs[file]=createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex');}
 const server=await startServer({root});let browser;
 try{

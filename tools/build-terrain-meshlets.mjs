@@ -138,7 +138,7 @@ function compileTrack(sourceDirectory, outputDirectory, id) {
   assert.deepEqual(decodeBinaryBake(encoded.slice(0)), payload);
   const compressed = gzipSync(new Uint8Array(encoded), {level: 9});
   manifest.tracks[id] = {...entry, bytes: compressed.length, decodedBytes: encoded.byteLength, sha256: hash(compressed)};
-  for (const file of ['src/tracks/visuals/terrain-refinement.mjs?v=fc7a19840d23b542', 'src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9', 'tools/build-terrain-meshlets.mjs']) {
+  for (const file of ['src/tracks/visuals/terrain-refinement.mjs?v=95030aee7f9229d2', 'src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9', 'tools/build-terrain-meshlets.mjs']) {
     manifest.inputs[file] = hash(fs.readFileSync(new URL(`../${file}`, import.meta.url)));
   }
   fs.mkdirSync(outputDirectory, {recursive: true});

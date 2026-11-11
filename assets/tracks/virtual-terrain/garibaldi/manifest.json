@@ -1,0 +1,680 @@
+{
+  "schema": "asfalto-virtual-terrain/1",
+  "source": "refine:655fc28c3c7222e4:1737255",
+  "triangles": 38614,
+  "root": {
+    "file": "root.vt.gz",
+    "bytes": 126282,
+    "decodedBytes": 631968,
+    "sha256": "a17a613d694a4345c720d5ec7bc92373d6a48a2026fd9c46ff59a9eecca062f6"
+  },
+  "pages": [
+    {
+      "id": 0,
+      "coarseStart": 0,
+      "coarseCount": 360,
+      "fineCount": 1206,
+      "errorM": 4.189976692199707,
+      "bounds": [
+        -6500,
+        -188.43313598632812,
+        -5100,
+        -4850,
+        270.3863220214844,
+        -2900
+      ],
+      "detail": {
+        "file": "detail-00.vt.gz",
+        "bytes": 11951,
+        "decodedBytes": 57888,
+        "sha256": "7c12d917ab690a26c988506ca7a8665bc220576e30ccf6a1b1c8059ae324fc60"
+      }
+    },
+    {
+      "id": 1,
+      "coarseStart": 360,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.8848259449005127,
+      "bounds": [
+        -4900,
+        -190.9505157470703,
+        -5300,
+        -3600,
+        229.9750213623047,
+        -3000
+      ],
+      "detail": {
+        "file": "detail-01.vt.gz",
+        "bytes": 11689,
+        "decodedBytes": 57936,
+        "sha256": "37828a5b94a39d4e4bd87b998b76f6c1f9a7aac54d7ff17b9099d9b3d7194d7b"
+      }
+    },
+    {
+      "id": 2,
+      "coarseStart": 721,
+      "coarseCount": 360,
+      "fineCount": 1206,
+      "errorM": 6.331855773925781,
+      "bounds": [
+        -3650,
+        -123.12097930908203,
+        -6000,
+        -1050,
+        598.5657958984375,
+        -4450
+      ],
+      "detail": {
+        "file": "detail-02.vt.gz",
+        "bytes": 10285,
+        "decodedBytes": 57888,
+        "sha256": "ea2d4f2d6f606b8a3c7f61306c09e516b3ff888322b8d91317eb0601775cb400"
+      }
+    },
+    {
+      "id": 3,
+      "coarseStart": 1081,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 13.585542678833008,
+      "bounds": [
+        -3650,
+        -205.24644470214844,
+        -4500,
+        -1050,
+        -39.19409942626953,
+        -3200
+      ],
+      "detail": {
+        "file": "detail-03.vt.gz",
+        "bytes": 10091,
+        "decodedBytes": 57936,
+        "sha256": "591eac893ab109955a556ffbce727e2cfe493054668fc31575bbd858a7203080"
+      }
+    },
+    {
+      "id": 4,
+      "coarseStart": 1442,
+      "coarseCount": 394,
+      "fineCount": 1206,
+      "errorM": 20.92102813720703,
+      "bounds": [
+        -6100,
+        -147.76312255859375,
+        -3000,
+        -3000,
+        279.78924560546875,
+        -1100
+      ],
+      "detail": {
+        "file": "detail-04.vt.gz",
+        "bytes": 10762,
+        "decodedBytes": 57888,
+        "sha256": "bacb346d225f48b639bd88fe17928a4eb1b7936eaf92a0a23e5d4799407a3307"
+      }
+    },
+    {
+      "id": 5,
+      "coarseStart": 1836,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.631589412689209,
+      "bounds": [
+        -5600,
+        -16.210844039916992,
+        -1200,
+        -3000,
+        427.5041198730469,
+        200
+      ],
+      "detail": {
+        "file": "detail-05.vt.gz",
+        "bytes": 10248,
+        "decodedBytes": 57936,
+        "sha256": "ead14bb3c260c1212dbf2d4f1018b615ea77327567524a7fb0f65aeb2e0714cf"
+      }
+    },
+    {
+      "id": 6,
+      "coarseStart": 2197,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 4.246103286743164,
+      "bounds": [
+        -3050,
+        -61.609901428222656,
+        -2750,
+        -1050,
+        450.0944519042969,
+        -1200
+      ],
+      "detail": {
+        "file": "detail-06.vt.gz",
+        "bytes": 10209,
+        "decodedBytes": 57936,
+        "sha256": "92c58c5193f6c0664ed99b51b435727861d770000f941904cd0ca16bf22436e6"
+      }
+    },
+    {
+      "id": 7,
+      "coarseStart": 2558,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.2238452434539795,
+      "bounds": [
+        -3100,
+        271.4171447753906,
+        -1300,
+        -1050,
+        553.1187744140625,
+        350
+      ],
+      "detail": {
+        "file": "detail-07.vt.gz",
+        "bytes": 10167,
+        "decodedBytes": 57936,
+        "sha256": "d4e568ddc2506f67e2e4c8c422c85e5084611e89d5178c55580a6dae28b85a29"
+      }
+    },
+    {
+      "id": 8,
+      "coarseStart": 2919,
+      "coarseCount": 360,
+      "fineCount": 1206,
+      "errorM": 5.814117908477783,
+      "bounds": [
+        -1100,
+        -162.69625854492188,
+        -6200,
+        1550,
+        553.1746215820312,
+        -4900
+      ],
+      "detail": {
+        "file": "detail-08.vt.gz",
+        "bytes": 10330,
+        "decodedBytes": 57888,
+        "sha256": "88cebc896b38784a04bd679c747d87c50160a32c156b3beac555d84a6ce3f795"
+      }
+    },
+    {
+      "id": 9,
+      "coarseStart": 3279,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 17.565231323242188,
+      "bounds": [
+        -1100,
+        -211.33380126953125,
+        -5000,
+        1550,
+        84.02684783935547,
+        -2950
+      ],
+      "detail": {
+        "file": "detail-09.vt.gz",
+        "bytes": 10090,
+        "decodedBytes": 57936,
+        "sha256": "f14d1b969761ce27c8843683d309a2fef76eff65127a9f9a8ee829f33a272636"
+      }
+    },
+    {
+      "id": 10,
+      "coarseStart": 3640,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.668898105621338,
+      "bounds": [
+        1500,
+        -215.12242126464844,
+        -6100,
+        3700,
+        107.91002655029297,
+        -4150
+      ],
+      "detail": {
+        "file": "detail-10.vt.gz",
+        "bytes": 10012,
+        "decodedBytes": 57936,
+        "sha256": "3e791a2302268c64a9c696ac69e7ce92eee40fd4d9cee5fee79103de7b3f722b"
+      }
+    },
+    {
+      "id": 11,
+      "coarseStart": 4001,
+      "coarseCount": 357,
+      "fineCount": 1207,
+      "errorM": 3.7038047313690186,
+      "bounds": [
+        1500,
+        -208.8211212158203,
+        -4200,
+        3800,
+        219.94082641601562,
+        -2900
+      ],
+      "detail": {
+        "file": "detail-11.vt.gz",
+        "bytes": 10114,
+        "decodedBytes": 57936,
+        "sha256": "88f9864d7211c491edda4caec6a0c2dcbc93afa4efec31152d5660d0281099f9"
+      }
+    },
+    {
+      "id": 12,
+      "coarseStart": 4358,
+      "coarseCount": 500,
+      "fineCount": 1206,
+      "errorM": 19.0125675201416,
+      "bounds": [
+        -1100,
+        -62.100154876708984,
+        -2950,
+        1400,
+        370.3450622558594,
+        -1300
+      ],
+      "detail": {
+        "file": "detail-12.vt.gz",
+        "bytes": 10533,
+        "decodedBytes": 57888,
+        "sha256": "eb359742bc1bdc36bc6d75d9e0196123caefea1fd7452c6458c5c55b7561cdc6"
+      }
+    },
+    {
+      "id": 13,
+      "coarseStart": 4858,
+      "coarseCount": 485,
+      "fineCount": 1207,
+      "errorM": 24.86265754699707,
+      "bounds": [
+        -1100,
+        29.29161834716797,
+        -1350,
+        1400,
+        448.04205322265625,
+        350
+      ],
+      "detail": {
+        "file": "detail-13.vt.gz",
+        "bytes": 10680,
+        "decodedBytes": 57936,
+        "sha256": "f64d97d7091fc85722b9b2fa5e975d4a5ffa8ca9bedf0f29d944a63ea55ca08c"
+      }
+    },
+    {
+      "id": 14,
+      "coarseStart": 5343,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.1165127754211426,
+      "bounds": [
+        1350,
+        74.48934936523438,
+        -3000,
+        3700,
+        456.528564453125,
+        -1500
+      ],
+      "detail": {
+        "file": "detail-14.vt.gz",
+        "bytes": 10173,
+        "decodedBytes": 57936,
+        "sha256": "c97024c4d9be7334066d6887e8adf4c10af177cd4bef8e61c70a2a8ebc655702"
+      }
+    },
+    {
+      "id": 15,
+      "coarseStart": 5704,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 2.8589799404144287,
+      "bounds": [
+        1350,
+        245.4705810546875,
+        -1550,
+        3200,
+        533.8322143554688,
+        350
+      ],
+      "detail": {
+        "file": "detail-15.vt.gz",
+        "bytes": 10036,
+        "decodedBytes": 57936,
+        "sha256": "10694634ebb5809e26f9c1d4842fca5d34d22348525f1efbad3d8e8bb982aab4"
+      }
+    },
+    {
+      "id": 16,
+      "coarseStart": 6065,
+      "coarseCount": 360,
+      "fineCount": 1206,
+      "errorM": 5.028181552886963,
+      "bounds": [
+        -3400,
+        40.89840316772461,
+        300,
+        -1250,
+        593.5242309570312,
+        1850
+      ],
+      "detail": {
+        "file": "detail-16.vt.gz",
+        "bytes": 10237,
+        "decodedBytes": 57888,
+        "sha256": "d9e6717840d4ae034b0082729ff031f45cd4e26e9d323baf400d45625dbea201"
+      }
+    },
+    {
+      "id": 17,
+      "coarseStart": 6425,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 5.138288974761963,
+      "bounds": [
+        -3400,
+        57.61275100708008,
+        1800,
+        -1250,
+        729.9039306640625,
+        3350
+      ],
+      "detail": {
+        "file": "detail-17.vt.gz",
+        "bytes": 10165,
+        "decodedBytes": 57936,
+        "sha256": "74306f1763200c25b22e381989cadb84e27cd29b4c857b430c428cfe8aeebcac"
+      }
+    },
+    {
+      "id": 18,
+      "coarseStart": 6786,
+      "coarseCount": 562,
+      "fineCount": 1206,
+      "errorM": 25.091873168945312,
+      "bounds": [
+        -1300,
+        -207.8941650390625,
+        300,
+        600,
+        413.7144775390625,
+        3350
+      ],
+      "detail": {
+        "file": "detail-18.vt.gz",
+        "bytes": 12474,
+        "decodedBytes": 57888,
+        "sha256": "6b3f75a4196def9a289308519624ff7eef3d7217f8840249552a766f45fa6428"
+      }
+    },
+    {
+      "id": 19,
+      "coarseStart": 7348,
+      "coarseCount": 407,
+      "fineCount": 1207,
+      "errorM": 31.267192840576172,
+      "bounds": [
+        500,
+        -207.8941650390625,
+        300,
+        1900,
+        552.60986328125,
+        3350
+      ],
+      "detail": {
+        "file": "detail-19.vt.gz",
+        "bytes": 11381,
+        "decodedBytes": 57936,
+        "sha256": "447c6ee9c214119730d13dd902b4a6f7e397356020a4c6d8e99e769a30221299"
+      }
+    },
+    {
+      "id": 20,
+      "coarseStart": 7755,
+      "coarseCount": 360,
+      "fineCount": 1206,
+      "errorM": 5.3610405921936035,
+      "bounds": [
+        -2900,
+        -82.8364486694336,
+        3300,
+        -100,
+        577.1170654296875,
+        4800
+      ],
+      "detail": {
+        "file": "detail-20.vt.gz",
+        "bytes": 11517,
+        "decodedBytes": 57888,
+        "sha256": "b99d7555a952d8d91075ed2ab7b75301cc80102c8d079143e98ff276331d9be8"
+      }
+    },
+    {
+      "id": 21,
+      "coarseStart": 8115,
+      "coarseCount": 1207,
+      "fineCount": 1207,
+      "errorM": 0,
+      "bounds": [
+        -150,
+        -207.8941650390625,
+        3300,
+        1900,
+        352.719970703125,
+        4800
+      ],
+      "detail": null
+    },
+    {
+      "id": 22,
+      "coarseStart": 9322,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 6.03826904296875,
+      "bounds": [
+        -1100,
+        -207.8941650390625,
+        4700,
+        1900,
+        422.9739685058594,
+        6200
+      ],
+      "detail": {
+        "file": "detail-22.vt.gz",
+        "bytes": 10116,
+        "decodedBytes": 57936,
+        "sha256": "da2d84ce15345181f6acd59066d9137dfa1d9899e3bbda2c1eac536543c0fc7b"
+      }
+    },
+    {
+      "id": 23,
+      "coarseStart": 9683,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 4.32712984085083,
+      "bounds": [
+        0,
+        -207.8941650390625,
+        6150,
+        1900,
+        383.2707824707031,
+        8700
+      ],
+      "detail": {
+        "file": "detail-23.vt.gz",
+        "bytes": 10306,
+        "decodedBytes": 57936,
+        "sha256": "cc3bfe099b08f7194539c69104ccccfbbc98b877eeb4e3f1c39e49ca73cce934"
+      }
+    },
+    {
+      "id": 24,
+      "coarseStart": 10044,
+      "coarseCount": 358,
+      "fineCount": 1206,
+      "errorM": 4.240272045135498,
+      "bounds": [
+        1850,
+        33.5613899230957,
+        300,
+        3100,
+        566.276611328125,
+        3000
+      ],
+      "detail": {
+        "file": "detail-24.vt.gz",
+        "bytes": 11851,
+        "decodedBytes": 57888,
+        "sha256": "c126edcad1c2190f0e93faec9dcde64fb3214c67649739dd199e0b88be08b6da"
+      }
+    },
+    {
+      "id": 25,
+      "coarseStart": 10402,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 5.757472991943359,
+      "bounds": [
+        3000,
+        -200.77227783203125,
+        300,
+        4900,
+        601.7295532226562,
+        3000
+      ],
+      "detail": {
+        "file": "detail-25.vt.gz",
+        "bytes": 12180,
+        "decodedBytes": 57936,
+        "sha256": "beb545bfa1c912a214b018d1167ca4c8c5527c56891758b4fb19fd1effb31806"
+      }
+    },
+    {
+      "id": 26,
+      "coarseStart": 10763,
+      "coarseCount": 417,
+      "fineCount": 1207,
+      "errorM": 29.101608276367188,
+      "bounds": [
+        1850,
+        -207.8941650390625,
+        2900,
+        3950,
+        461.74761962890625,
+        5300
+      ],
+      "detail": {
+        "file": "detail-26.vt.gz",
+        "bytes": 11542,
+        "decodedBytes": 57936,
+        "sha256": "b785f86a4f23f93fceebf14a6cde6d627001b3d0f2ae90ce8c6003702c911268"
+      }
+    },
+    {
+      "id": 27,
+      "coarseStart": 11180,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.692095994949341,
+      "bounds": [
+        3900,
+        -193.6002197265625,
+        2900,
+        6000,
+        473.02227783203125,
+        5300
+      ],
+      "detail": {
+        "file": "detail-27.vt.gz",
+        "bytes": 12006,
+        "decodedBytes": 57936,
+        "sha256": "27bef141ba585f01556fada31c95919c604295851c38284e269177fbd9781142"
+      }
+    },
+    {
+      "id": 28,
+      "coarseStart": 11541,
+      "coarseCount": 542,
+      "fineCount": 1206,
+      "errorM": 23.07330894470215,
+      "bounds": [
+        1800,
+        -207.8941650390625,
+        5250,
+        4100,
+        412.8800964355469,
+        7400
+      ],
+      "detail": {
+        "file": "detail-28.vt.gz",
+        "bytes": 8465,
+        "decodedBytes": 57888,
+        "sha256": "075b5cc0b55c39bf7a8e4f7ce3ff7958a81368c86d11112fb8e5764a05084d69"
+      }
+    },
+    {
+      "id": 29,
+      "coarseStart": 12083,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 3.1273303031921387,
+      "bounds": [
+        1800,
+        -207.8941650390625,
+        7350,
+        4100,
+        290.1463623046875,
+        9100
+      ],
+      "detail": {
+        "file": "detail-29.vt.gz",
+        "bytes": 8499,
+        "decodedBytes": 57936,
+        "sha256": "3a161fc2117967ee78aad8e04100b17e823ca4eef9cedb5cb2ac4e432d83f2bc"
+      }
+    },
+    {
+      "id": 30,
+      "coarseStart": 12444,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 4.795656681060791,
+      "bounds": [
+        4050,
+        -207.8941650390625,
+        5250,
+        5500,
+        414.22430419921875,
+        8150
+      ],
+      "detail": {
+        "file": "detail-30.vt.gz",
+        "bytes": 11773,
+        "decodedBytes": 57936,
+        "sha256": "32bda1d2c260d298157173c7d07c23636ddcf8a1ca3f51a6731f7c8f8b1f013f"
+      }
+    },
+    {
+      "id": 31,
+      "coarseStart": 12805,
+      "coarseCount": 361,
+      "fineCount": 1207,
+      "errorM": 1.5236271619796753,
+      "bounds": [
+        5450,
+        -186.95147705078125,
+        5200,
+        7300,
+        300.7183532714844,
+        7700
+      ],
+      "detail": {
+        "file": "detail-31.vt.gz",
+        "bytes": 11630,
+        "decodedBytes": 57936,
+        "sha256": "32196b1c1ce8e88e242718b49bc521721a0357e7eb1a117457ee8676ea0cd2ee"
+      }
+    }
+  ]
+}
