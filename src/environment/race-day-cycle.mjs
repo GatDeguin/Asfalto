@@ -13,6 +13,8 @@ const knot=(hour,skyId,rotation=0)=>{
 // image downloads or synthesized daytime fill are introduced at night.
 export const DAY_CYCLE_KNOTS=Object.freeze([knot(0,'night'),knot(4.5,'night'),knot(6,'sunset',Math.PI),knot(7,'golden-hour',Math.PI),knot(10,'clear'),knot(13,'overcast'),knot(15,'clear'),knot(17,'golden-hour'),knot(18.5,'sunset'),knot(20,'moonrise'),knot(23,'night'),knot(24,'night')]);
 const START_HOURS={clear:10,overcast:13,'golden-hour':17,golden:17,sunset:18.5,moonrise:20,night:0};
+export function racePresetHour(skyId){return START_HOURS[skyId]??10;}
+
 export function sampleRaceDayCycle(hour,target={direction:[0,1,0],color:[1,1,1]}){
  hour=wrap(Number.isFinite(hour)?hour:10);let index=0;
  while(index<DAY_CYCLE_KNOTS.length-2&&hour>=DAY_CYCLE_KNOTS[index+1].hour)index++;
@@ -26,14 +28,14 @@ export function sampleRaceDayCycle(hour,target={direction:[0,1,0],color:[1,1,1]}
  return target;
 }
 export function createRaceDayCycle({skyId='clear',durationSeconds=DAY_CYCLE_SECONDS,enabled=true}={}){
- let elapsed=0,activeSeconds=0,completedCycles=0,startHour=START_HOURS[skyId]??10,duration=DAY_CYCLE_SECONDS,on=enabled!==false;
+ let elapsed=0,activeSeconds=0,completedCycles=0,startHour=racePresetHour(skyId),duration=DAY_CYCLE_SECONDS,on=enabled!==false;
  const state=sampleRaceDayCycle(startHour);
  function publish(){state.enabled=on;state.durationSeconds=duration;state.elapsedSeconds=elapsed;state.activeSeconds=activeSeconds;state.completedCycles=completedCycles;state.cycleProgress=elapsed/duration;return state;}
  function setOptions(options={}){if('enabled'in options)on=options.enabled!==false;if(Number.isFinite(options.durationSeconds)){const next=Math.max(60,Math.min(86400,options.durationSeconds));elapsed*=next/duration;duration=next;}publish();return diagnostics();}
  function diagnostics(){return{enabled:on,durationSeconds:duration,elapsedSeconds:elapsed,activeSeconds,completedCycles,cycleProgress:elapsed/duration,hour:state.hour,phase:state.phase,from:state.from.skyId,to:state.to.skyId,blend:state.blend};}
  setOptions({durationSeconds});
  return{state,setOptions,diagnostics,
-  reset(id=skyId){skyId=id;startHour=START_HOURS[id]??10;elapsed=0;activeSeconds=0;completedCycles=0;sampleRaceDayCycle(startHour,state);return publish();},
+  reset(id=skyId){skyId=id;startHour=racePresetHour(id);elapsed=0;activeSeconds=0;completedCycles=0;sampleRaceDayCycle(startHour,state);return publish();},
   update({dt=0,status='IDLE',active=false}={}){
    if(on&&active&&status==='RUNNING'&&Number.isFinite(dt)&&dt>0){
     activeSeconds+=dt;elapsed+=dt;const loops=Math.floor((elapsed+duration*1e-12)/duration);completedCycles+=loops;elapsed=Math.max(0,elapsed-loops*duration);

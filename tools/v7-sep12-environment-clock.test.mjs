@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRaceDayCycle} from '../src/environment/race-day-cycle.mjs?v=7e778f2f4e357b6f';
+import {createRaceDayCycle} from '../src/environment/race-day-cycle.mjs?v=35b730ba327a62ee';
 import * as controls from '../src/ui/race-day-cycle-controls.mjs?v=5f87a759443055e0';
 const advance=(clock,dt)=>clock.update({dt,status:'RUNNING',active:true});
 test('360 second cycles preserve completed loops and real active time across a duration change',()=>{

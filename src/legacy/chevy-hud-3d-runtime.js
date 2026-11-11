@@ -35,6 +35,7 @@ let lastProfile=null;
 let lastProfileRead=0;
 let vehicleHudTelemetry=null;
 let routeMinimap=null;
+let minimapClock=null;
 
 function waitForThree(){
   const current=window.__chevyV6Three||window.THREE;
@@ -325,22 +326,26 @@ function updateHudState(time){
   classes.toggle('an-ss250-clear-console',clearConsole);
   const race=getRaceState();publicState.objective=objectiveText();publicState.timerMs=deriveTimer(race);publicState.navigation=deriveNavigation(race,publicState.objective);publicState.telemetry=deriveTelemetry(race,time);updateDom();applyModelState();
   if(!document.hidden&&classes.contains('v6-driving')&&!classes.contains('an-v7-free-hud')){
-    routeMinimap?.render(window.__cockpit?.raceWorld?.track,race.projection);
+    const world=window.__cockpit?.raceWorld;
+    routeMinimap?.render(world?.track,race.projection);
+    minimapClock?.render(world?.getTimeOfDayHour?.());
   }
 }
 async function boot(){
   try{
     const style=document.createElement('style');style.textContent=`@media(min-width:901px){body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-telemetry{bottom:auto;top:calc(max(var(--chevy-hud-safe-top),3.3vh) + clamp(315px,27vw,455px)/4.12 + 12px);transform:scale(.62);transform-origin:100% 0%}body.v6-driving.an-ss250-clear-console:not(.an-phone-hud) #chevy-hud-statuses{font-size:18px;line-height:1.15;flex-direction:column;align-items:flex-start;gap:2px;bottom:8%}}`;document.head.append(style);
-    const [telemetry,{createRouteMinimap}]=await Promise.all([
+    const [telemetry,{createRouteMinimap},{createMinimapClock}]=await Promise.all([
       import(new URL('src/ui/vehicle-hud-telemetry.mjs?v=e1759c101dc759b7',document.baseURI)),
       import(new URL('src/ui/route-minimap.mjs?v=119e35ca50740c45',document.baseURI)),
+      import(new URL('src/ui/minimap-clock.mjs?v=a166d5eeda99d094',document.baseURI)),
     ]);
     vehicleHudTelemetry=telemetry.vehicleHudTelemetry;
     routeMinimap=createRouteMinimap(elements.navMap);
+    minimapClock=createMinimapClock($('#chevy-hud-clock'));
     await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});
     const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));
     if(detectDeviceProfile().phone){
-      const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=91e7a6eb74484ed6',document.baseURI));
+      const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=b0f3ad3db634cf5d',document.baseURI));
       renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;
     }else{
       const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());

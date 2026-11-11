@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createRaceDayCycle,createRaceDayEnvironment,sampleRaceDayCycle} from '../src/environment/race-day-cycle.mjs?v=7e778f2f4e357b6f';
+import {createRaceDayCycle,createRaceDayEnvironment,sampleRaceDayCycle} from '../src/environment/race-day-cycle.mjs?v=35b730ba327a62ee';
 import {resolveEnvironment,getWeatherOptionsForTrack} from '../src/environment/environment-profiles.mjs?v=315916d6c7fab528';
 const weatherModule=await import('../src/environment/race-weather-cycle.mjs?v=98d02c4ab5b936e1').catch(()=>({}));
 const advance=(c,dt)=>c.update({dt,status:'RUNNING',active:true});

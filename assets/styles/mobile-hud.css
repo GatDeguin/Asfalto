@@ -15,33 +15,40 @@ body.an-phone-hud #chevy-hud-timer-value{font-size:20px}
 body.an-phone-hud #chevy-hud-navigation,body.an-phone-hud #chevy-hud-telemetry{bottom:calc(max(8px,env(safe-area-inset-bottom)) + var(--an-mobile-controls-height,0px));height:65px}
 body.an-phone-hud #chevy-hud-navigation{
  --chevy-nav-glass:#101923;
- left:max(8px,env(safe-area-inset-left));width:max(31%,130px);padding:5px 7px;gap:5px;grid-template-columns:minmax(0,1fr) 63px;
+ --chevy-clock-column:34px;
+ --chevy-clock-dial-size:28px;
+ left:max(8px,env(safe-area-inset-left));width:max(34%,166px);padding:5px 6px;gap:4px;grid-template-columns:minmax(0,1fr) 54px var(--chevy-clock-column);
  background:repeating-linear-gradient(135deg,#ffffff05 0 1px,transparent 1px 4px),var(--chevy-phone-hud-face)
 }
 body.an-phone-hud #chevy-hud-navigation::before,body.an-phone-hud #chevy-hud-navigation::after{content:none}
 body.an-phone-hud .chevy-hud-navigation-copy{justify-content:flex-end;gap:2px;padding-bottom:2px}
 body.an-phone-hud .chevy-hud-navigation-label{display:none}
+body.an-phone-hud .chevy-hud-clock{gap:3px}
+body.an-phone-hud .chevy-hud-clock-time{font-size:9px}
 body.an-phone-hud #chevy-hud-telemetry{right:max(8px,env(safe-area-inset-right));width:60%}
 body.an-phone-hud #chevy-hud-gear{left:10px;top:6px;font-size:28px}
 body.an-phone-hud #chevy-hud-gear-label{left:42px;top:12px;font-size:11px}
 body.an-phone-hud #chevy-hud-rpm{left:auto;right:10px;top:13px;font-size:13px}
 body.an-phone-hud #chevy-hud-statuses{left:10px;right:10px;bottom:9px;font-size:9px;gap:8px;justify-content:space-between}
-@media(orientation:landscape){body.an-phone-hud #chevy-hud-objective{width:29%;height:50px}body.an-phone-hud #chevy-hud-timer{width:23%;height:50px}body.an-phone-hud #chevy-hud-navigation{width:clamp(132px,22vw,190px);height:56px}body.an-phone-hud #chevy-hud-telemetry{width:32%;height:54px}body.an-phone-hud #chevy-hud-statuses{font-size:8px;bottom:6px}}
+@media(orientation:landscape){body.an-phone-hud #chevy-hud-objective{width:29%;height:50px}body.an-phone-hud #chevy-hud-timer{width:23%;height:50px}body.an-phone-hud #chevy-hud-navigation{width:clamp(168px,25.5vw,215px);height:56px}body.an-phone-hud #chevy-hud-telemetry{width:32%;height:54px}body.an-phone-hud #chevy-hud-statuses{font-size:8px;bottom:6px}}
 
 /* Speed is primary on a phone; distance remains a separate, labelled value. */
-body.an-phone-hud #an-mobile-speed{position:absolute;left:0;top:0;display:flex;align-items:baseline;gap:3px;color:#fff;font:800 19px/1.05 var(--chevy-hud-digits);white-space:nowrap}
-body.an-phone-hud #an-mobile-speed span{font:700 8px/1 system-ui,sans-serif;color:#d6d1c7}
+body.an-phone-hud #an-mobile-speed{position:absolute;left:0;top:0;display:flex;align-items:baseline;gap:2px;color:#fff;font:800 clamp(15px,4.6vw,19px)/1.05 var(--chevy-hud-digits);white-space:nowrap}
+body.an-phone-hud #an-mobile-speed span{font:700 7px/1 system-ui,sans-serif;color:#d6d1c7}
 body.an-phone-hud #chevy-hud-navigation-value{font-size:11px}
 body.an-phone-hud #chevy-hud-navigation-mode{font-size:7px}
 @media(orientation:portrait){
  body.an-phone-hud #chevy-hud-navigation,body.an-phone-hud #chevy-hud-telemetry{top:calc(max(8px,env(safe-area-inset-top)) + 70px);bottom:auto;height:54px}
- body.an-phone-hud #chevy-hud-navigation{width:47%;height:62px}
+ body.an-phone-hud #chevy-hud-navigation{width:48%;height:62px}
  body.an-phone-hud #chevy-hud-telemetry{width:45%}
  body.an-phone-hud #chevy-hud-gear{font-size:24px}
  body.an-phone-hud #chevy-hud-gear-label{left:37px;font-size:9px}
  body.an-phone-hud #chevy-hud-rpm{right:8px;font-size:11px}
  body.an-phone-hud #chevy-hud-statuses{font-size:8px;line-height:1;bottom:6px;gap:2px;flex-direction:column;align-items:flex-start}
  body.an-phone-hud #v6-game-shell #v6-return-menu{top:calc(max(8px,env(safe-area-inset-top)) + 136px)!important}
+}
+@media(max-width:360px) and (orientation:portrait){
+ body.an-phone-hud #chevy-hud-navigation{--chevy-clock-column:32px;padding-inline:5px;gap:3px;grid-template-columns:minmax(0,1fr) 48px var(--chevy-clock-column)}
 }
 @media(orientation:portrait){body.an-phone-hud #modular-race-cue[data-spawn-parking-hold=true]{top:calc(max(8px,env(safe-area-inset-top)) + 184px)!important;max-width:calc(100vw - 112px)}}
 

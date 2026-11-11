@@ -105,7 +105,7 @@ import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironme
 import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=2cf0ac07a334fc63';
 import { resolveRaceLighting, applyRaceLightingSupport, orientHdriRows } from '../environment/race-lighting.mjs';
 import { createTrackMaterialController } from '../environment/track-material-controller.mjs?v=c6ecbe61ca1d0924';
-import {createRaceDayCycle,createRaceDayEnvironment} from '../environment/race-day-cycle.mjs?v=99c8ee62b1e3818f';
+import {createRaceDayCycle,createRaceDayEnvironment,racePresetHour} from '../environment/race-day-cycle.mjs?v=35b730ba327a62ee';
 import {createHdriTransition} from '../render/hdri-transition.mjs?v=c2cb40f986930d10';
 import {readRaceDayCycleOptions,reflectRaceDayCycleOptions} from '../ui/race-day-cycle-controls.mjs?v=fb7eafe4df5b76e2';
 import {createRaceStartSignal,createRaceFinishMarker} from '../render/race-start-signal.mjs?v=62d43d5a178b174f';
@@ -8376,6 +8376,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
     attachWeatherSurfaces:roots=>raceWeatherEffects.attachVehicleSurfaces(roots),
     getSoundscapeDiagnostics:()=>raceAudio.soundscapeDiagnostics(),
     setDayCycleOptions,getDayCycleDiagnostics:()=>({...raceDayClock.diagnostics(),active:raceDayActive,resources:raceSkyTransition.diagnostics()}),
+    getTimeOfDayHour:()=>environmentOwner!=='race'?null
+      :raceDayActive?raceDayClock.state.hour:racePresetHour(regionalEnvironment?.presetId??settings.skyId),
     getDrivingLights:()=>({...drivingLights.getState(),phase:raceDayActive?raceDayClock.state.phase:settings.timeOfDay}),setDrivingLights,
     refreshWeatherEffectSurfaces:adapter=>raceWeatherEffects.refreshTrack({getMaterialBindings:()=>adapter.getMaterialBindings?.() || []}),
     get track(){return track;},get state(){return simulation.state;},get circuits(){return RaceCore.TRACK_BLUEPRINTS;},

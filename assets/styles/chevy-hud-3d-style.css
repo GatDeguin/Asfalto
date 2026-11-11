@@ -55,9 +55,11 @@ body.v6-driving #chevy-hud-webgl-canvas,body.v6-driving #chevy-hud-overlay{displ
   --chevy-nav-edge:linear-gradient(148deg,#31241a,#120f0d 36%,#241b16 72%,#100d0c);
   --chevy-nav-face:linear-gradient(153deg,#131211,#050505 55%,#0b0908);
   --chevy-nav-glass:#14120f;
+  --chevy-clock-column:clamp(48px,4.3vw,60px);
+  --chevy-clock-dial-size:clamp(37px,3.65vw,52px);
   left:max(var(--chevy-hud-safe-left),2.2vw);bottom:max(var(--chevy-hud-safe-bottom),3.8vh);
-  box-sizing:border-box;width:clamp(216px,19vw,264px);height:clamp(108px,14vh,142px);padding:8px 11px;gap:10px;
-  display:grid;grid-template-columns:minmax(0,1fr) minmax(76px,33%);grid-template-rows:minmax(0,1fr);
+  box-sizing:border-box;width:clamp(268px,23.5vw,328px);height:clamp(108px,14vh,142px);padding:8px 11px;gap:10px;
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(70px,24%) var(--chevy-clock-column);grid-template-rows:minmax(0,1fr);
   filter:none;
 }
 #chevy-hud-navigation::before,#chevy-hud-navigation::after{
@@ -94,6 +96,40 @@ body.v6-driving #chevy-hud-webgl-canvas,body.v6-driving #chevy-hud-overlay{displ
   font-size:clamp(14px,1.27vw,18px);font-weight:850;letter-spacing:-.025em;line-height:1;white-space:nowrap;
 }
 #chevy-hud-navigation-mode{color:#c5c6c3;font-size:clamp(8px,.67vw,11px);font-weight:700;letter-spacing:.045em;white-space:nowrap}
+
+.chevy-hud-clock{
+  display:grid;align-content:center;justify-items:center;gap:5px;min-width:0;
+  border-inline-start:1px solid #f4dcbd23;
+}
+.chevy-hud-clock[hidden]{display:none}
+.chevy-hud-clock-face{
+  position:relative;box-sizing:border-box;width:var(--chevy-clock-dial-size);aspect-ratio:1;border-radius:50%;
+  border:1px solid #b39775a8;background:radial-gradient(circle at 38% 29%,#312820,#14110f 70%);
+  box-shadow:0 0 0 1px #0b0908,inset 0 0 4px #000b;
+}
+.chevy-hud-clock-face::before{
+  content:"";position:absolute;inset:8%;border-radius:50%;
+  background:conic-gradient(from -2.5deg,#ffe2bd 0deg 5deg,transparent 5deg),
+    repeating-conic-gradient(from -1.2deg,#cfb38f 0deg 2.4deg,transparent 2.4deg 30deg);
+  mask:radial-gradient(circle closest-side,transparent 76%,#000 80% 97%,transparent 100%);
+}
+.chevy-hud-clock-face::after{
+  content:"";position:absolute;left:50%;top:50%;width:10%;aspect-ratio:1;
+  transform:translate(-50%,-50%);border-radius:50%;background:#ecc598;
+}
+.chevy-hud-clock-hand{position:absolute;inset:0}
+.chevy-hud-clock-hand::before{
+  content:"";position:absolute;left:50%;bottom:50%;
+  transform:translateX(-50%);border-radius:2px;
+}
+.chevy-hud-clock-hour{transform:rotate(var(--chevy-clock-hour,0deg))}
+.chevy-hud-clock-hour::before{width:clamp(2px,.23vw,3px);height:27%;background:var(--chevy-hud-white)}
+.chevy-hud-clock-minute{transform:rotate(var(--chevy-clock-minute,0deg))}
+.chevy-hud-clock-minute::before{width:1.5px;height:36%;background:#ff9e55}
+.chevy-hud-clock-time{
+  color:#f6ddbd;font:750 clamp(10px,.93vw,13px)/1 var(--chevy-hud-digits);
+  white-space:nowrap;text-shadow:0 1px 2px #000;
+}
 
 #chevy-hud-telemetry{
   right:max(var(--chevy-hud-safe-right),2.2vw);bottom:max(var(--chevy-hud-safe-bottom),3.8vh);
@@ -132,7 +168,7 @@ body.v6-driving #v6-return-menu:hover,body.v6-driving #v6-return-menu:focus-visi
 @media(max-width:680px){
   #chevy-hud-objective{left:8px;top:max(8px,env(safe-area-inset-top));width:51vw;min-width:0}
   #chevy-hud-timer{right:8px;top:max(8px,env(safe-area-inset-top));width:45vw;min-width:0}
-  #chevy-hud-navigation{--chevy-nav-cut:9px;left:7px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 112px);width:min(47vw,216px);height:82px;grid-template-columns:minmax(0,1fr) minmax(65px,33%);padding:6px 8px;gap:6px}
+  #chevy-hud-navigation{--chevy-nav-cut:9px;--chevy-clock-column:38px;--chevy-clock-dial-size:32px;left:7px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 112px);width:min(47vw,calc(51vw - 16px),258px);height:82px;grid-template-columns:minmax(0,1fr) minmax(48px,28%) var(--chevy-clock-column);padding:6px 8px;gap:5px}
   #chevy-hud-navigation-value{font-size:clamp(11px,2.8vw,14px)}
   #chevy-hud-telemetry{right:7px;bottom:calc(max(8px,env(safe-area-inset-bottom)) + 112px);width:49vw;min-width:0}
   #chevy-hud-objective-label{padding-left:12%;font-size:clamp(11px,3.6vw,17px)}
@@ -151,7 +187,7 @@ body.v6-driving #v6-return-menu:hover,body.v6-driving #v6-return-menu:focus-visi
 @media(max-height:500px) and (orientation:landscape){
   #chevy-hud-objective{left:7px;top:5px;width:27vw;min-width:0}
   #chevy-hud-timer{right:7px;top:5px;width:25vw;min-width:0}
-  #chevy-hud-navigation{left:7px;bottom:5px;width:clamp(136px,24vw,216px);height:76px}
+  #chevy-hud-navigation{--chevy-clock-column:40px;--chevy-clock-dial-size:33px;left:7px;bottom:5px;width:clamp(198px,30vw,268px);height:76px;grid-template-columns:minmax(0,1fr) minmax(54px,27%) var(--chevy-clock-column);padding-inline:8px;gap:6px}
   #chevy-hud-telemetry{right:7px;bottom:5px;width:29vw;min-width:0}
   #chevy-hud-objective-sub{display:none}
   body.v6-driving #v5-mirror{height:42px!important;width:27vw!important}

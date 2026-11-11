@@ -35,7 +35,7 @@
 <script type="module" src="./src/menu/menu-presentation.mjs?v=df0a0206952a5376"></script>
 
 <meta name="chevy-hud-3d-build" content="1.0.0">
-<link id="chevy-hud-3d-style" rel="stylesheet" href="./assets/styles/chevy-hud-3d-style.css?v=30d6f69365d17294">
+<link id="chevy-hud-3d-style" rel="stylesheet" href="./assets/styles/chevy-hud-3d-style.css?v=78080c8cc0e9dc18">
 
 <meta name="asfalto-nacional-build" content="3.0.0-chevy-v3-cameras">
 <link id="asfalto-v3-camera-style" rel="stylesheet" href="./assets/styles/asfalto-v3-camera-style.css?v=d107888692974cd0">
@@ -366,7 +366,7 @@
 <script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
 <script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
 <script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
-<script type="module" src="./src/legacy/module-02.mjs?v=89baa5d5bcbca81f"></script>
+<script type="module" src="./src/legacy/module-02.mjs?v=af05976fe51f9183"></script>
 
 
 
@@ -590,6 +590,13 @@
       <span id="chevy-hud-navigation-mode">RECORRIDO</span>
       <span id="chevy-hud-navigation-heading" class="chevy-hud-sr">Rumbo N</span>
     </div>
+    <div id="chevy-hud-clock" class="chevy-hud-clock" role="group" aria-label="Hora del circuito" hidden>
+      <span class="chevy-hud-clock-face" aria-hidden="true">
+        <span class="chevy-hud-clock-hand chevy-hud-clock-hour"></span>
+        <span class="chevy-hud-clock-hand chevy-hud-clock-minute"></span>
+      </span>
+      <time class="chevy-hud-clock-time" aria-live="off">—</time>
+    </div>
   </section>
   <section id="chevy-hud-telemetry" class="chevy-hud-host" data-hud-asset="telemetry" data-render-state="loading" aria-label="Telemetría del vehículo">
     <div class="chevy-hud-copy">
@@ -607,7 +614,7 @@
 <script  id="chevy-hud-asset-objective" type="application/octet-stream" data-filename="chevy-objective.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-objective/chevy-objective.glb" data-bytes="239812" data-sha256="6AC5D3A396AA84B2FD62A1FC9CAE00DA4CB56DA0B33D31EF87D328A0A6786FE9"></script>
 <script  id="chevy-hud-asset-timer" type="application/octet-stream" data-filename="chevy-timer.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-timer/chevy-timer.glb" data-bytes="211116" data-sha256="4D65D89B6ADC0FEFA318130D21B7D9001E0493251ECF5F6AD2139EBBD7AEE8A3"></script>
 <script  id="chevy-hud-asset-telemetry" type="application/octet-stream" data-filename="chevy-telemetry.glb" data-encoding="external-url" data-external-url="./assets/extracted/chevy-hud-asset-telemetry/chevy-telemetry.glb" data-bytes="602412" data-sha256="FC8CBA16935B7ECE010769DDFA8DD362DCE311069F17D935E86DC6A7714B7F36"></script>
-<script id="chevy-hud-3d-runtime" src="./src/legacy/chevy-hud-3d-runtime.js?v=240ef3e537a89062"></script>
+<script id="chevy-hud-3d-runtime" src="./src/legacy/chevy-hud-3d-runtime.js?v=055b32f8671a7f81"></script>
 
 <script id="asfalto-v3-workshop-editor-runtime" src="./src/legacy/asfalto-v3-workshop-editor-runtime.js?v=ec8a06713a3723fa"></script>
 
