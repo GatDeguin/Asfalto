@@ -4,7 +4,7 @@ import { createWaterfallEffects } from './weather-waterfalls.mjs?v=e976f102a3dc9
 import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs?v=b65e99f565d1554f';
 import { weatherEffectsPolicy, createVehicleEmissionState } from './weather-effects-policy.mjs?v=46da8d8e8b960aa3';
 import { createWeatherLayers } from './weather-layers.mjs?v=3739704650e329ef';
-import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=49ae91d3e9c9e86b';
+import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=a71155059f104803';
 import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 import { createSkyMatchedFog } from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 import { createWeatherDynamics } from './weather-dynamics.mjs?v=97b633343145b353';
@@ -69,6 +69,7 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
     prepareHydrology:()=>surfaces.prepareHydrology(),
     prepareWaterReflections(options){if(disposed)return Promise.resolve(false);return surfaces.prepareReflections({...options,excludeRoots:[root,...(options.excludeRoots||[])],prepareRender:options=>fogAlignment.prepareRender(options)});},
     invalidateReflections(){surfaces.invalidateReflections();},
+    suspendReflections(){surfaces.suspendReflections();},
     renderWaterReflections(options){if(disposed||!active)return false;return surfaces.renderReflections({...options,excludeRoots:[root,...(options.excludeRoots||[])],prepareRender:options=>fogAlignment.prepareRender(options)});},
     refreshTrack(options){if(disposed||!trackRoot||trackRoot.children.length===trackChildren.length&&trackChildren.every((child,i)=>trackRoot.children[i]===child))return false;waterfalls.clear();wind.clear();const changed=surfaces.refresh(options);wind.bind(trackRoot);roadWetness.bind(trackRoot);acoustics.bind(trackRoot,trackId);waterfalls.setTrack({visualRoot:trackRoot});trackChildren=[...trackRoot.children];return changed;},
     attachWindshield(options){windshield?.dispose();windshield=options?.cabinMount?createWeatherWindshield(THREE,{camera,...options}):null;return !!windshield;},

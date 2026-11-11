@@ -1,5 +1,6 @@
-import {createPassPreparation,compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=5e96c4931974c8ab';
+import {createPassPreparation,prepareBatchedPass} from './pass-preparation.mjs?v=5e96c4931974c8ab';
 import { interpolateVehicleSnapshot } from '../game/physical-render-bridge.mjs?v=3bfbde2ea40b338a';
+import {createMirrorCapture} from './mirror-capture.mjs?v=c2a27b6690d594ee';
 
 const QUALITY = Object.freeze({
   cinematic: { center: [512, 144, 24], left: [256, 192, 18] },
@@ -101,6 +102,8 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   for (const mount of Object.values(mounts)) mount.traverse(mesh => { if (mesh.isMesh) { mesh.castShadow = false; mesh.receiveShadow = false; } });
 
   const preparation=createPassPreparation();
+  const capture=createMirrorCapture(THREE);
+  const viewProjection=new THREE.Matrix4(), frustum=new THREE.Frustum();
   let currentQuality = null, disposed = false, rendering = false, feedsEnabled = true;
   const priorViewport = new THREE.Vector4(), priorScissor = new THREE.Vector4(), priorClearColor = new THREE.Color();
   function setQuality(value) {
@@ -118,6 +121,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   function setEnabled(enabled) {
     if (enabled === feedsEnabled) return;
     feedsEnabled = enabled;
+    if (!enabled) capture.suspend();
     for (const feed of Object.values(feeds)) {
       // Keep the mapped shader stable when feeds are toggled; a black tint hides
       // the retained texture without introducing a map/no-map variant.
@@ -134,6 +138,17 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
   const key=options=>[options.renderer,options.scene,options.quality||currentQuality,options.variantKey||'',passKey('center'),passKey('left')];
   function cancelPendingPreparation(){
     if(preparation.diagnostics().status==='pending')preparation.invalidate();
+  }
+  function visibleFeeds(camera, surfaces = null) {
+    camera.updateWorldMatrix(true,false);
+    viewProjection.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    frustum.setFromProjectionMatrix(viewProjection, THREE.WebGLCoordinateSystem, camera.reversedDepth);
+    const sees = mesh => {
+      if (!mesh || !mesh.layers.test(camera.layers)) return false;
+      for (let parent = mesh; parent; parent = parent.parent) if (!parent.visible) return false;
+      return frustum.intersectsObject(mesh);
+    };
+    return {center:sees(surfaces?.center ?? feeds.center.glass),left:sees(surfaces?.left ?? feeds.left.glass)};
   }
   function prepare(options={}){
     if(disposed)return Promise.resolve(false);
@@ -156,7 +171,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     },{signal:options.signal});
   }
   function update(options={}) {
-    const {renderer,scene,carPose,cameraPoses=null,cockpitVisible=true,enabled=true,quality:nextQuality=currentQuality,nowMs=globalThis.performance?.now?.()||Date.now(),force=false,captureSchedule=null,prepareOnly=null}=options;
+    const {renderer,scene,carPose,cameraPoses=null,cockpitVisible=true,visible=null,enabled=true,quality:nextQuality=currentQuality,nowMs=globalThis.performance?.now?.()||Date.now(),force=false,captureSchedule=null,prepareOnly=null}=options;
     if (disposed || rendering) return 0;
     setEnabled(Boolean(enabled));
     if (!cockpitVisible || !enabled) {
@@ -166,7 +181,8 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
     if (!renderer || !scene || renderer.getContext?.().isContextLost?.()) return 0;
     setQuality(nextQuality);
     if(!prepareOnly&&!preparation.ready(key({...options,quality:currentQuality}))){void prepare(options);return 0;}
-    const due = (prepareOnly?[prepareOnly]:['center', 'left']).filter(id => force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2]));
+    const due = (prepareOnly?[prepareOnly]:['center', 'left']).filter(id => (prepareOnly || !visible || visible[id]) &&
+      (force || (captureSchedule ? captureSchedule.take(id) : nowMs < feeds[id].lastRenderMs || nowMs - feeds[id].lastRenderMs >= 1000 / QUALITY[currentQuality][id][2])));
     if (!due.length) return 0;
     const poses = (typeof cameraPoses === 'function' ? cameraPoses() : cameraPoses) || mirrorCameraPoses(THREE, carPose);
     if (!poses) return 0;
@@ -187,9 +203,8 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       for (const id of due) {
         const feed = feeds[id], pose = poses[id];
         feed.camera.position.fromArray(pose.position); feed.camera.up.fromArray(pose.up); feed.camera.lookAt(...pose.look); feed.camera.updateMatrixWorld(true);
-        renderer.setRenderTarget(feed.target); renderer.setScissorTest(false);
-        if(prepareOnly)return compileVisiblePass(renderer,scene,feed.camera);
-        renderer.clear(true, true, true); renderer.render(scene, feed.camera);
+        if(prepareOnly)return capture.draw(renderer,scene,feed.camera,feed.target,true);
+        capture.draw(renderer,scene,feed.camera,feed.target);
         feed.lastRenderMs = nowMs; feed.frames++; rendered++;
       }
     } finally {
@@ -206,7 +221,7 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
 
   function dispose() {
     if (disposed) return;
-    disposed = true; preparation.dispose();
+    disposed = true; preparation.dispose(); capture.dispose();
     const geometries = new Set(), materials = new Set();
     for (const mount of Object.values(mounts)) {
       mount.removeFromParent();
@@ -223,6 +238,8 @@ export function createCockpitMirrors({ THREE, cockpitRoot = null, excludeRoots =
       { id: 'left-door-mirror', label: 'Espejo lateral izquierdo', object: mounts.left, capabilities: { position: true, rotation: true, scale: true, lens: false } },
     ]),
     feeds: Object.freeze(feeds), update, prepare, cancelPendingPreparation, invalidate:()=>preparation.invalidate(), dispose,
-    diagnostics: () => ({ preparation:preparation.diagnostics(), disposed, rendering, quality: currentQuality, enabled: feedsEnabled, centerFrames: feeds.center.frames, leftFrames: feeds.left.frames, centerSize: [feeds.center.target.width, feeds.center.target.height], leftSize: [feeds.left.target.width, feeds.left.target.height] }),
+    visibleFeeds,
+    suspend(){preparation.invalidate();capture.suspend();for(const feed of Object.values(feeds))feed.lastRenderMs=-Infinity;},
+    diagnostics: () => ({ preparation:preparation.diagnostics(), capture:capture.diagnostics(), disposed, rendering, quality: currentQuality, enabled: feedsEnabled, centerFrames: feeds.center.frames, leftFrames: feeds.left.frames, centerSize: [feeds.center.target.width, feeds.center.target.height], leftSize: [feeds.left.target.width, feeds.left.target.height] }),
   });
 }

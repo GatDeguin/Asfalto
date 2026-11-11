@@ -1,5 +1,5 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
-import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=abe009d1250a2cb2';
+import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=ce951fdc15ca9bae';
 
 function bind400DriverLens(T, vehicleRoot, anchor, feed) {
  const lens=vehicleRoot.getObjectByName('Details__26_Mirror_optical_silver')?.getObjectByProperty('isMesh',true);
@@ -53,13 +53,13 @@ function bind400DriverLens(T, vehicleRoot, anchor, feed) {
   lens.geometry=value?geometry:originalGeometry;
   lens.material=value?materials:originalMaterial;
  }
- return {setVisible,dispose(){setVisible(false);geometry.dispose();}};
+ return {lens,setVisible,dispose(){setVisible(false);geometry.dispose();}};
 }
 
 // Optical faces share the existing capture feeds, but sit on each authored housing.
 export function attachAuthoredMirrors(T,presentation,id,feeds){
  if(getVehicleDefinition(id)?.cockpit!=='authored-interior'&&id!=='chevy_400_1957')return null;
- const ss400=id==='chevy_400_1957',pickup=id==='pickup_3100',root=new T.Group(),faces={},owned=[];root.name='AuthoredLiveMirrors';presentation.root.add(root);
+ const ss400=id==='chevy_400_1957',pickup=id==='pickup_3100',root=new T.Group(),faces={},captureSurfaces={},owned=[];root.name='AuthoredLiveMirrors';presentation.root.add(root);
  const position=p=>ss400?p:p.map((v,i)=>v*.4+(i===1?-.296283007:0));
  // The 400's optical silver is tilted with respect to the body axes.
  const specs=ss400?{
@@ -75,18 +75,19 @@ export function attachAuthoredMirrors(T,presentation,id,feeds){
   const material=feeds[key].glass.material;
   if(ss400&&key==='left'){
    driverLens=bind400DriverLens(T,presentation.root,face,material);
-   if(driverLens){driverLens.setVisible(true);continue;}
+   if(driverLens){driverLens.setVisible(true);captureSurfaces[key]=driverLens.lens;continue;}
   }
   const geometry=s.r?new T.CircleGeometry(s.r,40):new T.PlaneGeometry(s.w*.4,s.h*.4);
   const uv=geometry.attributes.uv;
   for(let i=0;i<uv.count;i++)uv.setX(i,1-uv.getX(i));
-  face.add(new T.Mesh(geometry,material));owned.push(geometry);
+  const glass=new T.Mesh(geometry,material);face.add(glass);captureSurfaces[key]=glass;owned.push(geometry);
  }
  if(pickup||ss400){
   const chrome=new T.MeshStandardMaterial({color:'#c9ced0',metalness:1,roughness:.16}),geometry=new T.BoxGeometry(.008,.030,.082),housing=new T.Mesh(geometry,chrome);housing.position.copy(faces.center.position);housing.position.x-=.005;root.add(housing);owned.push(chrome,geometry);
   const stemGeometry=new T.BoxGeometry(.004,.035,.004),stem=new T.Mesh(stemGeometry,chrome);stem.position.copy(housing.position);stem.position.y+=.022;root.add(stem);owned.push(stemGeometry);
  }
  return {
+  captureSurfaces,
   get visible(){return root.visible;},
   setVisible(value){
    const visible=!!value;

@@ -2746,8 +2746,8 @@
     },
     {
       "path": "docs/fluidez-gpu.md",
-      "bytes": 49171,
-      "sha256": "5F267003D96DA52252A24A04E7E2824F1FB8B618AB803386D45FAF41C1CF048E"
+      "bytes": 50457,
+      "sha256": "DBB578C6F15C58115019BC0BE6CC9DCE3F676780731651F7C4B9AC0207C99263"
     },
     {
       "path": "docs/intro-brand-fix.md",
@@ -2937,7 +2937,7 @@
     {
       "path": "index.html",
       "bytes": 82580,
-      "sha256": "17EF7B97C931ABEE83368ADA616972F0B8F4E34AB9429A2CF0401607E579AEB7"
+      "sha256": "703CEAB240C6A5422E7A9F71DBF0FF063B431BFDC5CA51A427C308D7221A0B74"
     },
     {
       "path": "release-version.json",
@@ -3341,8 +3341,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 592844,
-      "sha256": "CD8524EAB6E150C1D4861D02B2DDC15FF89DC0A3B532A19CDAB10679C5121862"
+      "bytes": 593341,
+      "sha256": "0DBF2E231336FE237CD13E53E31C2A5B40301EFF6DC7A893ECF39AAC4D4A9514"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3631,8 +3631,8 @@
     },
     {
       "path": "src/render/authored-vehicle-mirrors.mjs",
-      "bytes": 5789,
-      "sha256": "2E9CC129C7E77388E5159786B524A711B09B1211E96EF02053CE4D869CD0A26E"
+      "bytes": 5915,
+      "sha256": "BF8A84D1BA17AF31D6A44C156837B1AAD04977FC6E38034C612232CE18E22DF2"
     },
     {
       "path": "src/render/auxiliary-capture-schedule.mjs",
@@ -3706,8 +3706,8 @@
     },
     {
       "path": "src/render/cockpit-mirrors.mjs",
-      "bytes": 15530,
-      "sha256": "ABE009D1250A2CB2B09A2AF2E77DBCE575EBF3A44490884D3419F48A4137C24F"
+      "bytes": 16562,
+      "sha256": "CE951FDC15CA9BAEB962AC1F5362AC4E2138D7E44396435519E1DADB8B494CA9"
     },
     {
       "path": "src/render/cockpit-render-pass.mjs",
@@ -3845,6 +3845,11 @@
       "sha256": "2992F7BE06B44F28C2DF1076852081D1DC5794CF4331207FF894CEF98FAD5D1A"
     },
     {
+      "path": "src/render/mirror-capture.mjs",
+      "bytes": 3901,
+      "sha256": "C2A27B6690D594EE850E0E83BBAB8D3A7D3C353394A2EC35CEB4F6F2BD86909B"
+    },
+    {
       "path": "src/render/opaque-transmission-reuse.mjs",
       "bytes": 5826,
       "sha256": "BE99BBDDE1C974B12FBF6F10A7D8335F34886202B9B72D5E4F8F4FAFE9FCD8A6"
@@ -3931,8 +3936,8 @@
     },
     {
       "path": "src/render/race-weather-effects.mjs",
-      "bytes": 10082,
-      "sha256": "A0BCDF4E9E18E3F5E60B0E03D596864941CF4C79E0D05CD4007A75B2D3450B4A"
+      "bytes": 10140,
+      "sha256": "1CE084169F294D667606291723A71914792BDE24CF6D0E07ABE897280649B285"
     },
     {
       "path": "src/render/ray-bvh-worker.mjs",
@@ -4236,8 +4241,8 @@
     },
     {
       "path": "src/render/water-scene-reflection.mjs",
-      "bytes": 7380,
-      "sha256": "D1AFC4809830045DB18580CB99C929D6A4A13AB228E20B4F9DAE5DE460F3D031"
+      "bytes": 8420,
+      "sha256": "50C4E99466F57B41492AB5E941F74E0394C85AAAC5780F4F0D82FB1ADFFBA38B"
     },
     {
       "path": "src/render/weather-dynamics.mjs",
@@ -4276,8 +4281,8 @@
     },
     {
       "path": "src/render/weather-surfaces.mjs",
-      "bytes": 24757,
-      "sha256": "49AE91D3E9C9E86B007E55B671122A93AB93176F75044BBB93690DAB56EA73D9"
+      "bytes": 24807,
+      "sha256": "A71155059F1048032F921C00D7FD78B7432B09516AC02E19703FFD7950D4AED9"
     },
     {
       "path": "src/render/weather-vehicle-surface.mjs",
@@ -4987,7 +4992,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "B4ADA4D76DF6C6F0470FE6954967D47F1FABF9426A13B7B7DE5B0AB4A5F03697"
+      "sha256": "86D667838543FF0915F949A7757260A2B7757A630887C7F9E1B531086D4EEE8C"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -5012,17 +5017,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "E083BF016DF4B2984F3107416C3681E481A42EE2D72F223BF9BB08010FB4A607"
+      "sha256": "1183E47E99562E3C0AC1D2246A3AB7661B7BA7D9F31EF7CD8CCC671416FD9452"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "8BDDABC79441C4ADCD9AEE3167D707A4E9FC618E820ED2D677D40B781B0F0E93"
+      "sha256": "A0CFEB1BDDAB099B89AC3B252EE39C7517CFBE614788604CA6B4DCD78F21A1EF"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "A070A87BA2B380D981B03DF8E69147B1C1696F5FCB28342B255F74FCAFC99172"
+      "sha256": "675B292B3DD47ADDB2F514FC87C75C9D8B749CB82E0B2D4831BA0366EAA79AB3"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -5032,17 +5037,17 @@
     {
       "path": "tools/authored-vehicle-mirrors.test.mjs",
       "bytes": 3617,
-      "sha256": "1DD24030D18C212016F86F548DF387EE3EB79F9853517AE1175F0513C0BB0661"
+      "sha256": "31EDE016F77C683CFA3D6F5678E198A73EADF537D45677D41A6D0D6F3E392EE4"
     },
     {
       "path": "tools/automatic-reverse.test.mjs",
       "bytes": 4285,
-      "sha256": "E8A1540F1E162DD77D0D598C997F4462917F01F3984C6ACE97C399CF7DBFF1FE"
+      "sha256": "2BF31AA1325E57A50B0690B4DD98A8EC0EC937C4670510F8557382B6CE1E9FFC"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
-      "bytes": 15098,
-      "sha256": "B3E640D331F4DED629C1E7759FD805919015B11372C05F757C8D12206B4E20F7"
+      "bytes": 18106,
+      "sha256": "5F5E5FE393BF435FF99F54B2E24DDD82089011ED69BB58E4A23AAC1B23BB5180"
     },
     {
       "path": "tools/bake-binary.test.mjs",
@@ -5307,7 +5312,7 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "E86D6EE098CBD4D69573A05CE8DAD6ADA8AFDC2602DC90B7D10E3240C01956E0"
+      "sha256": "4B79AB8F99E5B2706CD49CD866BCBB9DB153625AA189CAB0AF6E3B729A344CC9"
     },
     {
       "path": "tools/lipan-authored-signs.test.mjs",
@@ -5327,7 +5332,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 17847,
-      "sha256": "3FB6B1A8E131A9625B80BD2401909D362285361B79E38F0425D9D7C2B725AFF1"
+      "sha256": "48F877C7A2992C2665D97C2CA2A1B3A6BE9A294C9160524490A2919261758133"
     },
     {
       "path": "tools/minimap-clock.test.mjs",
@@ -5341,8 +5346,8 @@
     },
     {
       "path": "tools/opaque-transmission.gpu.mjs",
-      "bytes": 6315,
-      "sha256": "4852AA434A9D3402398357E6330AEAFD1E4F99F46D441BB10DF1DD0E065415B8"
+      "bytes": 8357,
+      "sha256": "753088ABD240024A09DA50983D5714B2BC0578702C0210D6F1FA996D88366E41"
     },
     {
       "path": "tools/opaque-transmission.test.mjs",
@@ -5352,7 +5357,7 @@
     {
       "path": "tools/original-track-layouts.test.mjs",
       "bytes": 1382,
-      "sha256": "5B911C2D65F33694D4C2A9379894C5B27E4491CBF9A3744473204B80DC05022E"
+      "sha256": "4A6865B15D6EAAA42AD1EF4635B7F4B0C00947FE27827C8C64C31D53F567311C"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5717,7 +5722,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3502,
-      "sha256": "ACA6366A1C273FD377686B701BAF1418C14F443FADD1D89594A91B072B7AD45B"
+      "sha256": "70383233C218C7FB0C2C2E847CAB03613217F735D811DCE559950A63532A0AF9"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5762,7 +5767,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "4145652FD7732AC6458932F77EAA5FE9C39190EC11813642BBDD9FE85378CE30"
+      "sha256": "1EACD178B84ADF1AD38D9FDA18EA1255A03799EA02C597B07C8C4744746D79BE"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -6075,7 +6080,7 @@
       "sha256": "1086156075A1A6D4768F78BC3F0973BE664E2BB6688C5034BF7388E00BC4FC77"
     }
   ],
-  "fileCount": 1200,
-  "totalBytes": 944597710,
-  "inventorySha256": "21CA75C65FEDBBB7CF4690ACF23F323B70C0A894F3E7C3F0B5285251D65F2960"
+  "fileCount": 1201,
+  "totalBytes": 944610750,
+  "inventorySha256": "5AF29C61217A02D16B477C67D828C8A8FD86B2193F147ADEEFD4AEE44BB37C53"
 }

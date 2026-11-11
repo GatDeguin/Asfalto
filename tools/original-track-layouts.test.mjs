@@ -16,7 +16,7 @@ test('playable route distances match the point-to-point source manifests', () =>
 });
 
 test('the live host and Iguazú adapter do not add a connector after the authored finish', () => {
-  assert.doesNotMatch(read('src/legacy/module-02.mjs?v=cd8524eab6e150c1'), /prepareClosedRoute\s*\(/);
+  assert.doesNotMatch(read('src/legacy/module-02.mjs?v=0dbf2e231336fe23'), /prepareClosedRoute\s*\(/);
   assert.doesNotMatch(read('src/tracks/adapters/cataratas-iguazu.mjs?v=991ea8fe0a7c894b'), /prepareClosedRoute/);
 });
 

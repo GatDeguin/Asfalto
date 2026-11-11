@@ -3,6 +3,7 @@ import {AUXILIARY_CAPTURE_RATES} from './auxiliary-capture-schedule.mjs?v=f03a5f
 // One nearby water plane captures the actual bank/terrain. It supplements the
 // physical HDR environment; out-of-capture pixels keep that continuous fallback.
 const TIERS={cinematic:[640,360,AUXILIARY_CAPTURE_RATES.cinematic.water],low:[256,144,AUXILIARY_CAPTURE_RATES.low.water],balanced:[384,216,AUXILIARY_CAPTURE_RATES.balanced.water],high:[640,360,AUXILIARY_CAPTURE_RATES.high.water]};
+const PLANAR_HEIGHT_SPREAD_M = .12;
 export function reflectedWaterPose(T,camera,height){
  const position=new T.Vector3(),direction=new T.Vector3(),up=new T.Vector3(0,1,0);camera.getWorldPosition(position);camera.getWorldDirection(direction);up.applyQuaternion(camera.getWorldQuaternion(new T.Quaternion()));
  position.y=2*height-position.y;direction.y*=-1;up.y*=-1;
@@ -10,27 +11,57 @@ export function reflectedWaterPose(T,camera,height){
 }
 export function createWaterSceneReflection(T){
  const preparation=createPassPreparation();
- let entries=[],target=null,disposed=false,lastMs=-Infinity,frames=0,activeHeight=null,currentTier=null,rendering=false,errors=0;
+ let entries=[],planarEntries=[],target=null,disposed=false,lastMs=-Infinity,frames=0,activeHeight=null,activeReceiver=null,currentTier=null,rendering=false,errors=0;
  const virtualCamera=new T.PerspectiveCamera();virtualCamera.userData.asfaltoWaterReflection=true;
  const matrix=new T.Matrix4(),bias=new T.Matrix4().set(.5,0,0,.5,0,.5,0,.5,0,0,.5,.5,0,0,0,1),bounds=new T.Box3(),position=new T.Vector3(),frustum=new T.Frustum(),vp=new T.Matrix4(),plane=new T.Plane(new T.Vector3(0,1,0),0);
  const previousViewport=new T.Vector4(),previousScissor=new T.Vector4(),previousColor=new T.Color();
- function reset(){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;lastMs=-Infinity;activeHeight=null;}
- function bind(next=[]){preparation.invalidate();reset();entries=next.map(e=>{bounds.setFromObject(e.mesh);return {...e,bounds:bounds.clone(),height:(bounds.min.y+bounds.max.y)*.5};});reset();}
+ function reset(){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;lastMs=-Infinity;activeHeight=null;activeReceiver=null;}
+ function releaseTarget(){
+  for(const e of entries)e.uniforms.uAnWaterReflection.value=null;
+  target?.dispose();target=null;currentTier=null;
+ }
+ function suspend(){preparation.invalidate();reset();releaseTarget();}
+ function bind(next=[]){
+  preparation.invalidate();reset();
+  entries=next.map(e=>{
+   // The mirror matrix represents a horizontal plane. A sloping channel
+   // keeps its local optical normal and existing environment reflection.
+   bounds.setFromObject(e.mesh,true);
+   const spread=bounds.max.y-bounds.min.y;
+   return {...e,bounds:bounds.clone(),height:(bounds.min.y+bounds.max.y)*.5,
+    planar:Number.isFinite(spread)&&spread>=0&&spread<=PLANAR_HEIGHT_SPREAD_M};
+  });
+  planarEntries=entries.filter(e=>e.planar);
+  reset();
+  if(!planarEntries.length)releaseTarget();
+ }
+ function setReady(){
+  for(const e of entries)e.uniforms.uAnWaterReflectReady.value=
+   e.planar&&activeHeight!==null&&Math.abs(e.height-activeHeight)<.08?1:0;
+ }
  const key=options=>[options.renderer,options.scene,options.quality||'balanced',options.camera?.layers.mask,options.variantKey||''];
- function prepare(options={}){if(disposed||!entries.length)return Promise.resolve(false);return preparation.prepare(key(options),isCurrent=>prepareBatchedPass(options.renderer,()=>capture({...options,prepareOnly:true}),{signal:options.signal,isCurrent}),{signal:options.signal});}
+ function prepare(options={}){if(disposed||!planarEntries.length)return Promise.resolve(false);return preparation.prepare(key(options),isCurrent=>prepareBatchedPass(options.renderer,()=>capture({...options,prepareOnly:true}),{signal:options.signal,isCurrent}),{signal:options.signal});}
  function capture(options={}){
   const {renderer,scene,camera,quality='balanced',nowMs=0,excludeRoots=[],prepareRender,captureSchedule=null,prepareOnly=false}=options;
-  if(disposed||rendering||!entries.length||!renderer||!scene||!camera)return false;
+  if(disposed||rendering||!planarEntries.length||!renderer||!scene||!camera)return false;
   camera.getWorldPosition(position);vp.multiplyMatrices(camera.projectionMatrix,camera.matrixWorldInverse);frustum.setFromProjectionMatrix(vp);
-  let chosen=null,best=Infinity;for(const e of entries){if(position.y<=e.height+.08||!frustum.intersectsBox(e.bounds))continue;const d=e.bounds.distanceToPoint(position);if(d<best&&d<1200){best=d;chosen=e;}}
-  if(prepareOnly&&!chosen)chosen=entries[0];
+  let chosen=null,best=Infinity;
+  for(const e of planarEntries){
+   if(position.y<=e.height+.08||!e.mesh.layers.test(camera.layers)||!frustum.intersectsBox(e.bounds))continue;
+   let visible=true;
+   for(let node=e.mesh;node&&visible;node=node.parent)visible=node.visible;
+   if(!visible)continue;
+   const d=e.bounds.distanceToPoint(position);
+   if(d<best&&d<1200){best=d;chosen=e;}
+  }
+  if(prepareOnly&&!chosen)chosen=planarEntries[0];
   if(!chosen){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;return false;}
   const tier=TIERS[quality]?quality:'balanced',[width,height,hz]=TIERS[tier];
-  if(!target){target=new T.WebGLRenderTarget(width,height,{type:T.HalfFloatType,depthBuffer:true,stencilBuffer:false,samples:0});target.texture.name='V7_Water_Real_Bank_Reflection';target.texture.colorSpace=T.LinearSRGBColorSpace;target.texture.generateMipmaps=false;}
-  if(currentTier!==tier){target.setSize(width,height);currentTier=tier;lastMs=-Infinity;}
+  if(!target){target=new T.WebGLRenderTarget(1,1,{type:T.HalfFloatType,depthBuffer:true,stencilBuffer:false,samples:0});target.texture.name='V7_Water_Real_Bank_Reflection';target.texture.colorSpace=T.LinearSRGBColorSpace;target.texture.generateMipmaps=false;}
   if(!prepareOnly&&!preparation.ready(key(options))){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=0;void prepare(options);return false;}
   const levelChanged=activeHeight===null||Math.abs(activeHeight-chosen.height)>.08;
-  if(!prepareOnly&&(captureSchedule?!captureSchedule.take('water'):(!levelChanged&&nowMs>=lastMs&&nowMs-lastMs<1000/hz))){for(const e of entries)e.uniforms.uAnWaterReflectReady.value=Math.abs(e.height-activeHeight)<.08?1:0;return false;}
+  if(!prepareOnly&&(captureSchedule?!captureSchedule.take('water'):(!levelChanged&&nowMs>=lastMs&&nowMs-lastMs<1000/hz))){setReady();return false;}
+  if(!prepareOnly&&currentTier!==tier){target.setSize(width,height);currentTier=tier;}
   const pose=reflectedWaterPose(T,camera,chosen.height);virtualCamera.position.fromArray(pose.position);virtualCamera.up.fromArray(pose.up);virtualCamera.lookAt(...pose.target);virtualCamera.near=camera.near;virtualCamera.far=camera.far;virtualCamera.projectionMatrix.copy(camera.projectionMatrix);virtualCamera.projectionMatrixInverse.copy(camera.projectionMatrixInverse);virtualCamera.layers.mask=camera.layers.mask;virtualCamera.updateMatrixWorld(true);
   matrix.copy(bias).multiply(virtualCamera.projectionMatrix).multiply(virtualCamera.matrixWorldInverse);plane.constant=-chosen.height+.035;
   const hidden=new Map();for(const e of entries)hidden.set(e.mesh,e.mesh.visible);for(const o of excludeRoots.filter(Boolean))hidden.set(o,o.visible);
@@ -39,12 +70,13 @@ export function createWaterSceneReflection(T){
    for(const o of hidden.keys())o.visible=false;
    if(renderer.shadowMap){renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=false;}if(renderer.xr)renderer.xr.enabled=false;
    restoreFog=prepareRender?.({linearOutput:true});renderer.toneMapping=T.NoToneMapping;renderer.clippingPlanes=[plane];renderer.autoClear=false;renderer.setRenderTarget(target);renderer.setScissorTest(false);if(prepareOnly)return compileVisiblePass(renderer,scene,virtualCamera);renderer.clear(true,true,true);renderer.render(scene,virtualCamera);
-   activeHeight=chosen.height;lastMs=nowMs;frames++;
-   for(const e of entries){e.uniforms.uAnWaterReflection.value=target.texture;e.uniforms.uAnWaterReflectMatrix.value.copy(matrix);e.uniforms.uAnWaterReflectReady.value=Math.abs(e.height-activeHeight)<.08?1:0;}return true;
+   activeHeight=chosen.height;activeReceiver=chosen.mesh.name||null;lastMs=nowMs;frames++;
+   for(const e of planarEntries){e.uniforms.uAnWaterReflection.value=target.texture;e.uniforms.uAnWaterReflectMatrix.value.copy(matrix);}
+   setReady();return true;
   }catch(error){errors++;reset();throw error;}finally{
    restoreFog?.();for(const [o,visible]of hidden)o.visible=visible;renderer.toneMapping=prior.toneMapping;renderer.clippingPlanes=prior.clippingPlanes;renderer.autoClear=prior.autoClear;if(renderer.shadowMap){renderer.shadowMap.autoUpdate=prior.shadowAuto;renderer.shadowMap.needsUpdate=prior.shadowNeeds;}if(renderer.xr)renderer.xr.enabled=prior.xr;
    renderer.setRenderTarget(prior.target,prior.face,prior.mipmap);renderer.setViewport(previousViewport);renderer.setScissor(previousScissor);renderer.setScissorTest(prior.scissor);renderer.setClearColor(previousColor,prior.alpha);rendering=false;
   }
  }
- return {bind,capture,prepare,reset,invalidate(){preparation.invalidate();reset();},diagnostics:()=>({preparation:preparation.diagnostics(),model:'nearest-real-bank-planar-with-HDR-fallback',frames,errors,activeHeightM:activeHeight,quality:currentTier,ownedTargets:target?1:0,textureSize:target?[target.width,target.height]:null,waterMeshes:entries.length,disposed}),dispose(){if(disposed)return;preparation.dispose();reset();entries=[];target?.dispose();target=null;disposed=true;}};
+ return {bind,capture,prepare,reset,suspend,invalidate(){preparation.invalidate();reset();},diagnostics:()=>({preparation:preparation.diagnostics(),model:'nearest-real-bank-planar-with-HDR-fallback',frames,errors,activeHeightM:activeHeight,activeReceiver,quality:currentTier,ownedTargets:target?1:0,textureSize:target?[target.width,target.height]:null,waterMeshes:entries.length,planarMeshes:planarEntries.length,nonPlanarMeshes:entries.length-planarEntries.length,disposed}),dispose(){if(disposed)return;preparation.dispose();reset();releaseTarget();entries=[];planarEntries=[];disposed=true;}};
 }

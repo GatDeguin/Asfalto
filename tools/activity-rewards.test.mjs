@@ -88,7 +88,7 @@ test('solo competitions award a completed objective without inventing a podium',
 });
 
 test('routes without authored trap bounds still register a physical speed pass', () => {
-  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=cd8524eab6e150c1', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=0dbf2e231336fe23', import.meta.url), 'utf8');
   const method = source.slice(source.indexOf('    _updateSpeedTrap('), source.indexOf('    _recordGhost('));
   const update = new Function(`return ({${method}})._updateSpeedTrap;`)();
   const trap = { active: false, peakMps: 0, attempts: 0, bestKmh: 0 };

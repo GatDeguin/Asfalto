@@ -25,8 +25,8 @@ test('cube prepares six target faces with immediate target and XR restoration',a
  for(let i=0;i<6;i++){assert.equal(gates.length,i+1);gates[i].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(target,'original');}
  await p;assert.deepEqual(faces,[0,1,2,3,4,5]);cube.dispose();
 });
-import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=d1afc4809830045d';
-import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=abe009d1250a2cb2';
+import {createWaterSceneReflection} from '../src/render/water-scene-reflection.mjs?v=50c4e99466f57b41';
+import {createCockpitMirrors} from '../src/render/cockpit-mirrors.mjs?v=ce951fdc15ca9bae';
 function captureFixture(){let target=null,face=2,mip=3,scissor=true,alpha=.4;const viewport=new T.Vector4(3,4,128,96),box=new T.Vector4(1,2,90,70),color=new T.Color('red');const compiled=[],drawn=[],pending=[];
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(70,1,.1,100);camera.position.set(0,4,5);camera.lookAt(0,0,0);camera.updateMatrixWorld();
  const state=c=>({target,tone:r.toneMapping,clipping:r.clippingPlanes.length,layers:c.layers.mask,visible:scene.children.filter(o=>o.visible).map(o=>o.uuid),xr:r.xr.enabled,shadow:r.shadowMap.autoUpdate});
@@ -40,11 +40,57 @@ test('water first capture prepares exact pass with immediate restoration and dra
  assert.equal(reflection.capture(options),false);assert.equal(f.compiled.length,1);f.pending[0].resolve();await reflection.prepare(options);assert.equal(reflection.capture(options),true);assert.deepEqual(f.drawn[0],f.compiled[0]);assert.equal(uniforms.uAnWaterReflectReady.value,1);
  const next={...options,variantKey:'rain',nowMs:2000};assert.equal(reflection.capture(next),false);assert.equal(uniforms.uAnWaterReflectReady.value,0);reflection.dispose();f.pending[1].resolve();await Promise.resolve();assert.equal(reflection.diagnostics().preparation.status,'disposed');
 });
+test('a sloping channel cannot stand in for a horizontal planar reflection',async()=>{
+ const f=captureFixture(),channel=new T.Mesh(new T.PlaneGeometry(20,20));
+ channel.rotation.x=-Math.PI/3;f.scene.add(channel);
+ const uniforms={uAnWaterReflectReady:{value:1},uAnWaterReflection:{value:null},uAnWaterReflectMatrix:{value:new T.Matrix4()}};
+ const reflection=createWaterSceneReflection(T);reflection.bind([{mesh:channel,uniforms}]);
+ const options={renderer:f.r,scene:f.scene,camera:f.camera,nowMs:1000};
+ assert.equal(reflection.diagnostics().planarMeshes,0);
+ assert.equal(reflection.diagnostics().nonPlanarMeshes,1);
+ assert.equal(await reflection.prepare(options),false);
+ assert.equal(reflection.capture(options),false);
+ assert.equal(uniforms.uAnWaterReflectReady.value,0);
+ assert.equal(reflection.diagnostics().ownedTargets,0);
+ assert.deepEqual(f.compiled,[]);
+ reflection.dispose();
+});
+test('planar reflection follows an eligible lake instead of a nearer sloping channel',async()=>{
+ const f=captureFixture(),lake=new T.Mesh(new T.PlaneGeometry(8,8)),channel=new T.Mesh(new T.PlaneGeometry(20,20));
+ lake.rotation.x=-Math.PI/2;lake.position.set(0,-1,0);channel.rotation.x=-Math.PI/3;f.scene.add(lake,channel);
+ const entries=[channel,lake].map(mesh=>({mesh,uniforms:{uAnWaterReflectReady:{value:0},uAnWaterReflection:{value:null},uAnWaterReflectMatrix:{value:new T.Matrix4()}}}));
+ const reflection=createWaterSceneReflection(T);reflection.bind(entries);
+ const options={renderer:f.r,scene:f.scene,camera:f.camera,nowMs:1000},preparing=reflection.prepare(options);
+ f.pending[0].resolve();await preparing;
+ assert.equal(reflection.capture(options),true);
+ assert.deepEqual(entries.map(e=>e.uniforms.uAnWaterReflectReady.value),[0,1]);
+ assert.ok(Math.abs(reflection.diagnostics().activeHeightM+1)<1e-7);
+ reflection.suspend();assert.equal(reflection.diagnostics().ownedTargets,0);assert.equal(entries[1].uniforms.uAnWaterReflectReady.value,0);
+ reflection.dispose();
+});
 test('mirror feeds share shader preparation and render to independent targets',async()=>{
  const f=captureFixture(),cockpit=new T.Group();f.scene.add(cockpit);const mirror=createCockpitMirrors({THREE:T,cockpitRoot:cockpit});const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};
  assert.equal(mirror.update(options),0);assert.equal(f.drawn.length,0);assert.equal(cockpit.visible,true);assert.equal(f.r.getRenderTarget(),null);const p=mirror.prepare(options);
  f.pending[0].resolve();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.compiled.length,1);assert.equal(await p,true);assert.equal(mirror.update(options),2);
  assert.deepEqual(f.drawn,[f.compiled[0],{...f.compiled[0],target:mirror.feeds.left.target}]);assert.equal(cockpit.visible,true);assert.equal(f.r.getRenderTarget(),null);mirror.dispose();
+});
+test('mirror capture skips an offscreen optical surface and resumes when it re-enters view',async()=>{
+ const f=captureFixture(),mirror=createCockpitMirrors({THREE:T});
+ const center=new T.Mesh(new T.PlaneGeometry(.2,.15)),left=new T.Mesh(new T.PlaneGeometry(.2,.15));
+ f.scene.add(center,left);left.position.x=80;f.scene.updateMatrixWorld(true);
+ const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};
+ const preparing=mirror.prepare(options);
+ f.pending[0].resolve();await preparing;
+ let visible=mirror.visibleFeeds(f.camera,{center,left});
+ assert.deepEqual(visible,{center:true,left:false});
+ assert.equal(mirror.update({...options,visible}),1);
+ assert.equal(mirror.diagnostics().leftFrames,0);
+ left.position.x=.4;f.scene.updateMatrixWorld(true);
+ visible=mirror.visibleFeeds(f.camera,{center,left});
+ assert.deepEqual(visible,{center:true,left:true});
+ assert.equal(mirror.update({...options,visible}),2);
+ assert.equal(mirror.diagnostics().leftFrames,1);
+ mirror.dispose();
 });
 test('changing the layer of one mirror invalidates shared preparation and prepares both layer sets',async()=>{
  const f=captureFixture(),mirror=createCockpitMirrors({THREE:T});const options={renderer:f.r,scene:f.scene,carPose:{position:[0,0,0]},nowMs:1000,force:true};

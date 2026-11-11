@@ -1,6 +1,6 @@
 import {WEATHER_VERTEX_FRAME,WEATHER_NORMAL_HELPERS} from './surface-weather.glsl.mjs?v=4659f155d8a61d7e';
 import {createHydrologyJobs} from './hydrology-jobs.mjs?v=c6c6f2381c6c0f08';
-import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=d1afc4809830045d';
+import {createWaterSceneReflection} from './water-scene-reflection.mjs?v=50c4e99466f57b41';
 import {resolveWaterOptics} from './weather-water-optics.mjs?v=6e6b17a2d8c64298';
 import { createWaterHydrology, installRoadHydrology } from './weather-hydrology.mjs?v=256f4d475bace940';
 const WATER_NAMES = /^(M_Lake_Water|MAT_WATER(?:\.\d+)?|MAT_P1_RIVER)$/;
@@ -216,6 +216,7 @@ export function createWeatherSurfaceController(THREE,{roadWetness}={}) {
     prepareHydrology:()=>Promise.all([...hydrology.map(field=>field.ready),...roadRestores.map(restore=>restore.ready)]),
     prepareReflections(options){if(!reflectionEntries.length)return Promise.resolve(false);if(!reflection){reflection=createWaterSceneReflection(THREE);reflection.bind(reflectionEntries);}return reflection.prepare(options);},
     invalidateReflections(){reflection?.invalidate();},
+    suspendReflections(){reflection?.suspend();},
     renderReflections(options){if(!reflectionEntries.length)return false;if(!reflection){reflection=createWaterSceneReflection(THREE);reflection.bind(reflectionEntries);}else if(reflection.diagnostics().waterMeshes!==reflectionEntries.length)reflection.bind(reflectionEntries);return reflection.capture(options);},
     waterAudioAt(position){if(!position){audioWater.distanceM=Infinity;return audioWater;}if(audioPosition.distanceToSquared(position)<.25)return audioWater;audioPosition.copy(position);audioWater.distanceM=Infinity;for(const field of hydrology){const b=field.bounds,broad=Math.hypot(Math.max(b.x-position.x,0,position.x-b.x-b.z),Math.max(b.y-position.z,0,position.z-b.y-b.w));if(broad>audioWater.distanceM)continue;const distance=field.distanceToWater(position);if(distance<audioWater.distanceM){audioWater.distanceM=distance;audioWater.kind=field.metadata.kind||'lake';audioWater.flowMps=Number(field.metadata.flowSpeedMps)||(audioWater.kind==='river'?.7:0);}}return audioWater;},
     refresh({materialBindings,getMaterialBindings}={}){

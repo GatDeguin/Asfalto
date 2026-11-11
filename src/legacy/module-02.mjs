@@ -16,7 +16,7 @@ import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?
 import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
-import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2e9cc129c7e77388';
+import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=bf8a84d1ba17af31';
 import {buildVehiclePhysicsSpec,authoredCockpitAnchors,authoredWindshieldMount} from '../game/expansion-vehicle-runtime.mjs?v=aaacadfb3c716f14';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../game/workshop-performance.mjs?v=bc1ff950c62515a0';
 globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerformance(buildVehiclePhysicsSpec(base,id),setup);
@@ -83,7 +83,7 @@ import { createRaceOpening } from '../game/race-opening.mjs?v=463e5f3d50f43451';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=f860033bfd2b09bd';
 import {createLightingEditor} from '../menu/lighting-editor.mjs?v=4c6f71b3e96bcd40';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=a299ea81213424be';
-import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=abe009d1250a2cb2';
+import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=ce951fdc15ca9bae';
 import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=34bee52b3be4e653';
 import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=710bd8d9f6760059';
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=844ffa3df7eb34e1';
@@ -92,7 +92,7 @@ import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=
 import { createRaceVirtualTerrain, installVirtualTerrainSettings } from '../render/virtual-terrain.mjs?v=80bfd0bd43db6dd9';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
-import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=a0bcdf4e9e18e3f5';
+import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=1ce084169f294d66';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=38c1999bb7cf725a';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=03174439df407898';
@@ -8347,6 +8347,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     invalidateChampionship:reason=>simulation.invalidateChampionship(reason),
     prepareHydrology:()=>raceWeatherEffects.prepareHydrology(),
     prepareWaterReflections:options=>raceWeatherEffects.prepareWaterReflections(options),
+    suspendWaterReflections:()=>raceWeatherEffects.suspendReflections(),
     renderWaterReflections:options=>raceWeatherEffects.renderWaterReflections(options),
     activateAudio:()=>raceAudio.ensureStarted(),
     getStartSignalDiagnostics:()=>startSignal.diagnostics(),
@@ -8984,7 +8985,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     globalThis.__asfaltoNacionalV41?.radio?.releaseFocus?.();
     updateKeyUi();
   }
-  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
+  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();cockpitMirrors?.suspend();raceWorld.suspendWaterReflections();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
   let hoverControl = null;
   let pointerVisualX = 0;
   let pointerVisualY = 0;
@@ -10213,12 +10214,18 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const captureNow=performance.now(),captureQuality=raceWorld.getPerformanceTier();
     const captureSchedule=!visualPrecompileInProgress?auxiliaryCaptureSchedule:null;
     const mirrorsVisible=cockpitMirrorsVisible();
-    captureSchedule?.beginFrame(captureNow,{quality:captureQuality,mirrors:mirrorsVisible&&raceWorld.rearviewEnabled});
+    const mirrorsActive=mirrorsVisible&&raceWorld.rearviewEnabled;
+    const visibleMirrors=mirrorsActive?cockpitMirrors.visibleFeeds(camera,authoredMirrors?.visible?authoredMirrors.captureSurfaces:null):null;
+    captureSchedule?.beginFrame(captureNow,{quality:captureQuality,mirrors:mirrorsActive});
+    if(visibleMirrors){
+      if(!visibleMirrors.center)captureSchedule?.skip('center');
+      if(!visibleMirrors.left)captureSchedule?.skip('left');
+    }
     markFirstFrame('Primer cuadro: reflejos del agua');
     const waterCaptured=raceWorld.renderWaterReflections({renderer,scene,camera,quality:captureQuality,variantKey:shaderVariant,nowMs:captureNow,captureSchedule,excludeRoots:[cockpit,...(compositionEditor?.renderOverlays||[])]});
     if(!waterCaptured)captureSchedule?.skip('water');
     markFirstFrame('Primer cuadro: espejos');
-    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:mirrorsVisible, cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null, enabled:raceWorld.rearviewEnabled, quality:captureQuality, variantKey:shaderVariant, nowMs:captureNow, captureSchedule });
+    cockpitMirrors.update({ renderer, scene, carPose:raceWorld.getRenderFrame(), cockpitVisible:mirrorsVisible, visible:visibleMirrors, cameraPoses:authoredMirrors?()=>authoredMirrors.cameraPoses(raceWorld.getRenderFrame()):null, enabled:raceWorld.rearviewEnabled, quality:captureQuality, variantKey:shaderVariant, nowMs:captureNow, captureSchedule });
     markFirstFrame('Primer cuadro: render del mundo y cockpit');
     colorGrading.render(()=>advancedGraphics.renderOutput(()=>{const restore=raceWorld.prepareFogRender({linearOutput:!!renderer.getRenderTarget()});try{cockpitRenderPass.render();}finally{restore?.();}}));
     });publishPresentedRacePhoto();actualSceneFrames++;actualSceneTimestampMs=performance.now();markFirstFrame('Cuadro enviado a GPU');firstPhoneFrame=false;}finally{gpuFrameTimer.end();}

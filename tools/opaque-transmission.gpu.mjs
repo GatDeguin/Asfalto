@@ -30,6 +30,7 @@ try {
     const url = URL.createObjectURL(new Blob([source], {type: 'text/javascript'}));
     const T = await import(url);
     const {createOpaqueTransmission} = await import('/src/render/opaque-transmission.mjs');
+    const {createMirrorCapture} = await import('/src/render/mirror-capture.mjs');
     const {createScreenSpaceTarget} = await import('/src/render/screen-space-targets.mjs');
     const {supportedHdrSamples} = await import('/src/render/render-target-capabilities.mjs');
     const renderer = new T.WebGLRenderer({logarithmicDepthBuffer: true});
@@ -89,7 +90,37 @@ try {
         target.dispose();
       }
       controller.release();
-      return {cases, released: controller.diagnostics().targets === 0};
+      const mirror = createMirrorCapture(T);
+      const display = new T.WebGLRenderTarget(96, 96, {colorSpace: T.SRGBColorSpace});
+      let mirrorCases;
+      try {
+        const sample = (reuse, scale = 1) => {
+          renderer.transmissionResolutionScale = scale;
+          renderer.setRenderTarget(display);
+          renderer.autoClear = false;
+          opaqueDraws = 0;
+          if (reuse) mirror.draw(renderer, scene, camera, display);
+          else {
+            renderer.clear(true, true, true);
+            renderer.render(scene, camera);
+          }
+          const pixels = [[20,44], [33,61], [58,63], [60,44], [67,36], [85,86]].map(([x,y]) => {
+            const p = new Uint8Array(4);
+            renderer.readRenderTargetPixels(display, x, y, 1, 1, p);
+            return Array.from(p);
+          });
+          return {opaqueDraws, pixels, glError: gl.getError()};
+        };
+        mirrorCases = {native: sample(false), reuse: sample(true), diagnostics: mirror.diagnostics(), fallback: sample(true, .5)};
+        mirrorCases.fallbackTargets = mirror.diagnostics().linearTargets;
+        mirror.suspend();
+        mirrorCases.released = mirror.diagnostics().linearTargets === 0;
+      } finally {
+        renderer.setRenderTarget(null);
+        mirror.dispose();
+        display.dispose();
+      }
+      return {cases, mirrorCases, released: controller.diagnostics().targets === 0};
     } finally {
       controller.release();
       scene.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); });
@@ -111,6 +142,16 @@ try {
       assert.ok(pixel.every((channel, j) => Math.abs(channel - reuse.pixels[i][j]) < .035),
         'Refraction and its foreground occlusion should agree with the native pass');
     }
+  }
+  const {native, reuse, fallback, diagnostics, fallbackTargets, released} = report.cases.mirrorCases;
+  assert.deepEqual([native.glError, reuse.glError, fallback.glError], [0, 0, 0]);
+  assert.deepEqual([native.opaqueDraws, reuse.opaqueDraws, fallback.opaqueDraws], [6, 3, 6]);
+  assert.deepEqual(diagnostics, {linearTargets: 1, reusedFrames: 1});
+  assert.equal(fallbackTargets, 0);
+  assert.ok(released);
+  for (const [i, pixel] of native.pixels.entries()) {
+    assert.ok(pixel.every((channel, j) => Math.abs(channel - reuse.pixels[i][j]) <= 1),
+      'The reused mirror view should preserve the original sRGB output');
   }
   console.log(JSON.stringify(report.cases));
 } catch (error) {
