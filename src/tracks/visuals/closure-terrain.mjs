@@ -1,5 +1,5 @@
 import {bakeSpatialField} from './offline-track-bake.mjs?v=6f7a9d7b48d68a4c';
-import { terrainHeightSampler } from './reference-landscape.mjs?v=30a528c61c10745d';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=ada39f9cec1a7220';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const smooth=v=>{v=clamp(v,0,1);return v*v*(3-2*v);};
 const terrainNode=o=>o.isMesh&&!o.userData?.asfaltoReplacedTerrain&&!/^(COLLISION_|ASFALTO_TERRAIN_SOURCE_OWNER|RETURN_)/.test(o.name||'')&&(/ENV_Terrain_|TERRAIN_HERO|TERRAIN_TRANSITION/.test(o.name||'')||/^(V2_TERRAIN_PBR|MAT_P1_TERRAIN_|M_Terrain_Andean|MAT_TERRAIN_|MAT_PEAT|MAT_forest_floor|MAT_earthen_bank_PBR)/.test(o.material?.name||''));

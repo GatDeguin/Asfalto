@@ -6,7 +6,7 @@ const FRAME_BYTES = 80;
 const DRAW_ARGS = new Uint32Array([0, 1, 0, 0]);
 const MAX_PIXELS = 1920 * 1080;
 
-export async function createVirtualTerrainRaster(device, {canvas, slots, doubleSided}) {
+export async function createVirtualTerrainRaster(device, {canvas, slots, doubleSided, surfaces = null}) {
   const format = navigator.gpu.getPreferredCanvasFormat();
   const context = canvas.getContext('webgpu');
   if (!context || !Number.isInteger(slots) || slots < 1 || slots > MAX_TERRAIN_PAGES + TERRAIN_DETAIL_SLOTS ||
@@ -71,17 +71,15 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
     targets = null;
   }
 
-  function fits(width, height) {
+  function fits(width, height, withSurfaces = false) {
     return Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0 &&
-      width * height <= MAX_PIXELS && width <= device.limits.maxTextureDimension2D &&
+      width * height <= MAX_PIXELS && width * (withSurfaces ? 2 : 1) <= device.limits.maxTextureDimension2D &&
       height <= device.limits.maxTextureDimension2D && width * height * 4 <= device.limits.maxStorageBufferBindingSize;
   }
 
   function resize(width, height) {
     if (targets?.width === width && targets.height === height) return;
     releaseTargets();
-    canvas.width = width;
-    canvas.height = height;
     const size = {width, height};
     const buffer = () => device.createBuffer({size: width * height * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST});
     const depth = buffer();
@@ -100,12 +98,17 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
     targets.ownerBind = bind(ownerPipeline, bindings);
     targets.resolveBind = bind(resolvePipeline, [[0, frame], [10, depth], [11, owner]],
       [[9, targets.nativeView], [12, targets.nativeDepthView]]);
+    if (surfaces) targets.surfaceBind = surfaces.bindings({frame, vertices, large, ...targets});
   }
 
-  function submit(selected, matrix, far, width, height, now = performance.now()) {
-    if (disposed || !selected.length || !fits(width, height)) return false;
+  function submit(selected, matrix, far, width, height, now = performance.now(), surfaceFrame = null) {
+    const withSurfaces = Boolean(surfaces && surfaceFrame);
+    if (disposed || (!selected.length && !withSurfaces) || !fits(width, height, withSurfaces)) return false;
     if (selected.length > MAX_TERRAIN_PAGES) throw new RangeError('Demasiadas páginas en el rasterizador.');
     resize(width, height);
+    const packetWidth = width * (withSurfaces ? 2 : 1);
+    if (canvas.width !== packetWidth) canvas.width = packetWidth;
+    if (canvas.height !== height) canvas.height = height;
     floats.set(matrix, 0);
     uints[16] = width;
     uints[17] = height;
@@ -125,33 +128,44 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
       maximum = Math.max(maximum, entry.triangles);
     }
     device.queue.writeBuffer(frame, 0, uniforms);
-    device.queue.writeBuffer(pages, 0, selectedPages, 0, selected.length * 2);
+    if (selected.length) device.queue.writeBuffer(pages, 0, selectedPages, 0, selected.length * 2);
     device.queue.writeBuffer(args, 0, DRAW_ARGS);
+    if (withSurfaces) surfaces.update(surfaceFrame.camera, width, height);
     const encoder = device.createCommandEncoder({label: 'Terreno virtual'});
     encoder.clearBuffer(targets.depth);
     encoder.clearBuffer(targets.owner);
     if (sample) encoder.clearBuffer(counters);
-    const groups = Math.ceil(maximum / 64);
-    const depthPass = encoder.beginComputePass(sample && timestamps ?
-      {timestampWrites: {querySet: timestamps, beginningOfPassWriteIndex: 0}} : {});
-    depthPass.setPipeline(depthPipeline);
-    depthPass.setBindGroup(0, targets.depthBind);
-    depthPass.dispatchWorkgroups(groups, selected.length);
-    depthPass.end();
+    if (selected.length) {
+      const groups = Math.ceil(maximum / 64);
+      const depthPass = encoder.beginComputePass(sample && timestamps ?
+        {timestampWrites: {querySet: timestamps, beginningOfPassWriteIndex: 0}} : {});
+      depthPass.setPipeline(depthPipeline);
+      depthPass.setBindGroup(0, targets.depthBind);
+      depthPass.dispatchWorkgroups(groups, selected.length);
+      depthPass.end();
 
-    const ownerPass = encoder.beginComputePass();
-    ownerPass.setPipeline(ownerPipeline);
-    ownerPass.setBindGroup(0, targets.ownerBind);
-    ownerPass.dispatchWorkgroups(groups, selected.length);
-    ownerPass.end();
+      const ownerPass = encoder.beginComputePass();
+      ownerPass.setPipeline(ownerPipeline);
+      ownerPass.setBindGroup(0, targets.ownerBind);
+      ownerPass.dispatchWorkgroups(groups, selected.length);
+      ownerPass.end();
+    }
 
     const nativePass = encoder.beginRenderPass({
       colorAttachments: [{view: targets.nativeView, loadOp: 'clear', storeOp: 'store', clearValue: [0, 0, 0, 0]}],
       depthStencilAttachment: {view: targets.nativeDepthView, depthLoadOp: 'clear', depthStoreOp: 'store', depthClearValue: 0},
+      ...(!selected.length && sample && timestamps && {timestampWrites: {querySet: timestamps, beginningOfPassWriteIndex: 0}}),
     });
-    nativePass.setPipeline(nativePipeline);
-    nativePass.setBindGroup(0, nativeBind);
-    nativePass.drawIndirect(args, 0);
+    if (selected.length) {
+      if (withSurfaces) {
+        surfaces.drawVista(nativePass, targets.surfaceBind.vista, args);
+      } else {
+        nativePass.setPipeline(nativePipeline);
+        nativePass.setBindGroup(0, nativeBind);
+        nativePass.drawIndirect(args, 0);
+      }
+    }
+    if (withSurfaces) surfaces.drawVisibility(nativePass, targets.surfaceBind.visibility, surfaceFrame.frustum);
     nativePass.end();
 
     const resolvePass = encoder.beginRenderPass({
@@ -159,9 +173,13 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
         clearValue: [0, 0, 0, 1]}],
       ...(sample && timestamps && {timestampWrites: {querySet: timestamps, endOfPassWriteIndex: 1}}),
     });
-    resolvePass.setPipeline(resolvePipeline);
-    resolvePass.setBindGroup(0, targets.resolveBind);
-    resolvePass.draw(3);
+    if (withSurfaces) {
+      surfaces.drawResolve(resolvePass, targets.surfaceBind.resolve);
+    } else {
+      resolvePass.setPipeline(resolvePipeline);
+      resolvePass.setBindGroup(0, targets.resolveBind);
+      resolvePass.draw(3);
+    }
     resolvePass.end();
     if (sample) {
       encoder.copyBufferToBuffer(counters, 0, readback, 0, 4);
@@ -181,7 +199,9 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
         const [microTriangles, hardwareVertices] = new Uint32Array(bytes, 0, 2);
         const ticks = timestamps ? new BigUint64Array(bytes, 16, 2) : null;
         samples = {microTriangles, hardwareTriangles: hardwareVertices / 3, gpuMs: ticks && ticks[1] >= ticks[0] ?
-          Number(ticks[1] - ticks[0]) / 1e6 : null, width, height, visibilityBytes: width * height * 4};
+          Number(ticks[1] - ticks[0]) / 1e6 : null, width, height,
+          backend: withSurfaces ? 'surface' : 'visibility', packetBytes: packetWidth * height * 4,
+          visibilityBytes: withSurfaces ? 0 : width * height * 4};
         readback.unmap();
       }).catch(() => {}).finally(() => { pending = false; });
     }

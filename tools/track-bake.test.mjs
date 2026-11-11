@@ -5,9 +5,9 @@ import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=e9115296c3370d52';
+import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=a5fcd85eb3e18b4b';
 import {visualRoadField} from '../src/tracks/visuals/forest-terrain-detail.mjs?v=8e17cf50d6fbaefc';
-import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=95030aee7f9229d2';
+import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=8ac034d3920ac072';
 import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from '../src/render/surface-curvature.mjs?v=4c6fa9c0ecb6bbe6';
 import {prepareTrackBake,bakeCapture,bakeDiagnostics,BAKE_SCHEMA} from '../src/tracks/visuals/offline-track-bake.mjs?v=6f7a9d7b48d68a4c';
 const state=globalThis.__asfaltoTrackBakeState;
@@ -54,7 +54,7 @@ test('curvature bakes distinguish interleaved views sharing the same storage',()
  const data=new T.InterleavedBuffer(array,6),a=new T.BufferGeometry(),b=new T.BufferGeometry();a.setAttribute('position',new T.InterleavedBufferAttribute(data,3,0));b.setAttribute('position',new T.InterleavedBufferAttribute(data,3,3));a.setIndex(sphere.index.clone());b.setIndex(sphere.index.clone());computeSurfaceCurvature(T,a);globalThis.__ASFALTO_CAPTURE_BAKE__=false;const actual=computeSurfaceCurvature(T,b).attribute.array;releaseSurfaceCurvatureCache(b);state.entries.clear();const expected=computeSurfaceCurvature(T,b).attribute.array;assert.deepEqual(actual,expected);assert.ok(actual.every(v=>v===0));
 });
 test('refinement helper-only edits invalidate distributed results',async()=>{
- const {readFile}=await import('node:fs/promises'),url=new URL('../src/tracks/visuals/terrain-refinement.mjs?v=95030aee7f9229d2',import.meta.url);
+ const {readFile}=await import('node:fs/promises'),url=new URL('../src/tracks/visuals/terrain-refinement.mjs?v=8ac034d3920ac072',import.meta.url);
  const text=await readFile(new URL('./terrain-refinement-solver.mjs',url),'utf8');
  const changed=text.replace('return(h(ix,iz)','return 0;return(h(ix,iz)');
  assert.notEqual(changed,text);

@@ -76,6 +76,14 @@ export function registerTerrainMeshlets(geometry, data) {
   return true;
 }
 
+export function selectTerrainMeshletRange(geometry, planes, range) {
+  const layout = layouts.get(geometry);
+  if (!layout || geometry.index !== layout.index || geometry.index.version !== layout.indexVersion ||
+    geometry.attributes.position !== layout.position || layout.position.version !== layout.positionVersion ||
+    geometry.drawRange.start !== 0 || geometry.drawRange.count < layout.index.count) return null;
+  return layout.select(planes, range);
+}
+
 export function installTerrainMeshletRanges(THREE, renderer, {enabled = () => true} = {}) {
   if (!renderer.isWebGLRenderer) return null;
   const original = renderer.renderBufferDirect;

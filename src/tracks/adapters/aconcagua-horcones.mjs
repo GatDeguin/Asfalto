@@ -1,5 +1,5 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=063f25f763dd5745';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=30a528c61c10745d';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=fa15f6fb776e83d0';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=ada39f9cec1a7220';
 import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=942ba726ff042432';
 import { aconcaguaArtAsset, attachAconcaguaArt } from '../visuals/aconcagua-art.mjs?v=4aea20f8e9afadaa';
 

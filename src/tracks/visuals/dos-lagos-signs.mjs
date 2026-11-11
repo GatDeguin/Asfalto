@@ -1,4 +1,4 @@
-import { terrainHeightSampler } from './reference-landscape.mjs?v=30a528c61c10745d';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=ada39f9cec1a7220';
 import { addRoadSigns, roadSignYaw } from './road-signs.mjs?v=6d823d9e48d15630';
 
 const groupName = 'ASFALTO_DOS_LAGOS_AUTHORED_SIGNS';

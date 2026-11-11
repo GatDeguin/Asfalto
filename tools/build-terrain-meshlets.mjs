@@ -5,7 +5,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gunzipSync, gzipSync} from 'node:zlib';
 import {BAKE_SCHEMA, decodeBinaryBake, encodeBinaryBake} from '../src/tracks/visuals/bake-binary-codec.mjs';
-import {TERRAIN_MESHLET_MAX_VERTICES, TERRAIN_MESHLET_MAX_TRIANGLES} from '../src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
+import {TERRAIN_MESHLET_MAX_VERTICES, TERRAIN_MESHLET_MAX_TRIANGLES} from '../src/render/terrain-meshlets.mjs?v=d30e317b7c1b864d';
 
 // Subdivide the authored triangle order, preserving its locality and winding.
 // Leaves share the authored vertices through a byte-sized local index stream.
@@ -138,7 +138,7 @@ function compileTrack(sourceDirectory, outputDirectory, id) {
   assert.deepEqual(decodeBinaryBake(encoded.slice(0)), payload);
   const compressed = gzipSync(new Uint8Array(encoded), {level: 9});
   manifest.tracks[id] = {...entry, bytes: compressed.length, decodedBytes: encoded.byteLength, sha256: hash(compressed)};
-  for (const file of ['src/tracks/visuals/terrain-refinement.mjs?v=95030aee7f9229d2', 'src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9', 'tools/build-terrain-meshlets.mjs']) {
+  for (const file of ['src/tracks/visuals/terrain-refinement.mjs?v=8ac034d3920ac072', 'src/render/terrain-meshlets.mjs?v=d30e317b7c1b864d', 'tools/build-terrain-meshlets.mjs']) {
     manifest.inputs[file] = hash(fs.readFileSync(new URL(`../${file}`, import.meta.url)));
   }
   fs.mkdirSync(outputDirectory, {recursive: true});

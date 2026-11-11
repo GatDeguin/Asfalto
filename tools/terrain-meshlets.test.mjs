@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {bakeTerrainMeshlets, buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=144162be656b62c1';
-import {createMeshletCuller, installTerrainMeshletRanges, registerTerrainMeshlets} from '../src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
+import {bakeTerrainMeshlets, buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=36ae8303ea2ae641';
+import {createMeshletCuller, installTerrainMeshletRanges, registerTerrainMeshlets} from '../src/render/terrain-meshlets.mjs?v=d30e317b7c1b864d';
 
 function terrain(width, height) {
   const positions = [];

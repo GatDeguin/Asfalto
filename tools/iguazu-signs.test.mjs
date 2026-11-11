@@ -6,7 +6,7 @@ import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-wor
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {addIguazuNativeRoadSigns} from '../src/tracks/visuals/iguazu-signs.mjs?v=963ecc7c5f8c18fb';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=30a528c61c10745d';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=ada39f9cec1a7220';
 
 test('Iguazú replaces the original 14 sign pairs with grounded plates for real features', async () => {
   const track=new URL('../tracks/cataratas-iguazu/',import.meta.url);

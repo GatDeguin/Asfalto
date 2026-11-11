@@ -7,7 +7,9 @@ import {gunzipSync} from 'node:zlib';
 import {GARIBALDI_TERRAIN_MANIFEST, TRIANGLE_BYTES, packTerrainTriangles, selectTerrainDetail, validateTerrainManifest}
   from '../src/render/virtual-terrain-data.mjs?v=09bc75160261c900';
 import {createTerrainResidency} from '../src/render/virtual-terrain-residency.mjs?v=497442d1b9bbf4b7';
-import {createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=eece709030ed7959';
+import {createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=1f674a88819b63b9';
+import {packGaribaldiSurfaces, readGaribaldiSurfaceMeshes} from '../src/render/virtual-terrain-surface.mjs?v=51250a3d4d356a8c';
+import {prepareSurfaceSky} from '../src/render/virtual-terrain-sky.mjs?v=63f27700e259634a';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {orientedBoundary, readVistaBake, spatialTrianglePages} from './build-virtual-terrain.mjs?v=3c7434995edbee78';
 
@@ -157,4 +159,63 @@ test('the attribute atlas mirrors a reused GPU slot without marking other layers
   assert.throws(() => atlas.upload(3, page), RangeError);
   assert.throws(() => atlas.upload(1, page.subarray(0, 11)), RangeError);
   atlas.dispose();
+});
+
+function garibaldiSurfaceFixture() {
+  const root = new THREE.Group();
+  const names = ['TERRAIN_VISTA', 'ROAD_RENDER', 'TERRAIN_HERO', 'TERRAIN_TRANSITION'];
+  const meshes = names.map((name, i) => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0,0,i, 1,0,i, 0,1,i], 3));
+    g.setAttribute('normal', new THREE.Float32BufferAttribute([0,0,1, 0,0,1, 0,0,1], 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute([.5,1,.75, 1,1,1, 1,1,1], 3));
+    g.setIndex([0,1,2]);
+    const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({vertexColors:true}));
+    mesh.name = name + '_WEB_MESH_Primitive_0';
+    root.add(mesh);
+    return mesh;
+  });
+  return {root, meshes};
+}
+
+test('the WebGPU surface package retains authored triangle order, distinct IDs and road tint', async () => {
+  const {root, meshes} = garibaldiSurfaceFixture();
+  const sources = readGaribaldiSurfaceMeshes(THREE, root, meshes[0]);
+  assert.deepEqual(sources.map(source => source.id), [1,2,3,4]);
+  const statics = sources.slice(1);
+  const {indices, vertices} = await packGaribaldiSurfaces(statics);
+  assert.deepEqual([...indices], [0,1,2,3,4,5,6,7,8]);
+  assert.deepEqual(statics.map(source => source.first), [0,3,6]);
+  assert.deepEqual([...vertices.slice(0, 8)], [0,0,1,32896,.5,1,.75,0]);
+  assert.equal(vertices[24 + 2], 2);
+});
+
+test('transformed or grouped ground preserves the WebGL fallback, and packing can be aborted before publishing a range', async () => {
+  const {root, meshes} = garibaldiSurfaceFixture();
+  const sources = readGaribaldiSurfaceMeshes(THREE, root, meshes[0]);
+  const controller = new AbortController();
+  await assert.rejects(packGaribaldiSurfaces(sources.slice(1), controller.signal, async () => controller.abort()), {name:'AbortError'});
+  assert.ok(sources.every(source => source.first === undefined));
+  meshes[1].position.set(1, 0, 0);
+  root.updateMatrixWorld(true);
+  assert.throws(() => readGaribaldiSurfaceMeshes(THREE, root, meshes[0]), /incompatible/);
+  meshes[1].position.set(0, 0, 0);
+  root.updateMatrixWorld(true);
+  meshes[2].geometry.addGroup(0, 3, 0);
+  assert.throws(() => readGaribaldiSurfaceMeshes(THREE, root, meshes[0]), /incompatible/);
+});
+
+test('constant linear HDR radiance integrates to pi times its value without a directional tint', () => {
+  const width = 64, height = 32, data = new Uint16Array(width * height * 4);
+  const pixel = [2, .5, 1, 1].map(THREE.DataUtils.toHalfFloat);
+  for (let i = 0; i < data.length; i += 4) data.set(pixel, i);
+  const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat, THREE.HalfFloatType);
+  const sky = prepareSurfaceSky(THREE, texture);
+  assert.deepEqual([...sky.data.slice(0, 4)], pixel);
+  for (const [channel, radiance] of [2, .5, 1].entries()) {
+    assert.ok(Math.abs(sky.irradiance[channel] * .282094792 - Math.PI * radiance) < .004);
+  }
+  assert.ok(sky.irradiance.slice(4).every(coefficient => Math.abs(coefficient) < .01));
+  assert.throws(() => prepareSurfaceSky(THREE, new THREE.Texture()), /panorama HDR/);
+  texture.dispose();
 });

@@ -1,5 +1,5 @@
 import {bakeRead,bakeWrite,bakeGeometryInput} from './offline-track-bake.mjs?v=6f7a9d7b48d68a4c';
-import {registerTerrainMeshlets} from '../../render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
+import {registerTerrainMeshlets} from '../../render/terrain-meshlets.mjs?v=d30e317b7c1b864d';
 import {refineTerrainSurfaceOriginal, terrainRefinementIdentity} from './terrain-refinement-solver.mjs?v=eeee2ed24d0fed64';
 
 /** Adjacent Dos Lagos tiles are one continuous sheet, not independent cliffs. */

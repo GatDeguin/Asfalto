@@ -1,4 +1,4 @@
-import {terrainProjection} from '../tracks/visuals/reference-landscape.mjs?v=30a528c61c10745d';
+import {terrainProjection} from '../tracks/visuals/reference-landscape.mjs?v=ada39f9cec1a7220';
 import {MAX_PAGE_TRIANGLES, TRIANGLE_BYTES} from './virtual-terrain-data.mjs?v=09bc75160261c900';
 
 const ATLAS_WIDTH = 256;
@@ -199,6 +199,81 @@ export function createVirtualTerrainComposite(THREE, source, canvas, {atlas, obj
     dispose() {
       mesh.removeFromParent();
       releaseTexture();
+      geometry.dispose();
+      material.dispose();
+    },
+  };
+}
+
+export function createVirtualTerrainSurfaceComposite(THREE, canvas) {
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.flipY = false;
+  texture.generateMipmaps = false;
+  texture.minFilter = texture.magFilter = THREE.NearestFilter;
+  texture.colorSpace = THREE.NoColorSpace;
+  const uniforms = {
+    ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),
+    surfacePacket: {value: texture},
+    surfaceViewport: {value: new THREE.Vector4()},
+    surfaceLogFar: {value: 0},
+  };
+  const material = new THREE.ShaderMaterial({
+    name: 'Composición HDR de superficies WebGPU',
+    uniforms,
+    fog: true,
+    vertexShader: 'void main(){gl_Position = vec4(position.xy, 0.0, 1.0);}',
+    fragmentShader: /* glsl */ `
+      uniform sampler2D surfacePacket;
+      uniform vec4 surfaceViewport;
+      uniform float surfaceLogFar;
+      ${THREE.ShaderChunk.fog_pars_fragment.replace('varying float vFogDepth;', 'float vFogDepth;')}
+      void main() {
+        ivec2 pixel = ivec2(gl_FragCoord.xy - surfaceViewport.xy);
+        pixel.y = int(surfaceViewport.w) - 1 - pixel.y;
+        vec3 bits = floor(texelFetch(surfacePacket, pixel + ivec2(int(surfaceViewport.z), 0), 0).rgb * 255.0 + 0.5);
+        float key = dot(bits, vec3(1.0, 256.0, 65536.0));
+        if (key == 0.0) discard;
+        float depth = (16777215.0 - key) / 16777214.0;
+        gl_FragDepth = depth;
+        #ifdef USE_FOG
+          vFogDepth = exp2(depth * surfaceLogFar) - 1.0;
+        #endif
+        vec3 packed = texelFetch(surfacePacket, pixel, 0).rgb;
+        gl_FragColor = vec4((exp2(packed * log2(513.0)) - 1.0) / 32.0, 1.0);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+        #include <fog_fragment>
+      }
+    `,
+  });
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([-1,-1,0, 3,-1,0, -1,3,0], 3));
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = 'ASFALTO_VIRTUAL_TERRAIN_SURFACE_RESOLVE';
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 9000;
+  mesh.visible = false;
+  let width = 0, height = 0;
+  function releaseViewport() {
+    if (width) texture.dispose();
+    width = height = 0;
+  }
+  return {
+    mesh,
+    releaseViewport,
+    update(camera, viewport) {
+      if (width !== viewport.z || height !== viewport.w) {
+        releaseViewport();
+        width = viewport.z;
+        height = viewport.w;
+      }
+      texture.needsUpdate = true;
+      uniforms.surfaceViewport.value.copy(viewport);
+      uniforms.surfaceLogFar.value = Math.log2(camera.far + 1);
+    },
+    dispose() {
+      mesh.removeFromParent();
+      releaseViewport();
       geometry.dispose();
       material.dispose();
     },

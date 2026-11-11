@@ -6,9 +6,9 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=30a528c61c10745d';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=ada39f9cec1a7220';
 import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=e01b8f5308225a46';
-import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=2895050bf24b111d';
+import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=fda03ce20aaea527';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,

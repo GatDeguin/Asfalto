@@ -1,5 +1,5 @@
 import {assetDecodePool} from '../../runtime/asset-decode-pool.mjs?v=1be266bf7b1e2d93';
-import {installRefinedTerrain} from './terrain-refinement.mjs?v=95030aee7f9229d2';
+import {installRefinedTerrain} from './terrain-refinement.mjs?v=8ac034d3920ac072';
 import {refineTerrainSurfaceOriginal} from './terrain-refinement-solver.mjs?v=eeee2ed24d0fed64';
 import {packTerrainGeometry, terrainTransferList, unpackTerrainGeometry} from './terrain-geometry-transport.mjs?v=1bd13edef21b4c5a';
 
