@@ -4,7 +4,7 @@ import {readFile} from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {THREE as T} from './cinematic-three.mjs';
-import {attachTrackApproachArt, trackApproachArtAssets} from '../src/tracks/visuals/track-approach-art.mjs?v=4f7deb4bf592efe1';
+import {attachTrackApproachArt, trackApproachArtAssets} from '../src/tracks/visuals/track-approach-art.mjs?v=5ebdf5bf2d7a3ca4';
 
 const names = ['ART_HORIZON', ...['START','FINISH'].flatMap(end =>
   ['BANK_LEFT','BANK_RIGHT','STRATA','UNDERSTORY'].map(part => `ART_${end}_${part}`))];

@@ -7,7 +7,7 @@ import {THREE as T} from './cinematic-three.mjs';
 import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs';
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
-import {aconcaguaArtAsset,attachAconcaguaArt} from '../src/tracks/visuals/aconcagua-art.mjs?v=06f5ae0d35c4689b';
+import {aconcaguaArtAsset,attachAconcaguaArt} from '../src/tracks/visuals/aconcagua-art.mjs?v=4aea20f8e9afadaa';
 import {addHorconesDEM,decodeHorconesDEM} from '../src/tracks/visuals/horcones-dem.mjs?v=6e9457e12e10ffb1';
 
 const game = new URL('../',import.meta.url);

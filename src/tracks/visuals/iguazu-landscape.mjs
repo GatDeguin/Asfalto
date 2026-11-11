@@ -189,6 +189,50 @@ export function addIguazuApproachPlants(T, root, name, placements) {
   }
 }
 
+export function reseatIguazuFinishPlants(T, root) {
+  if (!T || !root?.isObject3D) return null;
+  const banks = [-1, 1].map(side => root.getObjectByName('APPROACH_FINISH_TERRAIN_' + side));
+  if (banks.some(mesh => !mesh?.isMesh || mesh.parent?.userData.iguazuFinishRegrade !== 1)) return null;
+  const bankSet = new Set(banks);
+  const heightAt = terrainHeightSampler(T,root,mesh=>bankSet.has(mesh)||/^TERRAIN_/.test(mesh.name)
+    || mesh.userData.asfaltoDistantRidge,{includeDefaultTerrain:false}).raw;
+  const matrix = new T.Matrix4();
+  let supported = 0, unsupported = 0, maximumShiftM = 0;
+  for (const family of ['tree','palmito']) {
+    const parts = [0,1].map(part=>root.getObjectByName(`APPROACH_FINISH_CANOPY_${family}_${part}`))
+      .filter(mesh=>mesh?.isInstancedMesh);
+    const trunk = parts.find(mesh=>mesh.material?.name==='MAT_bark');
+    if (!trunk || parts.some(mesh=>mesh.count!==trunk.count)) continue;
+    trunk.geometry.computeBoundingBox();
+    for (let i=0;i<trunk.count;i++) {
+      trunk.getMatrixAt(i,matrix);
+      const e = matrix.elements;
+      const floor = heightAt(e[12],e[14]);
+      if (!Number.isFinite(floor)) {
+        unsupported++;
+        continue;
+      }
+      // Parts of the same instance share a root. Move the crown and the
+      // trunk collider by the same amount so their alignment stays intact.
+      const base = e[13] + trunk.geometry.boundingBox.min.y * e[5];
+      const shift = floor - .06 - base;
+      for (const mesh of parts) {
+        mesh.getMatrixAt(i,matrix);
+        matrix.elements[13] += shift;
+        mesh.setMatrixAt(i,matrix);
+      }
+      supported++;
+      maximumShiftM = Math.max(maximumShiftM,Math.abs(shift));
+    }
+    for (const mesh of parts) {
+      mesh.instanceMatrix.needsUpdate = true;
+      mesh.computeBoundingBox();
+      mesh.computeBoundingSphere();
+    }
+  }
+  return root.userData.asfaltoIguazuFinish = Object.freeze({supported,unsupported,maximumShiftM});
+}
+
 export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,THREE:T=globalThis.__chevyV6Three||globalThis.THREE}={}){
   if(!root?.isObject3D||!T)return null;
   if(sourceRoot?.isObject3D&&sourceRoot.userData.asfaltoIguazu)sourceRoot.userData.asfaltoIguazu.ground=batchIguazuGround(T,sourceRoot);

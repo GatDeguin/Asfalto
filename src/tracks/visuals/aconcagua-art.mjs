@@ -1,8 +1,8 @@
 export const aconcaguaArtAsset = Object.freeze({
   path: 'assets/tracks/aconcagua-horcones-art.glb.gz',
-  bytes: 419486,
-  sha256: 'c9c47d57e5849fe0080e9fc883dd02adcccd915b6ea709f9f1a5e196878b337d',
-  triangles: 13216,
+  bytes: 424037,
+  sha256: '0be23acd4a5f5db037d6c6eba454e3a2187b0fbde668d672478746c107ddd998',
+  triangles: 13918,
 });
 const expectedMeshes = new Set([
   'HORCONES_CORTES_S06',

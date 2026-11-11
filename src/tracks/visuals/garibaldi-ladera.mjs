@@ -19,7 +19,40 @@ function validateStems(stems){
   return stems;
 }
 
-export function attachGaribaldiLadera(root,art){
+function trimUphillWaterStrips(root,query){
+  const drains=root.getObjectByName('ASFALTO_TOPOGRAPHIC_DRAINS');
+  const channels=root.userData.asfaltoDrainageChannels;
+  const geometry=drains?.geometry,index=geometry?.index,uv=geometry?.attributes.uv;
+  if(!query?.sample||!drains?.userData.asfaltoDrainageWater||!channels?.length||!index||!uv||index.count%6)return;
+
+  // The procedural mesh packs disconnected strips in channel order. Each
+  // channel starts a new UV run. Keep the wet soil and culvert meshes intact.
+  const starts=[];
+  for(let i=0;i<index.count;i+=6)if(uv.getY(index.getX(i))===0)starts.push(i);
+  if(starts.length!==channels.length)return;
+  starts.push(index.count);
+
+  const retained=[],indices=[];
+  for(let i=0;i<channels.length;i++){
+    const channel=channels[i],{sM,position,end}=channel;
+    if(sM>=garibaldiLaderaAsset.startM&&sM<=garibaldiLaderaAsset.endM){
+      const roadY=query.sample(sM).position[1];
+      const run=Math.hypot(position[0]-end[0],position[2]-end[2]);
+      // The exposed cut has moist soil. A steep ribbon entirely above the road
+      // should not be sent to the standing-water reflection and transmission pass.
+      if(run>0&&position[1]>roadY+2&&end[1]>roadY&&(position[1]-end[1])/run>.55)continue;
+    }
+    retained.push(channel);
+    for(let j=starts[i];j<starts[i+1];j++)indices.push(index.getX(j));
+  }
+  if(retained.length===channels.length)return;
+  geometry.setIndex(indices);
+  root.userData.asfaltoDrainageChannels=retained;
+  const reference=root.userData.asfaltoReferenceVisual;
+  if(reference)reference.drainageChannels=retained.length;
+}
+
+export function attachGaribaldiLadera(root,art,query){
   const found=new Map();
   let triangles=0,groundTriangles=0,stemTriangles=0;
   art.traverse(mesh=>{
@@ -66,6 +99,7 @@ export function attachGaribaldiLadera(root,art){
   shareMaps(found.get('TERRAIN_GARIBALDI_ESTRATOS').material,source.terrain);
   art.name='ASFALTO_GARIBALDI_LADERA_BLENDER';
   root.add(art);
+  trimUphillWaterStrips(root,query);
   root.userData.asfaltoGaribaldiLadera=Object.freeze({triangles,groundTriangles,stemTriangles,
     primitives:found.size,startM:garibaldiLaderaAsset.startM,endM:garibaldiLaderaAsset.endM});
   return root.userData.asfaltoGaribaldiLadera;

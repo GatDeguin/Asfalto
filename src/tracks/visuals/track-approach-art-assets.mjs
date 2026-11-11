@@ -17,7 +17,7 @@ export const trackApproachArtAssets = Object.freeze({
     "sha256": "15c0e49d38f51d94aac747ad55009a7990018b269e714a09448e051d68b90eb3"
   },
   "cataratas_iguazu": {
-    "bytes": 1173600,
-    "sha256": "78e3ce2ad3d083af881cc5bbdda5802772044134dea8decc719e69e9603f193b"
+    "bytes": 824152,
+    "sha256": "673e3e42979bb550a3cb1514ed10bfe2e8a03790708e8608cbad72817f21a0b4"
   }
 });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
 import {CIRCUIT_IDS, readCircuitSource} from './fixtures/closed-circuit-source.mjs?v=dab87f84716fb019';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
-import {addTrackApproaches} from '../src/tracks/visuals/track-approaches.mjs?v=0154850da6cdab11';
+import {addTrackApproaches} from '../src/tracks/visuals/track-approaches.mjs?v=37e9c79b11ba671f';
 
 for (const id of CIRCUIT_IDS) test(`${id} joins both gates to asphalt beyond the official route`, () => {
   const source = readCircuitSource(id);

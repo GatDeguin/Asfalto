@@ -1,11 +1,11 @@
 import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
 import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=9a64c78470dec416";
-import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=6e6d75c33149145a";
+import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=c503ae23b525af47";
 import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=dce9e4855b105e7c";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=541a6faa080e396b";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=ad1e74349e667860";
 
-import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=e364d6607a49a39c";
+import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=3f0ac0c089745439";
 
 const releaseRootUrl=new URL("../../",import.meta.url).href;
 const registryUrl=new URL("tracks/registry.json",releaseRootUrl).href;
