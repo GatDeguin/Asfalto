@@ -1,5 +1,5 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=7bf9390718628c94';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=893415f03864bece';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=03ab3972c3d44f53';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
 import { attachGaribaldiLadera, garibaldiLaderaAsset } from '../visuals/garibaldi-ladera.mjs?v=bb4060bab8241a9c';
 import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
 

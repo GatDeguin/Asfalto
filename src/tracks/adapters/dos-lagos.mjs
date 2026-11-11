@@ -5,10 +5,10 @@ import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistanc
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=893415f03864bece';
-import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=a7c28ead09e1b649';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import { addDosLagosPostSupport } from '../visuals/dos-lagos-post-support.mjs?v=9b2afe4583851ae2';
 import { loadDosLagosRibera } from '../visuals/dos-lagos-ribera.mjs?v=b1337fbed3bf6958';
-import { prepareDosLagosSigns } from '../visuals/dos-lagos-signs.mjs?v=75b718bb13f7ccfb';
+import { prepareDosLagosSigns } from '../visuals/dos-lagos-signs.mjs?v=dea23cc8e1ecc993';
 
 const ENVIRONMENTS = Object.freeze(['clear','overcast','golden','sunset','moonrise','night']);
 const LOCKS = Object.freeze({

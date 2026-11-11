@@ -23,6 +23,7 @@ globalThis.__asfaltoBuildSelectedVehicleSpec=(base,id,setup)=>applyWorkshopPerfo
 import {installRaceAudioActivation} from '../audio/race-audio-activation.mjs?v=8ac7cca74f77a006';
 import {createAuxiliaryCaptureSchedule} from '../render/auxiliary-capture-schedule.mjs?v=35131d35093dabfc';
 import {installEmptyInstanceDrawGuard} from '../render/empty-instance-draw-guard.mjs?v=41a3cf08442da55f';
+import {installTerrainMeshletRanges} from '../render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
 import {createOpaqueTransmissionReuse} from '../render/opaque-transmission-reuse.mjs?v=be99bbdde1c974b1';
 import {prepareSoundscapeBanks} from '../audio/prepare-soundscape-banks.mjs?v=ec1a7e1a73d04d30';
 import {waitForGpuFrame} from '../render/phone-gpu-ready.mjs?v=6238a1d93547777f';
@@ -30,7 +31,7 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=3b371003aa0e2ce0';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=55a74ce72fc340f0';
 import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=5ebdf5bf2d7a3ca4';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
@@ -66,7 +67,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=80e541c39e3bf279';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=434dcbd0064c51e4';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -4648,6 +4649,8 @@ try {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const emptyInstanceDrawGuard=installEmptyInstanceDrawGuard(renderer,{enabled:()=>!visualPrecompileInProgress});
+  let terrainMeshletsEnabled=true;
+  const terrainMeshletRanges=installTerrainMeshletRanges(THREE,renderer,{enabled:()=>terrainMeshletsEnabled&&!visualPrecompileInProgress});
   const auxiliaryCaptureSchedule=createAuxiliaryCaptureSchedule();
   const opaqueTransmissionReuse=createOpaqueTransmissionReuse(THREE,{renderer,enabled:!runtimeDeviceProfile.phone});
   renderer.domElement.addEventListener('webglcontextlost',()=>globalThis.__asfaltoPhoneLoad?.stage('Contexto gráfico perdido'));
@@ -8454,7 +8457,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       advancedGraphics?.dispose();advancedGraphics=null;graphicsSettings?.dispose();graphicsSettings=null;
       try { await modularRaceWorld?.dispose?.(); } finally {
         cameraOpening.cancel();cameraOpeningOverlay.dispose();headMotionControls?.dispose();headMotion.dispose();lightingEditor?.dispose();colorGrading?.dispose();rayTracingSettings?.dispose();rayTracing?.dispose();
-        gpuFrameTimer?.dispose();raceAudioActivation?.dispose();opaqueTransmissionReuse.dispose();emptyInstanceDrawGuard?.dispose();
+        gpuFrameTimer?.dispose();raceAudioActivation?.dispose();opaqueTransmissionReuse.dispose();terrainMeshletRanges?.dispose();emptyInstanceDrawGuard?.dispose();
         vehicleCockpitWheel?.dispose();lazyCockpitOriginals?.dispose();cockpitDisplayLods?.dispose();framePacingSettings?.dispose();cockpitViewPreset?.dispose();
         authoredMirrors?.dispose();cockpitMirrors?.dispose();cockpitRenderPass?.dispose();
         cockpitIgnition?.dispose();cockpitLightSwitch?.dispose();cockpitLightSwitch=null;
@@ -10265,6 +10268,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     getInstrumentReadings:()=>{const r=gaugeCluster.speed.getReading();return{indicatedKph:r.value,digitalKph:r.digitalValue,physicalTimeSeconds:instrumentPhysicalTimeSeconds,physicalTick:instrumentPhysicalTimeSeconds===null?null:Math.round(instrumentPhysicalTimeSeconds*120)};},
     v7PhoneTextureDiagnostics:()=>phoneCockpitTextureSelector.diagnostics(),
     debugSetPerformanceAdaptive:value=>{if(new URLSearchParams(location.search).get('qa')==='1')return raceWorld.debugSetPerformanceAdaptive(value);},
+    debugSetTerrainMeshletsEnabled:value=>{if(new URLSearchParams(location.search).get('qa')==='1')terrainMeshletsEnabled=value!==false;},
     v7RenderDiagnostics:()=>({actualSceneFrames,actualSceneTimestampMs,preparation:{batch:getRenderPreparationDiagnostics(renderer),tier:tierPreparationDiagnostics?{...tierPreparationDiagnostics}:null,renderingPending},sharedHost:renderHost.diagnostics(),vehiclePool:vehicleResourcePool.diagnostics(),frameBudget:currentFrameBudget,gpu:gpuFrameTimer.diagnostics(),render:{...renderer.info.render},resources:{...renderer.info.memory},deviceBudget:{phone:runtimeDeviceProfile.phone,textureDecodeLimit:textureDecodeLimit(),antialias:renderer.getContext().getContextAttributes()?.antialias??null,transmissionScale:renderer.transmissionResolutionScale},camera:{position:camera.position.toArray(),quaternion:camera.quaternion.toArray(),fov:camera.fov,near:camera.near,far:camera.far},drawingBuffer:[renderer.domElement.width,renderer.domElement.height],exposure:renderer.toneMappingExposure}),
     v7BeginMeasurement:()=>{raceWorld.resetPerformanceMeasurement();raceWorld.beginPerformanceWindow('driving');gpuFrameTimer.beginWindow();},
     v7DrivingView:{set:value=>cockpitViewPreset.setSelected(value),diagnostics:()=>cockpitViewPreset.diagnostics()},

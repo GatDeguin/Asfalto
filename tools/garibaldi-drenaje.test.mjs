@@ -8,8 +8,8 @@ import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-wor
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {visualRoadField} from '../src/tracks/visuals/forest-terrain-detail.mjs';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=893415f03864bece';
-import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=025b3f7e349de378';
 import {addRegionalLandscapeDetails} from '../src/tracks/visuals/regional-landscape-details.mjs?v=00ce76228f289119';
 import {attachGaribaldiLadera,garibaldiLaderaAsset as asset} from '../src/tracks/visuals/garibaldi-ladera.mjs?v=bb4060bab8241a9c';
 import {loadRegionalBlenderArt} from '../src/tracks/visuals/regional-blender-art.mjs';

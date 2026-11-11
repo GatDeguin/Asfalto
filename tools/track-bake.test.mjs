@@ -5,9 +5,9 @@ import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=0fb8d53360fc71ad';
+import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=d74df3d36b48e795';
 import {visualRoadField} from '../src/tracks/visuals/forest-terrain-detail.mjs?v=9535a171be7c3c52';
-import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be';
+import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=025b3f7e349de378';
 import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from '../src/render/surface-curvature.mjs?v=b65bd00ab81d3d27';
 import {prepareTrackBake,bakeCapture,bakeDiagnostics,BAKE_SCHEMA} from '../src/tracks/visuals/offline-track-bake.mjs?v=67e9450828b29db5';
 const state=globalThis.__asfaltoTrackBakeState;
@@ -54,7 +54,12 @@ test('curvature bakes distinguish interleaved views sharing the same storage',()
  const data=new T.InterleavedBuffer(array,6),a=new T.BufferGeometry(),b=new T.BufferGeometry();a.setAttribute('position',new T.InterleavedBufferAttribute(data,3,0));b.setAttribute('position',new T.InterleavedBufferAttribute(data,3,3));a.setIndex(sphere.index.clone());b.setIndex(sphere.index.clone());computeSurfaceCurvature(T,a);globalThis.__ASFALTO_CAPTURE_BAKE__=false;const actual=computeSurfaceCurvature(T,b).attribute.array;releaseSurfaceCurvatureCache(b);state.entries.clear();const expected=computeSurfaceCurvature(T,b).attribute.array;assert.deepEqual(actual,expected);assert.ok(actual.every(v=>v===0));
 });
 test('refinement helper-only edits invalidate distributed results',async()=>{
- const {readFile}=await import('node:fs/promises'),url=new URL('../src/tracks/visuals/terrain-refinement.mjs?v=b7edee06e0b828be',import.meta.url);const text=await readFile(url,'utf8');const changed=text.replace(/(['"])\.\/offline-track-bake\.mjs(?:\?[^'"]*)?\1/,JSON.stringify(new URL('../src/tracks/visuals/offline-track-bake.mjs?v=67e9450828b29db5',import.meta.url).href)).replace('return(h(ix,iz)','return 0;return(h(ix,iz)');assert.notEqual(changed,text);const modified=await import('data:text/javascript;base64,'+Buffer.from(changed).toString('base64'));
+ const {readFile}=await import('node:fs/promises'),url=new URL('../src/tracks/visuals/terrain-refinement.mjs?v=025b3f7e349de378',import.meta.url);
+ const text=await readFile(url,'utf8');
+ const changed=text.replace('return(h(ix,iz)','return 0;return(h(ix,iz)');
+ assert.notEqual(changed,text);
+ const resolved=changed.replace(/\bfrom\s+(['"])(\.\.?\/[^'"]+)\1/g,(_match,_quote,specifier)=>'from '+JSON.stringify(new URL(specifier,url).href));
+ const modified=await import('data:text/javascript;base64,'+Buffer.from(resolved).toString('base64'));
  clear();const roadField=Object.assign(()=>({distanceM:500,widthM:8,position:[0,0,0]}),{bakeSignature:'test-field'}),source=new T.PlaneGeometry(200,200,10,10);source.rotateX(-Math.PI/2);source.translate(50,30,80);for(let i=0;i<source.attributes.position.count;i++){const p=source.attributes.position;p.setY(i,p.getY(i)+p.getX(i)*.2+p.getZ(i)*.1);}const options={roadField,region:'dos_lagos',targetEdgeM:32,maxTriangles:1000},a=new T.Mesh(source.clone()),b=new T.Mesh(source.clone()),c=new T.Mesh(source.clone());refineTerrainSurface(T,a,options);globalThis.__ASFALTO_CAPTURE_BAKE__=false;modified.refineTerrainSurface(T,b,options);state.entries.clear();modified.refineTerrainSurface(T,c,options);assert.deepEqual(b.geometry.attributes.position.array,c.geometry.attributes.position.array);assert.notDeepEqual(a.geometry.attributes.position.array,b.geometry.attributes.position.array);
 });
 

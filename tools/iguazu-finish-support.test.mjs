@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {THREE as T} from './cinematic-three.mjs';
-import {reseatIguazuFinishPlants} from '../src/tracks/visuals/iguazu-landscape.mjs?v=a9de555055fb0e9e';
+import {reseatIguazuFinishPlants} from '../src/tracks/visuals/iguazu-landscape.mjs?v=ba819fd81df5f712';
 
 function finishFixture(regraded) {
   const root = new T.Group();

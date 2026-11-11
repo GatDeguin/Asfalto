@@ -1,4 +1,5 @@
 import {bakeRead,bakeWrite,bakeGeometryInput} from './offline-track-bake.mjs?v=67e9450828b29db5';
+import {registerTerrainMeshlets} from '../../render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
 // Connected, visual-only relief. X/Z, road envelope, shore and sector borders
 // remain fixed. A hidden owner retains the untouched imported buffers for disposal.
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,v));
@@ -190,6 +191,7 @@ export function refineTerrainSurface(THREE,mesh,options={}){
       const geometry=new THREE.BufferGeometryLoader().parse(saved.geometry),source=mesh.geometry;
       if(!geometry.attributes.position||!geometry.attributes.normal)throw Error('invalid baked geometry');
       geometry.computeBoundingBox();geometry.computeBoundingSphere();mesh.geometry=geometry;
+      if(saved.terrainMeshlets)registerTerrainMeshlets(geometry,saved.terrainMeshlets);
       const owner=new THREE.Mesh(source,mesh.material);owner.name='ASFALTO_TERRAIN_SOURCE_OWNER';owner.visible=false;mesh.add(owner);
       return mesh.userData.asfaltoTerrainRefinement=Object.freeze({...saved.result});
     }catch{} // A stale or malformed optional artifact uses the authored path.

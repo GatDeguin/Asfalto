@@ -3,9 +3,9 @@
   "tracks": {
     "dos_lagos": {
       "file": "dos_lagos.bake.gz",
-      "bytes": 8156317,
-      "decodedBytes": 14257236,
-      "sha256": "965f2c6680b0eff346f1f7688f38b88d02902a4ff3d3460aa321cd971508b5e9",
+      "bytes": 8418578,
+      "decodedBytes": 14695462,
+      "sha256": "b02fb0c3374694a2576e190df1738b1672feae73289277882bc72fea524f8956",
       "entries": 218
     },
     "aconcagua_horcones": {
@@ -45,6 +45,9 @@
     "tracks\\aconcagua-horcones\\manifest.json": "5ac561c6ab79665727734bcfecdf605414719139c74673ff8adedd241704a2ef",
     "tracks\\cuesta-lipan\\manifest.json": "78009a158f4cb10af5be71aa012d1cb6fd97e2dcd195d371bab91df4ed7768f6",
     "tracks\\paso-garibaldi\\manifest.json": "f3f8af64b3553c9863e1b37c93760eb23d43c5cef1ec85532ac8ec8caafc0f29",
-    "tracks\\cataratas-iguazu\\manifest.json": "1ad2ca83d5e0510001933ded4623254d9917b78badadfafd7116b8b03b7accbf"
+    "tracks\\cataratas-iguazu\\manifest.json": "1ad2ca83d5e0510001933ded4623254d9917b78badadfafd7116b8b03b7accbf",
+    "src/tracks/visuals/terrain-refinement.mjs?v=025b3f7e349de378": "025b3f7e349de378118daa21b7d195de3617ad1062f00191f3499a049099d605",
+    "src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9": "e25fb31f401ba6c9aa2769aa0373f91801755379a619a6727d610a607174a90a",
+    "tools/build-terrain-meshlets.mjs": "3a2812da0a16b70a527250dcbef28d5beca63ea42afc9f59c95d734813cd5aed"
   }
 }
