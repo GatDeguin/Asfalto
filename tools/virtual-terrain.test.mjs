@@ -5,13 +5,12 @@ import {test} from 'node:test';
 import {setImmediate as flush} from 'node:timers/promises';
 import {gunzipSync} from 'node:zlib';
 import {GARIBALDI_TERRAIN_MANIFEST, TRIANGLE_BYTES, packTerrainTriangles, selectTerrainDetail, validateTerrainManifest}
-  from '../src/render/virtual-terrain-data.mjs?v=09bc75160261c900';
-import {createTerrainResidency} from '../src/render/virtual-terrain-residency.mjs?v=497442d1b9bbf4b7';
-import {createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=1f674a88819b63b9';
-import {packGaribaldiSurfaces, readGaribaldiSurfaceMeshes} from '../src/render/virtual-terrain-surface.mjs?v=51250a3d4d356a8c';
-import {prepareSurfaceSky} from '../src/render/virtual-terrain-sky.mjs?v=63f27700e259634a';
+  from '../src/render/virtual-terrain-data.mjs?v=3cb3d32add0067b4';
+import {createTerrainResidency} from '../src/render/virtual-terrain-residency.mjs?v=266f386fd7a0ca46';
+import {createSurfaceVisibilityAtlas, createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=ef8b4f345a25645e';
+import {packGaribaldiSurfaces, readGaribaldiSurfaceMeshes} from '../src/render/virtual-terrain-surface.mjs?v=77a4d00a9e536abb';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {orientedBoundary, readVistaBake, spatialTrianglePages} from './build-virtual-terrain.mjs?v=3c7434995edbee78';
+import {orientedBoundary, readVistaBake, spatialTrianglePages} from './build-virtual-terrain.mjs?v=fa84db1d20d99e97';
 
 const directory = new URL('../assets/tracks/virtual-terrain/garibaldi/', import.meta.url);
 const hash = b => createHash('sha256').update(b).digest('hex');
@@ -190,6 +189,26 @@ test('the WebGPU surface package retains authored triangle order, distinct IDs a
   assert.equal(vertices[24 + 2], 2);
 });
 
+test('compact surface references address the same triangle in the WebGL material atlas', async () => {
+  const {root, meshes} = garibaldiSurfaceFixture();
+  const sources = readGaribaldiSurfaceMeshes(THREE, root, meshes[0]).slice(1);
+  const geometry = await packGaribaldiSurfaces(sources);
+  const atlas = createSurfaceVisibilityAtlas(THREE, geometry, 1024);
+  assert.equal(atlas.triangles.format, THREE.RGBAIntegerFormat);
+  for (const source of sources) {
+    const triangle = source.first / 3;
+    assert.deepEqual([...atlas.triangles.image.data.slice(triangle * 4, triangle * 4 + 3)],
+      [...geometry.indices.slice(source.first, source.first + 3)]);
+  }
+  assert.deepEqual([...atlas.vertices.image.data.slice(0, geometry.vertices.length)], [...geometry.vertices]);
+  assert.equal(atlas.bytes, atlas.triangles.image.data.byteLength + atlas.vertices.image.data.byteLength);
+  let released = 0;
+  for (const texture of [atlas.vertices, atlas.triangles]) texture.addEventListener('dispose', () => released++);
+  atlas.dispose();
+  assert.equal(released, 2);
+  assert.throws(() => createSurfaceVisibilityAtlas(THREE, geometry, 512), /presupuesto/);
+});
+
 test('transformed or grouped ground preserves the WebGL fallback, and packing can be aborted before publishing a range', async () => {
   const {root, meshes} = garibaldiSurfaceFixture();
   const sources = readGaribaldiSurfaceMeshes(THREE, root, meshes[0]);
@@ -203,19 +222,4 @@ test('transformed or grouped ground preserves the WebGL fallback, and packing ca
   root.updateMatrixWorld(true);
   meshes[2].geometry.addGroup(0, 3, 0);
   assert.throws(() => readGaribaldiSurfaceMeshes(THREE, root, meshes[0]), /incompatible/);
-});
-
-test('constant linear HDR radiance integrates to pi times its value without a directional tint', () => {
-  const width = 64, height = 32, data = new Uint16Array(width * height * 4);
-  const pixel = [2, .5, 1, 1].map(THREE.DataUtils.toHalfFloat);
-  for (let i = 0; i < data.length; i += 4) data.set(pixel, i);
-  const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat, THREE.HalfFloatType);
-  const sky = prepareSurfaceSky(THREE, texture);
-  assert.deepEqual([...sky.data.slice(0, 4)], pixel);
-  for (const [channel, radiance] of [2, .5, 1].entries()) {
-    assert.ok(Math.abs(sky.irradiance[channel] * .282094792 - Math.PI * radiance) < .004);
-  }
-  assert.ok(sky.irradiance.slice(4).every(coefficient => Math.abs(coefficient) < .01));
-  assert.throws(() => prepareSurfaceSky(THREE, new THREE.Texture()), /panorama HDR/);
-  texture.dispose();
 });

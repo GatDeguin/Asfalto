@@ -2,8 +2,8 @@ import {readExternalPayload} from '../runtime/asset-core.mjs?v=d795faf208f60d96'
 import {assetDecodePool, AssetWorkerError} from '../runtime/asset-decode-pool.mjs?v=1be266bf7b1e2d93';
 import {inflateBrowserGzip} from '../runtime/gzip-kernel.mjs?v=7cef6073fc46cbf3';
 import {GARIBALDI_TERRAIN_MANIFEST, selectTerrainDetail, TERRAIN_DETAIL_SLOTS, TRIANGLE_BYTES, validateTerrainManifest}
-  from './virtual-terrain-data.mjs?v=09bc75160261c900';
-import {createTerrainResidency} from './virtual-terrain-residency.mjs?v=497442d1b9bbf4b7';
+  from './virtual-terrain-data.mjs?v=3cb3d32add0067b4';
+import {createTerrainResidency} from './virtual-terrain-residency.mjs?v=266f386fd7a0ca46';
 
 const PATH = new URL('../../assets/tracks/virtual-terrain/garibaldi/', import.meta.url);
 const VISTA_NAME = 'TERRAIN_VISTA_WEB_MESH_Primitive_0';
@@ -30,7 +30,7 @@ async function readPage(payload, signal) {
   return new Float32Array(buffer);
 }
 
-export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighting = null}) {
+export function createRaceVirtualTerrain({THREE, renderer, scene, camera, surfacesAvailable = () => false}) {
   const rawRenderer = renderer.__rawRenderer || renderer;
   const viewProjection = new THREE.Matrix4();
   const mvp = new THREE.Matrix4();
@@ -43,7 +43,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
   let disposed = false;
   let enabled = false;
   let surfacesRequested = false;
-  let desiredPanorama = null;
+  let surfacesAllowed = false;
   let status = 'off';
   let lastError = null;
 
@@ -63,7 +63,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
   function suspend() {
     const previous = session;
     session = null;
-    desiredPanorama = null;
+    surfacesAllowed = false;
     if (previous) release(previous);
     status = enabled ? 'suspended' : 'off';
   }
@@ -75,23 +75,30 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     release(entry);
   }
 
-  async function prepareSurfaces(entry, device, signal) {
-    const {createVirtualTerrainSurfaces} = await import('./virtual-terrain-surface.mjs?v=51250a3d4d356a8c');
+  async function prepareSurfaces(entry, device, signal, canvas, createComposite) {
+    const {createVirtualTerrainSurfaces, readGaribaldiSurfaceMeshes, packGaribaldiSurfaces} =
+      await import('./virtual-terrain-surface.mjs?v=77a4d00a9e536abb');
+    const sources = readGaribaldiSurfaceMeshes(THREE, entry.root, entry.source);
+    const geometry = await packGaribaldiSurfaces(sources.slice(1), signal, () => new Promise(resolve => setTimeout(resolve, 0)));
     signal.throwIfAborted();
-    let surfaces = null, failure = null;
+    let surfaces = null, composite = null, failure = null;
     device.pushErrorScope('validation');
     try {
-      surfaces = await createVirtualTerrainSurfaces(THREE, device, entry.root, entry.source, lighting, signal);
+      surfaces = await createVirtualTerrainSurfaces(device, sources, geometry, signal);
+      composite = createComposite(THREE, sources, canvas, {atlas: entry.atlas, geometry,
+        maxTextureSize: renderer.capabilities.maxTextureSize});
     } catch (error) {
       failure = error;
     }
     const validation = await device.popErrorScope().catch(error => error);
     if (signal.aborted || validation || failure) {
       surfaces?.dispose();
+      composite?.dispose();
       signal.throwIfAborted();
       throw failure || validation;
     }
-    return surfaces;
+    entry.surfaceComposite = composite;
+    entry.surfaces = surfaces;
   }
 
   async function prepare(entry) {
@@ -105,8 +112,8 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     const [bytes, {createVirtualTerrainRaster},
       {createVirtualTerrainAtlas, createVirtualTerrainComposite, createVirtualTerrainSurfaceComposite}] = await Promise.all([
       readBytes(GARIBALDI_TERRAIN_MANIFEST, signal),
-      import('./virtual-terrain-gpu.mjs?v=205571945c1d8e88'),
-      import('./virtual-terrain-composite.mjs?v=1f674a88819b63b9'),
+      import('./virtual-terrain-gpu.mjs?v=32f875c9c2e76637'),
+      import('./virtual-terrain-composite.mjs?v=ef8b4f345a25645e'),
     ]);
     const manifest = validateTerrainManifest(JSON.parse(new TextDecoder().decode(bytes)));
     signal.throwIfAborted();
@@ -127,9 +134,10 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     void device.lost.then(info => fail(entry, info.message || 'Se perdió el dispositivo WebGPU.'));
     const canvas = document.createElement('canvas');
     const slots = manifest.pages.length + TERRAIN_DETAIL_SLOTS;
-    if (entry.surfacePanorama) {
+    const atlas = entry.atlas = createVirtualTerrainAtlas(THREE, slots);
+    if (entry.prepareSurfaces) {
       try {
-        entry.surfaces = await prepareSurfaces(entry, device, signal);
+        await prepareSurfaces(entry, device, signal, canvas, createVirtualTerrainSurfaceComposite);
       } catch (error) {
         signal.throwIfAborted();
         entry.surfaceError = String(error?.message || error);
@@ -143,7 +151,6 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
       return;
     }
     entry.raster = raster;
-    const atlas = entry.atlas = createVirtualTerrainAtlas(THREE, slots);
     const upload = (slot, vertices) => {
       raster.upload(slot, vertices);
       atlas.upload(slot, vertices);
@@ -162,21 +169,18 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     });
     entry.composite = createVirtualTerrainComposite(THREE, source, canvas, {atlas, objectId: VISTA_OBJECT_ID});
     scene.add(entry.composite.mesh);
-    if (entry.surfaces) {
-      entry.surfaceComposite = createVirtualTerrainSurfaceComposite(THREE, canvas);
-      scene.add(entry.surfaceComposite.mesh);
-    }
+    if (entry.surfaceComposite) scene.add(...entry.surfaceComposite.meshes);
     status = 'ready';
   }
 
   function sync(adapter, active) {
     if (disposed || !enabled || !active) return;
     const root = adapter?.visualRoot;
-    const panorama = surfacesRequested && lighting?.available() ? lighting.skyTexture() : null;
-    desiredPanorama = panorama;
-    if (root && root === session?.root && (session.incompatible || !panorama || panorama === session.surfacePanorama)) return;
+    const eligible = Boolean(surfacesRequested && surfacesAvailable());
+    surfacesAllowed = eligible;
+    if (root && root === session?.root && (session.incompatible || !eligible || session.prepareSurfaces)) return;
     suspend();
-    desiredPanorama = panorama;
+    surfacesAllowed = eligible;
     if (!root) { status = 'track'; return; }
     const source = root.getObjectByName(VISTA_NAME);
     if (!source?.isMesh || !source.geometry.userData.asfaltoBakeKey || !source.material?.isMeshStandardMaterial ||
@@ -188,7 +192,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     }
     lastError = null;
     status = 'preparing';
-    const entry = {root, source, surfacePanorama: panorama, abort: new AbortController(), previousDetail: new Set(), frames: 0};
+    const entry = {root, source, prepareSurfaces: eligible, abort: new AbortController(), previousDetail: new Set(), frames: 0};
     session = entry;
     void prepare(entry).catch(error => fail(entry, error));
   }
@@ -245,9 +249,8 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
         for (const page of entry.pages) page.worldBox = page.box.clone().applyMatrix4(entry.matrix);
       }
       const selected = select(entry, viewport.w);
-      useSurfaces = Boolean(entry.surfaceComposite && desiredPanorama && desiredPanorama === entry.surfacePanorama && entry.surfaces.compatible() &&
-        Math.abs(camera.projectionMatrixInverse.elements[2]) < 1e-7 && Math.abs(camera.projectionMatrixInverse.elements[6]) < 1e-7 &&
-        entry.raster.fits(viewport.z, viewport.w, true) && viewport.z * 2 <= renderer.capabilities.maxTextureSize);
+      useSurfaces = Boolean(entry.surfaceComposite && surfacesAllowed && entry.surfaces.compatible() && entry.surfaceComposite.compatible() &&
+        Math.abs(camera.projectionMatrixInverse.elements[2]) < 1e-7 && Math.abs(camera.projectionMatrixInverse.elements[6]) < 1e-7);
       if (!entry.raster.submit(selected, mvp.elements, camera.far, viewport.z, viewport.w, performance.now(),
         useSurfaces ? surfaceFrame : null)) {
         entry.surfaceActive = false;
@@ -265,11 +268,11 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
     }
     const target = rawRenderer.getRenderTarget();
     const drawBuffer = rawRenderer.renderBufferDirect;
-    // The same camera can reuse the already resolved surfaces in Three's
+    // The same camera can reuse the visibility packet in Three's
     // full-size transmission capture. Mirrors and water have their own cameras.
     rawRenderer.renderBufferDirect = function (passCamera, passScene, geometry, material, object, group) {
       const source = useSurfaces ? entry.surfaces.includes(object) : object === entry.source;
-      if (source || object === composite.mesh) {
+      if (source || composite.meshes.includes(object)) {
         const current = rawRenderer.getRenderTarget();
         const transmission = useSurfaces && current && current !== target &&
           current.texture.generateMipmaps && current.texture.type === THREE.HalfFloatType &&
@@ -280,15 +283,14 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
       }
       return drawBuffer.call(this, passCamera, passScene, geometry, material, object, group);
     };
-    composite.mesh.visible = true;
+    for (const mesh of composite.meshes) mesh.visible = true;
     try {
       draw();
     } finally {
-      composite.mesh.visible = false;
+      for (const mesh of composite.meshes) mesh.visible = false;
       rawRenderer.renderBufferDirect = drawBuffer;
     }
-    const program = renderer.properties.get(composite.mesh.material).currentProgram;
-    if (program?.diagnostics?.runnable === false) {
+    if (composite.meshes.some(mesh => renderer.properties.get(mesh.material).currentProgram?.diagnostics?.runnable === false)) {
       fail(entry, 'No se pudo componer el terreno virtualizado en WebGL.');
       return draw();
     }
@@ -317,6 +319,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, lighti
       originalTriangles: session?.originalTriangles || 0, coarseTriangles: session?.coarseTriangles || 0,
       attributeBytes: session?.atlas?.bytes || 0,
       surfaces: {requested: surfacesRequested, active: Boolean(session?.surfaceActive), error: session?.surfaceError || null,
+        attributeBytes: session?.surfaceComposite?.attributeBytes || 0,
         resources: session?.surfaces?.diagnostics() || null},
       visible: session?.visible || null, residency: session?.residency?.diagnostics() || null,
       gpu: session?.raster?.diagnostics() || null}),
@@ -346,7 +349,7 @@ export function installVirtualTerrainSettings(controller, vehicleId, {root = doc
   function refresh() {
     const status = controller.getStatus();
     const surfaces = controller.getSurfaceStatus();
-    const label = status === 'active' && surfaces === 'active' ? 'Activa · calzada y terreno en WebGPU' :
+    const label = status === 'active' && surfaces === 'active' ? 'Activa · búfer de visibilidad de calzada y terreno' :
       status === 'active' && surfaces !== 'off' ? 'Relieve lejano · respaldo de superficies WebGPU' : labels[status];
     if (label === last) return;
     last = label;

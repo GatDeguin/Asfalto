@@ -89,7 +89,7 @@ import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=710
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=844ffa3df7eb34e1';
 import { createRaceProbeLighting } from '../render/race-probe-lighting.mjs?v=46236ecbd7b772bd';
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=f087a0217ed8f9e5';
-import { createRaceVirtualTerrain, installVirtualTerrainSettings } from '../render/virtual-terrain.mjs?v=80bfd0bd43db6dd9';
+import { createRaceVirtualTerrain, installVirtualTerrainSettings } from '../render/virtual-terrain.mjs?v=4affa486ffd114bb';
 import { createCockpitRenderPass, patchCockpitLightStateSource } from '../render/cockpit-render-pass.mjs?v=f7386d0d68b4cb16';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=1ce084169f294d66';
@@ -8430,17 +8430,13 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let cockpitMirrors = null,vehicleCockpitWheel=null,cockpitRenderPass=null;
   let cockpitIgnition = null,cockpitLightSwitch=null;
   let rayTracing=null,rayTracingSettings=null;
-  const virtualTerrain=createRaceVirtualTerrain({THREE,renderer,scene,camera,lighting:{
-    directional:[keyLight,fillLight,rimLight],hemisphere:hemi,
-    skyTexture:()=>scene.background,
-    skyIntensity:()=>scene.environmentIntensity??1,
-    skyYaw:()=>scene.environmentRotation?.y??0,
-    available:()=>{
+  const virtualTerrain=createRaceVirtualTerrain({THREE,renderer,scene,camera,
+    surfacesAvailable:()=>{
       const environment=modularRaceWorld?.getAdvancedGraphicsEnvironment();
       return environment?.surfaceState==='dry'&&!environment.dayCycle&&environment.sunIntensity>.05&&modularRaceWorld.getDrivingLights().position<2&&
         (rayTracingSettings?.getMode()??'off')==='off';
     },
-  }});
+  });
   let virtualTerrainSettings=null;
   let modularRuntimeShutdown = null,cockpitHudTimer=null;
   const documentFlags={hidden:document.hidden,menuOpen:false,introOpen:false,reducedMotion:false};

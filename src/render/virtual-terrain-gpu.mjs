@@ -1,5 +1,6 @@
-import {MAX_PAGE_TRIANGLES, MAX_TERRAIN_PAGES, TERRAIN_DETAIL_SLOTS, TRIANGLE_BYTES} from './virtual-terrain-data.mjs?v=09bc75160261c900';
-import {virtualTerrainShader} from './virtual-terrain-raster.wgsl.mjs?v=2a2c51069349da11';
+import {MAX_PAGE_TRIANGLES, MAX_TERRAIN_PAGES, TERRAIN_DETAIL_SLOTS, TRIANGLE_BYTES,
+  VISIBILITY_OBJECT_SHIFT, VISTA_OBJECT_SHIFT, VISTA_TRIANGLE_MASK} from './virtual-terrain-data.mjs?v=3cb3d32add0067b4';
+import {virtualTerrainShader} from './virtual-terrain-raster.wgsl.mjs?v=4228237d8a7e45da';
 
 const SLOT_BYTES = MAX_PAGE_TRIANGLES * TRIANGLE_BYTES;
 const FRAME_BYTES = 80;
@@ -10,7 +11,7 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
   const format = navigator.gpu.getPreferredCanvasFormat();
   const context = canvas.getContext('webgpu');
   if (!context || !Number.isInteger(slots) || slots < 1 || slots > MAX_TERRAIN_PAGES + TERRAIN_DETAIL_SLOTS ||
-    slots * MAX_PAGE_TRIANGLES > 65535) {
+    slots * MAX_PAGE_TRIANGLES > VISTA_TRIANGLE_MASK) {
     throw new Error('Contexto de geometría virtualizada no disponible.');
   }
   const module = device.createShaderModule({label: 'Rasterización de microtriángulos', code: virtualTerrainShader});
@@ -71,9 +72,9 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
     targets = null;
   }
 
-  function fits(width, height, withSurfaces = false) {
+  function fits(width, height) {
     return Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0 &&
-      width * height <= MAX_PIXELS && width * (withSurfaces ? 2 : 1) <= device.limits.maxTextureDimension2D &&
+      width * height <= MAX_PIXELS && width <= device.limits.maxTextureDimension2D &&
       height <= device.limits.maxTextureDimension2D && width * height * 4 <= device.limits.maxStorageBufferBindingSize;
   }
 
@@ -103,11 +104,10 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
 
   function submit(selected, matrix, far, width, height, now = performance.now(), surfaceFrame = null) {
     const withSurfaces = Boolean(surfaces && surfaceFrame);
-    if (disposed || (!selected.length && !withSurfaces) || !fits(width, height, withSurfaces)) return false;
+    if (disposed || (!selected.length && !withSurfaces) || !fits(width, height)) return false;
     if (selected.length > MAX_TERRAIN_PAGES) throw new RangeError('Demasiadas páginas en el rasterizador.');
     resize(width, height);
-    const packetWidth = width * (withSurfaces ? 2 : 1);
-    if (canvas.width !== packetWidth) canvas.width = packetWidth;
+    if (canvas.width !== width) canvas.width = width;
     if (canvas.height !== height) canvas.height = height;
     floats.set(matrix, 0);
     uints[16] = width;
@@ -115,22 +115,24 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
     floats[18] = 1 / Math.log2(far + 1);
     const sample = !pending && now - lastSample >= 850;
     uints[19] = Number(doubleSided) | (sample ? 2 : 0);
+    const objectShift = withSurfaces ? VISIBILITY_OBJECT_SHIFT : VISTA_OBJECT_SHIFT;
+    const maxObject = 0xffffff >>> objectShift;
     let maximum = 0;
     for (const [i, entry] of selected.entries()) {
       const {slot, triangles, objectId} = entry;
       if (!Number.isInteger(slot) || slot < 0 || slot >= slots ||
         !Number.isInteger(triangles) || triangles < 1 || triangles > MAX_PAGE_TRIANGLES ||
-        !Number.isInteger(objectId) || objectId < 1 || objectId > 255) {
+        !Number.isInteger(objectId) || objectId < 1 || objectId > maxObject) {
         throw new RangeError('Identificador de visibilidad fuera de la reserva GPU.');
       }
-      selectedPages[i * 2] = (objectId << 16) | slot;
+      selectedPages[i * 2] = (objectId << objectShift) | slot;
       selectedPages[i * 2 + 1] = entry.triangles;
       maximum = Math.max(maximum, entry.triangles);
     }
     device.queue.writeBuffer(frame, 0, uniforms);
     if (selected.length) device.queue.writeBuffer(pages, 0, selectedPages, 0, selected.length * 2);
     device.queue.writeBuffer(args, 0, DRAW_ARGS);
-    if (withSurfaces) surfaces.update(surfaceFrame.camera, width, height);
+    if (withSurfaces) surfaces.update(surfaceFrame.camera);
     const encoder = device.createCommandEncoder({label: 'Terreno virtual'});
     encoder.clearBuffer(targets.depth);
     encoder.clearBuffer(targets.owner);
@@ -200,8 +202,8 @@ export async function createVirtualTerrainRaster(device, {canvas, slots, doubleS
         const ticks = timestamps ? new BigUint64Array(bytes, 16, 2) : null;
         samples = {microTriangles, hardwareTriangles: hardwareVertices / 3, gpuMs: ticks && ticks[1] >= ticks[0] ?
           Number(ticks[1] - ticks[0]) / 1e6 : null, width, height,
-          backend: withSurfaces ? 'surface' : 'visibility', packetBytes: packetWidth * height * 4,
-          visibilityBytes: withSurfaces ? 0 : width * height * 4};
+          backend: withSurfaces ? 'surface' : 'visibility', packetBytes: width * height * 4,
+          visibilityBytes: width * height * 4};
         readback.unmap();
       }).catch(() => {}).finally(() => { pending = false; });
     }

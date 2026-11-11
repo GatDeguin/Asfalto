@@ -1,9 +1,9 @@
-import {MAX_PAGE_TRIANGLES} from './virtual-terrain-data.mjs?v=09bc75160261c900';
+import {MAX_PAGE_TRIANGLES, VISTA_TRIANGLE_MASK} from './virtual-terrain-data.mjs?v=3cb3d32add0067b4';
 
 export const virtualTerrainShader = /* wgsl */`
 const PAGE_TRIANGLES = ${MAX_PAGE_TRIANGLES}u;
 const DEPTH_MAX = 16777215u;
-const TRIANGLE_MASK = 65535u;
+const TRIANGLE_MASK = ${VISTA_TRIANGLE_MASK}u;
 const MICRO_SPAN = 8.0;
 
 struct Frame {
@@ -72,8 +72,7 @@ fn raster(invocation: vec3u, owners: bool) {
   let page = pages[invocation.y];
   if (invocation.x >= page.y) { return; }
   let id = (page.x & TRIANGLE_MASK) * PAGE_TRIANGLES + invocation.x;
-  // The low 16 bits address the resident triangle, with zero reserved for sky.
-  // The high byte identifies its object and selects a material at resolve time.
+  // The low bits address the resident triangle. The high bits select its object.
   let visibility = (page.x & ~TRIANGLE_MASK) | (id + 1u);
   let t = clipTriangle(id);
   if (isOutside(t)) { return; }
@@ -161,6 +160,11 @@ fn fullscreen(@builtin(vertex_index) i: u32) -> @builtin(position) vec4f {
   return vec4f(vertices[i], 0.0, 1.0);
 }
 
+fn encodeVisibility(winner: u32) -> vec4f {
+  let bytes = vec3u(winner & 255u, (winner >> 8u) & 255u, winner >> 16u);
+  return vec4f(vec3f(bytes) / 255.0, 1.0);
+}
+
 // Transport only the winning IDs. Geometry attributes are fetched by the
 // material shader after visibility, and depth stays in the rasterizer.
 @fragment
@@ -175,7 +179,6 @@ fn resolveVisibility(@builtin(position) position: vec4f) -> @location(0) vec4f {
       winner = owner;
     }
   }
-  let bytes = vec3u(winner & 255u, (winner >> 8u) & 255u, winner >> 16u);
-  return vec4f(vec3f(bytes) / 255.0, 1.0);
+  return encodeVisibility(winner);
 }
 `;

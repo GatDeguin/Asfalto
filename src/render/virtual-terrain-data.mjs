@@ -3,6 +3,12 @@ export const MAX_TERRAIN_PAGES = 32;
 export const MAX_PAGE_TRIANGLES = 1280;
 export const TERRAIN_DETAIL_SLOTS = 6;
 export const TRIANGLE_BYTES = 48;
+// The opaque canvas preserves three ID bytes. Vista keeps its resident-slot
+// format. The joint pass needs a wider address for the authored triangles.
+export const VISTA_OBJECT_SHIFT = 16;
+export const VISTA_TRIANGLE_MASK = (1 << VISTA_OBJECT_SHIFT) - 1;
+export const VISIBILITY_OBJECT_SHIFT = 21;
+export const VISIBILITY_TRIANGLE_MASK = (1 << VISIBILITY_OBJECT_SHIFT) - 1;
 export const GARIBALDI_TERRAIN_MANIFEST = Object.freeze({
   file: 'manifest.json', bytes: 15516, sha256: '0ecad55849022f171a9d3242fc597f8d7923a3db7a2955521248e1b1d9714551',
 });

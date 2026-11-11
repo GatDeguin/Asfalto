@@ -5,7 +5,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import {gunzipSync, gzipSync} from 'node:zlib';
 import {decodeBinaryBake} from '../src/tracks/visuals/bake-binary-codec.mjs';
 import {MAX_PAGE_TRIANGLES, VIRTUAL_TERRAIN_SCHEMA, packTerrainTriangles, validateTerrainManifest}
-  from '../src/render/virtual-terrain-data.mjs?v=09bc75160261c900';
+  from '../src/render/virtual-terrain-data.mjs?v=3cb3d32add0067b4';
 
 const sourceKey = 'refine:655fc28c3c7222e4:1737255';
 const meshoptDigest = 'b8fb6180d6ec894aa2a1a2b3c4415274f47e43d3f1fd5dc1c38177939f382db2';

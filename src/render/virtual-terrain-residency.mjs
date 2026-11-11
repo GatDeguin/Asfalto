@@ -1,4 +1,4 @@
-import {TERRAIN_DETAIL_SLOTS} from './virtual-terrain-data.mjs?v=09bc75160261c900';
+import {TERRAIN_DETAIL_SLOTS} from './virtual-terrain-data.mjs?v=3cb3d32add0067b4';
 
 /** Bounded GPU residency. Invisible pages can stay until their slots are needed. */
 export function createTerrainResidency({pages, load, upload, capacity = TERRAIN_DETAIL_SLOTS}) {
