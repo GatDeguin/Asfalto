@@ -1,4 +1,7 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=ca4378465bf6e57d';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=7c67a5a0a1abdf66';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=65ec87e78d128128';
+import { attachGaribaldiLadera, garibaldiLaderaAsset } from '../visuals/garibaldi-ladera.mjs?v=17d789bafef3d047';
+import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
 
 const MANIFEST = Object.freeze({
   schema: 'asfalto-track/v1',
@@ -100,7 +103,7 @@ function spawnRecord(base, sample, position, grid) {
   });
 }
 
-function policy() {
+function policy(dependencies) {
   return Object.freeze({
     manifest: MANIFEST,
     locks: LOCKS,
@@ -111,6 +114,16 @@ function policy() {
     requiredCollisionNodes: PHYSICAL_COLLISION,
     visualFilter: () => true,
     collisionFilter: name => PHYSICAL_COLLISION.includes(name),
+    async prepareVisual(root, context) {
+      await prepareTrackVisual(root,context);
+      await loadRegionalBlenderArt({root,releaseRoot:dependencies.releaseRootUrl,asset:garibaldiLaderaAsset,
+        label:'Paso Garibaldi · Ladera y lengas',signal:context.signal}, {
+        fetchBytes:(...args)=>dependencies.fetchBytes(...args),
+        loadGlb:(...args)=>dependencies.completeGlbToObject(...args),
+        attach:attachGaribaldiLadera,
+        dispose:art=>dependencies.disposeObjectRoot(art),
+      });
+    },
     updateStreaming(_root, context) {
       const sM = Number(context?.sM ?? context?.distanceM ?? 0);
       if (!Number.isFinite(sM)) throw new TypeError('Garibaldi streaming station must be finite');
@@ -161,5 +174,5 @@ function wrapGaribaldi(base) {
 }
 
 export function createPasoGaribaldiAdapter(dependencies) {
-  return wrapGaribaldi(createGlbPointToPointAdapter(dependencies, policy()));
+  return wrapGaribaldi(createGlbPointToPointAdapter(dependencies, policy(dependencies)));
 }

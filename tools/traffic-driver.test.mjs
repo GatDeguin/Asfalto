@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { THREE as T } from './cinematic-three.mjs?v=1538801f0545ceb6';
 import { createTrafficDriver } from '../src/render/traffic-driver.mjs?v=9229a704a8fd763a';
-import { createDriveTrafficView } from '../src/render/drive-traffic-view.mjs?v=1e0ee363cbcbeab0';
+import { createDriveTrafficView } from '../src/render/drive-traffic-view.mjs?v=fc2c05d15d3d494a';
 import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs';
 
 test('the seated driver fits below the roof and changes appearance without replacing the pose', () => {

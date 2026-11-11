@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {THREE as T} from './cinematic-three.mjs';
 import {mountainProfile} from '../src/tracks/visuals/mountain-profile.mjs?v=260b3d9b5f9319b2';
-import {addMountainBackdrop,terrainProjection} from '../src/tracks/visuals/reference-landscape.mjs?v=7191e18f64bf833f';
-import {decodeHorconesDEM,addHorconesDEM} from '../src/tracks/visuals/horcones-dem.mjs?v=c4edaa957788f7bd';
+import {addMountainBackdrop,terrainProjection} from '../src/tracks/visuals/reference-landscape.mjs?v=65ec87e78d128128';
+import {decodeHorconesDEM,addHorconesDEM} from '../src/tracks/visuals/horcones-dem.mjs?v=6e9457e12e10ffb1';
 const ids=['dos_lagos','paso_garibaldi','cuesta_lipan','cataratas_iguazu'];
 const query={sample:s=>({position:[s,Math.sin(s/500)*20,Math.sin(s/1100)*200],frame:{tangent:[1,0,0]}})};
 test('regional backdrops stay finite and close at both ends of each ridge',()=>{

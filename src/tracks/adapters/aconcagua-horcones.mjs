@@ -1,4 +1,7 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=ca4378465bf6e57d';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=7c67a5a0a1abdf66';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=65ec87e78d128128';
+import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
+import { aconcaguaArtAsset, attachAconcaguaArt } from '../visuals/aconcagua-art.mjs?v=06f5ae0d35c4689b';
 
 const SCENE_LOCK=Object.freeze({bytes:30462168,sha256:'BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92'});
 const MANIFEST=Object.freeze({
@@ -44,7 +47,7 @@ const LOD_GROUPS=Object.freeze(Array.from({length:12},(_,index)=>{
   return Object.freeze({lod0:'RAILWAY_SLEEPERS_'+sector+'_LOD0',lod1:'RAILWAY_SLEEPERS_'+sector+'_LOD1'});
 }));
 function named(root,name){let hit=null;root?.traverse?.(node=>{if(!hit&&node?.name===name)hit=node;});return hit;}
-function createPolicy(){
+function createPolicy(dependencies){
   const modes=new WeakMap();
   return Object.freeze({
     manifest:MANIFEST,
@@ -53,6 +56,19 @@ function createPolicy(){
     requiredVisualNodes:REQUIRED_VISUAL,
     materialRoles:Object.freeze({asphalt:Object.freeze(['MAT_P1_ROAD','MAT_ROAD_JOINT_DARK','MAT_P1_WEAR']),shoulder:Object.freeze(['MAT_P1_GRAVEL','MAT_P1_BALLAST']),terrain:Object.freeze(['MAT_P1_TERRAIN_ROCK','MAT_P1_TERRAIN_ARID','MAT_P1_DUST','MAT_P1_SCRUB']),water:Object.freeze(['MAT_P1_RIVER']),snow:Object.freeze([])}),
     requiredCollisionNodes:REQUIRED_COLLISION,
+    async prepareVisual(root, context) {
+      await prepareTrackVisual(root,context);
+      if (typeof document === 'undefined') return null;
+      return loadRegionalBlenderArt({
+        root,releaseRoot:dependencies.releaseRootUrl,asset:aconcaguaArtAsset,
+        label:'Aconcagua · Horcones Blender',signal:context.signal,
+      },{
+        fetchBytes:dependencies.fetchBytes,
+        loadGlb:dependencies.completeGlbToObject,
+        attach:attachAconcaguaArt,
+        dispose:dependencies.disposeObjectRoot,
+      });
+    },
     visualFilter(name){return !name.startsWith('COLLISION_');},
     collisionFilter(name){return name==='COLLISION_ROAD'||name==='COLLISION_TRACK_LIMITS';},
     updateStreaming(_root,context,roots){
@@ -125,6 +141,6 @@ function wrapSpawnPolicy(base){
   return Object.freeze(wrapper);
 }
 export function createAconcaguaHorconesAdapter(dependencies){
-  const base=createGlbPointToPointAdapter(dependencies,createPolicy());
+  const base=createGlbPointToPointAdapter(dependencies,createPolicy(dependencies));
   return wrapSpawnPolicy(base);
 }

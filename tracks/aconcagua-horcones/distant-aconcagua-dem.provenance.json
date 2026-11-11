@@ -66,7 +66,7 @@
     "localOrigin": {
       "longitude": -70.01,
       "latitude": -32.665,
-      "heightDatumM": 3000.0
+      "heightDatumM": 3000
     },
     "localAxes": "X east, Y orthometric elevation minus3000m, Z south",
     "horizontalProjection": "x=R*cos(lat0)*radians(lon-lon0); z=-R*radians(lat-lat0), R=6378137m; local metric approximation for visual prototype",
@@ -142,27 +142,27 @@
     ]
   },
   "placement": {
-    "degrees": -110,
-    "shift": 11500,
-    "scale": 0.8,
-    "minimumCorridorClearanceM": 1459.7456433038958,
-    "visiblePeakStations": 6,
+    "degrees": 8,
+    "shift": 10600,
+    "scale": 0.72,
+    "minimumCorridorClearanceM": 635.8,
+    "visiblePeakStations": 12,
     "matrixColumnMajor": [
-      -0.7875195801925874,
+      0.35275546260569235,
       0,
-      -0.1407583418959277,
-      0,
-      0,
-      0.8,
+      -0.6276651843155265,
       0,
       0,
-      0.1407583418959277,
+      0.72,
       0,
-      -0.7875195801925874,
       0,
-      -5630.037287179041,
+      0.6276651843155265,
+      0,
+      0.35275546260569235,
+      0,
+      -30125.762350474502,
       143.292,
-      10363.202709548113,
+      -2832.200570549104,
       1
     ],
     "views": [
@@ -170,95 +170,209 @@
         "sM": 20,
         "eye": [
           -20,
-          2.241,
+          2.231,
           0.007
         ],
         "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
         ],
-        "distanceM": 13153.102537661956,
-        "sourceTerrainOcclusion": false
+        "distanceM": 31280.5,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 5.95,
+        "elevationDeg": 5.43
       },
       {
         "sM": 4200,
         "eye": [
           -4177.418,
-          105.14,
+          105.13,
           203.267
         ],
         "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
         ],
-        "distanceM": 11742.448238169693,
-        "sourceTerrainOcclusion": false
-      },
-      {
-        "sM": 9030,
-        "eye": [
-          -8926.511,
-          220.652,
-          -193.694
-        ],
-        "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
-        ],
-        "distanceM": 12426.092894063875,
-        "sourceTerrainOcclusion": false
+        "distanceM": 27183.3,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 21.22,
+        "elevationDeg": 6.03
       },
       {
         "sM": 7980,
         "eye": [
           -7930.835,
-          194.542,
+          194.532,
           128.424
         ],
         "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
         ],
-        "distanceM": 11905.611349640201,
-        "sourceTerrainOcclusion": false
+        "distanceM": 23466.8,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": -0.57,
+        "elevationDeg": 6.77
+      },
+      {
+        "sM": 11260,
+        "eye": [
+          -10999.327,
+          278.522,
+          -928.652
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 20302.6,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": -30.59,
+        "elevationDeg": 7.6
+      },
+      {
+        "sM": 13440,
+        "eye": [
+          -13049.075,
+          322.67900000000003,
+          -1440.705
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 18224.4,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": -6.57,
+        "elevationDeg": 8.33
+      },
+      {
+        "sM": 15150,
+        "eye": [
+          -14711.686,
+          354.56,
+          -1736.874
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 16555.9,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": -8.72,
+        "elevationDeg": 9.06
       },
       {
         "sM": 17220,
         "eye": [
           -16752.172,
-          426.315,
+          426.305,
           -1582.324
         ],
         "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
         ],
-        "distanceM": 17298.603345947264,
-        "sourceTerrainOcclusion": false
+        "distanceM": 14557.2,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 18.11,
+        "elevationDeg": 10.03
+      },
+      {
+        "sM": 19760,
+        "eye": [
+          -19260.372,
+          488.868,
+          -1786.458
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 12075.6,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 11.11,
+        "elevationDeg": 11.82
+      },
+      {
+        "sM": 20480,
+        "eye": [
+          -19978.477,
+          498.659,
+          -1734.755
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 11383.4,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 10.27,
+        "elevationDeg": 12.5
       },
       {
         "sM": 20880,
         "eye": [
           -20378.302,
-          496.132,
+          496.122,
           -1723.854
         ],
         "target": [
-          -5689.84228114432,
-          3275.707625,
-          11407.960853702629
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
         ],
-        "distanceM": 19897.775024345436,
-        "sourceTerrainOcclusion": false
+        "distanceM": 10998.9,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 8.36,
+        "elevationDeg": 12.96
+      },
+      {
+        "sM": 20960,
+        "eye": [
+          -20458.301,
+          496.38100000000003,
+          -1723.421
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 10921.7,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 8.09,
+        "elevationDeg": 13.05
+      },
+      {
+        "sM": 21000,
+        "eye": [
+          -20498.3,
+          496.71000000000004,
+          -1723.363
+        ],
+        "target": [
+          -30996.02477999244,
+          2962.4660624999997,
+          -3192.2995008511034
+        ],
+        "distanceM": 10883,
+        "sourceTerrainOcclusion": false,
+        "bearingDeg": 8,
+        "elevationDeg": 13.1
       }
     ],
-    "coordinateAdaptation": "Real geographic Aconcagua relief adapted as a distant scenic reference for a fictional unreferenced route. Uniform XYZ scale 0.8; no vertical exaggeration. Geographic source coordinates remain in prototype.localOrigin. Matrix acts on local East/height-minus-3000/South coordinates. This supersedes the earlier prototype.proposedPlacement, which is archival only.",
-    "corridorAudit": "Entire generated closed route sampled every 40m against conservative 800-local-metre expanded crop rectangle; six peak rays against refined visible source terrain. GPU visual review pending."
+    "coordinateAdaptation": "Relieve geográfico del Aconcagua orientado desde la Pared Sur hacia el frente del corredor ficticio. Escala XYZ uniforme 0,72 y relieve de origen conservado.",
+    "corridorAudit": "Corredor original y acceso a meta, rectángulo DEM con margen conservador, doce rayos de cima y encuadres de cabina sin climatología ni geometría del vehículo."
   },
   "license": {
     "url": "https://documentation.dataspace.copernicus.eu/APIs/SentinelHub/Data/DEM/resources/license/License-COPDEM-30.pdf",

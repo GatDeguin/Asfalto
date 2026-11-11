@@ -40,6 +40,12 @@ return (sin(q.x*.23+q.y*.08-t*.68+broadPhase)*.019
 `;
 function patchSurface(material, uniforms, kind, transmissionChunk) {
   const water=kind==='water',ground=kind==='ground',fogOnly=kind==='fog';
+  const authoredGround=ground&&material.userData.asfaltoWeatherMask==='uv2-snow-wetness';
+  const groundMaskVertex=authoredGround?'\n#ifndef USE_UV2\nattribute vec2 uv2;\n#endif\nvarying vec2 vAnFxGroundMask;':'';
+  const groundMaskFragment=authoredGround?'\nvarying vec2 vAnFxGroundMask;':'';
+  const wetness=kind==='asphalt'?'anRoadWetness(vAnFxWorldPosition)':authoredGround
+    ?'clamp(uAnFxWetness*mix(.42,1.42,clamp(vAnFxGroundMask.y,0.,1.)),0.,1.)':'uAnFxWetness';
+  const snowRetention=authoredGround?'*mix(.34,1.42,clamp(vAnFxGroundMask.x,0.,1.))':'';
   const compile=material.onBeforeCompile,cache=material.customProgramCacheKey;
   const priorAssetUniforms=Object.getOwnPropertyDescriptor(material.userData,'assetUniforms');
   // Expose references for the caller's resource collector, without taking texture ownership.
@@ -51,8 +57,8 @@ function patchSurface(material, uniforms, kind, transmissionChunk) {
     // hooks while leaving lit surface weather out of those shadow shaders.
     if(!shader.vertexShader.includes('#include <defaultnormal_vertex>'))return;
     Object.assign(shader.uniforms,uniforms);
-    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;'+(kind==='asphalt'?'\nattribute vec2 anFxHydrology;':''));
-    if(!fogOnly)shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvAnFxSurface = position;'+WEATHER_VERTEX_FRAME+'vAnFxHydrology='+(kind==='asphalt'?'anFxHydrology':'vec2(0.)')+';');
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vAnFxSurface,vAnFxWorldPosition,vAnFxWorldNormal;varying float vAnFxSlope;varying vec2 vAnFxHydrology;'+(kind==='asphalt'?'\nattribute vec2 anFxHydrology;':'')+groundMaskVertex);
+    if(!fogOnly)shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvAnFxSurface = position;'+WEATHER_VERTEX_FRAME+'vAnFxHydrology='+(kind==='asphalt'?'anFxHydrology':'vec2(0.)')+';'+(authoredGround?'vAnFxGroundMask=uv2;':''));
     shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
 vec4 anFxWorld=vec4(transformed,1.);
 #ifdef USE_INSTANCING
@@ -60,10 +66,10 @@ anFxWorld=instanceMatrix*anFxWorld;
 #endif
 vAnFxWorldPosition=(modelMatrix*anFxWorld).xyz;
 vAnFxSurface=vAnFxWorldPosition;`);
-    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n'+SURFACE_SHADER);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\n'+SURFACE_SHADER+groundMaskFragment);
     // Terrain projection owns color/roughness chunks; main remains a common,
     // unconditional anchor across Standard, Physical and chained terrain hooks.
-    if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(/void\s+main\s*\(\s*\)\s*\{/,main=>main+'\nfloat anWorldWetness='+(kind==='asphalt'?'anRoadWetness(vAnFxWorldPosition)':'uAnFxWetness')+';\nvec4 anWeatherPacked=clamp(uAnFxWeather,0.,1.);\nfloat anSnowAltitude=smoothstep(uAnFxSnowLine-70.,uAnFxSnowLine+160.,vAnFxWorldPosition.y);');
+    if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(/void\s+main\s*\(\s*\)\s*\{/,main=>main+'\nfloat anWorldWetness='+wetness+';\nvec4 anWeatherPacked=clamp(uAnFxWeather,0.,1.);\nfloat anSnowAltitude=smoothstep(uAnFxSnowLine-70.,uAnFxSnowLine+160.,vAnFxWorldPosition.y);');
     const normalAnchor=shader.fragmentShader.includes('// ASFALTO_LANDSCAPE_NORMAL_END')?'// ASFALTO_LANDSCAPE_NORMAL_END':'#include <normal_fragment_maps>';
     if(!fogOnly)shader.fragmentShader=shader.fragmentShader.replace(normalAnchor,`${normalAnchor}
 float anHeight=${water?'anWaterHeight(vAnFxSurface.xz)*(1.+uAnFxWind*.13)':ground?'0.':'anRainHeight(vAnFxSurface.xz)*uAnFxRain*anWorldWetness'};
@@ -89,7 +95,7 @@ if(uAnFxSnow>.0001){
  vec2 anSnowWind=normalize(uAnWindVector.xz+vec2(.001)),anSnowAcross=vec2(-anSnowWind.y,anSnowWind.x);
  float anAltitude=anSnowAltitude;
  float anShelter=.76+.24*clamp(1.-dot(vAnFxWorldNormal.xz,anSnowWind),0.,1.);
- float anSnowCoverage=clamp(anWeatherPacked.y*(.66+.34*anAltitude)*anShelter,0.,1.);
+ float anSnowCoverage=clamp(anWeatherPacked.y*(.66+.34*anAltitude)*anShelter${snowRetention},0.,1.);
  float anSnowMacro=anSurfaceNoise(vAnFxSurface.xz*.075);
  anSnowDrift=anSurfaceNoise(vec2(dot(vAnFxSurface.xz,anSnowWind)*.085,dot(vAnFxSurface.xz,anSnowAcross)*.46)+anSnowMacro*1.7);
  float anSnowField=.10+.70*(anSnowMacro*.46+anSnowDrift*.32+anSurfaceNoise(vAnFxSurface.xz*.63+vAnFxSurface.y*.11)*.22);
@@ -160,7 +166,7 @@ anFogColor=linearToOutputTexel(vec4(anSkyColor,1.)).rgb;
 gl_FragColor.rgb=mix(gl_FragColor.rgb,anFogColor,anFogFactor);
 #endif`);
   };
-  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+(water?'-optical-depth':'')+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
+  material.customProgramCacheKey=function(){return(cache?.call(this)||'')+'|an-fx-surface-v12-bank-reflection-'+kind+(water?'-optical-depth':'')+(authoredGround?'-uv2-weather':'')+'-mountain-'+(material.userData.asfaltoMountainLayer??'none');};
   material.needsUpdate=true;
   return()=>{if(priorAssetUniforms)Object.defineProperty(material.userData,'assetUniforms',priorAssetUniforms);else delete material.userData.assetUniforms;material.onBeforeCompile=compile;material.customProgramCacheKey=cache;material.needsUpdate=true;};
 }

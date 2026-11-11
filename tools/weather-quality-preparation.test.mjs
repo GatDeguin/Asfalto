@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {createRaceWeatherEffects} from '../src/render/race-weather-effects.mjs?v=42d2950b3f6dff91';
+import {createRaceWeatherEffects} from '../src/render/race-weather-effects.mjs?v=a0186ccb64923845';
 const waterRoot=()=>{const root=new T.Group(),m=new T.MeshStandardMaterial();m.name='M_Lake_Water';const water=new T.Mesh(new T.PlaneGeometry(10,10),m);water.rotation.x=-Math.PI/2;root.add(water);root.updateMatrixWorld(true);return {root,water,m};};
 test('tier changes settle water shaders immediately and newly streamed water inherits the tier',()=>{
  const scene=new T.Scene(),camera=new T.PerspectiveCamera(),effects=createRaceWeatherEffects({THREE:T,scene,camera,qualityTier:'balanced'}),first=waterRoot();scene.add(first.root);effects.setTrack({id:'one',visualRoot:first.root});assert.ok(first.water.material.transmission>0);
@@ -8,7 +8,7 @@ test('tier changes settle water shaders immediately and newly streamed water inh
  const second=waterRoot();scene.add(second.root);effects.setTrack({id:'two',visualRoot:second.root});assert.equal(second.water.material.transmission,0);effects.setQualityTier('high');assert.ok(second.water.material.transmission>0);effects.dispose();for(const x of [first,second]){x.water.geometry.dispose();x.m.dispose();}
 });
 test('governor applies shader tier before resize can start asynchronous preparation',()=>{
- const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=9e070dabc3973240',import.meta.url),'utf8'),body=source.match(/function applyPerformanceTier\(\) \{([\s\S]*?)\n  \}/)[1],order=[];
+ const source=fs.readFileSync(new URL('../src/legacy/module-02.mjs?v=3f25929032c95f48',import.meta.url),'utf8'),body=source.match(/function applyPerformanceTier\(\) \{([\s\S]*?)\n  \}/)[1],order=[];
  const fn=new Function('raceWeatherEffects','performanceState','options','falconPresentation','setSurfaceReliefQuality','isHighGraphicsQuality','MAX_SEGMENTS','drawDistance','behindDistance','visibleRoadStep',body);
  const player={setReducedRefraction:value=>order.push('player:'+value)},falcon={setReducedRefraction:value=>order.push('falcon:'+value)};
  fn({setQualityTier:t=>order.push('weather:'+t)},{qualityTier:'low'},{getPlayerPresentation:()=>player},falcon,()=>{},()=>false,1,1,1,1);
