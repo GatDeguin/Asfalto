@@ -1,15 +1,55 @@
 import {terrainProjection} from '../tracks/visuals/reference-landscape.mjs?v=30a528c61c10745d';
+import {MAX_PAGE_TRIANGLES, TRIANGLE_BYTES} from './virtual-terrain-data.mjs?v=09bc75160261c900';
+
+const ATLAS_WIDTH = 256;
+const ATLAS_HEIGHT = Math.ceil(MAX_PAGE_TRIANGLES * 3 / ATLAS_WIDTH);
+const ATLAS_FLOATS = ATLAS_WIDTH * ATLAS_HEIGHT * 4;
+
+/** A WebGL layer for each WebGPU residency slot. Detail updates touch one layer. */
+export function createVirtualTerrainAtlas(THREE, slots) {
+  const data = new Float32Array(slots * ATLAS_FLOATS);
+  const texture = new THREE.DataArrayTexture(data, ATLAS_WIDTH, ATLAS_HEIGHT, slots);
+  texture.name = 'ASFALTO_VIRTUAL_TERRAIN_VERTEX_ATLAS';
+  texture.type = THREE.FloatType;
+  texture.format = THREE.RGBAFormat;
+  texture.colorSpace = THREE.NoColorSpace;
+  let initialized = false;
+  texture.onUpdate = () => { initialized = true; };
+  return {
+    texture,
+    bytes: data.byteLength,
+    upload(slot, vertices) {
+      if (!Number.isInteger(slot) || slot < 0 || slot >= slots || !(vertices instanceof Float32Array) ||
+        !vertices.byteLength || vertices.byteLength % TRIANGLE_BYTES || vertices.byteLength > MAX_PAGE_TRIANGLES * TRIANGLE_BYTES) {
+        throw new RangeError('La página de atributos no coincide con la reserva de visibilidad.');
+      }
+      data.set(vertices, slot * ATLAS_FLOATS);
+      if (initialized) texture.addLayerUpdate(slot);
+      texture.needsUpdate = true;
+    },
+    dispose() { texture.dispose(); },
+  };
+}
 
 const reconstruct = /* glsl */ `
-uniform sampler2D virtualTerrainPixels;
+uniform sampler2D virtualTerrainVisibility;
+uniform highp sampler2DArray virtualTerrainVertices;
+uniform uint virtualTerrainObject;
 uniform vec4 virtualTerrainViewport;
 uniform mat4 virtualTerrainInverseProjection;
-uniform mat4 virtualTerrainCameraWorld;
+uniform mat4 virtualTerrainLocalFromView;
+uniform mat4 virtualTerrainWorldFromLocal;
 uniform mat3 virtualTerrainNormal;
-uniform float virtualTerrainLogFar;
+uniform float virtualTerrainInverseLogFar;
+uniform float virtualTerrainFar;
 
-vec3 virtualOctNormal(vec2 oct) {
-  vec2 f = oct * 2.0 - 1.0;
+vec4 virtualVertex(uint slot, uint vertex) {
+  return texelFetch(virtualTerrainVertices, ivec3(int(vertex % ${ATLAS_WIDTH}u), int(vertex / ${ATLAS_WIDTH}u), int(slot)), 0);
+}
+
+vec3 virtualOctNormal(float packedNormal) {
+  uint bits = uint(packedNormal);
+  vec2 f = vec2(float(bits & 255u), float(bits >> 8u)) * (2.0 / 255.0) - 1.0;
   float z = 1.0 - abs(f.x) - abs(f.y);
   if (z < 0.0) f = (1.0 - abs(f.yx)) * mix(vec2(-1.0), vec2(1.0), greaterThanEqual(f, vec2(0.0)));
   return normalize(vec3(f, z));
@@ -19,22 +59,46 @@ vec3 virtualOctNormal(vec2 oct) {
 const fragmentStart = /* glsl */ `
   vec2 samplePixel = gl_FragCoord.xy - virtualTerrainViewport.xy;
   ivec2 pixel = ivec2(samplePixel);
-  int width = int(virtualTerrainViewport.z);
   // The unflipped DOM canvas uploads its top row as WebGL texture row zero.
   pixel.y = int(virtualTerrainViewport.w) - 1 - pixel.y;
-  vec3 bits = floor(texelFetch(virtualTerrainPixels, pixel, 0).rgb * 255.0 + 0.5);
-  float key = dot(bits, vec3(1.0, 256.0, 65536.0));
-  if (key == 0.0) discard;
-  float logDepth = (16777215.0 - key) / 16777214.0;
-  gl_FragDepth = logDepth;
-  float viewDepth = exp2(logDepth * virtualTerrainLogFar) - 1.0;
+  uvec3 bits = uvec3(floor(texelFetch(virtualTerrainVisibility, pixel, 0).rgb * 255.0 + 0.5));
+  uint reference = bits.r | (bits.g << 8u);
+  if (reference == 0u || bits.b != virtualTerrainObject) discard;
+
+  uint triangle = reference - 1u;
+  uint slot = triangle / ${MAX_PAGE_TRIANGLES}u;
+  uint vertex = (triangle % ${MAX_PAGE_TRIANGLES}u) * 3u;
+  vec4 a = virtualVertex(slot, vertex);
+  vec4 b = virtualVertex(slot, vertex + 1u);
+  vec4 c = virtualVertex(slot, vertex + 2u);
+  // Ray/triangle barycentrics work for clipped primitives too. Unproject the
+  // pixel center and keep the ray parameter in units of view-space depth.
   vec2 clipXY = samplePixel / virtualTerrainViewport.zw * 2.0 - 1.0;
-  vec4 ray = virtualTerrainInverseProjection * vec4(clipXY, 1.0, 1.0);
-  vec3 viewPoint = ray.xyz * (viewDepth / -ray.z);
-  vViewPosition = -viewPoint;
-  vLandscapeWorld = (virtualTerrainCameraWorld * vec4(viewPoint, 1.0)).xyz;
-  vec2 oct = texelFetch(virtualTerrainPixels, pixel + ivec2(width, 0), 0).rg;
-  vLandscapeNormal = normalize(virtualTerrainNormal * virtualOctNormal(oct));
+  vec3 ray = (virtualTerrainInverseProjection * vec4(clipXY, 0.0, 1.0)).xyz;
+  vec3 viewRay = ray / -ray.z;
+  vec3 localRay = mat3(virtualTerrainLocalFromView) * viewRay;
+  vec3 localEye = virtualTerrainLocalFromView[3].xyz;
+  vec3 ab = b.xyz - a.xyz;
+  vec3 ac = c.xyz - a.xyz;
+  vec3 p = cross(localRay, ac);
+  float determinant = dot(ab, p);
+  if (abs(determinant) < 1e-8) discard;
+  vec3 offset = localEye - a.xyz;
+  vec3 q = cross(offset, ab);
+  float viewDepth = dot(ac, q) / determinant;
+  if (!(viewDepth > 0.0 && viewDepth <= virtualTerrainFar)) discard;
+  gl_FragDepth = clamp(log2(1.0 + viewDepth) * virtualTerrainInverseLogFar, 0.0, 1.0);
+
+  float u = dot(offset, p) / determinant;
+  float v = dot(localRay, q) / determinant;
+  // Clamp only the attributes near subpixel-quantized edges. Depth is always
+  // the intersection with the original triangle plane.
+  vec3 barycentric = clamp(vec3(1.0 - u - v, u, v), 0.0, 1.0);
+  vec3 localNormal = barycentric.x * virtualOctNormal(a.w) +
+    barycentric.y * virtualOctNormal(b.w) + barycentric.z * virtualOctNormal(c.w);
+  vViewPosition = -viewRay * viewDepth;
+  vLandscapeWorld = (virtualTerrainWorldFromLocal * vec4(localEye + localRay * viewDepth, 1.0)).xyz;
+  vLandscapeNormal = normalize(virtualTerrainNormal * localNormal) * sign(determinant);
   #ifdef USE_FOG
     vFogDepth = viewDepth;
   #endif
@@ -51,19 +115,23 @@ const tint = /* glsl */ `
   diffuseColor.rgb *= mix(terrainTint, vec3(.86, .94, 1.02), tintBroad * .34);
 `;
 
-export function createVirtualTerrainComposite(THREE, source, canvas) {
+export function createVirtualTerrainComposite(THREE, source, canvas, {atlas, objectId}) {
   const texture = new THREE.CanvasTexture(canvas);
   texture.flipY = false;
   texture.generateMipmaps = false;
   texture.colorSpace = THREE.NoColorSpace;
   texture.minFilter = texture.magFilter = THREE.NearestFilter;
   const uniforms = {
-    virtualTerrainPixels: {value: texture},
+    virtualTerrainVisibility: {value: texture},
+    virtualTerrainVertices: {value: atlas.texture},
+    virtualTerrainObject: {value: objectId},
     virtualTerrainViewport: {value: new THREE.Vector4()},
     virtualTerrainInverseProjection: {value: new THREE.Matrix4()},
-    virtualTerrainCameraWorld: {value: new THREE.Matrix4()},
+    virtualTerrainLocalFromView: {value: new THREE.Matrix4()},
+    virtualTerrainWorldFromLocal: {value: new THREE.Matrix4()},
     virtualTerrainNormal: {value: new THREE.Matrix3()},
-    virtualTerrainLogFar: {value: 0},
+    virtualTerrainInverseLogFar: {value: 0},
+    virtualTerrainFar: {value: 0},
   };
   const material = source.material.clone();
   material.name = 'Paso Garibaldi · terreno virtualizado';
@@ -73,7 +141,7 @@ export function createVirtualTerrainComposite(THREE, source, canvas) {
     source.material.asfaltoTerrainRockTexture ? {diff: source.material.asfaltoTerrainRockTexture} : null);
   const landscape = material.onBeforeCompile;
   const programKey = material.customProgramCacheKey();
-  material.customProgramCacheKey = () => programKey + '|virtual-terrain-v1';
+  material.customProgramCacheKey = () => programKey + '|virtual-terrain-visibility';
   material.onBeforeCompile = shader => {
     landscape(shader);
     Object.assign(shader.uniforms, uniforms);
@@ -119,9 +187,11 @@ export function createVirtualTerrainComposite(THREE, source, canvas) {
       texture.needsUpdate = true;
       uniforms.virtualTerrainViewport.value.copy(viewport);
       uniforms.virtualTerrainInverseProjection.value.copy(camera.projectionMatrixInverse);
-      uniforms.virtualTerrainCameraWorld.value.copy(camera.matrixWorld);
+      uniforms.virtualTerrainLocalFromView.value.copy(source.matrixWorld).invert().multiply(camera.matrixWorld);
+      uniforms.virtualTerrainWorldFromLocal.value.copy(source.matrixWorld);
       uniforms.virtualTerrainNormal.value.getNormalMatrix(source.matrixWorld);
-      uniforms.virtualTerrainLogFar.value = Math.log2(camera.far + 1);
+      uniforms.virtualTerrainInverseLogFar.value = 1 / Math.log2(camera.far + 1);
+      uniforms.virtualTerrainFar.value = camera.far * 1.000001;
       material.color.copy(source.material.color);
       material.roughness = source.material.roughness;
       material.envMapIntensity = source.material.envMapIntensity;

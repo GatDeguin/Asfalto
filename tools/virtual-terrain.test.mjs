@@ -7,6 +7,8 @@ import {gunzipSync} from 'node:zlib';
 import {GARIBALDI_TERRAIN_MANIFEST, TRIANGLE_BYTES, packTerrainTriangles, selectTerrainDetail, validateTerrainManifest}
   from '../src/render/virtual-terrain-data.mjs?v=09bc75160261c900';
 import {createTerrainResidency} from '../src/render/virtual-terrain-residency.mjs?v=497442d1b9bbf4b7';
+import {createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=eece709030ed7959';
+import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {orientedBoundary, readVistaBake, spatialTrianglePages} from './build-virtual-terrain.mjs?v=3c7434995edbee78';
 
 const directory = new URL('../assets/tracks/virtual-terrain/garibaldi/', import.meta.url);
@@ -134,4 +136,25 @@ test('a failed detail page keeps its coarse page and cannot spin a request loop'
   assert.equal(resident.slotFor(0), undefined);
   assert.equal(resident.diagnostics().errors, 1);
   resident.dispose();
+});
+
+test('the attribute atlas mirrors a reused GPU slot without marking other layers dirty', () => {
+  const atlas = createVirtualTerrainAtlas(THREE, 3);
+  const page = new Float32Array(12).fill(7);
+  const {data, width, height} = atlas.texture.image;
+  const stride = width * height * 4;
+  atlas.upload(1, page);
+  assert.equal(data[stride], 7);
+  assert.equal(atlas.texture.layerUpdates.size, 0);
+  atlas.texture.onUpdate();
+  atlas.upload(2, page);
+  atlas.upload(1, new Float32Array(12).fill(9));
+  assert.equal(data[0], 0);
+  assert.equal(data[stride], 9);
+  assert.equal(data[stride * 2], 7);
+  assert.deepEqual([...atlas.texture.layerUpdates], [2, 1]);
+  assert.equal(atlas.bytes, stride * 3 * 4);
+  assert.throws(() => atlas.upload(3, page), RangeError);
+  assert.throws(() => atlas.upload(1, page.subarray(0, 11)), RangeError);
+  atlas.dispose();
 });

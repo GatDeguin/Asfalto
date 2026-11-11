@@ -7,6 +7,7 @@ import {createTerrainResidency} from './virtual-terrain-residency.mjs?v=497442d1
 
 const PATH = new URL('../../assets/tracks/virtual-terrain/garibaldi/', import.meta.url);
 const VISTA_NAME = 'TERRAIN_VISTA_WEB_MESH_Primitive_0';
+const VISTA_OBJECT_ID = 1;
 
 function readBytes({file, bytes, sha256}, signal) {
   return readExternalPayload({dataset: {externalUrl: new URL(file, PATH).href, bytes, sha256: sha256.toUpperCase()}},
@@ -47,9 +48,10 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     entry.abort.abort();
     entry.residency?.dispose();
     entry.composite?.dispose();
+    entry.atlas?.dispose();
     entry.raster?.dispose();
     entry.device?.destroy();
-    entry.residency = entry.composite = entry.raster = entry.device = null;
+    entry.residency = entry.composite = entry.atlas = entry.raster = entry.device = null;
   }
 
   function suspend() {
@@ -74,10 +76,10 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
       fail(entry, 'Adaptador WebGPU de hardware no disponible.', 'unsupported');
       return;
     }
-    const [bytes, {createVirtualTerrainRaster}, {createVirtualTerrainComposite}] = await Promise.all([
+    const [bytes, {createVirtualTerrainRaster}, {createVirtualTerrainAtlas, createVirtualTerrainComposite}] = await Promise.all([
       readBytes(GARIBALDI_TERRAIN_MANIFEST, signal),
-      import('./virtual-terrain-gpu.mjs?v=0306024cc8fec91b'),
-      import('./virtual-terrain-composite.mjs?v=45cd197f3d165bd8'),
+      import('./virtual-terrain-gpu.mjs?v=eb5360605e2d836b'),
+      import('./virtual-terrain-composite.mjs?v=eece709030ed7959'),
     ]);
     const manifest = validateTerrainManifest(JSON.parse(new TextDecoder().decode(bytes)));
     signal.throwIfAborted();
@@ -94,8 +96,9 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     device.addEventListener('uncapturederror', ({error}) => fail(entry, error));
     void device.lost.then(info => fail(entry, info.message || 'Se perdió el dispositivo WebGPU.'));
     const canvas = document.createElement('canvas');
+    const slots = manifest.pages.length + TERRAIN_DETAIL_SLOTS;
     const raster = await createVirtualTerrainRaster(device, {
-      canvas, slots: manifest.pages.length + TERRAIN_DETAIL_SLOTS, doubleSided: source.material.side === THREE.DoubleSide,
+      canvas, slots, doubleSided: source.material.side === THREE.DoubleSide,
     });
     if (signal.aborted) {
       raster.dispose();
@@ -104,9 +107,14 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     entry.raster = raster;
     const root = await readPage(manifest.root, signal);
     signal.throwIfAborted();
+    const atlas = entry.atlas = createVirtualTerrainAtlas(THREE, slots);
+    const upload = (slot, vertices) => {
+      raster.upload(slot, vertices);
+      atlas.upload(slot, vertices);
+    };
     for (const page of manifest.pages) {
       const first = page.coarseStart * TRIANGLE_BYTES / 4;
-      raster.upload(page.id, root.subarray(first, first + page.coarseCount * TRIANGLE_BYTES / 4));
+      upload(page.id, root.subarray(first, first + page.coarseCount * TRIANGLE_BYTES / 4));
     }
     entry.pages = manifest.pages.map(page => ({...page, box: new THREE.Box3(
       new THREE.Vector3(...page.bounds.slice(0, 3)), new THREE.Vector3(...page.bounds.slice(3)))}));
@@ -114,9 +122,9 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     entry.coarseTriangles = root.byteLength / TRIANGLE_BYTES;
     entry.residency = createTerrainResidency({pages: entry.pages,
       load: (page, signal) => readPage(page.detail, signal),
-      upload: (slot, vertices) => raster.upload(slot, vertices),
+      upload,
     });
-    entry.composite = createVirtualTerrainComposite(THREE, source, canvas);
+    entry.composite = createVirtualTerrainComposite(THREE, source, canvas, {atlas, objectId: VISTA_OBJECT_ID});
     scene.add(entry.composite.mesh);
     status = 'ready';
   }
@@ -165,7 +173,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
       const count = fineSlot === undefined ? page.coarseCount : page.fineCount;
       triangles += count;
       detail += Number(fineSlot !== undefined);
-      return {slot: fineSlot ?? page.id, triangles: count};
+      return {slot: fineSlot ?? page.id, triangles: count, objectId: VISTA_OBJECT_ID};
     });
     entry.visible = {pages: selected.length, detail, triangles};
     return selected;
@@ -177,7 +185,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     let selected;
     try {
       renderer.getCurrentViewport(viewport);
-      if (!entry.raster.fits(viewport.z, viewport.w)) {
+      if (!entry.raster.fits(viewport.z, viewport.w) || Math.max(viewport.z, viewport.w) > renderer.capabilities.maxTextureSize) {
         if (status !== 'viewport') {
           entry.raster.releaseViewport();
           entry.composite.releaseViewport();
@@ -239,6 +247,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera}) {
     getStatus: () => status,
     diagnostics: () => ({enabled, status, lastError, frames: session?.frames || 0,
       originalTriangles: session?.originalTriangles || 0, coarseTriangles: session?.coarseTriangles || 0,
+      attributeBytes: session?.atlas?.bytes || 0,
       visible: session?.visible || null, residency: session?.residency?.diagnostics() || null,
       gpu: session?.raster?.diagnostics() || null}),
     dispose() { disposed = true; enabled = false; suspend(); },

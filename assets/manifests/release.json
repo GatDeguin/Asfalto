@@ -2746,8 +2746,8 @@
     },
     {
       "path": "docs/fluidez-gpu.md",
-      "bytes": 44719,
-      "sha256": "28EB9EE187B1D894906DE1F498409479EF0D7E5964A67BFBF19DACC3C7520FFF"
+      "bytes": 45654,
+      "sha256": "AC801318FAB16845047BB52670DEA7CD2E400E78DE3F6503F5E7D5B9DD6847D8"
     },
     {
       "path": "docs/intro-brand-fix.md",
@@ -2937,7 +2937,7 @@
     {
       "path": "index.html",
       "bytes": 82321,
-      "sha256": "C2F6BF393910D5A89AB7A2F9FA8A287FFD44C7597516BF7AF8BB9F0C1F037EC9"
+      "sha256": "9C3A6C5A531381EC0665B7DC96D57B7D122F0DDC583798461BA55CE72FE7CC42"
     },
     {
       "path": "release-version.json",
@@ -3342,7 +3342,7 @@
     {
       "path": "src/legacy/module-02.mjs",
       "bytes": 592153,
-      "sha256": "C9789B8329B3176C43D242ACA6BF6788F01EC6F621AD13E9184E97A19842C8C5"
+      "sha256": "212202E2A536A59046383A56BB64403B19EF947726E5F1AE3E2CCE9C6ECF9DAE"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -4181,8 +4181,8 @@
     },
     {
       "path": "src/render/virtual-terrain-composite.mjs",
-      "bytes": 6156,
-      "sha256": "45CD197F3D165BD8368C3D8CE16D1C9F5B847FFD1112805562F10958CE6DFF13"
+      "bytes": 9628,
+      "sha256": "EECE709030ED7959BAF2B02129F0C51B43E36B08F34FD56763FA281C5F8AF49C"
     },
     {
       "path": "src/render/virtual-terrain-data.mjs",
@@ -4191,13 +4191,13 @@
     },
     {
       "path": "src/render/virtual-terrain-gpu.mjs",
-      "bytes": 10029,
-      "sha256": "0306024CC8FEC91B07A4DCC396A2EFBC0A6F1CC8AA59BBC7F4AB29A7259A3740"
+      "bytes": 10668,
+      "sha256": "EB5360605E2D836BBC2FF9AD1659BCCE7714369A6BB8AFE743CF098ACAA22B37"
     },
     {
       "path": "src/render/virtual-terrain-raster.wgsl.mjs",
-      "bytes": 7484,
-      "sha256": "EDA10914A55F01BB04F6A1C81BCA2602BDCC7905924A62B2E2DD9255EB56815E"
+      "bytes": 6662,
+      "sha256": "2A2C51069349DA11A16E1B5569375C32EA6D53BEC0F9E48D31C46FE722809434"
     },
     {
       "path": "src/render/virtual-terrain-residency.mjs",
@@ -4206,8 +4206,8 @@
     },
     {
       "path": "src/render/virtual-terrain.mjs",
-      "bytes": 12453,
-      "sha256": "FC4E85E6FA6F18984D1D659BD0430448468AC6BB1217231452D1C54F8A356C08"
+      "bytes": 12891,
+      "sha256": "44A157299EDEE9F41D5AE14185BB1C7053F5B993A35EA0D9044C94CB2C44F03F"
     },
     {
       "path": "src/render/volumetric-atmosphere.glsl.mjs",
@@ -4967,7 +4967,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 6393,
-      "sha256": "AE6D0ED17831333DED216D21AEF0A1FB9D1A98619C4C4A0416CBCB62AFAD09B8"
+      "sha256": "EF3A8C02A786A205B46127EB471ED2D026E969D8B2AD5B12B9286F7B577002E9"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -4992,17 +4992,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 2878,
-      "sha256": "80A721C215097692C093465C3189965768E5A963361692B3AF8A2BBAE30662BC"
+      "sha256": "52C4C40A25812FEF0A6926F81B6D479006184BD35F612832DC13BC3F201EFB5F"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "0A45BFB7A9CA39540302A7A1C1916E384217A5805DC16297EACDDFA6EA39DD22"
+      "sha256": "0D567125D636D5296B358FC7EA662DACCE805F1F3DEEC6BBDF6AD26F75011EC5"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "D4978C939954B21C7766C31E14088A53D3490753498606676E6D239B7346C0CC"
+      "sha256": "A54EC8960AE8E98671D125FF2195EDA2F705AC3CB2A9465ADDE169434F8BEF78"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -5017,7 +5017,7 @@
     {
       "path": "tools/automatic-reverse.test.mjs",
       "bytes": 4285,
-      "sha256": "A1CBA1226263E2CE8C3902A5E31EDAE28A07E6F8A2DD5BB2367ECD8F7E4269E7"
+      "sha256": "BC63369BD462538490A2DF1645E927824393384EDD66D26A92FAB0403E2EEE16"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
@@ -5287,7 +5287,7 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "ACD72153FE2D820E9F76A3905EC566339FD415A38559304B8345BB676D2CF013"
+      "sha256": "A05D6159328DF7FE2E2700DCB5998024015DA032DA4BF861D3B66557D32EF86D"
     },
     {
       "path": "tools/lipan-authored-signs.test.mjs",
@@ -5307,7 +5307,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 17847,
-      "sha256": "FE4295BBCF820D1CE1DFDAA05F5DB161287576A1A78F3A9F88AB423D52924E3C"
+      "sha256": "A800263CBF851EAE103A7BB49DBC3AEF0C398E9A6F9376FF9F0595FB9BA8BEB6"
     },
     {
       "path": "tools/minimap-clock.test.mjs",
@@ -5322,7 +5322,7 @@
     {
       "path": "tools/original-track-layouts.test.mjs",
       "bytes": 1382,
-      "sha256": "1F4A7F7EA5B3CFE83D874445B25199FF89C3D5F3D09D66C6E6059A4F7CFC3BDC"
+      "sha256": "7D933278EF03B0FC326B6632DC2230E405D33D1DA047F1DF35C940F4C2AD4B37"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5687,7 +5687,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3502,
-      "sha256": "604ED3196166865725AFF903892C83B641227CE79F3E4FF91370114DE672D951"
+      "sha256": "47877B9DCA32DF30AD78ECEE605B6D4690EB6499EDBFC9234C50F6E8EE6C4390"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5721,8 +5721,8 @@
     },
     {
       "path": "tools/virtual-terrain.test.mjs",
-      "bytes": 6088,
-      "sha256": "0E8E9D05C29EB3DCF435FCA6E9A8E2EA882ADCFB24BB7CB3F6F031A76BCF30DC"
+      "bytes": 7115,
+      "sha256": "F53BAB86588A62943B915724EFB1DFA07173DBF7FB0EFA0A0D90CB98E56E1D5A"
     },
     {
       "path": "tools/water-optics.gpu.mjs",
@@ -5732,7 +5732,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "8B952E17D36D1625B3E45BDAB19A1AC943EA924D4CDEE96165693F347A0D5980"
+      "sha256": "FE581C9DC89B2A92E3CCA002D337F35B0A6C40D6812E73B2C433D45D0A0E1081"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -6046,6 +6046,6 @@
     }
   ],
   "fileCount": 1194,
-  "totalBytes": 944521763,
-  "inventorySha256": "A123C93DE907827873DC8A7BE5C4AA0EEE23DCFFA29A907B677F371BCFF8677D"
+  "totalBytes": 944527452,
+  "inventorySha256": "1B465D1DCB5543F5A80AF543B55EA3ABF524B8FAD1F55F6532AC6ECCB502F342"
 }

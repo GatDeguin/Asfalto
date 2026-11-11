@@ -3,6 +3,7 @@ import {MAX_PAGE_TRIANGLES} from './virtual-terrain-data.mjs?v=09bc75160261c900'
 export const virtualTerrainShader = /* wgsl */`
 const PAGE_TRIANGLES = ${MAX_PAGE_TRIANGLES}u;
 const DEPTH_MAX = 16777215u;
+const TRIANGLE_MASK = 65535u;
 const MICRO_SPAN = 8.0;
 
 struct Frame {
@@ -21,9 +22,10 @@ struct Frame {
 @group(0) @binding(6) var<storage, read_write> drawArgs: array<atomic<u32>>;
 @group(0) @binding(7) var<storage, read_write> stats: array<atomic<u32>>;
 @group(0) @binding(8) var<storage, read> largeRead: array<u32>;
-@group(0) @binding(9) var nativePixels: texture_2d<u32>;
+@group(0) @binding(9) var nativeIds: texture_2d<u32>;
 @group(0) @binding(10) var<storage, read> depthRead: array<u32>;
 @group(0) @binding(11) var<storage, read> ownerRead: array<u32>;
+@group(0) @binding(12) var nativeDepth: texture_depth_2d;
 
 struct Triangle { a: vec4f, b: vec4f, c: vec4f };
 
@@ -61,35 +63,24 @@ fn depthKey(viewDepth: f32) -> u32 {
   return DEPTH_MAX - u32(round(clamp(log2(1.0 + viewDepth) * frame.inverseLogFar, 0.0, 1.0) * f32(DEPTH_MAX - 1u)));
 }
 
-fn octDecode(bits: u32) -> vec3f {
-  let f = vec2f(f32(bits & 255u), f32((bits >> 8u) & 255u)) * (2.0 / 255.0) - 1.0;
-  let z = 1.0 - abs(f.x) - abs(f.y);
-  let folded = (1.0 - abs(f.yx)) * select(vec2f(-1.0), vec2f(1.0), f >= vec2f(0.0));
-  return normalize(vec3f(select(f, folded, z < 0.0), z));
-}
-
-fn octEncode(normal: vec3f) -> u32 {
-  let n = normal / max(dot(abs(normal), vec3f(1.0)), 0.000001);
-  let folded = (1.0 - abs(n.yx)) * select(vec2f(-1.0), vec2f(1.0), n.xy >= vec2f(0.0));
-  let oct = vec2u(round((select(n.xy, folded, n.z < 0.0) * 0.5 + 0.5) * 255.0));
-  return oct.x | (oct.y << 8u);
-}
-
-fn appendNative(id: u32) {
+fn appendNative(visibility: u32) {
   let entry = atomicAdd(&drawArgs[0], 3u) / 3u;
-  largeWrite[entry] = id;
+  largeWrite[entry] = visibility;
 }
 
 fn raster(invocation: vec3u, owners: bool) {
   let page = pages[invocation.y];
   if (invocation.x >= page.y) { return; }
-  let id = page.x * PAGE_TRIANGLES + invocation.x;
+  let id = (page.x & TRIANGLE_MASK) * PAGE_TRIANGLES + invocation.x;
+  // The low 16 bits address the resident triangle, with zero reserved for sky.
+  // The high byte identifies its object and selects a material at resolve time.
+  let visibility = (page.x & ~TRIANGLE_MASK) | (id + 1u);
   let t = clipTriangle(id);
   if (isOutside(t)) { return; }
   // The fixed rasterizer clips large triangles and triangles crossing near/far.
   if (min(t.a.w, min(t.b.w, t.c.w)) <= 0.0 ||
       any(abs(vec3f(t.a.z, t.b.z, t.c.z)) > vec3f(t.a.w, t.b.w, t.c.w))) {
-    if (!owners) { appendNative(id); }
+    if (!owners) { appendNative(visibility); }
     return;
   }
   let a = toPixel(t.a);
@@ -98,7 +89,7 @@ fn raster(invocation: vec3u, owners: bool) {
   let low = min(a, min(b, c));
   let high = max(a, max(b, c));
   if (any(high - low > vec2f(MICRO_SPAN))) {
-    if (!owners) { appendNative(id); }
+    if (!owners) { appendNative(visibility); }
     return;
   }
   let area = edge(a, b, c);
@@ -119,7 +110,7 @@ fn raster(invocation: vec3u, owners: bool) {
       let pixel = u32(y) * frame.size.x + u32(x);
       let key = depthKey(abs(area) / dot(e, inverseW));
       if (owners) {
-        if (atomicLoad(&microDepth[pixel]) == key) { atomicMax(&microOwner[pixel], id + 1u); }
+        if (atomicLoad(&microDepth[pixel]) == key) { atomicMax(&microOwner[pixel], visibility); }
       } else {
         atomicMax(&microDepth[pixel], key);
       }
@@ -135,20 +126,33 @@ fn rasterOwner(@builtin(global_invocation_id) id: vec3u) { raster(id, true); }
 
 struct NativeVertex {
   @builtin(position) position: vec4f,
-  @location(0) normal: vec3f,
+  @location(0) @interpolate(flat) visibility: u32,
   @location(1) viewDepth: f32,
 };
 
 @vertex
 fn nativeVertex(@builtin(vertex_index) i: u32) -> NativeVertex {
-  let v = vertices[largeRead[i / 3u] * 3u + i % 3u];
+  let visibility = largeRead[i / 3u];
+  let triangle = (visibility & TRIANGLE_MASK) - 1u;
+  let v = vertices[triangle * 3u + i % 3u];
   let c = frame.mvp * vec4f(v.xyz, 1.0);
-  return NativeVertex(vec4f(c.xy, (c.z + c.w) * 0.5, c.w), octDecode(u32(v.w)), c.w);
+  return NativeVertex(vec4f(c.xy, (c.z + c.w) * 0.5, c.w), visibility, c.w);
+}
+
+struct NativeVisibility {
+  @location(0) visibility: u32,
+  @builtin(frag_depth) depth: f32,
+};
+
+fn normalizedDepth(key: u32) -> f32 {
+  return f32(key) / f32(DEPTH_MAX);
 }
 
 @fragment
-fn nativeFragment(in: NativeVertex, @builtin(front_facing) front: bool) -> @location(0) vec2u {
-  return vec2u(depthKey(in.viewDepth), octEncode(in.normal * select(-1.0, 1.0, front)));
+fn nativeFragment(in: NativeVertex) -> NativeVisibility {
+  // Use the same reversed logarithmic depth as compute. Projective depth
+  // alone loses the order of distant surfaces with the cockpit near plane.
+  return NativeVisibility(in.visibility, normalizedDepth(depthKey(in.viewDepth)));
 }
 
 @vertex
@@ -157,39 +161,21 @@ fn fullscreen(@builtin(vertex_index) i: u32) -> @builtin(position) vec4f {
   return vec4f(vertices[i], 0.0, 1.0);
 }
 
-fn softwareNormal(id: u32, pixel: vec2f) -> u32 {
-  let t = clipTriangle(id);
-  let a = toPixel(t.a);
-  let b = toPixel(t.b);
-  let c = toPixel(t.c);
-  let area = edge(a, b, c);
-  let w = vec3f(edge(b, c, pixel) / t.a.w, edge(c, a, pixel) / t.b.w, edge(a, b, pixel) / t.c.w);
-  let first = id * 3u;
-  // Signed weights already flip the normal when we shade the back face.
-  return octEncode((octDecode(u32(vertices[first].w)) * w.x +
-    octDecode(u32(vertices[first + 1u].w)) * w.y + octDecode(u32(vertices[first + 2u].w)) * w.z) * -1.0 *
-    select(0.0, 1.0 / abs(area), abs(area) > 0.0));
-}
-
-// An opaque UNORM canvas transfers both exact bit fields into the WebGL world
-// without readPixels/mapAsync or any same-frame CPU copy of the framebuffer.
+// Transport only the winning IDs. Geometry attributes are fetched by the
+// material shader after visibility, and depth stays in the rasterizer.
 @fragment
-fn resolvePixels(@builtin(position) position: vec4f) -> @location(0) vec4f {
-  let packed = u32(position.x) >= frame.size.x;
-  let x = u32(position.x) % frame.size.x;
-  let y = u32(position.y);
-  let pixel = y * frame.size.x + x;
-  let native = textureLoad(nativePixels, vec2i(i32(x), i32(y)), 0).xy;
-  let depth = depthRead[pixel];
+fn resolveVisibility(@builtin(position) position: vec4f) -> @location(0) vec4f {
+  let coord = vec2u(position.xy);
+  let pixel = coord.y * frame.size.x + coord.x;
+  let native = textureLoad(nativeIds, vec2i(coord), 0).x;
   let owner = ownerRead[pixel];
-  let useSoftware = owner != 0u && depth >= native.x;
-  let winner = select(native.x, depth, useSoftware);
-  if (!packed) {
-    return vec4f(vec3f(f32(winner & 255u), f32((winner >> 8u) & 255u), f32(winner >> 16u)) / 255.0, 1.0);
+  var winner = native;
+  if (owner != 0u) {
+    if (native == 0u || normalizedDepth(depthRead[pixel]) >= textureLoad(nativeDepth, vec2i(coord), 0)) {
+      winner = owner;
+    }
   }
-  if (winner == 0u) { return vec4f(0.0, 0.0, 0.0, 1.0); }
-  var normal = native.y;
-  if (useSoftware) { normal = softwareNormal(owner - 1u, vec2f(f32(x) + 0.5, position.y)); }
-  return vec4f(f32(normal & 255u) / 255.0, f32(normal >> 8u) / 255.0, select(128.0 / 255.0, 1.0, useSoftware), 1.0);
+  let bytes = vec3u(winner & 255u, (winner >> 8u) & 255u, winner >> 16u);
+  return vec4f(vec3f(bytes) / 255.0, 1.0);
 }
 `;
