@@ -5,11 +5,11 @@ import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=fe11ada0cd773951';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=01d189b1a8467e23';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=3ca186fb7d49227a';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=b96fdffad53cec8f';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=00ce76228f289119';
 import {addScenicSetpieces,hasScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
@@ -543,7 +543,7 @@ export async function loadSurfaceTextures(THREE, id, signal, sceneryOnly) {
   } catch (error) { for (const texture of owned) texture.dispose(); throw error; }
 }
 
-export async function prepareTrackVisual(root, { id, query, lengthM, signal, scenery = true, sceneryOnly = false, detailRange = null, barrierSource = null, THREE = globalThis.__chevyV6Three || globalThis.THREE } = {}) {
+export async function prepareTrackVisual(root, { id, query, lengthM, signal, scenery = true, sceneryOnly = false, detailRange = null, barrierSource = null, prepareSigns, THREE = globalThis.__chevyV6Three || globalThis.THREE } = {}) {
   // Contract fixtures deliberately have no rendering engine or browser. Their route behavior stays independent.
   if (!root?.isObject3D || !THREE?.TextureLoader || typeof document === 'undefined') return null;
   if (root.userData.asfaltoReferenceVisual) return root.userData.asfaltoReferenceVisual;
@@ -595,8 +595,15 @@ export async function prepareTrackVisual(root, { id, query, lengthM, signal, sce
   if (templates && query && Number.isFinite(lengthM)) details = { ...details,
     ...addRoadsideDetails(THREE, root, { id, query, lengthM, heightAt, templates, textures, treePlacements, detailRange }) };
   else if (templates) for (const geometry of new Set(templates.values())) geometry.dispose();
-  if(templates && heightAt && query)details={...details,...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange,barrierSource:id==='cuesta_lipan'?barrierSource:null}),...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,templates,textures,detailRange})};
-  else if(scenery&&query)root.userData.asfaltoRegionalCameras=regionalCameraProfiles({id,query,lengthM});
+  if(templates && heightAt && query){
+    const shoulderAt=terrainHeightSampler(THREE,root,mesh=>/^(ROAD_(SHOULDERS|Shoulder_)|V2_ROAD_DETAIL.*SHOULDER)/.test(mesh.name),{includeDefaultTerrain:false});
+    const signHeightAt=(x,z)=>Math.max(heightAt(x,z),shoulderAt.raw(x,z));
+    const existingCues=prepareSigns?.(root,{THREE,query,lengthM,heightAt,detailRange})||[];
+    details={...details,
+      ...addRegionalLandscapeDetails(THREE,root,{id,query,lengthM,heightAt,textures,templates,scenery,detailRange,
+        barrierSource:id==='cuesta_lipan'?barrierSource:null,signHeightAt,existingCues}),
+      ...addRegionalWayfinding(THREE,root,{id,query,lengthM,heightAt,signHeightAt,templates,textures,detailRange,existingCues})};
+  }else if(scenery&&query)root.userData.asfaltoRegionalCameras=regionalCameraProfiles({id,query,lengthM});
   if(scenery&&heightAt&&query)details={...details,...refineRegionalShoreline(THREE,root,{id,query,heightAt,textures})};
   if(scenery&&id!=='cuesta_lipan'&&heightAt&&query){
     details.scenicSetpieces=addScenicSetpieces(THREE,root,{id,leg:'outbound',query,lengthM,heightAt});

@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
 import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs?v=dab87f84716fb019';
-import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=f8d32d8a5f2f2357';
+import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=d02a9a791bd9002e';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {createGameplayBridge} from '../src/tracks/gameplay-bridge.mjs?v=c594401a38ba1b3f';
-import {planReturnLandmarks} from '../src/tracks/visuals/return-landmarks.mjs?v=014dc064c17ba04b';
+import {planReturnLandmarks} from '../src/tracks/visuals/return-landmarks.mjs?v=75d9331ad7501fa6';
 
 for(const id of CIRCUIT_IDS)test(id+' keeps both joins and drives through five distinct return chapters',()=>{
   const source=readCircuitSource(id),loop=createClosedRoute(source,{id}),{closure,samples,route}=loop;

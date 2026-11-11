@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=f0712ba4b9d1ee26';
+import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=a9de555055fb0e9e';
 import {bindSharedInstanceWindows,installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
 
 test('ordinary roadside windows prepare their buffer before drawing and skip hidden or off-layer passes',()=>{

@@ -1,5 +1,5 @@
 import {instanceDetailTiles} from './roadside-details.mjs?v=22883e922e9447bd';
-import {addRouteDirection} from './route-direction.mjs?v=45e8a4216d1415cc';
+import {addRouteDirection} from './route-direction.mjs?v=e9e6dcf49d8bbd2e';
 
 const palette={
   dos_lagos:['#706a5a','#80765c','#33585a','#5e6547'],

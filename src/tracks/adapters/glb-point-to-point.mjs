@@ -5,7 +5,7 @@ import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mj
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=65ec87e78d128128';
+import { prepareTrackVisual, prepareReturnScenery } from '../visuals/reference-landscape.mjs?v=893415f03864bece';
 const ENV = new Set(['clear','overcast','golden','sunset','moonrise','night']);
 const freeze = (v,seen=new Set()) => { if (!v || typeof v !== 'object' || Object.isFrozen(v) || seen.has(v)) return v; seen.add(v); Object.values(v).forEach(child=>freeze(child,seen)); return Object.freeze(v); };
 const abortError = () => Object.assign(new Error('operation aborted'), { name: 'AbortError' });

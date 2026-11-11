@@ -6,8 +6,9 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=65ec87e78d128128';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=893415f03864bece';
 import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=f7b5dadf80bbf238';
+import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=4f53c00990f3791d';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -404,7 +405,11 @@ export function createCuestaLipanAdapter(dependencies) {
           tx.visualRoot.add(root);
           try {
             const detailRange={startM:sector.startM,endM:sector.endM};
-            await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery, lengthM: sourceRoute.lengthM, detailRange, barrierSource:sector.startM<6100?{collisionRoot:tx.collisionById.get(sector.id),sectorId:sector.id}:null });
+            await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery,
+              lengthM: sourceRoute.lengthM, detailRange,
+              barrierSource: sector.startM < 6100 ? { collisionRoot: tx.collisionById.get(sector.id), sectorId: sector.id } : null,
+              prepareSigns: (sectorRoot, options) => prepareLipanAuthoredSigns(sectorRoot, { ...options, sectorId: sector.id }),
+            });
             tx.closureRoots?.carveSourceTerrain?.(root);
             // S05 uses its highest-detail ground whenever it is the driving sector, even at low quality.
             const pilot = sector.id === 'S05' && lod === 0 && await loadLipanPilot({

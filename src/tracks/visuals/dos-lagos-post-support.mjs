@@ -1,4 +1,4 @@
-import {terrainHeightSampler} from './reference-landscape.mjs?v=65ec87e78d128128';
+import {terrainHeightSampler} from './reference-landscape.mjs?v=893415f03864bece';
 
 const NATIVE_POST=/^(PROP_(Guardrail_Posts|SignPosts)|DETAIL_Roadside_Posts)_Primitive_/;
 const INSTANCE_POST=/^ASFALTO_DETAIL_(guard-post|sign-post|kilometre-post)_/;
@@ -45,7 +45,7 @@ export function addDosLagosPostSupport(T,root,query,lengthM){
  };
  root.traverse(mesh=>{
   if(!mesh.isMesh)return;
-  if(NATIVE_POST.test(mesh.name))visitNativeFeet(T,mesh,v=>record(v,mesh.name.startsWith('PROP_Guardrail_')));
+  if(mesh.visible&&NATIVE_POST.test(mesh.name))visitNativeFeet(T,mesh,v=>record(v,mesh.name.startsWith('PROP_Guardrail_')));
   if(!mesh.isInstancedMesh||!INSTANCE_POST.test(mesh.name))return;
   const source=mesh.userData.asfaltoCloneForChart?.();if(!source)return;
   try{for(let i=0;i<source.count;i++){source.getMatrixAt(i,matrix);record(point.set(0,-.5,0).applyMatrix4(matrix).applyMatrix4(mesh.matrixWorld),mesh.name.startsWith('ASFALTO_DETAIL_guard-post_'));}}

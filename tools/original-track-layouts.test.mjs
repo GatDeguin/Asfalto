@@ -16,8 +16,8 @@ test('playable route distances match the point-to-point source manifests', () =>
 });
 
 test('the live host and Iguazú adapter do not add a connector after the authored finish', () => {
-  assert.doesNotMatch(read('src/legacy/module-02.mjs?v=425f8400e08a617f'), /prepareClosedRoute\s*\(/);
-  assert.doesNotMatch(read('src/tracks/adapters/cataratas-iguazu.mjs?v=3f0ac0c089745439'), /prepareClosedRoute/);
+  assert.doesNotMatch(read('src/legacy/module-02.mjs?v=89baa5d5bcbca81f'), /prepareClosedRoute\s*\(/);
+  assert.doesNotMatch(read('src/tracks/adapters/cataratas-iguazu.mjs?v=bd3d631ebb6d1f66'), /prepareClosedRoute/);
 });
 
 test('club competitions offer one pass and the route sheet uses the official distance', () => {

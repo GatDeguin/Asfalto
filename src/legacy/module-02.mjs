@@ -30,7 +30,7 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=37e9c79b11ba671f';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=3b371003aa0e2ce0';
 import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=5ebdf5bf2d7a3ca4';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
@@ -66,7 +66,7 @@ import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=d848a5739bbf4d01';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=80e541c39e3bf279';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';

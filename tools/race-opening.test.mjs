@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRaceOpening} from '../src/game/race-opening.mjs?v=463e5f3d50f43451';
-import {regionalCameraProfiles} from '../src/tracks/visuals/regional-landscape-details.mjs?v=b96fdffad53cec8f';
+import {regionalCameraProfiles} from '../src/tracks/visuals/regional-landscape-details.mjs?v=00ce76228f289119';
 
 const viewpoint={position:[50,40,50],positionEnd:[68,46,62],target:[200,15,-100],fov:55,fovEnd:52,sM:320};
 
