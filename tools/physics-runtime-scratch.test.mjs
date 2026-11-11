@@ -25,20 +25,75 @@ for(const height of [.56,3])for(const configured of [false,true]){
 }
 console.log('physics runtime: 64 real Rapier ticks matched baseline; grounded/airborne, ABS/chassis, impact, buffer reuse and historical copy passed');
 
-vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=a5d05c0233a7e691',root),'utf8'),context);
+vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=20b4c62a387397e8',root),'utf8'),context);
 const proto=context.AsfaltoV6Integration.RaceSimulationV6.prototype;
-const live=session(context,.56,false);live.stepFixed({});
-let recorded,maintenance;
-const host={state:{status:'RUNNING'},_snapshot:live.getSnapshot(),_physicalEnvironmentQuery:{},_physicalEnvironment:{},_physicalFrameView:{},_physicalObservers:new Set(),_vehicleMaintenance:{sample(frame){maintenance=frame;}},_physicsSession:live,_projection:{s:1,raceProgress:1},_browserOptions:{},_physicalSessionSequence:1,_physicalQAMutated:false,_playerTeleportCount:0,_physicalTeleportBaseline:0,_recoveryCount:0,_referenceChart:0,getPhysicsSnapshotCopy:proto.getPhysicsSnapshotCopy};
-proto._emitPhysicalStep.call(host,'RUNNING',0);assert.equal(maintenance.snapshot,host._snapshot);assert.ok(!Object.isFrozen(host._snapshot));
-assert.equal(maintenance.statusBefore,'RUNNING');assert.equal(maintenance.statusAfter,'RUNNING');
-host.state.status='FINISHED';host._physicalObservers.add({sample(frame){recorded=frame;}});proto._emitPhysicalStep.call(host,'RUNNING',0);
-assert.equal(maintenance.statusAfter,'FINISHED');assert.equal(maintenance.running,true);
-assert.ok(Object.isFrozen(recorded.snapshot));assert.notEqual(recorded.snapshot,host._snapshot);const time=recorded.snapshot.timeSeconds;
-for(let i=0;i<3;i++)live.stepFixed({});assert.equal(recorded.snapshot.timeSeconds,time);assert.ok(!Object.isFrozen(host._snapshot));
-live.mutableSnapshots=false;const immutable=live.stepFixed({});assert.ok(Object.isFrozen(immutable));const originalTime=immutable.timeSeconds;live.stepFixed({});assert.equal(immutable.timeSeconds,originalTime);
-live.dispose();live.world.free();
-console.log('physics integration: synchronous maintenance view, immutable observer history and legacy default snapshot passed');
+test('lifecycle listeners rebase without copying the physics history each tick', () => {
+ const live = session(context, .56, false);
+ try {
+  let recorded, maintenance, rebased, invalidated;
+  let copies = 0;
+  const host = Object.assign(Object.create(proto), {
+   state: {status: 'RUNNING'}, _snapshot: live.stepFixed({}),
+   _physicalEnvironmentQuery: {}, _physicalEnvironment: {}, _physicalFrameView: {},
+   _physicalObservers: new Set(), _physicalStepObservers: new Set(),
+   _vehicleMaintenance: {sample(frame) { maintenance = frame; }}, _physicsSession: live,
+   _projection: {s: 1, raceProgress: 1}, _browserOptions: {}, _physicalSessionSequence: 1,
+   _physicalQAMutated: false, _playerTeleportCount: 0, _physicalTeleportBaseline: 0,
+   _recoveryCount: 0, _referenceChart: 0, _referenceFrameSequence: 0,
+   _publish() { return this.state; },
+   getPhysicsSnapshotCopy() {
+    copies++;
+    return proto.getPhysicsSnapshotCopy.call(this);
+   },
+  });
+  host.subscribePhysicalLifecycle({
+   rebase(event) { rebased = event; },
+   invalidated(reason) { invalidated = reason; },
+  });
+  host._emitPhysicalStep('RUNNING', 0);
+  assert.equal(copies, 0);
+  assert.equal(maintenance.snapshot, host._snapshot);
+  assert.equal(maintenance.statusAfter, 'RUNNING');
+  assert.ok(!Object.isFrozen(host._snapshot));
+
+  host.transformReferenceFrame({
+   point: ([x, y, z]) => [x + 10, y, z],
+   vector: value => [...value],
+   rotation: value => [...value],
+  }, {referenceChart: 1});
+  assert.equal(rebased.referenceChart, 1);
+  assert.equal(rebased.matrix[12], 10);
+  assert.equal(copies, 0);
+
+  host.state.status = 'FINISHED';
+  const unsubscribe = host.subscribePhysicalSteps({sample(frame) { recorded = frame; }});
+  host._emitPhysicalStep('RUNNING', 0);
+  assert.equal(copies, 1);
+  assert.equal(maintenance.statusAfter, 'FINISHED');
+  assert.equal(maintenance.running, true);
+  assert.ok(Object.isFrozen(recorded.snapshot));
+  assert.notEqual(recorded.snapshot, host._snapshot);
+  const time = recorded.snapshot.timeSeconds;
+  for (let i = 0; i < 3; i++) live.stepFixed({});
+  assert.equal(recorded.snapshot.timeSeconds, time);
+  assert.ok(!Object.isFrozen(host._snapshot));
+  assert.equal(unsubscribe(), true);
+  host._invalidatePhysicalObservers('session-restarted');
+  assert.equal(invalidated, 'session-restarted');
+  host._emitPhysicalStep('RUNNING', 0);
+  assert.equal(copies, 1);
+
+  live.mutableSnapshots = false;
+  const immutable = live.stepFixed({});
+  assert.ok(Object.isFrozen(immutable));
+  const originalTime = immutable.timeSeconds;
+  live.stepFixed({});
+  assert.equal(immutable.timeSeconds, originalTime);
+ } finally {
+  live.dispose();
+  live.world.free();
+ }
+});
 {
  const a=session(context,.56,false),b=session(old,.56,false);
  for(const s of [a,b]){s.world.createCollider(R.ColliderDesc.cuboid(.2,3,8).setTranslation(4,2,0));s.body.setLinvel({x:40,y:0,z:0},true);s.reserveImpactContacts?.();}

@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {gunzipSync} from 'node:zlib';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass } from '../src/render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
+import { createCockpitRenderPass, patchCockpitLightStateSource } from '../src/render/cockpit-render-pass.mjs?v=f7386d0d68b4cb16';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();
@@ -24,6 +26,18 @@ function fixture() {
   };
   return {scene,camera,cockpit,road,dash,light,guide,renderer,calls};
 }
+
+test('the cockpit light state patch applies only once to the pinned Three renderer', async () => {
+  const bootstrap = JSON.parse(await readFile(new URL('../assets/manifests/workshop-bootstrap.json', import.meta.url)));
+  const source = gunzipSync(Buffer.from(bootstrap.threeModuleGz, 'base64')).toString();
+  const patched = patchCockpitLightStateSource(source);
+  assert.notEqual(patched, source);
+  assert.equal(patchCockpitLightStateSource(patched), patched);
+  const ambiguous = source + source;
+  assert.equal(patchCockpitLightStateSource(ambiguous), ambiguous);
+  const unknown = 'export class WebGLRenderer {}';
+  assert.equal(patchCockpitLightStateSource(unknown), unknown);
+});
 
 test('near road cannot overwrite the lower cockpit, while internal depth and world lighting remain enabled',()=>{
   const f=fixture();

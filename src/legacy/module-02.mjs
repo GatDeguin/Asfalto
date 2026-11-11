@@ -90,7 +90,7 @@ import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=8
 import { createRaceProbeLighting } from '../render/race-probe-lighting.mjs?v=46236ecbd7b772bd';
 import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=f087a0217ed8f9e5';
 import { createRaceVirtualTerrain, installVirtualTerrainSettings } from '../render/virtual-terrain.mjs?v=80bfd0bd43db6dd9';
-import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
+import { createCockpitRenderPass, patchCockpitLightStateSource } from '../render/cockpit-render-pass.mjs?v=f7386d0d68b4cb16';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=1ce084169f294d66';
 import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=388287a840df0163';
@@ -1570,7 +1570,7 @@ async function loadThree() {
   const coreUrl = URL.createObjectURL(new Blob([coreSource], { type: 'text/javascript' }));
   const moduleCompressedSource = payload.threeModuleGz;
   delete payload.threeModuleGz;
-  const moduleSource = patchOpaqueTransmissionSource(await gunzipBase64ToText(moduleCompressedSource))
+  const moduleSource = patchCockpitLightStateSource(patchOpaqueTransmissionSource(await gunzipBase64ToText(moduleCompressedSource)))
     .replaceAll('./three.core.min.js', coreUrl);
   const moduleUrl = URL.createObjectURL(new Blob([moduleSource], { type: 'text/javascript' }));
   try {
@@ -6056,8 +6056,7 @@ function prepareStartSignal(){
  finishRoute=context.routeQuery;
  finishMarker.clear();
  startSignalSubscription?.();
- startSignalSubscription=simulation.subscribePhysicalSteps({
-  sample(){},
+ startSignalSubscription=simulation.subscribePhysicalLifecycle({
   rebase:event=>{startSignal.rebase(event);finishMarker.rebase(event);},
   invalidated:reason=>{
    startSignal.clear();finishMarker.clear();finishRoute=null;
@@ -6117,7 +6116,7 @@ function clearRoadTestGates(){roadTestCourseUnsubscribe?.();roadTestCourseUnsubs
 function setRoadTestGates(gates,{sessionSequence}={}){
  const state=simulation.getPhysicalObservationState();if(state.sessionSequence!==sessionSequence)throw new Error('Road-test gate session changed');
  const result=roadTestCourse.set(gates,{sessionSequence,referenceChart:state.referenceChart});roadTestCourseUnsubscribe?.();
- roadTestCourseUnsubscribe=simulation.subscribePhysicalSteps({sample(){},rebase:event=>roadTestCourse.rebase(event),invalidated:()=>clearRoadTestGates()});return result;
+ roadTestCourseUnsubscribe=simulation.subscribePhysicalLifecycle({rebase:event=>roadTestCourse.rebase(event),invalidated:()=>clearRoadTestGates()});return result;
 }
 const v6InputAdapter = globalThis.AsfaltoV6Input.createInputAdapter();
 v6InputAdapter.setProfile(getSelectedV6Profile());

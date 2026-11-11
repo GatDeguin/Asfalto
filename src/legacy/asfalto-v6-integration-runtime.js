@@ -1250,6 +1250,7 @@
       this._previousRivalSnapshot = null;
       this._currentRivalSnapshot = null;
       this._physicalObservers = new Set();
+      this._physicalStepObservers = new Set();
       this._physicalFrameView={};this._physicalEnvironment={};
       this._physicalEnvironmentQuery={worldPosition:null,speedMps:0};
       this._vehicleMaintenance = options.vehicleMaintenance || null;
@@ -1311,8 +1312,23 @@
     // Observers subscribe after start(). They receive only actual player physics steps.
     subscribePhysicalSteps(observer) {
       if (this._disposed || !observer || typeof observer.sample !== 'function') throw new TypeError('Active physical observer with sample callback required');
+      return this._subscribePhysicalObserver(observer, true);
+    }
+
+    subscribePhysicalLifecycle(observer) {
+      if (this._disposed || !observer || typeof observer.rebase !== 'function') throw new TypeError('Active physical lifecycle observer with rebase callback required');
+      return this._subscribePhysicalObserver(observer, false);
+    }
+
+    _subscribePhysicalObserver(observer, sampleSteps) {
       this._physicalObservers.add(observer);
-      return () => this._physicalObservers.delete(observer);
+      if (sampleSteps) this._physicalStepObservers.add(observer);
+      return () => this._removePhysicalObserver(observer);
+    }
+
+    _removePhysicalObserver(observer) {
+      this._physicalStepObservers.delete(observer);
+      return this._physicalObservers.delete(observer);
     }
 
     getPhysicalObservationState() {
@@ -1341,6 +1357,7 @@
     _invalidatePhysicalObservers(reason) {
       const observers = [...this._physicalObservers];
       this._physicalObservers.clear();
+      this._physicalStepObservers.clear();
       for (const observer of observers) { try { observer.invalidated?.(reason); } catch {} }
     }
 
@@ -1350,7 +1367,8 @@
     }
 
     _emitPhysicalStep(statusBefore, previousTime) {
-      if ((!this._physicalObservers.size && !this._vehicleMaintenance) || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
+      const stepObservers = this._physicalStepObservers;
+      if ((!stepObservers.size && !this._vehicleMaintenance) || !this._snapshot || this._snapshot.timeSeconds === previousTime) return;
       const snapshot=this._snapshot,q=this._physicalEnvironmentQuery;
       q.worldPosition=snapshot.chassis.position;q.speedMps=Math.hypot(...snapshot.chassis.linearVelocity);
       const environment=this._physicsSession.environment?.(q,this._physicalEnvironment)||this._physicalEnvironment;
@@ -1362,11 +1380,11 @@
       // Maintenance consumes the borrowed view synchronously. Historical observers
       // explicitly own a copy; never recursively freeze the physics ring buffers.
       this._vehicleMaintenance?.sample(frame);
-      if(!this._physicalObservers.size)return;
+      if (!stepObservers.size) return;
       const historical=freezeDeep({...frame,snapshot:this.getPhysicsSnapshotCopy(),projection:cloneProjection(this._projection),environment:{...environment}});
-      for (const observer of [...this._physicalObservers]) {
-        if (!this._physicalObservers.has(observer)) continue;
-        try { observer.sample(historical); } catch { this._physicalObservers.delete(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
+      for (const observer of [...stepObservers]) {
+        if (!stepObservers.has(observer)) continue;
+        try { observer.sample(historical); } catch { this._removePhysicalObserver(observer); try { observer.invalidated?.('observer-callback-error'); } catch {} }
       }
     }
 
@@ -1404,7 +1422,7 @@
       if(this._physicalObservers.size){
         const axes=[[1,0,0],[0,1,0],[0,0,1]].map(v=>transform.vector(v)),origin=transform.point([0,0,0]);
         const event=freezeDeep({referenceChart,previousChart,matrix:[...axes[0],0,...axes[1],0,...axes[2],0,...origin,1]});
-        for(const observer of [...this._physicalObservers]){try{if(typeof observer.rebase!=='function')throw new Error('rebase handler required');observer.rebase(event);}catch{this._physicalObservers.delete(observer);try{observer.invalidated?.('observer-rebase-required');}catch{}}}
+        for(const observer of [...this._physicalObservers]){try{if(typeof observer.rebase!=='function')throw new Error('rebase handler required');observer.rebase(event);}catch{this._removePhysicalObserver(observer);try{observer.invalidated?.('observer-rebase-required');}catch{}}}
       }
       this.state=this._publish(this._projection,this._snapshot);
       return Object.freeze({applied:true,previousChart,referenceChart,sequence:this._referenceFrameSequence,raceProgressM:this._projection.raceProgress,transform});
@@ -2137,7 +2155,7 @@
     }
 
     _advanceFixed(input) {
-      if (!this._physicalObservers.size && !this._vehicleMaintenance) return this._advanceRulesFixed(input);
+      if (!this._physicalStepObservers.size && !this._vehicleMaintenance) return this._advanceRulesFixed(input);
       const statusBefore=this._rules.state.status,previousTime=this._snapshot?.timeSeconds;
       const feedback=this._advanceRulesFixed(input);
       this._emitPhysicalStep(statusBefore,previousTime);

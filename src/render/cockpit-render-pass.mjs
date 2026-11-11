@@ -6,6 +6,35 @@ import {compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=5e
 // before returning. No render target, material copy or GPU resource is created.
 const INTERIOR_MASK = 1 << 30;
 
+// Three r180 reuses one light topology per scene and render depth. The cockpit
+// changes layers on the same camera. Keep each topology alive across frames
+// while retaining Three's transmission targets, light collection and uniforms.
+const renderStateAnchor = 'function Zi(e){const t=new ji(e),n=[],r=[];const i={lightsArray:n,shadowsArray:r,camera:null,lights:t,transmissionRenderTarget:{}};return{init:function(e){i.camera=e,n.length=0,r.length=0},state:i,setupLights:function(){t.setup(n)},setupLightsView:function(e){t.setupView(n,e)},pushLight:function(e){n.push(e)},pushShadow:function(e){r.push(e)}}}';
+
+export function patchCockpitLightStateSource(source) {
+  const offset = source.indexOf(renderStateAnchor);
+  if (offset < 0 || offset !== source.lastIndexOf(renderStateAnchor)) return source;
+  return source.replace(renderStateAnchor, `function Zi(extensions){
+    const worldLights=new ji(extensions), lightsArray=[], shadowsArray=[];
+    let interiorLights;
+    const state={lightsArray,shadowsArray,camera:null,lights:worldLights,transmissionRenderTarget:{}};
+    return {
+      init(camera){
+        state.camera=camera;
+        state.lights=camera?.layers?.mask===${INTERIOR_MASK}
+          ? (interiorLights??=new ji(extensions)) : worldLights;
+        lightsArray.length=0;
+        shadowsArray.length=0;
+      },
+      state,
+      setupLights(){state.lights.setup(lightsArray);},
+      setupLightsView(camera){state.lights.setupView(lightsArray,camera);},
+      pushLight(light){lightsArray.push(light);},
+      pushShadow(light){shadowsArray.push(light);}
+    };
+  }`);
+}
+
 export function createCockpitRenderPass({ renderer, scene, camera, cockpit, overlays = [], renderWorld = () => renderer.render(scene,camera), prepareWorld = compile => compile(), prepareInterior = compile => compile() }) {
   const masks = [], visibility = [], temporarilyHidden = [];
   let dirty=true,disposed=false,rebuilds=0,revision=0;
