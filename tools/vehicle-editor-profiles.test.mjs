@@ -8,10 +8,10 @@ import { createVehicleCameraRig } from '../src/game/vehicle-camera-rig.mjs?v=467
 import { createVehicleCockpitLayouts } from '../src/game/cockpit-layout-file.mjs?v=3400aba2ce03221e';
 import { createCompositionState, sanitizeCompositionState } from '../src/game/composition-editor-state.mjs?v=c4711cb3438b2dc0';
 import { createLightingPresetStore } from '../src/game/lighting-preset-file.mjs?v=b7a7523d5581d2ac';
-import { installRayTracingSettings } from '../src/render/ray-tracing-settings.mjs?v=513f6fff23644d17';
-import { RAY_TRACING_STORAGE_KEY } from '../src/render/ray-traced-occlusion.mjs';
+import { installRayTracingSettings } from '../src/render/ray-tracing-settings.mjs?v=f087a0217ed8f9e5';
+import { RAY_TRACING_STORAGE_KEY } from '../src/render/ray-traced-occlusion.mjs?v=bce6dfbce11d570c';
 import { applyPhoneCockpitProjection } from '../src/render/phone-cockpit-projection.mjs?v=c9d3861a0c494f0b';
-import { startServer } from '../server.mjs?v=9eba410657deb1ea';
+import { startServer } from '../server.mjs?v=d5132a06b199d493';
 
 const storage = () => {
   const data = new Map();

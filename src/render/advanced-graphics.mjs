@@ -5,7 +5,7 @@ import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../p
 import {GRAPHICS_QUALITY_LABELS} from './graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {createAdvancedMaterials}from'./advanced-materials.mjs?v=9c4d214f51c3abfd';
 import {createPivotPainter}from'./pivot-painter.mjs?v=51fc8374f2d1160e';
-import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=20a8f9064089448f';
+import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=cd25059b36d94dd7';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=85d450c23e36764c';
 import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=8323c5f9d777ad62';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
@@ -56,6 +56,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  const change=event=>setSettings(event.detail||{});globalThis.addEventListener?.('asfalto:advanced-graphics',change);configure();refresh();
  return{
   refresh,invalidatePreparation(){structureRevision++;preparedSignature=null;},setSettings,getEffectiveQuality:()=>quality,
+  getRadianceProxies:()=>settings.dfao&&screenLightingPolicy(quality).dfao?field.radianceProxies():[],
   resizeRenderer:dimensions=>rendererBudget?.apply(governed(),dimensions),
   getRendererQuality:()=>governed(),
   beginFrameWindow(){lastFrameTime=null;pendingFrame=false;return performanceGovernor?.beginWindow('workshop-visible');},

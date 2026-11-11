@@ -1,5 +1,5 @@
 // Stackless, depth-first BVH. Leaves retain exact source triangles; no proxy boxes.
-export function buildRayBvh(vertices) {
+export function buildRayBvh(vertices, surfaceColors) {
   const count=Math.floor(vertices.length/9),ids=Array.from({length:count},(_,i)=>i),nodes=[],ordered=[];
   const center=(id,axis)=>(vertices[id*9+axis]+vertices[id*9+3+axis]+vertices[id*9+6+axis])/3;
   function split(first,end) {
@@ -12,7 +12,13 @@ export function buildRayBvh(vertices) {
   if(count)split(0,count);
   const bounds=new Float32Array(Math.max(8,nodes.length*8)),triangles=new Float32Array(Math.max(12,count*12));
   nodes.forEach((n,i)=>{bounds.set(n.min,i*8);bounds[i*8+3]=n.first<0?-1:n.first*8+n.count;bounds.set(n.max,i*8+4);bounds[i*8+7]=n.escape;});
-  ordered.forEach((id,i)=>{const offset=id*9,out=i*12;for(let a=0;a<3;a++){triangles[out+a]=vertices[offset+a];triangles[out+4+a]=vertices[offset+3+a]-vertices[offset+a];triangles[out+8+a]=vertices[offset+6+a]-vertices[offset+a];}});
+  ordered.forEach((id,i)=>{
+    const offset=id*9,out=i*12;
+    for(let a=0;a<3;a++){
+      triangles[out+a]=vertices[offset+a];triangles[out+4+a]=vertices[offset+3+a]-vertices[offset+a];triangles[out+8+a]=vertices[offset+6+a]-vertices[offset+a];
+      if(surfaceColors)triangles[out+3+a*4]=surfaceColors[id*3+a];
+    }
+  });
   return {bounds,triangles,nodeCount:nodes.length,triangleCount:count};
 }
 export function traceRayBvh(bvh,origin,direction,maxDistance=Infinity) {

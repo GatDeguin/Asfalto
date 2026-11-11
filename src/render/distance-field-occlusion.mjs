@@ -38,7 +38,8 @@ export function createDistanceFieldOcclusion(T,{scene,maxObjects=64}={}){
   const radius=size.length();
   if(radius<.04||Math.max(size.x,size.y,size.z)>12||size.x>6&&size.z>6&&size.y<.7)return null;
   const q=rotation.clone().normalize();proxyBuilds++;
-  return {name:o.name,index,center:center.clone(),half:size.clone(),rotation:q,inverse:q.clone().conjugate(),radius,distance:0,cell:cellKey(center)};
+  const color=materials[0]?.userData?.asfaltoSurfaceColorBase||materials[0]?.color;
+  return {name:o.name,index,center:center.clone(),half:size.clone(),rotation:q,inverse:q.clone().conjugate(),radius,distance:0,cell:cellKey(center),color:color?.toArray?.()||[.33,.32,.31]};
  }
  function refresh({camera}={}){
   if(disposed)return 0;
@@ -88,6 +89,7 @@ export function createDistanceFieldOcclusion(T,{scene,maxObjects=64}={}){
   return result;
  }
  return {uniforms,glsl:GLSL,refresh,setQuality,sampleDistance,invalidate(){forceBuild=true;lastQuery="";},
+  radianceProxies:()=>proxies.slice(0,uniforms.anDfaCount.value).map(p=>({center:p.center.toArray(),halfExtent:p.half.toArray(),rotation:p.rotation.toArray(),color:p.color})),
   diagnostics:()=>({enabled:!!uniforms.anDfaEnabled.value,tier,representation:'analytic-signed-distance-OBB-proxies',approximation:'opaque local bounding boxes; broad merged wall envelopes, terrain slabs, foliage and vehicles omitted',proxyCount:uniforms.anDfaCount.value,candidates,capacity,cachedProxies,cachedOwners:records.size,instanceVisits,proxyBuilds,queryVisits,spatialCells:grid.size,rangeM:RANGE_M,rays:uniforms.anDfaRays.value,steps:uniforms.anDfaSteps.value,proxies:proxies.map(p=>({name:p.name,index:p.index,center:p.center.toArray(),halfExtent:p.half.toArray(),rotation:p.rotation.toArray(),distanceM:p.distance})),disposed}),
   dispose(){if(disposed)return;disposed=true;proxies=[];records.clear();grid.clear();cachedProxies=0;uniforms.anDfaCount.value=0;uniforms.anDfaEnabled.value=0;texture.dispose();}
  };

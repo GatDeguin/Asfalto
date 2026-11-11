@@ -1,18 +1,20 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {waitForSignal} from '../src/runtime/abortable.mjs?v=c91114c944607feb';import {createSessionTransactionRunner} from '../src/menu/v7-session-runtime.mjs?v=70b376bd29cce8c2';
-const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=24c6181cd570a1f1',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=b4cce9f6618c1b1d',import.meta.url),'utf8');
+const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=e07c155d46bc4f28',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=bb5ec8193025aa90',import.meta.url),'utf8');
 const extract=(s,start,end)=>s.slice(s.indexOf(start),s.indexOf(end,s.indexOf(start))).trim();
 const bind=(source,scope)=>new Function('scope',`with(scope){return (${source});}`)(scope);
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};const tick=()=>new Promise(r=>setImmediate(r));
 test('continuous sky and weather blends do not invalidate the prepared image',()=>{
  const selection={skyId:'clear',weather:'clear'},live={...selection};
- const variant=bind(extract(moduleSource,'  function renderPreparationVariant(','  async function prepareAuxiliaryRendering('),{
+ const scope={
   raceWorld:{getPerformanceTier:()=> 'low',track:{id:'dos_lagos'},getDrivingLights:()=>({mode:'off'}),
    getAdvancedGraphicsEnvironment:()=>live,getRenderEnvironmentSelection:()=>selection},
-  cockpit:{visible:true},camera:{layers:{mask:1}},readAdvancedGraphics:()=>({}),renderingSceneRevision:0,cockpitRenderPass:null,renderer:{},
- });
+  cockpit:{visible:true},camera:{layers:{mask:1}},readAdvancedGraphics:()=>({}),renderingSceneRevision:0,rayShaderRevision:0,cockpitRenderPass:null,renderer:{},
+ };
+ const variant=bind(extract(moduleSource,'  function renderPreparationVariant(','  async function prepareAuxiliaryRendering('),scope);
  const before=variant();live.skyId='overcast';live.weather='rain';
  assert.equal(variant(),before);
- selection.weather='rain';assert.notEqual(variant(),before);
+ scope.rayShaderRevision++;assert.notEqual(variant(),before);
+ const withProbes=variant();selection.weather='rain';assert.notEqual(variant(),withProbes);
 });
 const prepareSource=extract(moduleSource,'  let renderingPreparation=','  gpuFrameTimer=createGpuFrameTimer');
 const preparationScope={raceWorld:{getRenderEnvironmentSelection:()=>({}),getPerformanceTier:()=>'balanced',getDrivingLights:()=>({mode:'off'}),prepareHydrology:async()=>{},prepareWaterReflections:async()=>{},getRenderFrame:()=>({chassis:{position:[0,0,0]}})},cockpit:{visible:true},camera:{layers:{mask:1}},scene:{},renderer:{},compositionEditor:null,authoredMirrors:null,cockpitMirrors:{prepare:async()=>{}},readAdvancedGraphics:()=>({}),gpuFrameTimer:{beginWindow(){}},raceCameraState:{current:'cockpit'}};

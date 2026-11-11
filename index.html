@@ -244,7 +244,7 @@
         <label class="slider-row"><span>Fuerza de freno<output id="brake-strength-value">100%</output></span><input id="brake-strength" type="range" min="0.55" max="1.55" step="0.01" value="1"></label>
         <label class="slider-row"><span>Velocidad de cambio<output id="shift-speed-value">100%</output></span><input id="shift-speed" type="range" min="0.65" max="1.45" step="0.01" value="1"></label>
         <label class="setting-row select-row"><span>Calidad gráfica<small>Ajusta la resolución interna según el dispositivo.</small></span><select id="graphics-quality"><option value="auto">Auto</option><option value="high">Alta</option><option value="balanced">Balanceada</option><option value="eco">Ahorro</option></select></label>
-        <label class="setting-row select-row"><span>Ray tracing<small>Oclusión ambiental en geometría opaca cercana. Puede reducir los FPS.</small></span><select name="settings-ray-tracing" data-ray-tracing-select aria-label="Calidad de ray tracing"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><small data-ray-tracing-status role="status">Desactivado</small>
+        <label class="setting-row select-row"><span>Iluminación por rayos<small>Luz indirecta y reflejos rugosos cerca del auto con WebGPU.</small></span><select name="settings-ray-tracing" data-ray-tracing-select aria-label="Calidad de iluminación por rayos"><option value="off">Apagado</option><option value="balanced">Equilibrado</option><option value="high">Alto</option></select></label><small data-ray-tracing-status role="status">Desactivado</small>
       </section>
     </div>
 
@@ -366,7 +366,7 @@
 <script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
 <script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
 <script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
-<script type="module" src="./src/legacy/module-02.mjs?v=24c6181cd570a1f1"></script>
+<script type="module" src="./src/legacy/module-02.mjs?v=e07c155d46bc4f28"></script>
 
 
 
@@ -532,7 +532,7 @@
       <section class="v6-panel" id="v6-settings-panel" role="tabpanel" aria-labelledby="v6-tab-settings">
         <header class="v6-panel-head"><div><span class="v6-kicker">Placa técnica</span><h2>Ajustes</h2></div><p>Consecuencias claras, controles discretos y accesibilidad sin romper la lectura mecánica.</p></header>
         <div class="v6-setting-group"><h3>Realismo gráfico</h3><label class="v6-tech-row"><span>Materiales e iluminación<small>Relieve, reflejos de pintura y metal, telas, vegetación y luz ambiental.</small></span><select name="v6-advanced-graphics-quality" data-advanced-graphics-quality aria-label="Calidad del realismo gráfico"><option value="auto">Adaptativo</option><option value="cinematic">Cinemática / Ultra</option><option value="high">Alto</option><option value="balanced" selected>Equilibrado</option><option value="low">Bajo</option><option value="off">Apagado</option></select></label><p data-advanced-graphics-status role="status">Equilibrado · preparando materiales e iluminación.</p></div>
-        <div class="v6-setting-group"><h3>Ray tracing</h3><label class="v6-tech-row"><span>Oclusión ambiental<small>Sombras de contacto sobre geometría opaca cercana. Mayor calidad puede reducir los FPS.</small></span><select name="v6-ray-tracing" data-ray-tracing-select aria-label="Ray tracing del juego"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><p data-ray-tracing-status role="status">Desactivado</p></div>
+        <div class="v6-setting-group"><h3>Iluminación por rayos</h3><label class="v6-tech-row"><span>Calidad<small>Rebote de luz y reflejos rugosos en pista. En el taller ajusta la oclusión ambiental.</small></span><select name="v6-ray-tracing" data-ray-tracing-select aria-label="Calidad de iluminación por rayos del juego"><option value="off">Apagado</option><option value="balanced">Equilibrado</option><option value="high">Alto</option></select></label><p data-ray-tracing-status role="status">Desactivado</p></div>
         <div class="v6-setting-group"><h3>Preset integral</h3><div class="v6-button-row"><button class="v6-btn v6-btn-small" data-v6-preset="original">Original</button><button class="v6-btn v6-btn-small" data-v6-preset="balanced">Equilibrado</button><button class="v6-btn v6-btn-small" data-v6-preset="assisted">Asistido</button><button class="v6-btn v6-btn-small" data-v6-preset="restomod">Restomod</button></div></div>
         <div class="v6-setting-group"><h3>Interfaz y accesibilidad</h3>
           <label class="v6-switch"><span>Interfaz grande<small> Aumenta lectura y áreas de interacción.</small></span><input id="v6-ui-large" type="checkbox"></label>
@@ -562,7 +562,7 @@
 </div>
 
 
-<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=b4cce9f6618c1b1d"></script>
+<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=bb5ec8193025aa90"></script>
 
 
 <canvas id="chevy-hud-webgl-canvas" aria-hidden="true"></canvas>
