@@ -1,4 +1,4 @@
-import { COCKPIT_CALIBRATION_DEFAULTS, sanitizeCockpitCalibration } from './vehicle-camera-rig.mjs?v=93a85b29944b9925';
+import { CAMERA_MODES, COCKPIT_CALIBRATION_DEFAULTS, sanitizeCameraCalibration } from './vehicle-camera-rig.mjs?v=467c30948b8f1e07';
 
 const TRANSFORM_DEFAULTS = Object.freeze({
   position: Object.freeze([0, 0, 0]),
@@ -37,6 +37,16 @@ export function sanitizeTransform(value = {}, fallback = TRANSFORM_DEFAULTS) {
   });
 }
 
+function sanitizeCameras(camera) {
+  const result = { cockpit: sanitizeCameraCalibration('cockpit', camera?.cockpit) };
+  for (const mode of CAMERA_MODES) {
+    if (mode !== 'cockpit' && camera?.[mode] && typeof camera[mode] === 'object' && !Array.isArray(camera[mode])) {
+      result[mode] = sanitizeCameraCalibration(mode, camera[mode]);
+    }
+  }
+  return result;
+}
+
 export function migrateCompositionState(raw = {}) {
   const source = raw && typeof raw === 'object' ? raw : {};
   const legacyRadians = Number(source.version) === 1 || Number(source.version) === 2;
@@ -50,7 +60,7 @@ export function migrateCompositionState(raw = {}) {
     build: typeof source.build === 'string' ? source.build : '',
     ...(typeof source.updatedAt === 'string' ? { updatedAt: source.updatedAt } : {}),
     transforms,
-    camera: { cockpit: sanitizeCockpitCalibration(source.camera?.cockpit) },
+    camera: sanitizeCameras(source.camera),
   });
 }
 
@@ -63,7 +73,7 @@ export function sanitizeCompositionState(raw = {}) {
     transforms: Object.fromEntries(Object.entries(migrated.transforms)
       .filter(([id]) => validId(id))
       .map(([id, transform]) => [id, sanitizeTransform(transform, COMPOSITION_STATE_DEFAULTS.transforms[id] || TRANSFORM_DEFAULTS)])),
-    camera: { cockpit: sanitizeCockpitCalibration(migrated.camera?.cockpit) },
+    camera: migrated.camera,
   });
 }
 
@@ -78,17 +88,18 @@ export function serializeCompositionState(state, build = '') {
   });
 }
 
-export function createTargetDescriptor({ id, label = id, kind = 'object', capabilities, defaultState, getState, applyState, pickRoots = [], availability = () => ({ available: true, reason: '' }) }) {
-  if (!validId(id) || (kind !== 'object' && kind !== 'cockpit-camera') || typeof getState !== 'function' || typeof applyState !== 'function') {
+export function createTargetDescriptor({ id, label = id, kind = 'object', cameraMode = kind === 'cockpit-camera' ? 'cockpit' : null, capabilities, defaultState, getState, applyState, pickRoots = [], availability = () => ({ available: true, reason: '' }) }) {
+  if (!validId(id) || (kind !== 'object' && !CAMERA_MODES.includes(cameraMode)) || typeof getState !== 'function' || typeof applyState !== 'function') {
     throw new TypeError('Descriptor de composición inválido');
   }
-  const defaults = kind === 'cockpit-camera'
-    ? sanitizeCockpitCalibration(defaultState)
+  const defaults = cameraMode
+    ? sanitizeCameraCalibration(cameraMode, defaultState)
     : sanitizeTransform(defaultState);
   return freeze({
     id,
     label,
     kind,
+    cameraMode,
     capabilities: freeze({ position: !!capabilities?.position, rotation: !!capabilities?.rotation, scale: !!capabilities?.scale, lens: !!capabilities?.lens }),
     getState,
     applyState,
@@ -121,13 +132,13 @@ export function createCompositionEditorController({ targets = [], cameraMode = (
       if (!validId(id)) throw new TypeError('Id de composición inválido');
       const target = targetMap.get(id);
       if (!target || id !== selectedId || !availability().available) return false;
-      if (target.kind === 'cockpit-camera') {
+      if (target.cameraMode) {
         if (!target.capabilities.lens && (value?.lensMode !== undefined || value?.focalLengthMm !== undefined)) return false;
         const current = target.getState();
         const next = { ...current, ...value };
         if (!target.capabilities.position) next.positionOffsetM = current.positionOffsetM;
         if (!target.capabilities.rotation) next.rotationOffsetDeg = current.rotationOffsetDeg;
-        target.applyState(sanitizeCockpitCalibration(next));
+        target.applyState(sanitizeCameraCalibration(target.cameraMode, next));
         return true;
       }
       const current = target.getState();
@@ -139,12 +150,12 @@ export function createCompositionEditorController({ targets = [], cameraMode = (
     setCockpitCameraCalibration(value) {
       const target = targetMap.get('cockpit-camera');
       if (!target) return false;
-      target.applyState(sanitizeCockpitCalibration(value));
+      target.applyState(sanitizeCameraCalibration('cockpit', value));
       return true;
     },
     setElementTransform(id, value) {
       const target = targetMap.get(id);
-      if (target?.kind === 'cockpit-camera') throw new TypeError('cockpit-camera requires setCockpitCameraCalibration');
+      if (target?.cameraMode) throw new TypeError('camera targets require a camera calibration');
       return this.setTargetState(id, value);
     },
     resetTarget(id = selectedId) {
@@ -165,6 +176,11 @@ export function createCompositionState({ storage = null, keys = {}, initial = {}
   const write = (key, value) => storage?.setItem?.(key, value);
   const read = key => storage?.getItem?.(key) ?? null;
   const restore = (key, value) => { if (value === null) storage?.removeItem?.(key); else write(key, value); };
+  const setCamera = (mode, value) => {
+    if (!CAMERA_MODES.includes(mode)) throw new TypeError('Cámara de vehículo inválida');
+    layout = sanitizeCompositionState({ ...layout, camera: { ...layout.camera, [mode]: sanitizeCameraCalibration(mode, value) } });
+    return layout.camera[mode];
+  };
 
   return Object.freeze({
     getState: () => freeze(clone(layout)),
@@ -175,10 +191,9 @@ export function createCompositionState({ storage = null, keys = {}, initial = {}
       frontCutState = clone(nextFrontCut);
       return freeze({ background: clone(backgroundState), frontCut: clone(frontCutState) });
     },
-    setCockpitCalibration(value) {
-      layout = sanitizeCompositionState({ ...layout, camera: { cockpit: value } });
-      return layout.camera.cockpit;
-    },
+    replaceLayout(value) { layout = sanitizeCompositionState(value); return layout; },
+    setCameraCalibration: setCamera,
+    setCockpitCalibration(value) { return setCamera('cockpit', value); },
     setTargetState(id, value) {
       if (!validId(id)) throw new TypeError('Id de composición inválido');
       layout = sanitizeCompositionState({ ...layout, transforms: { ...layout.transforms, [id]: value } });

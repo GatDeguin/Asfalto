@@ -56,25 +56,30 @@ export const COCKPIT_CALIBRATION_DEFAULTS = freeze({
   headMotion: HEAD_MOTION_DEFAULTS,
 });
 
+export const CAMERA_CALIBRATION_DEFAULTS = freeze(Object.fromEntries(MODES.map(mode => {
+  if (mode === 'cockpit') return [mode, COCKPIT_CALIBRATION_DEFAULTS];
+  const baseHorizontalFovDeg = CAMERA_TOKENS[mode].horizontalFovDeg;
+  return [mode, {
+    positionOffsetM: [0, 0, 0], rotationOffsetDeg: [0, 0, 0], lensMode: 'original',
+    baseHorizontalFovDeg, focalLengthMm: LENS_SENSOR_WIDTH_MM / (2 * Math.tan(baseHorizontalFovDeg * DEG / 2)),
+  }];
+})));
+
 function calibrationVector(value, fallback, minimum = -Infinity, maximum = Infinity) {
   return [0, 1, 2].map(index => clamp(finite(Array.isArray(value) ? value[index] : NaN, fallback[index]), minimum, maximum));
 }
 
-function roundedManualFocalLength(value) {
-  return Math.round(clamp(finite(value, COCKPIT_CALIBRATION_DEFAULTS.focalLengthMm), 18, 120) * 10) / 10;
-}
-
-export function sanitizeCockpitCalibration(value = {}) {
+export function sanitizeCameraCalibration(mode, value = {}) {
+  const defaults = CAMERA_CALIBRATION_DEFAULTS[mode];
+  if (!Object.hasOwn(CAMERA_CALIBRATION_DEFAULTS, mode)) throw new TypeError('Cámara de vehículo inválida');
   const candidate = value && typeof value === 'object' ? value : {};
   const lensMode = Object.hasOwn(COCKPIT_LENS_PRESETS, candidate.lensMode)
     ? candidate.lensMode : candidate.lensMode === 'manual' ? 'manual' : 'original';
   const lens = lensMode === 'manual'
-    ? freeze({
-      lensMode,
-      focalLengthMm: roundedManualFocalLength(candidate.focalLengthMm),
-      baseHorizontalFovDeg: horizontalFovForFocalLength(roundedManualFocalLength(candidate.focalLengthMm)),
-    })
-    : COCKPIT_LENS_PRESETS[lensMode];
+    ? cockpitLensPreset(lensMode, Math.round(clamp(finite(candidate.focalLengthMm, defaults.focalLengthMm), 18, 120) * 10) / 10)
+    : lensMode === 'original'
+      ? { lensMode, focalLengthMm: defaults.focalLengthMm, baseHorizontalFovDeg: defaults.baseHorizontalFovDeg }
+      : COCKPIT_LENS_PRESETS[lensMode];
   return freeze({
     positionOffsetM: [
       clamp(finite(candidate.positionOffsetM?.[0], COCKPIT_CALIBRATION_DEFAULTS.positionOffsetM[0]), -4, 4),
@@ -87,9 +92,11 @@ export function sanitizeCockpitCalibration(value = {}) {
       ...calibrationVector(candidate.rotationOffsetDeg, COCKPIT_CALIBRATION_DEFAULTS.rotationOffsetDeg, -30, 30).slice(2, 3),
     ],
     ...lens,
-    headMotion: sanitizeHeadMotionCalibration(candidate.headMotion),
+    ...(mode === 'cockpit' ? { headMotion: sanitizeHeadMotionCalibration(candidate.headMotion) } : {}),
   });
 }
+
+export function sanitizeCockpitCalibration(value) { return sanitizeCameraCalibration('cockpit', value); }
 
 function copyCockpitCalibration(value) {
   return freeze({
@@ -125,7 +132,7 @@ function rotateAroundAxis(vectorValue, axis, angleRad) {
     scale([axis[1] * vectorValue[2] - axis[2] * vectorValue[1], axis[2] * vectorValue[0] - axis[0] * vectorValue[2], axis[0] * vectorValue[1] - axis[1] * vectorValue[0]], sine));
 }
 
-function rotateCockpitVector(vectorValue, basis, rotationOffsetDeg) {
+function rotateCameraVector(vectorValue, basis, rotationOffsetDeg) {
   const [pitchDeg, yawDeg, rollDeg] = rotationOffsetDeg;
   // qYaw(+Y) * qPitch(+Z) * qRoll(+X): vectors receive roll, then pitch, then yaw.
   return rotateAroundAxis(
@@ -200,18 +207,17 @@ function setVector(target, values) {
   else { target.x = values[0]; target.y = values[1]; target.z = values[2]; }
 }
 
-function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
+function poseTarget(mode, snapshot, frame, motion, calibration) {
   const origin = vector(snapshot.chassis.position);
   const basis = bodyBasis(snapshot);
   let position;
   let look;
-  let baseHorizontalFovDeg = CAMERA_TOKENS[mode].horizontalFovDeg;
+  const {baseHorizontalFovDeg, positionOffsetM, rotationOffsetDeg} = calibration;
   if (mode === 'cockpit') {
-    position = localPoint(origin, basis, add(vector(frame.cockpitAnchorM,CAMERA_TOKENS.cockpit.anchorM), cockpitCalibration.positionOffsetM));
+    position = localPoint(origin, basis, add(vector(frame.cockpitAnchorM,CAMERA_TOKENS.cockpit.anchorM), positionOffsetM));
     look = add(add(position, scale(basis.forward, 14)),scale(basis.up,-Math.tan(clamp(finite(frame.cockpitLookDownDeg),0,30)*DEG)*14));
-    baseHorizontalFovDeg = cockpitCalibration.baseHorizontalFovDeg;
   } else if (mode === 'hood') {
-    position = localPoint(origin, basis, vector(frame.hoodAnchorM,CAMERA_TOKENS.hood.anchorM));
+    position = localPoint(origin, basis, add(vector(frame.hoodAnchorM,CAMERA_TOKENS.hood.anchorM), positionOffsetM));
     look = add(position, scale(basis.forward, 18));
   } else if (mode === 'chase') {
     position = add(origin, add(
@@ -232,6 +238,9 @@ function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
     // The driver and the car stay in frame in the frontal and side shots.
     look = localPoint(origin,basis,[.45,.48,0]);
   }
+  if ((mode === 'chase' || mode === 'cinematic') && positionOffsetM.some(Boolean)) {
+    position = localPoint(position, basis, positionOffsetM);
+  }
 
   position = add(position, scale(basis.up, motion.heaveM));
   const velocity = vector(snapshot.chassis.linearVelocity);
@@ -249,14 +258,23 @@ function poseTarget(mode, snapshot, frame, motion, cockpitCalibration) {
   let up = basis.up;
   if (mode === 'cockpit') {
     const dynamicDirectionDelta = subtract(lookDirection, basis.forward);
-    lookDirection = normalize(add(rotateCockpitVector(basis.forward, basis, cockpitCalibration.rotationOffsetDeg), dynamicDirectionDelta), basis.forward);
-    up = normalize(rotateCockpitVector(basis.up, basis, cockpitCalibration.rotationOffsetDeg), basis.up);
+    lookDirection = normalize(add(rotateCameraVector(basis.forward, basis, rotationOffsetDeg), dynamicDirectionDelta), basis.forward);
+    up = normalize(rotateCameraVector(basis.up, basis, rotationOffsetDeg), basis.up);
   }
   lookDirection = normalize(add(lookDirection, scale(basis.up, -motion.pitchRad)), lookDirection);
   const lookDistance = mode === 'chase' || mode === 'cinematic' ? 8 : 14;
   look = frame?.lookBack
     ? add(position, scale(lookDirection, lookDistance))
     : add(look, scale(subtract(lookDirection, basis.forward), lookDistance));
+  if (mode !== 'cockpit' && !frame?.lookBack && rotationOffsetDeg.some(Boolean)) {
+    const direction = subtract(look, position);
+    const forward = normalize(direction, basis.forward);
+    const [x, y, z] = forward, [a, b, c] = basis.up;
+    const right = normalize([y*c-z*b, z*a-x*c, x*b-y*a], basis.right);
+    const view = {forward, right, up: basis.up};
+    look = add(position, rotateCameraVector(direction, view, rotationOffsetDeg));
+    up = normalize(rotateCameraVector(up, view, rotationOffsetDeg), basis.up);
+  }
   const dynamicFov = clamp(speedMps / 60, 0, 1) * CAMERA_TOKENS.dynamicFovMaxDeg;
   const dynamicFovDeltaDeg = mode === 'cockpit' ? dynamicFov * 0.25
     : mode === 'hood' ? dynamicFov * 0.5 : dynamicFov;
@@ -289,7 +307,7 @@ export function createVehicleCameraRig(options = {}) {
   const pitch = { value: 0, velocity: 0 };
   const roll = { value: 0, velocity: 0 };
   const heave = { value: 0, velocity: 0 };
-  let cockpitCalibration = COCKPIT_CALIBRATION_DEFAULTS;
+  let calibrations = { ...CAMERA_CALIBRATION_DEFAULTS };
 
   function resetMotion() {
     for (const state of [pitch, roll, heave]) { state.value = 0; state.velocity = 0; }
@@ -337,7 +355,7 @@ export function createVehicleCameraRig(options = {}) {
     lastChassisPosition=chassisPosition;
     const suppressCockpitMotion = mode === 'cockpit' && options.cockpitPhysicalMotion === false;
     const motion = snap || suppressCockpitMotion ? { pitchRad: 0, rollRad: 0, heaveM: 0 } : physicalMotion(snapshot, dt);
-    const target = poseTarget(mode, snapshot, frame, motion, cockpitCalibration);
+    const target = poseTarget(mode, snapshot, frame, motion, calibrations[mode]);
     // Geometry-based interiors share the interpolated chassis pose; world-space lag
     // would pull the eye outside the cabin at speed. Head motion is applied separately.
     if (!initialized || snap || (mode === 'cockpit' && frame.bodyMountedCockpit)) {
@@ -471,24 +489,28 @@ export function createVehicleCameraRig(options = {}) {
       resetMotion();
       return apply(frame, 0, true);
     },
-    setCockpitCalibration(value) {
-      cockpitCalibration = sanitizeCockpitCalibration(value);
-      return copyCockpitCalibration(cockpitCalibration);
+    setCalibrations(value = {}) {
+      calibrations = Object.fromEntries(MODES.map(mode => [mode, sanitizeCameraCalibration(mode, value?.[mode])]));
     },
-    getCockpitCalibration() { return copyCockpitCalibration(cockpitCalibration); },
+    setCockpitCalibration(value) {
+      calibrations.cockpit = sanitizeCockpitCalibration(value);
+      return copyCockpitCalibration(calibrations.cockpit);
+    },
+    getCockpitCalibration() { return copyCockpitCalibration(calibrations.cockpit); },
     resetCockpitCalibration() {
-      cockpitCalibration = COCKPIT_CALIBRATION_DEFAULTS;
-      return copyCockpitCalibration(cockpitCalibration);
+      calibrations.cockpit = COCKPIT_CALIBRATION_DEFAULTS;
+      return copyCockpitCalibration(calibrations.cockpit);
     },
     diagnostics() {
       return freeze({
         mode,
         initialized,
         tokens: CAMERA_TOKENS,
-        cockpitCalibration: copyCockpitCalibration(cockpitCalibration),
-        baseHorizontalFovDeg: lastOutput?.baseHorizontalFovDeg ?? cockpitCalibration.baseHorizontalFovDeg,
+        cockpitCalibration: copyCockpitCalibration(calibrations.cockpit),
+        calibration: calibrations[mode],
+        baseHorizontalFovDeg: lastOutput?.baseHorizontalFovDeg ?? calibrations[mode].baseHorizontalFovDeg,
         dynamicFovDeltaDeg: lastOutput?.dynamicFovDeltaDeg ?? 0,
-        finalHorizontalFovDeg: lastOutput?.finalHorizontalFovDeg ?? cockpitCalibration.baseHorizontalFovDeg,
+        finalHorizontalFovDeg: lastOutput?.finalHorizontalFovDeg ?? calibrations[mode].baseHorizontalFovDeg,
         lastOutput,
         trace: [...trace],
       });

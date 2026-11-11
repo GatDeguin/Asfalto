@@ -12,12 +12,17 @@ const fields={
  lut:{lutId:v=>{if(!safeId(v))throw new TypeError('LUT inválido');return v;},intensity:[0,1],contrast:[0,2],saturation:[0,2],temperature:[-1,1],tint:[-1,1]},
 };
 function group(value,kind){if(!record(value))throw new TypeError('Configuración inválida');const out={};for(const [key,v]of Object.entries(value)){const schema=fields[kind][key];if(!schema)throw new TypeError('Parámetro de iluminación desconocido: '+key);out[key]=typeof schema==='function'?schema(v):number(v,...schema);}return out;}
-export function lightingPresetKey(context){if(!record(context)||!['trackId','skyId','weather'].every(k=>safeId(context[k])))throw new TypeError('Circuito, HDRI o clima inválido');return [context.trackId,context.skyId,context.weather].join('|');}
+function contextFields(context){return ['trackId','skyId','weather',...(context?.vehicleId===undefined?[]:['vehicleId'])];}
+export function lightingPresetKey(context){
+ const keys=contextFields(context);
+ if(!record(context)||!keys.every(key=>safeId(context[key])))throw new TypeError('Auto, circuito, HDRI o clima inválido');
+ return keys.map(key=>context[key]).join('|');
+}
 export function sanitizeLightingOverrides(value){if(!record(value))throw new TypeError('Configuración inválida');const out={};for(const[key,v]of Object.entries(value)){
  if(['hdri','fog','lut'].includes(key))out[key]=group(v,key);
  else if(key==='lights'||key==='vehicles'){if(!record(v)||Object.keys(v).length>32)throw new TypeError('Lista de luces inválida');out[key]={};for(const[id,entry]of Object.entries(v)){if(!safeId(id)||(key==='vehicles'&&!['player','rival'].includes(id)))throw new TypeError('Luz inválida');out[key][id]=group(entry,key==='lights'?'light':'vehicle');}}
  else throw new TypeError('Grupo de iluminación desconocido: '+key);
  }return out;
 }
-export function validateLightingEntry(value){lightingPresetKey(value?.context);if(typeof value.updatedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(value.updatedAt)||!Number.isFinite(Date.parse(value.updatedAt)))throw new TypeError('Fecha de guardado inválida');return {context:Object.fromEntries(['trackId','skyId','weather'].map(k=>[k,value.context[k]])),updatedAt:value.updatedAt,values:sanitizeLightingOverrides(value.values)};}
+export function validateLightingEntry(value){lightingPresetKey(value?.context);if(typeof value.updatedAt!=='string'||!/^\d{4}-\d{2}-\d{2}T/.test(value.updatedAt)||!Number.isFinite(Date.parse(value.updatedAt)))throw new TypeError('Fecha de guardado inválida');return {context:Object.fromEntries(contextFields(value.context).map(k=>[k,value.context[k]])),updatedAt:value.updatedAt,values:sanitizeLightingOverrides(value.values)};}
 export const LUT_DEFAULTS=Object.freeze({lutId:'none',intensity:1,contrast:1,saturation:1,temperature:0,tint:0});

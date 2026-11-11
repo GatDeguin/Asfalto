@@ -5,8 +5,8 @@ import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
-import { createCockpitLayoutEndpoint } from './src/server/cockpit-layout-store.mjs?v=73e940b68f1d1979';
-import {createLightingPresetEndpoint} from './src/server/lighting-preset-store.mjs?v=f5ba02405e3d662b';
+import { createCockpitLayoutEndpoint } from './src/server/cockpit-layout-store.mjs?v=dfc9fc3ad7933bf1';
+import {createLightingPresetEndpoint} from './src/server/lighting-preset-store.mjs?v=565cc978c362bc25';
 
 const MIME_TYPES = new Map([
   ['.html', 'text/html; charset=utf-8'], ['.htm', 'text/html; charset=utf-8'],

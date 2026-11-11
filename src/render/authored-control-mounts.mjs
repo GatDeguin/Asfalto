@@ -67,6 +67,8 @@ function seatOnDash(T,frame,targets,point,normal){
 // legacy layout available when the same controls are used in the other Chevy.
 export function createAuthoredControlMounts(T,parts){
   let active=null,radioFace=null,placements=[];
+  let placementFrame=null;
+  const inverseRoot=new T.Matrix4();
   const owned=new Set(),hidden=[];
   const saved=Object.entries(parts).filter(([,node])=>node).map(([id,node])=>({
     id,node,parent:node.parent,position:node.position.clone(),quaternion:node.quaternion.clone(),
@@ -81,9 +83,18 @@ export function createAuthoredControlMounts(T,parts){
     }
     for(const [node,visible] of hidden)node.visible=visible;
     hidden.length=0;
-    active?.removeFromParent();active=null;placements=[];
+    active?.removeFromParent();active=null;placements=[];placementFrame=null;
     for(const resource of owned)resource.dispose();
     owned.clear();
+  }
+
+  function refreshPlacement(){
+    if(!placementFrame)return;
+    const {root,frame,dashboard}=placementFrame;
+    frame.updateWorldMatrix(true,false);
+    inverseRoot.copy(root.matrixWorld).invert();
+    dashboard.matrix.multiplyMatrices(inverseRoot,frame.matrixWorld);
+    dashboard.matrixWorldNeedsUpdate=true;
   }
   const box=(parent,name,size,position,material)=>{
     const geometry=new T.BoxGeometry(...size),mesh=new T.Mesh(geometry,material);
@@ -106,7 +117,7 @@ export function createAuthoredControlMounts(T,parts){
   }
 
   return {
-    restore,
+    restore,refreshPlacement,
     attach(root,id){
       restore();
       const specs=dashboards[id];
@@ -117,8 +128,8 @@ export function createAuthoredControlMounts(T,parts){
       const frame=is400?model.getObjectByName('SS250_DashboardAssembly')||model:model;
       root.updateWorldMatrix(true,true);
       const dashboard=new T.Group();dashboard.name='Dashboard mounting frame';
-      dashboard.matrix.multiplyMatrices(root.matrixWorld.clone().invert(),frame.matrixWorld);
       dashboard.matrixAutoUpdate=false;active.add(dashboard);
+      placementFrame={root,frame,dashboard};refreshPlacement();
       const right=is400?new T.Vector3(1,0,0):new T.Vector3(0,0,-1);
       const normal=is400?new T.Vector3(0,1,0):new T.Vector3(1,0,0);
       const up=new T.Vector3().crossVectors(normal,right);

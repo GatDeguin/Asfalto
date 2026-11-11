@@ -8,7 +8,7 @@ import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=e4
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=9dc1482154f3463e';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
-import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=2cb0605f3be95739';
+import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=3045f15fc78d12cf';
 import {createVehicleWeatherParticles} from '../src/render/vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));

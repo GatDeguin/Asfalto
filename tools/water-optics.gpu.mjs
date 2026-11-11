@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {gunzipSync} from 'node:zlib';
-import {startServer} from '../server.mjs?v=5a11a063822d96e9';
+import {startServer} from '../server.mjs?v=9eba410657deb1ea';
 
 const output=process.argv[2];
 assert.ok(output,'Indica un archivo JSON externo para la evidencia.');

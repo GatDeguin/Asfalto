@@ -147,3 +147,13 @@ body.race-menu-open #viewport canvas,body.race-results-open #viewport canvas{poi
 @media (pointer: coarse){.race-settings-toggle{opacity:.95}.race-primary-button,.race-icon-button,.race-panel-header button,.race-wide-button,.race-bindings-grid button{min-height:34px}.race-setting-row,.race-switch-row{min-height:42px}}
 @media (prefers-reduced-motion: reduce){.race-hud,.race-message,.race-panel-header button,.race-primary-button,.race-icon-button,.race-settings,.race-switch-row i:after{transition:none!important;animation:none!important}}
 .editor-lens-row{display:grid;gap:8px;margin:10px 0;padding:10px;border:1px solid rgba(255,179,71,.22);border-radius:10px;background:rgba(255,179,71,.06)}.editor-lens-row[hidden]{display:none!important}.editor-availability{margin:8px 0;color:#ffd38b;font-size:12px;line-height:1.35}.editor-availability[data-state="unavailable"]{display:block}.editor-capability-hidden{display:none!important}.editor-controls [aria-disabled="true"]{opacity:.52;pointer-events:none}
+
+.settings-panel:not([hidden]) { display: flex; flex-direction: column; overflow: clip; }
+.settings-panel .settings-header, .settings-panel .settings-footer { flex: 0 0 auto; }
+.settings-panel .settings-scroll { flex: 1 1 auto; min-height: 0; overscroll-behavior: contain; }
+.settings-panel #settings-active-vehicle { color: #ffe0ac; font-size: 12px; font-weight: 700; }
+#editor-controls .switch-row { position: relative; }
+#editor-controls .switch-row input { inset-inline-end: 0; top: 50%; width: 36px; height: 20px; margin: 0; transform: translateY(-50%); }
+#editor-controls .switch-row input:focus-visible + i { outline: 2px solid #ffe0ac; outline-offset: 2px; }
+.editor-background-card > summary { color: #dfc7a4; cursor: pointer; font-size: 12px; font-weight: 700; }
+.editor-background-card[open] > summary { margin-bottom: 8px; }

@@ -1,5 +1,5 @@
 import {staticSeedUrl} from './hosting-mode.mjs?v=bcd45c5c9364a26f';
-import {lightingPresetKey,validateLightingEntry,sanitizeLightingOverrides} from './lighting-presets.mjs?v=746ea306bd370d04';
+import {lightingPresetKey,validateLightingEntry,sanitizeLightingOverrides} from './lighting-presets.mjs?v=8a945bd345e31282';
 export const LIGHTING_STORAGE_KEY='asfalto:nacional:v6:lighting-presets';
 export function createLightingPresetStore({storage,fetcher=globalThis.fetch?.bind(globalThis),delay=400,staticPresetUrl=staticSeedUrl('lighting-presets.json')}={}){
  if(storage===undefined){try{storage=globalThis.__asfaltoV7Storage;}catch{storage=null;}}
@@ -13,5 +13,10 @@ export function createLightingPresetStore({storage,fetcher=globalThis.fetch?.bin
  }
  async function load(){try{const response=await fetcher(staticPresetUrl||'/api/lighting-presets',{cache:'no-store'});if(!response.ok)throw Error(staticPresetUrl?'No se pudo leer la iluminación inicial':'El servidor todavía no ofrece el guardado de iluminación');const data=await response.json();enabled=!staticPresetUrl&&!!data.enabled;path=staticPresetUrl?null:data.path||null;if(enabled||staticPresetUrl){for(const raw of Object.values(data.presets||{})){const e=validateLightingEntry(raw);lastTime=Math.max(lastTime,Date.parse(e.updatedAt));const key=lightingPresetKey(e.context),local=entries.get(key);if(!local||Date.parse(e.updatedAt)>=Date.parse(local.updatedAt)){entries.set(key,e);dirty.delete(key);}else dirty.set(key,local);}for(const[key,entry]of entries)if(!data.presets?.[key])dirty.set(key,entry);cache();}state=enabled?'saved':'local';}catch(reason){state='local';error=String(reason.message||reason);}loaded=true;notify();if(dirty.size&&enabled)await flush();return diagnostics();}
  function set(context,values){if(disposed)return false;const entry=validateLightingEntry({context,values:sanitizeLightingOverrides(values),updatedAt:new Date(lastTime=Math.max(Date.now(),lastTime+1)).toISOString()}),key=lightingPresetKey(context);entries.set(key,entry);dirty.set(key,entry);const cached=cache();state=enabled?'saving':cached?'local':'error';error=cached?null:'No se pudo conservar el ajuste en el navegador';notify();clearTimeout(timer);timer=setTimeout(()=>void flush(),delay);return true;}
- return {load,flush,set,get:context=>structuredClone(entries.get(lightingPresetKey(context))?.values||{}),diagnostics,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},dispose(){disposed=true;clearTimeout(timer);listeners.clear();}};
+ function get(context){
+  const saved=entries.get(lightingPresetKey(context));
+  const legacy=saved?null:entries.get(lightingPresetKey({...context,vehicleId:undefined}));
+  return structuredClone(saved?.values??legacy?.values??{});
+ }
+ return {load,flush,set,get,diagnostics,subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},dispose(){disposed=true;clearTimeout(timer);listeners.clear();}};
 }

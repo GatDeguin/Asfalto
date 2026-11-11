@@ -35,7 +35,7 @@ import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=55a74
 import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=5ebdf5bf2d7a3ca4';
 const phoneTextureQueue=createSerialTextureQueue();
 import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
-import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c4baaeb1f89d1b0c';
+import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c9d3861a0c494f0b';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs?v=e3741fd151e9f46f';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs?v=f96bb5c406d469ba';
 import {detectDeviceProfile,deviceGraphicsQuality,devicePixelRatioLimit,automaticTextureLimit} from '../performance/mobile-device-profile.mjs?v=b745e14ff9bd217b';
@@ -50,7 +50,7 @@ import {createPresentedFrameCapture} from '../render/presented-frame-capture.mjs
 import {createChampionshipClassificationLedger} from '../game/championship-classification.mjs?v=b43d93f1161c6526';
 import {startupDemand} from '../runtime/startup-demand.mjs?v=cdc80b4586de6db3';
 import {loadWorkshopBootstrap,readDeferredPayload} from '../runtime/workshop-bootstrap.mjs?v=78be56c6974baa83';
-import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=5a600e9872121b20';
+import {installDrivingViewPreset} from '../game/driving-view-preset.mjs?v=a25b36dafdcb3b50';
 import {loadCockpitDisplayLods} from '../render/cockpit-display-lod.mjs?v=5a4f657d52211b79';
 import {createFramePacer} from '../performance/frame-pacer.mjs?v=a3ed1a05db9caf08';
 import {installFramePacingSettings,readFramePacingTarget} from '../render/frame-pacing-settings.mjs?v=49e6b83e1cf67591';
@@ -62,7 +62,7 @@ import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=6f67b1db
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=ec10ff29633a1e47';
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
 import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
-import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=2cb0605f3be95739';
+import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=3045f15fc78d12cf';
 import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c5fc16161';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
@@ -80,14 +80,14 @@ import {createCockpitHeadMotion} from '../game/cockpit-head-motion.mjs?v=8489d14
 import {installHeadMotionControls} from '../game/cockpit-head-motion-controls.mjs?v=24f25fcf48eeb844';
 import { createRaceOpening } from '../game/race-opening.mjs?v=463e5f3d50f43451';
 import { createRaceOpeningOverlay } from '../menu/race-opening-overlay.mjs?v=f860033bfd2b09bd';
-import {createLightingEditor} from '../menu/lighting-editor.mjs?v=e50675addf5a2773';
+import {createLightingEditor} from '../menu/lighting-editor.mjs?v=4c6f71b3e96bcd40';
 import {createRaceColorGrade} from '../render/race-color-grade.mjs?v=a299ea81213424be';
 import { createCockpitMirrors } from '../render/cockpit-mirrors.mjs?v=abe009d1250a2cb2';
 import { loadCockpitIgnition } from '../render/cockpit-ignition.mjs?v=34bee52b3be4e653';
 import { loadCockpitLightSwitch } from '../render/cockpit-light-switch.mjs?v=710bd8d9f6760059';
 import { createVehicleLightControl } from '../game/vehicle-light-control.mjs?v=844ffa3df7eb34e1';
 import { createRayTracedOcclusion } from '../render/ray-traced-occlusion.mjs?v=513e97fd2ac59740';
-import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=cd3b096c06d47fea';
+import { installRayTracingSettings } from '../render/ray-tracing-settings.mjs?v=513f6fff23644d17';
 import { createCockpitRenderPass } from '../render/cockpit-render-pass.mjs?v=c304e24907a2bfee';
 import { createChevyPaintController } from '../render/chevy-paint-controller.mjs?v=9b42dbdc773b3d63';
 import { createRaceWeatherEffects } from '../render/race-weather-effects.mjs?v=a0bcdf4e9e18e3f5';
@@ -98,10 +98,10 @@ import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18
 import {engineMix} from '../audio/v7-audio-state.mjs?v=da15432714fb6647';
 import { drivingAudioState } from '../audio/race-driving-state.mjs?v=f7d9a0df235fa5e6';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
-import { createVehicleCameraRig, COCKPIT_CALIBRATION_DEFAULTS } from '../game/vehicle-camera-rig.mjs?v=93a85b29944b9925';
+import { CAMERA_MODES, CAMERA_CALIBRATION_DEFAULTS, createVehicleCameraRig } from '../game/vehicle-camera-rig.mjs?v=467c30948b8f1e07';
 import { createCameraBoomCollisionQuery } from '../game/camera-boom-collision.mjs?v=d809a788e1c11c70';
-import { COMPOSITION_STATE_DEFAULTS, createCompositionState, createTargetDescriptor, migrateCompositionState, sanitizeCompositionState, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=854484feaf2bd3fc';
-import { createCockpitLayoutFile } from '../game/cockpit-layout-file.mjs?v=717dcf1a7e3be45f';
+import { createCompositionState, createTargetDescriptor, sanitizeTransform as sanitizeCompositionTransform, serializeCompositionState } from '../game/composition-editor-state.mjs?v=c4711cb3438b2dc0';
+import { createCockpitLayoutFile, createVehicleCockpitLayouts, localCockpitHost, readVehiclePreference, vehiclePreferenceKey } from '../game/cockpit-layout-file.mjs?v=3400aba2ce03221e';
 import { TRACK_ENVIRONMENT_DEFAULTS, getTrackEnvironmentPolicy, resolveEnvironment } from '../environment/environment-profiles.mjs?v=10029cc9ad1b0d80';
 import { clearHdriPresetCache, loadHdriPreset } from '../environment/av3hdri-loader.mjs?v=2cf0ac07a334fc63';
 import { resolveRaceLighting, applyRaceLightingSupport, orientHdriRows } from '../environment/race-lighting.mjs';
@@ -1228,7 +1228,6 @@ const SETTINGS_STORAGE_KEY = 'cockpit-chevy-settings-v6';
 const EDITOR_STORAGE_KEY = 'cockpit-chevy-layout-editor-v1';
 const BACKGROUND_STORAGE_KEY = 'cockpit-chevy-background-editor-v1';
 const FRONT_CUT_STORAGE_KEY = 'cockpit-chevy-front-cut-editor-v1';
-const EDITOR_SCHEMA_VERSION = 3;
 const DEFAULT_GAME_SETTINGS = Object.freeze({
   transmissionMode: 'manual',
   autoAggression: 0.56,
@@ -1408,6 +1407,7 @@ const editorUi = Object.freeze({
   toggle: editorModeToggleEl, controls: editorControlsEl, select: editorElementSelectEl,
   showGuides: editorShowGuidesEl, lockScale: editorLockScaleEl, save: editorSaveEl, resetElement: editorResetElementEl,
   resetAll: editorResetAllEl, status: editorSaveStatusEl, settingsPanel: settingsPanelEl,
+  vehicle: document.getElementById('settings-active-vehicle'), positionUnits: document.getElementById('editor-position-units'),
   availability: editorAvailabilityEl, cameraLens: editorCameraLensEl, cameraFocalLength: editorCameraFocalLengthEl, scaleGroup: editorScaleGroupEl, positionGroup: editorPositionGroupEl, rotationGroup: editorRotationGroupEl,
 });
 const frontCutUi = Object.freeze({
@@ -2029,6 +2029,7 @@ function createAdjustableFrontCut({
   const localBoxForPercent = (percent) => localBoxForBucket(bucketForPercent(percent));
   const defaultLocalBox = localBoxForPercent(defaultPercent);
   let currentPercent = clamp(Number(defaultPercent) || 36.8857962522, minPercent, maxPercent);
+  let editVehicle = initialVehicle();
 
   function syncUi() {
     if (ui?.range) ui.range.value = currentPercent.toFixed(3);
@@ -2062,7 +2063,7 @@ function createAdjustableFrontCut({
     syncUi();
     if (persist) {
       try {
-        globalThis.__asfaltoV7Storage.setItem(FRONT_CUT_STORAGE_KEY, JSON.stringify({ version: 1, percent: currentPercent }));
+        globalThis.__asfaltoV7Storage.setItem(vehiclePreferenceKey(FRONT_CUT_STORAGE_KEY, editVehicle), JSON.stringify({ version: 1, percent: currentPercent }));
       } catch {}
     }
     if (notify) onChange(getState());
@@ -2070,16 +2071,12 @@ function createAdjustableFrontCut({
   }
 
   function restore() {
-    try {
-      const saved = JSON.parse(globalThis.__asfaltoV7Storage.getItem(FRONT_CUT_STORAGE_KEY) || 'null');
-      if (saved && saved.version === 1 && Number.isFinite(Number(saved.percent))) currentPercent = Number(saved.percent);
-    } catch {}
-    apply(currentPercent, { persist: false, notify: false });
+    const saved = readVehiclePreference(globalThis.__asfaltoV7Storage, FRONT_CUT_STORAGE_KEY, editVehicle);
+    apply(saved?.version === 1 ? saved.percent : defaultPercent, { persist: false, notify: false });
   }
 
   function reset({ persist = true } = {}) {
-    if (persist) try { globalThis.__asfaltoV7Storage.removeItem(FRONT_CUT_STORAGE_KEY); } catch {}
-    return apply(defaultPercent, { persist: false, notify: true });
+    return apply(defaultPercent, { persist, notify: true });
   }
 
   ui?.range?.addEventListener('input', () => apply(ui.range.value));
@@ -2093,6 +2090,7 @@ function createAdjustableFrontCut({
     restoreState: (snapshot) => apply(snapshot?.currentPercent, { persist: false, notify: true }),
     getDefaultLocalBox: () => defaultLocalBox.clone(),
     setPercent: (percent, options = {}) => apply(percent, options),
+    setVehicle(vehicle) { if (vehicle !== editVehicle) { editVehicle = vehicle;restore(); } },
     reset,
     setVisible(visible) {
       if (ui?.card) ui.card.hidden = !visible;
@@ -3754,6 +3752,7 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
   });
   let state = normalize(DEFAULT_STATE);
   let customPersistenceAvailable = true;
+  let editVehicle = initialVehicle(), backgroundRevision = 0;
 
   function setStatus(message, statusState = '') {
     ui.status.textContent = message;
@@ -3761,18 +3760,13 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
   }
 
   function readSaved() {
-    try {
-      const raw = JSON.parse(globalThis.__asfaltoV7Storage.getItem(BACKGROUND_STORAGE_KEY) || 'null');
-      if (raw && typeof raw === 'object') state = normalize(raw);
-    } catch (error) {
-      console.warn('No se pudo restaurar el fondo:', error);
-      state = normalize(DEFAULT_STATE);
-    }
+    const raw = readVehiclePreference(globalThis.__asfaltoV7Storage, BACKGROUND_STORAGE_KEY, editVehicle);
+    state = normalize(raw && typeof raw === 'object' ? raw : DEFAULT_STATE);
   }
 
   function persist({ announce = false } = {}) {
     try {
-      globalThis.__asfaltoV7Storage.setItem(BACKGROUND_STORAGE_KEY, JSON.stringify(state));
+      globalThis.__asfaltoV7Storage.setItemPersistent(vehiclePreferenceKey(BACKGROUND_STORAGE_KEY, editVehicle), JSON.stringify(state));
       customPersistenceAvailable = true;
       if (announce) setStatus(state.source === 'custom' ? 'Fondo personalizado guardado' : 'Fondo incluido guardado', 'saved');
       return true;
@@ -3918,15 +3912,18 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
   ui.file.addEventListener('change', async () => {
     const [file] = ui.file.files || [];
     if (!file) return;
+    const revision = backgroundRevision;
     ui.upload.disabled = true;
     setStatus('Optimizando imagen…', 'working');
     try {
       const customDataUrl = await optimizeImage(file);
+      if (revision !== backgroundRevision) return;
       state = normalize({ ...state, enabled: true, source: 'custom', customDataUrl });
       apply();
       const saved = persist();
       setStatus(saved ? `Fondo personalizado · ${file.name}` : `Fondo de sesión · ${file.name}`, saved ? 'saved' : 'error');
     } catch (error) {
+      if (revision !== backgroundRevision) return;
       console.error(error);
       setStatus(error?.message || 'No se pudo cargar el fondo', 'error');
     } finally {
@@ -3967,6 +3964,12 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
 
   return {
     getState,
+    setVehicle(vehicle) {
+      if (vehicle === editVehicle) return;
+      editVehicle = vehicle;backgroundRevision++;customPersistenceAvailable = true;
+      readSaved();apply({render:false});
+      setStatus(state.source === 'custom' ? 'Fondo personalizado restaurado' : 'Fondo incluido', 'saved');
+    },
     getDefaultState: () => normalize(DEFAULT_STATE),
     snapshotState: () => ({ state: { ...state }, customPersistenceAvailable }),
     restoreState(snapshot) {
@@ -3979,12 +3982,13 @@ function createBackgroundEditor({ defaultDataUrl, ui, onChange = () => {} }) {
   };
 }
 
-function createCompositionEditor({ THREE, scene, renderer, targets, ui, compositionState, initialLayout = null, fileStore = null, beforeActivate = null, getCameraMode = () => 'cockpit', onCockpitCalibration = () => {}, onResetAllTransaction = () => ({ ok: true }), onActiveChange = () => {}, onSelectionChange = () => {}, onChange = () => {} }) {
+function createCompositionEditor({ THREE, scene, renderer, targets, ui, compositionState, beforeActivate = null, getCameraMode, previewCamera, onCameraCalibration, onResetAll, onActiveChange = () => {}, onSelectionChange = () => {}, onChange = () => {} }) {
   const targetMap = new Map();
   const objectTargetMap = new Map();
-  const defaults = Object.create(null);
+  const changedPieces = new Set(), resetPieces = new Set();
+  let profile = null;
   let active = false;
-  let selectedId = targets.find((target) => target?.defaultSelected)?.id || targets[0]?.id || null;
+  let selectedId = 'cockpit-camera';
   let showGuides = true;
   let dirty = false;
   let saveTimer = 0;
@@ -3995,18 +3999,10 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     const wrapped = ((degrees % 360) + 540) % 360 - 180;
     return wrapped === -180 && degrees > 0 ? 180 : wrapped;
   };
-  const captureExact = (object) => ({ position: object.position.toArray(), rotation: [object.rotation.x, object.rotation.y, object.rotation.z].map(THREE.MathUtils.radToDeg), scale: object.scale.toArray() });
-  const capture = (object) => ({ position: captureExact(object).position.map(value => Number(value.toFixed(6))), rotation: captureExact(object).rotation.map(value => Number(value.toFixed(6))), scale: captureExact(object).scale.map(value => Number(value.toFixed(6))) });
-  const sanitizeTransform = (value, fallback) => {
-    const source = value && typeof value === 'object' ? value : {};
-    return {
-      position: [0, 1, 2].map((index) => {
-        const limit = index === 1 ? 2.5 : 4;
-        return clamp(finite(source.position?.[index], fallback.position[index]), -limit, limit);
-      }),
-      rotation: [0, 1, 2].map((index) => normalizeDegrees(finite(source.rotation?.[index], fallback.rotation[index]))),
-      scale: [0, 1, 2].map((index) => clamp(finite(source.scale?.[index], fallback.scale[index]), 0.05, 4)),
-    };
+  const editorRotation = new THREE.Euler();
+  const captureExact = (object) => {
+    editorRotation.setFromQuaternion(object.quaternion, 'XYZ');
+    return { position: object.position.toArray(), rotation: [editorRotation.x, editorRotation.y, editorRotation.z].map(THREE.MathUtils.radToDeg), scale: object.scale.toArray() };
   };
   const applyTransform = (object, transform) => {
     object.position.fromArray(transform.position);
@@ -4015,31 +4011,35 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     object.updateMatrixWorld(true);
   };
 
-  const factoryDefaults = fileStore?.defaults || COMPOSITION_STATE_DEFAULTS;
-  for (const descriptor of targets) {
-    if (!descriptor?.id) continue;
-    const typedTarget = descriptor.kind === 'cockpit-camera'
-      ? createTargetDescriptor({ ...descriptor, defaultState: factoryDefaults.camera.cockpit })
-      : createTargetDescriptor({
-        id: descriptor.id, label: descriptor.label || descriptor.id, kind: 'object',
-        capabilities: descriptor.capabilities || { position: true, rotation: true, scale: true, lens: false },
-        defaultState: factoryDefaults.transforms[descriptor.id] || captureExact(descriptor.object), getState: () => captureExact(descriptor.object),
-        applyState: state => applyTransform(descriptor.object, sanitizeCompositionTransform(state, captureExact(descriptor.object))),
-        pickRoots: descriptor.pickRoots || [descriptor.object], availability: descriptor.availability || ((mode) => (mode === 'cockpit' ? { available: true, reason: '' } : { available: false, reason: 'Este objeto interior requiere la vista cockpit' })),
-      });
-    // Object references are host-only; the reusable descriptor remains typed.
-    const target = { ...typedTarget, object: descriptor.object || null, defaultSelected: descriptor.defaultSelected };
-    targetMap.set(target.id, target);
-    if (target.object) {
-      defaults[target.id] = factoryDefaults.transforms[target.id] || capture(target.object);
-      target.object.traverse((node) => objectTargetMap.set(node.uuid, target.id));
+  const legacyTransforms = new Map(targets.filter(target => target.object).map(target => [target.id, captureExact(target.object)]));
+  function registerTargets(descriptors, factory) {
+    targetMap.clear();objectTargetMap.clear();
+    const cameras = document.createElement('optgroup'), pieces = document.createElement('optgroup');
+    cameras.label = 'Cámaras';pieces.label = 'Piezas';
+    for (const descriptor of descriptors) {
+      const { object, cameraMode } = descriptor;
+      const defaultState = cameraMode
+        ? factory.camera[cameraMode] || CAMERA_CALIBRATION_DEFAULTS[cameraMode]
+        : factory.transforms[descriptor.id] || (!profile.authored && legacyTransforms.get(descriptor.id)) || captureExact(object);
+      const typedTarget = cameraMode
+        ? createTargetDescriptor({ ...descriptor, defaultState })
+        : createTargetDescriptor({
+          id: descriptor.id, label: descriptor.label || descriptor.id, kind: 'object',
+          capabilities: descriptor.capabilities || { position: true, rotation: true, scale: true, lens: false },
+          defaultState, getState: () => captureExact(object),
+          applyState: state => applyTransform(object, sanitizeCompositionTransform(state, defaultState)),
+          pickRoots: descriptor.pickRoots || [object], availability: descriptor.availability || (mode => ({ available: mode === 'cockpit', reason: 'Esta pieza requiere la vista cockpit' })),
+        });
+      const target = { ...typedTarget, object: object || null, defaultState, ...(object ? { reset: () => applyTransform(object, defaultState) } : {}) };
+      targetMap.set(target.id, target);
+      object?.traverse(node => objectTargetMap.set(node.uuid, target.id));
+      const option = document.createElement('option');
+      option.value = target.id;
+      option.textContent = target.label;
+      (cameraMode ? cameras : pieces).append(option);
     }
-    const option = document.createElement('option');
-    option.value = target.id;
-    option.textContent = target.label;
-    ui.select.appendChild(option);
+    ui.select.replaceChildren(cameras, pieces);
   }
-  if (!targetMap.has(selectedId)) selectedId = targetMap.keys().next().value || null;
 
   const selectionBox = new THREE.Box3();
   const selectionHelper = new THREE.Box3Helper(selectionBox, 0xffb75f);
@@ -4081,50 +4081,50 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     ui.status.dataset.state = state;
   }
 
-  function loadSavedLayout() {
-    try {
-      const raw = initialLayout || JSON.parse(globalThis.__asfaltoV7Storage.getItem(EDITOR_STORAGE_KEY) || 'null');
-      if (!raw || ![1, 2, EDITOR_SCHEMA_VERSION].includes(raw.version) || !raw.transforms || typeof raw.transforms !== 'object') return false;
-      const migrated = migrateCompositionState(raw);
-      const saved = sanitizeCompositionState(raw);
-      for (const [id, target] of targetMap) {
-        if (target.kind === 'cockpit-camera') {
-          target.applyState(saved.camera.cockpit);
-          compositionState.setCockpitCalibration(saved.camera.cockpit);
-          onCockpitCalibration(compositionState.getState().camera.cockpit);
-        } else if (migrated.transforms[id] && target.object) target.applyState(sanitizeCompositionTransform(migrated.transforms[id], defaults[id]));
-      }
-      setStatus('Composición guardada restaurada', 'saved');
-      return true;
-    } catch (error) {
-      console.warn('No se pudo restaurar la composición:', error);
-      setStatus('No se pudo leer el guardado; se usa el diseño original');
-      return false;
+  function useProfile(next, descriptors = targets) {
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = 0; }
+    profile = next;dirty = false;
+    changedPieces.clear();resetPieces.clear();
+    registerTargets(descriptors, profile.defaults);
+    const layout = compositionState.replaceLayout(profile.layout);
+    for (const [id, target] of targetMap) {
+      if (!target.object) continue;
+      if (layout.transforms[id]) target.applyState(layout.transforms[id]);
+      else if (!profile.authored || id === 'auto') target.reset();
     }
+    onCameraCalibration(layout.camera, profile.defaults.camera);
+    ui.vehicle.textContent = getVehicleDefinition(profile.vehicle).label;
+    ui.status.title = profile.file.error;
+    if (!targetMap.has(selectedId)) selectedId = 'cockpit-camera';
+    syncFields();updateGuides();onSelectionChange(selectedId, selectedTarget());
+    setStatus('Composición del modelo cargada', 'saved');
   }
 
-  function serialize() {
-    const transforms = { ...compositionState.getState().transforms };
-    for (const [id, target] of targetMap) if (target.object) transforms[id] = target.getState();
-    return JSON.parse(serializeCompositionState({ transforms, camera: { cockpit: compositionState.getState().camera.cockpit } }, COCKPIT_BUILD));
+  function serialize({save = false} = {}) {
+    const state = compositionState.getState();
+    const transforms = { ...state.transforms };
+    for (const [id, target] of targetMap) {
+      if (target.object && (!save || !profile?.authored || changedPieces.has(id))) transforms[id] = target.getState();
+    }
+    if (save) for (const id of resetPieces) delete transforms[id];
+    return JSON.parse(serializeCompositionState({ ...state, transforms }, COCKPIT_BUILD));
   }
 
-  let fileSaveSequence = 0, fileSavesPending = 0, lastFileSnapshot = null;
-  function persistFile(snapshot, { announce = true, immediate = false } = {}) {
-    if (!fileStore?.enabled) return;
-    lastFileSnapshot = snapshot;
-    const sequence = ++fileSaveSequence;
-    fileSavesPending++;
+  const pendingFiles = new Map();
+  function persistFile(owner, snapshot, localSaved, { announce = true, immediate = false } = {}) {
+    const operation = { snapshot, localSaved };
+    pendingFiles.set(owner, operation);
     if (announce) setStatus('Guardando archivo del cockpit…', 'dirty');
-    void fileStore.save(snapshot, { immediate }).then(result => {
-      fileSavesPending--;
-      if (sequence !== fileSaveSequence || dirty) return;
+    void owner.file.save(snapshot, { immediate }).then(result => {
+      if (pendingFiles.get(owner) !== operation) return;
+      pendingFiles.delete(owner);
+      if (profile !== owner || dirty) return;
       if (result.ok) {
         ui.status.title = result.path || '';
-        if (announce) setStatus('Guardado en cockpit-layout.json', 'saved');
+        if (announce) setStatus('Composición del modelo guardada en disco', 'saved');
       } else {
-        dirty = true;
-        if (announce) setStatus('No se pudo guardar el archivo · tocá Guardar para reintentar', 'error');
+        dirty = !localSaved;
+        if (announce) setStatus(localSaved ? 'Guardado en este navegador · archivo no disponible' : 'Guardado pendiente · tocá Guardar para reintentar', 'error');
         ui.status.title = result.error || '';
       }
     });
@@ -4132,18 +4132,13 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
 
   function saveNow({ announce = true, immediate = false } = {}) {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = 0; }
-    const snapshot = serialize();
-    let localSaved = false;
-    try {
-      globalThis.__asfaltoV7Storage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(snapshot));
-      localSaved = true;
-      dirty = false;
-      if (announce && !fileStore?.enabled) setStatus('Composición guardada en este dispositivo', 'saved');
-    } catch (error) {
-      if (announce && !fileStore?.enabled) setStatus('El navegador bloqueó el guardado local', 'error');
-    }
-    if (fileStore?.enabled) { dirty = false; persistFile(snapshot, { announce, immediate }); }
-    return localSaved || fileStore?.enabled === true;
+    if (!profile) return false;
+    const localSaved = profile.saveLocal(serialize({save:true}));
+    const fileEnabled = profile.file.enabled;
+    dirty = !localSaved && !fileEnabled;
+    if (fileEnabled) persistFile(profile, profile.layout, localSaved, { announce, immediate });
+    else if (announce) setStatus(localSaved ? 'Composición del modelo guardada en este navegador' : 'El navegador bloqueó el guardado', localSaved ? 'saved' : 'error');
+    return localSaved || fileEnabled;
   }
 
   function scheduleSave() {
@@ -4168,7 +4163,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
   function fieldValue(kind, axis) {
     const target = selectedTarget();
     if (!target) return 0;
-    if (target.kind === 'cockpit-camera') {
+    if (target.cameraMode) {
       const current = target.getState();
       const state = { ...current, positionOffsetM: [...current.positionOffsetM], rotationOffsetDeg: [...current.rotationOffsetDeg] };
       if (kind === 'position') return state.positionOffsetM[axisNames.indexOf(axis)] || 0;
@@ -4186,7 +4181,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     if (!target) return;
     const available = selectedAvailability();
     const controlsEnabled = available.available !== false;
-    const cameraTarget = target.kind === 'cockpit-camera';
+    const cameraTarget = Boolean(target.cameraMode);
     const capabilities = target.capabilities;
     if (ui.lockScale) { ui.lockScale.disabled = !controlsEnabled || !capabilities.scale; ui.lockScale.setAttribute('aria-disabled', String(ui.lockScale.disabled)); }
     ui.resetElement.disabled = !controlsEnabled;
@@ -4198,6 +4193,9 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     ui.availability.textContent = controlsEnabled ? '' : (available.reason || 'No disponible en esta vista');
     ui.availability.dataset.state = controlsEnabled ? '' : 'unavailable';
     ui.cameraLens.hidden = !cameraTarget || !capabilities.lens;
+    const headControls = ui.cameraLens.querySelector('.editor-head-motion-controls');
+    if (headControls) headControls.hidden = target.cameraMode !== 'cockpit';
+    ui.positionUnits.textContent = cameraTarget ? 'm · avance / altura / lateral' : 'unidades 3D';
     for (const [group, enabled] of [[ui.positionGroup, capabilities.position], [ui.rotationGroup, capabilities.rotation], [ui.scaleGroup, capabilities.scale && !cameraTarget]]) {
       group.classList.toggle('editor-capability-hidden', !enabled); group.hidden = !enabled;
     }
@@ -4205,7 +4203,8 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     if (cameraTarget) {
       const cameraState = target.getState();
       const preset = ui.cameraLens?.querySelector('select');
-      if (preset) preset.value = cameraState.lensMode;
+      if (preset) preset.value = cameraState.lensMode === target.defaultState.lensMode &&
+        cameraState.focalLengthMm === target.defaultState.focalLengthMm ? 'original' : cameraState.lensMode;
       if (ui.cameraFocalLength) ui.cameraFocalLength.value = String(cameraState.focalLengthMm);
     }
     for (const input of numberInputs) {
@@ -4220,7 +4219,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
         input.setAttribute('aria-label', `${rotationNames[index]} de rotación`);
       }
       input.value = fieldValue(kind, axis).toFixed(kind === 'rotation' ? 1 : 3);
-      input.disabled = !controlsEnabled || !capabilities[kind] || (target.kind === 'cockpit-camera' && kind === 'scale');
+      input.disabled = !controlsEnabled || !capabilities[kind];
       input.setAttribute('aria-disabled', String(input.disabled));
     }
     for (const input of rangeInputs) {
@@ -4235,14 +4234,16 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
         input.setAttribute('aria-label', `${rotationNames[index]} de rotación deslizante`);
       }
       input.value = String(fieldValue(kind, axis));
-      input.disabled = !controlsEnabled || !capabilities[kind] || (target.kind === 'cockpit-camera' && kind === 'scale');
+      input.disabled = !controlsEnabled || !capabilities[kind];
       input.setAttribute('aria-disabled', String(input.disabled));
     }
   }
 
-  function setSelected(id, { announce = true } = {}) {
+  function setSelected(id, { announce = true, preview = false } = {}) {
     if (!targetMap.has(id)) return false;
     selectedId = id;
+    const target = selectedTarget();
+    if (preview && target.cameraMode) previewCamera(target.cameraMode);
     syncFields();
     updateGuides();
     if (announce) setStatus(`${targetMap.get(id).label} seleccionado`);
@@ -4251,21 +4252,24 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     return true;
   }
 
+  function editPiece(target, state) {
+    target.applyState(state);
+    changedPieces.add(target.id);resetPieces.delete(target.id);
+  }
+
   function applyField(kind, axis, rawValue) {
     const target = selectedTarget();
     if (!target || !axisNames.includes(axis)) return;
     if (target.availability(getCameraMode()).available === false || !target.capabilities[kind]) return;
-    if (target.kind === 'cockpit-camera') {
+    if (target.cameraMode) {
       const current = target.getState();
       const state = { ...current, positionOffsetM: [...current.positionOffsetM], rotationOffsetDeg: [...current.rotationOffsetDeg] };
       const index = axisNames.indexOf(axis);
       if (kind === 'position') state.positionOffsetM[index] = finite(rawValue, state.positionOffsetM[index]);
       else if (kind === 'rotation') state.rotationOffsetDeg[index] = finite(rawValue, state.rotationOffsetDeg[index]);
       else return;
-      target.applyState(state);
-      compositionState.setCockpitCalibration(state);
-      onCockpitCalibration(compositionState.getState().camera.cockpit);
-      syncFields(); scheduleSave(); onChange(); return;
+      applyCameraState(target, state);
+      return;
     }
     const state = target.getState();
     const index = axisNames.indexOf(axis);
@@ -4273,56 +4277,43 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     else if (kind === 'rotation') state.rotation[index] = normalizeDegrees(rawValue);
     else if (kind === 'scale') { const value = clamp(finite(rawValue, state.scale[index]), 0.05, 4); if (ui.lockScale?.checked) state.scale = [value, value, value]; else state.scale[index] = value; }
     else return;
-    target.applyState(state);
+    editPiece(target, state);
     syncFields();
     updateGuides();
     scheduleSave();
     onChange();
+  }
+
+  function applyCameraState(target, state, { save = true } = {}) {
+    target.applyState(state);
+    onCameraCalibration(compositionState.getState().camera, profile.defaults.camera);
+    if (selectedId === target.id) syncFields();
+    if (save) scheduleSave();
+    onChange();
+    return true;
   }
 
   function resetElement() {
     const target = selectedTarget();
     if (!target || target.availability(getCameraMode()).available === false) return;
-    if (target.kind === 'cockpit-camera') {
-      target.reset();
-      compositionState.setCockpitCalibration(target.getState());
-      onCockpitCalibration(compositionState.getState().camera.cockpit);
-      syncFields(); scheduleSave(); setStatus(`${target.label} restablecido`, 'dirty'); onChange(); return;
+    if (target.cameraMode) applyCameraState(target, target.defaultState);
+    else {
+      target.reset();changedPieces.delete(target.id);resetPieces.add(target.id);
+      syncFields();updateGuides();scheduleSave();onChange();
     }
-    target.reset();
-    syncFields();
-    updateGuides();
-    scheduleSave();
     setStatus(`${target.label} restablecido`, 'dirty');
-    onChange();
   }
 
   function resetAll() {
-    const wasDirty = dirty;
-    if (saveTimer) { clearTimeout(saveTimer); saveTimer = 0; }
-    dirty = false;
-    const previousTransforms = Object.fromEntries([...targetMap].filter(([, target]) => target.object).map(([id, target]) => [id, target.getState()]));
-    const resetResult = onResetAllTransaction();
-    if (!resetResult?.ok) {
-      for (const [id, transform] of Object.entries(previousTransforms)) targetMap.get(id).applyState(transform);
-      dirty = wasDirty;
-      if (wasDirty) saveTimer = window.setTimeout(() => saveNow(), 420);
-      setStatus(`No se pudo restablecer: ${resetResult?.error || 'guardado local bloqueado'}`, 'error');
-      return false;
-    }
-    for (const [id, target] of targetMap) {
-      if (target.kind === 'cockpit-camera') {
-        target.reset();
-        compositionState.setCockpitCalibration(target.getState());
-        onCockpitCalibration(compositionState.getState().camera.cockpit);
-      } else target.reset();
-    }
-    syncFields();
-    updateGuides();
-    setStatus('Todos los elementos fueron restablecidos', 'saved');
-    persistFile(serialize());
+    if (!profile) return false;
+    const layout = compositionState.replaceLayout(profile.defaults);
+    changedPieces.clear();resetPieces.clear();
+    for (const target of targetMap.values()) if (target.object) target.reset();
+    onCameraCalibration(layout.camera, profile.defaults.camera);
+    onResetAll(profile);
+    syncFields();updateGuides();
     onChange();
-    return true;
+    return saveNow();
   }
 
   let activationController=null;
@@ -4343,7 +4334,9 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
       renderer.domElement.classList.remove('editor-hit');
       if (dirty) saveNow();
     } else {
+      if (selectedAvailability().available === false) selectedId = `${getCameraMode()}-camera`;
       syncFields();
+      onSelectionChange(selectedId, selectedTarget());
       setStatus(`${selectedTarget()?.label || 'Elemento'} seleccionado`);
     }
     updateGuides();
@@ -4396,7 +4389,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
   }
 
   ui.toggle.addEventListener('click', () => setActive(!active));
-  ui.select.addEventListener('change', () => setSelected(ui.select.value));
+  ui.select.addEventListener('change', () => setSelected(ui.select.value, { preview: true }));
   ui.showGuides.addEventListener('change', () => {
     showGuides = ui.showGuides.checked;
     updateGuides();
@@ -4407,7 +4400,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     if (ui.lockScale.checked && target?.object && target.capabilities.scale && target.availability(getCameraMode()).available !== false) {
       const state = target.getState();
       const uniform = clamp(finite(state.scale[0], 1), 0.05, 4);
-      target.applyState({ ...state, scale: [uniform, uniform, uniform] });
+      editPiece(target, { ...state, scale: [uniform, uniform, uniform] });
       syncFields();
       updateGuides();
       scheduleSave();
@@ -4423,46 +4416,39 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
   }
   ui.cameraLens?.querySelector('select')?.addEventListener('change', (event) => {
     const target = selectedTarget();
-    if (target?.kind !== 'cockpit-camera' || !target.capabilities.lens || target.availability(getCameraMode()).available === false) return;
-    const next = { ...target.getState(), lensMode: event.target.value };
-    target.applyState(next); compositionState.setCockpitCalibration(next); onCockpitCalibration(compositionState.getState().camera.cockpit); scheduleSave(); syncFields();
+    if (!target?.cameraMode || !target.capabilities.lens || target.availability(getCameraMode()).available === false) return;
+    const next = event.target.value === 'original'
+      ? { ...target.getState(), lensMode: target.defaultState.lensMode, focalLengthMm: target.defaultState.focalLengthMm }
+      : { ...target.getState(), lensMode: event.target.value };
+    applyCameraState(target, next);
   });
   ui.cameraFocalLength?.addEventListener('change', () => {
     const target = selectedTarget();
-    if (target?.kind !== 'cockpit-camera' || !target.capabilities.lens || target.availability(getCameraMode()).available === false) return;
+    if (!target?.cameraMode || !target.capabilities.lens || target.availability(getCameraMode()).available === false) return;
     const next = { ...target.getState(), lensMode: 'manual', focalLengthMm: Number(ui.cameraFocalLength.value) };
-    target.applyState(next); compositionState.setCockpitCalibration(next); onCockpitCalibration(compositionState.getState().camera.cockpit); scheduleSave(); syncFields();
+    applyCameraState(target, next);
   });
   ui.save.addEventListener('click', () => saveNow());
   ui.resetElement.addEventListener('click', resetElement);
   ui.resetAll.addEventListener('click', resetAll);
   function flushFileOnClose() {
     if (dirty) saveNow({ announce: false, immediate: true });
-    else if (fileSavesPending && lastFileSnapshot) persistFile(lastFileSnapshot, { announce: false, immediate: true });
+    else if (pendingFiles.has(profile)) {
+      const { snapshot, localSaved } = pendingFiles.get(profile);
+      persistFile(profile, snapshot, localSaved, { announce: false, immediate: true });
+    }
   }
   window.addEventListener('pagehide', flushFileOnClose);
 
-  const restored = loadSavedLayout();
-  ui.select.value = selectedId || '';
   ui.showGuides.checked = true;
   if (ui.lockScale) ui.lockScale.checked = true;
-  syncFields();
-  onSelectionChange(selectedId, selectedTarget());
-  if (!restored) setStatus('Diseño original cargado');
-  if (fileStore?.enabled) {
-    const snapshot = serialize();
-    // A newly created default file must not supersede an older browser's genuine edits.
-    snapshot.updatedAt = initialLayout?.updatedAt || '1970-01-01T00:00:00.000Z';
-    persistFile(snapshot);
-  } else if (fileStore?.error) {
-    setStatus('Archivo no disponible · guardado del navegador activo', 'error');
-    ui.status.title = fileStore.error;
-  }
 
   return {
     isActive: () => active,
     renderOverlays: [selectionHelper, axes],
     getSelectedId: () => selectedId,
+    useProfile,
+    flush() { if (dirty) saveNow({ announce: false }); },
     setActive,
     select: setSelected,
     pick,
@@ -4475,6 +4461,7 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
       const availability = selectedAvailability();
       return {
         active,
+        vehicleId: profile?.vehicle,
         selectedId,
         availability,
         pickEnabled: active && availability.available && availablePickRoots().length > 0,
@@ -4486,11 +4473,11 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
     setTransform(id, transform, { save = true } = {}) {
       const target = targetMap.get(id);
       if (!target) return false;
-      if (target.kind === 'cockpit-camera') throw new TypeError('cockpit-camera requires setCockpitCameraCalibration');
+      if (target.cameraMode) throw new TypeError('camera targets require a camera calibration');
       const current = target.getState();
       const next = { ...current };
       for (const kind of ['position', 'rotation', 'scale']) if (target.capabilities[kind] && transform?.[kind] !== undefined) next[kind] = transform[kind];
-      target.applyState(sanitizeCompositionTransform(next, current));
+      editPiece(target, next);
       if (id === selectedId) syncFields();
       updateGuides();
       if (save) scheduleSave();
@@ -4498,19 +4485,14 @@ function createCompositionEditor({ THREE, scene, renderer, targets, ui, composit
       return true;
     },
     setTargetState(id, state, options = {}) {
-      if (id === 'cockpit-camera') return this.setCockpitCameraCalibration(state, options);
+      const target = targetMap.get(id);
+      if (target?.cameraMode) return applyCameraState(target, state, options);
       return this.setTransform(id, state, options);
     },
     setCockpitCameraCalibration(state, { save = true } = {}) {
       const target = targetMap.get('cockpit-camera');
       if (!target) return false;
-      target.applyState(state);
-      compositionState.setCockpitCalibration(state);
-      onCockpitCalibration(compositionState.getState().camera.cockpit);
-      if (selectedId === 'cockpit-camera') syncFields();
-      if (save) scheduleSave();
-      onChange();
-      return true;
+      return applyCameraState(target, state, { save });
     },
   };
 }
@@ -4548,16 +4530,12 @@ function normalizeGameSettings(raw = {}) {
   return settings;
 }
 
-function loadGameSettings() {
-  try {
-    return normalizeGameSettings(JSON.parse(globalThis.__asfaltoV7Storage.getItem(SETTINGS_STORAGE_KEY) || '{}'));
-  } catch {
-    return normalizeGameSettings();
-  }
+function loadGameSettings(vehicle = initialVehicle()) {
+  return normalizeGameSettings(readVehiclePreference(globalThis.__asfaltoV7Storage, SETTINGS_STORAGE_KEY, vehicle));
 }
 
-function saveGameSettings(settings) {
-  try { globalThis.__asfaltoV7Storage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings)); } catch {}
+function saveGameSettings(settings, vehicle) {
+  try { globalThis.__asfaltoV7Storage.setItem(vehiclePreferenceKey(SETTINGS_STORAGE_KEY, vehicle), JSON.stringify(settings)); } catch {}
 }
 
 let modularHostInitialization = null;
@@ -4595,7 +4573,8 @@ try {
   delete payload.threeCoreGz;delete payload.threeModuleGz;delete payload.backgroundPngDataUrl;delete payload.rearviewPngDataUrl;
   DOS_LAGOS_ROUTE_DATA=deferredStartupAssets.route;
   setLoading('Creando cockpit…');
-  let gameSettings = loadGameSettings();
+  let gameSettingsVehicle = initialVehicle();
+  let gameSettings = loadGameSettings(gameSettingsVehicle);
   mobileTextureQuality=gameSettings.graphicsQuality;
   const bootRenderGate=createBootRenderGate(runtimeDeviceProfile.phone);
   let firstPhoneFrame=runtimeDeviceProfile.phone;
@@ -4727,8 +4706,7 @@ try {
 
   const raceCameraState = globalThis.AsfaltoV3CameraState.create('cockpit');
   let vehicleCameraRig = null;
-  const vehicleCockpitCalibrations=new Map();let appliedCockpitVehicle=null;
-  function rememberCockpitCalibration(state){vehicleCockpitCalibrations.set(window.__asfaltoSelectedPlayerVehicle||'chevy',structuredClone(state));vehicleCameraRig?.setCockpitCalibration(state);}
+  let customCockpitLens = false;
   const headMotion=createCockpitHeadMotion();let headMotionControls=null;
   const headMotionOffset=new THREE.Vector3(),headMotionQuaternion=new THREE.Quaternion();
   const engineAudioContext={cameraMode:'cockpit',physicalRoad:true,ignition:null},cockpitMotionContext={dt:0,paused:false,editing:false,reducedMotion:false};
@@ -6877,6 +6855,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     getEffectiveFogState:()=>raceWeatherEffects.getEffectiveFogState(regionalEnvironment),
     getLights:()=>[{id:'key',label:'Luz principal',object:keyLight},{id:'hemi',label:'Ambiente hemisférico',object:hemi},{id:'fill',label:'Luz de relleno',object:fillLight},{id:'rim',label:'Contraluz',object:rimLight},...environmentArtificialLights.map((object,index)=>({id:'point-'+index,label:'Luz puntual '+(index+1),object}))],
     getVehicles:()=>({player:globalThis.__asfaltoVehiclePresentations?.chevy,rival:globalThis.__asfaltoVehiclePresentations?.falcon}),
+    getVehicleId:()=>globalThis.__asfaltoSelectedPlayerVehicle||initialVehicle(),
     setLut:value=>colorGrading?.setSettings(value),
   });
   const environmentController = globalThis.AsfaltoV5EnvironmentCore.createEnvironmentController({
@@ -8730,23 +8709,11 @@ listen(window,'chevy:vehicle-config',(event)=>{
   front.name = 'ChevyFrenteCorteAjustable';
   frontMount.add(front);
 
-  // Construct only after both independent facets exist. This state survives the
-  // lazy camera and writes the actual three globalThis.__asfaltoV7Storage keys transactionally.
   const browserCompositionLayout = (() => { try { return JSON.parse(globalThis.__asfaltoV7Storage.getItem(EDITOR_STORAGE_KEY) || 'null'); } catch { return null; } })();
-  const cockpitLayoutFile = createCockpitLayoutFile();
-  const compositionInitialLayout = await modularHostInitialization.waitFor(cockpitLayoutFile.initialize(browserCompositionLayout), 'cockpit-file-layout');
-  if (compositionInitialLayout) {
-    try { globalThis.__asfaltoV7Storage.setItem(EDITOR_STORAGE_KEY, JSON.stringify(compositionInitialLayout)); } catch {}
-  }
-  const compositionState = createCompositionState({
-    storage: globalThis.__asfaltoV7Storage,
-    keys: { layout: EDITOR_STORAGE_KEY, background: BACKGROUND_STORAGE_KEY, frontCut: FRONT_CUT_STORAGE_KEY },
-    initial: compositionInitialLayout || {},
-    defaults: cockpitLayoutFile.defaults,
-    build: COCKPIT_BUILD,
-    background: backgroundEditor.getState(),
-    frontCut: { version: 1, percent: frontCutController.getState().percent },
-  });
+  const legacyCockpitFile = localCockpitHost() ? createCockpitLayoutFile({staticLayoutUrl: null}) : createCockpitLayoutFile();
+  const compositionInitialLayout = await modularHostInitialization.waitFor(legacyCockpitFile.initialize(browserCompositionLayout), 'cockpit-file-layout');
+  const vehicleCockpitLayouts = createVehicleCockpitLayouts({storage:globalThis.__asfaltoV7Storage, legacyLayout:compositionInitialLayout, key:EDITOR_STORAGE_KEY});
+  const compositionState = createCompositionState({initial:compositionInitialLayout});
 
   const lowPolyHoodWidth = Math.max(0.7, COCKPIT_LAYOUT.front.targetWidth * 0.92);
   const lowPolyHoodGeometry = new THREE.BoxGeometry(
@@ -9014,6 +8981,55 @@ listen(window,'chevy:vehicle-config',(event)=>{
   const automaticTransmission = createAutomaticTransmissionState();
 
   let resumeAfterCompositionEdit = false;
+  const compositionTargets = [
+    ...CAMERA_MODES.map(mode => ({
+      id: `${mode}-camera`, label: `Cámara · ${raceCameraLabels[mode]}`, kind: 'camera', cameraMode: mode,
+      capabilities: {position:true, rotation:true, scale:false, lens:true},
+      getState: () => compositionState.getState().camera[mode] || CAMERA_CALIBRATION_DEFAULTS[mode],
+      applyState: state => compositionState.setCameraCalibration(mode, state),
+      availability: activeMode => ({available:activeMode === mode, reason:`Activá la vista ${raceCameraLabels[mode]} para editar esta cámara`}),
+    })),
+    { id: 'auto', label: 'Auto', object: raceChevyV3, capabilities: { position: true, rotation: true, scale: true, lens: false }, availability: (mode) => (mode === 'chase' || mode === 'cinematic' ? { available: true, reason: '' } : { available: false, reason: 'El Auto requiere una vista exterior' }) },
+    { id: 'cockpit-complete', label: 'Cockpit completo', object: cockpit },
+    { id: 'front', label: 'Frente del auto', object: frontMount },
+    { id: 'cabin', label: 'Cabina', object: cabinMount },
+    { id: 'roof', label: 'Techo', object: techoMount },
+    { id: 'rearview', label: 'Retrovisor interior', object: rearviewMount },
+    { ...cockpitMirrors.editorTargets[1], availability: (mode) => ({ available:mode === 'cockpit', reason: 'El espejo lateral requiere la vista cockpit' }) },
+    { id: 'dashboard', label: 'Tablero', object: dashboard },
+    { id: 'radio', label: 'Radio', object: radioMount },
+    { id: 'speedometer', label: 'Velocímetro', object: gaugeCluster.speed.group },
+    { id: 'tachometer', label: 'Cuentarrevoluciones', object: gaugeCluster.rpm.group },
+    { id: 'wheel', label: 'Volante', object: wheelMount },
+    ...cockpitIgnition.editorTargets,
+    ...cockpitLightSwitch.editorTargets,
+    { id: 'pedals', label: 'Pedalera', object: pedalsMount },
+    { id: 'shifter', label: 'Palanca de cambios · conjunto', object: shifterAssembly },
+    { id: 'shifter-base', label: 'Palanca · base y chapa', object: shifter },
+    { id: 'shifter-boot', label: 'Palanca · cuero/fuelle', object: shifterMechanism.bootGroup },
+    { id: 'shifter-shaft', label: 'Palanca · eje', object: shifterMechanism.shaftRig },
+    { id: 'shifter-knob', label: 'Palanca · bocha/pomo', object: shifterMechanism.knobRig },
+  ];
+  function authoredEditorTargets(root, vehicle) {
+    const isMounted = object => {
+      for (let node = object; node; node = node.parent) if (node === root) return true;
+      return false;
+    };
+    const targets = compositionTargets.filter(target => target.cameraMode || target.id === 'auto' || isMounted(target.object));
+    const model = root.getObjectByName(`${vehicle}_Exterior_LOD0`);
+    const parts = [
+      ['cockpit-complete', 'Cockpit completo', 'SS250_PhysicalInterior_R53'],
+      ['dashboard', 'Tablero', 'SS250_DashboardAssembly'],
+      ['upholstery', 'Tapicería turquesa', `${vehicle}_static_${vehicle === 'pickup_3100' ? 'C3100' : 'BA57'}_Upholstery_Turquoise`],
+      ['upholstery-ivory', 'Tapicería marfil', 'belair_1957_static_BA57_Upholstery_Ivory'],
+    ];
+    for (const [id, label, name] of parts) {
+      const object = model?.getObjectByName(name);
+      if (object) targets.push({id, label, object});
+    }
+    return targets;
+  }
+  authoredControlMounts = createAuthoredControlMounts(THREE,{radio:radioMount,ignition:cockpitIgnition.mount,lights:cockpitLightSwitch.mount,illumination:cockpitLightSwitch.instrumentLight,shifter:shifterAssembly});
   setLoading('Preparando composición del cockpit…');
   compositionEditor = createCompositionEditor({
     THREE,
@@ -9021,53 +9037,22 @@ listen(window,'chevy:vehicle-config',(event)=>{
     renderer,
     ui: editorUi,
     compositionState,
-    initialLayout: compositionInitialLayout,
+    targets: compositionTargets,
     beforeActivate:createCockpitEditorActivation({prepare:options=>lazyCockpitOriginals.prepare(options),isRunning:()=>['RUNNING','COUNTDOWN'].includes(raceWorld.state.status),pause:()=>raceWorld.pause({reason:'settings'}),resume:()=>raceWorld.resume(),onResumeIntent:value=>{resumeAfterCompositionEdit=value;}}),
-    fileStore: cockpitLayoutFile,
     getCameraMode: () => raceCameraState.current,
-    onCockpitCalibration: (state) => {rememberCockpitCalibration(state);headMotion.setCalibration(state.headMotion);headMotionControls?.refresh();},
-    onResetAllTransaction: () => {
-      const previousBackground = backgroundEditor.snapshotState();
-      const previousFrontCut = frontCutController.snapshotState();
-      compositionState.replaceFacets({
-        background: previousBackground,
-        frontCut: previousFrontCut,
-      });
-      backgroundEditor.resetToDefault({ announce: false, save: false });
-      frontCutController.reset({ persist: false });
-      const result = compositionState.resetAll({
-        background: backgroundEditor.getState(),
-        frontCut: { version: 1, percent: frontCutController.getState().percent },
-      });
-      if (!result.ok) {
-        backgroundEditor.restoreState(previousBackground);
-        frontCutController.restoreState(previousFrontCut);
-      }
-      return result;
+    previewCamera(mode) { setRaceCameraMode(mode);raceCameraInitialized=false; },
+    onCameraCalibration(cameras, defaults) {
+      vehicleCameraRig?.setCalibrations(cameras);
+      const cockpitLens = cameras.cockpit;
+      customCockpitLens = cockpitLens.baseHorizontalFovDeg !== defaults.cockpit.baseHorizontalFovDeg;
+      headMotion.setCalibration(cockpitLens.headMotion);
+      headMotionControls?.refresh();
+      raceCameraInitialized=false;
     },
-    targets: [
-      { id: 'auto', label: 'Auto', object: raceChevyV3, capabilities: { position: true, rotation: true, scale: true, lens: false }, availability: (mode) => (mode === 'chase' || mode === 'cinematic' ? { available: true, reason: '' } : { available: false, reason: 'El Auto requiere una vista exterior' }) },
-      { id: 'cockpit-camera', label: 'Cámara cockpit', kind: 'cockpit-camera', capabilities: { position: true, rotation: true, scale: false, lens: true }, getState: () => compositionState.getState().camera.cockpit, applyState: (state) => compositionState.setCockpitCalibration(state), pickRoots: [], availability: (mode) => (mode === 'cockpit' ? { available: true, reason: '' } : { available: false, reason: 'La Cámara cockpit requiere la vista cockpit' }) },
-      { id: 'cockpit-complete', label: 'Cockpit Completo', object: cockpit },
-      { id: 'front', label: 'Frente del auto', object: frontMount },
-      { id: 'cabin', label: 'Cabina', object: cabinMount },
-      { id: 'roof', label: 'Techo', object: techoMount, capabilities: { position: true, rotation: true, scale: true, lens: false }, pickRoots: [techoMount], availability: (mode) => (mode === 'cockpit' ? { available: true, reason: '' } : { available: false, reason: 'El Techo requiere la vista cockpit' }) },
-      { id: 'rearview', label: 'Retrovisor interior', object: rearviewMount },
-      { ...cockpitMirrors.editorTargets[1], availability: (mode) => ({ available:mode === 'cockpit', reason:mode === 'cockpit' ? '' : 'El espejo lateral requiere la vista cockpit' }) },
-      { id: 'dashboard', label: 'Tablero', object: dashboard },
-      { id: 'radio', label: 'Radio Chevrolet 1973', object: radioMount, defaultSelected: true },
-      { id: 'speedometer', label: 'Velocímetro', object: gaugeCluster.speed.group },
-      { id: 'tachometer', label: 'Cuentarrevoluciones', object: gaugeCluster.rpm.group },
-      { id: 'wheel', label: 'Volante', object: wheelMount },
-      ...cockpitIgnition.editorTargets,
-      ...cockpitLightSwitch.editorTargets,
-      { id: 'pedals', label: 'Pedalera', object: pedalsMount },
-      { id: 'shifter', label: 'Palanca de cambios · conjunto', object: shifterAssembly },
-      { id: 'shifter-base', label: 'Palanca · base y chapa', object: shifter },
-      { id: 'shifter-boot', label: 'Palanca · cuero/fuelle', object: shifterMechanism.bootGroup },
-      { id: 'shifter-shaft', label: 'Palanca · eje', object: shifterMechanism.shaftRig },
-      { id: 'shifter-knob', label: 'Palanca · bocha/pomo', object: shifterMechanism.knobRig },
-    ],
+    onResetAll(profile) {
+      backgroundEditor.resetToDefault({announce:false});
+      if (!profile.authored) frontCutController.reset();
+    },
     onSelectionChange(id) {
       frontCutController.setVisible(id === 'front');headMotionControls?.refresh();
     },
@@ -9088,6 +9073,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       applyCockpitLod();
     },
     onChange() {
+      authoredControlMounts?.refreshPlacement();
       if (typeof renderFrame === 'function') requestAnimationFrame(() => renderFrame());
     },
   });
@@ -9145,7 +9131,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   function applySettings({ persist = true } = {}) {
     mobileTextureQuality=gameSettings.graphicsQuality;
     gameSettings = normalizeGameSettings(gameSettings);
-    if (persist) saveGameSettings(gameSettings);
+    if (persist) saveGameSettings(gameSettings, gameSettingsVehicle);
     engineSound.applySettings();
     window.dispatchEvent(new CustomEvent('asfalto:audio-settings'));
     applyCockpitLod();
@@ -9902,14 +9888,10 @@ listen(window,'chevy:vehicle-config',(event)=>{
           getObstacles: () => [raceWorld.getFalconVisualRoot?.()].filter(Boolean),
         }),
       });
-      vehicleCameraRig.setCockpitCalibration(compositionState.getState().camera.cockpit);
+      vehicleCameraRig.setCalibrations(compositionState.getState().camera);
       vehicleCameraRig.setMode(mode);
     }
     const cockpitVehicle=window.__asfaltoSelectedPlayerVehicle||'chevy';
-    if(appliedCockpitVehicle!==cockpitVehicle){
-      vehicleCameraRig.setCockpitCalibration(vehicleCockpitCalibrations.get(cockpitVehicle)||(authoredAnchors?{...COCKPIT_CALIBRATION_DEFAULTS,positionOffsetM:[0,0,0],rotationOffsetDeg:[0,0,0],lensMode:'manual',focalLengthMm:18}:compositionState.getState().camera.cockpit));
-      appliedCockpitVehicle=cockpitVehicle;
-    }
     lastPhysicalCameraPose = raceCameraInitialized
       ? vehicleCameraRig.update(cameraFrame, frameDt)
       : vehicleCameraRig.reset(cameraFrame);
@@ -9952,13 +9934,13 @@ listen(window,'chevy:vehicle-config',(event)=>{
     authoredMirrors?.setVisible(inAuthoredCabin&&!opening.shot);
     playerDriver?.update(mode,steerToWheelRotation(steering.steer,maxWheelAngle),{opening:!!opening.shot,exterior:raceChevyV3.visible});
     // Portrait phones keep a usable road view instead of expanding to a fisheye cabin lens.
-    if(runtimeDeviceProfile.phone&&isCockpit&&!opening.shot&&!compositionEditor?.isActive())applyPhoneCockpitProjection(camera);
+    if(runtimeDeviceProfile.phone&&isCockpit&&!opening.shot)applyPhoneCockpitProjection(camera,{fitLens:!customCockpitLens});
   }
 
   setLoading('Preparando oclusión de la escena…');
   const initialVehicleStage=await modularHostInitialization.waitFor(preparePlayerVehicle(initialVehicle(),{signal:modularHostInitialization.signal}),'selected-vehicle');initialVehicleStage.commit();
   rayTracing=createRayTracedOcclusion({THREE,renderer,scene,camera,excludeRoots:()=>[cockpit,...(compositionEditor?.renderOverlays||[])],excludeOccluders:()=>[raceChevyPhysicalRoot,raceWorld.getFalconVisualRoot?.()]});
-  rayTracingSettings=installRayTracingSettings({controller:rayTracing,getDiagnostics:()=>globalThis.__chevyV6Complete?.workshop?.active?(globalThis.__chevyV6Complete.workshop.rayTracing?.diagnostics()||rayTracing.diagnostics()):rayTracing.diagnostics()});
+  rayTracingSettings=installRayTracingSettings({controller:rayTracing,vehicleId:globalThis.__asfaltoSelectedPlayerVehicle,getDiagnostics:()=>globalThis.__chevyV6Complete?.workshop?.active?(globalThis.__chevyV6Complete.workshop.rayTracing?.diagnostics()||rayTracing.diagnostics()):rayTracing.diagnostics()});
   globalThis.__asfaltoRayTracing={refresh:()=>rayTracingSettings.refresh(),getMode:()=>rayTracingSettings.getMode(),setMode:value=>rayTracingSettings.setMode(value),diagnostics:()=>rayTracing.diagnostics()};
   async function preparePlayerVehicle(vehicle,{signal}={}) {
     const stage=new THREE.Group();
@@ -9966,8 +9948,9 @@ listen(window,'chevy:vehicle-config',(event)=>{
     stage.userData.vehicleSelectionMount=true;
     stage.visible=false;
     raceChevyV3Model.add(stage);
-    let presentation,driver,committed=false,released=false;
+    let presentation,driver,cockpitProfile,committed=false,released=false;
     try {
+      const layout = vehicleCockpitLayouts.prepare(vehicle);
       presentation=await createVehiclePresentation(THREE,{
         vehicle,signal,lodLevels:runtimeDeviceProfile.phone?[0]:[0,1,2],modelRoot:stage,
         physicalCalibration:true,lightScene:scene,loadGlb:window.__asfaltoLoadVehicleModel,
@@ -9977,6 +9960,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
       const savedCondition=globalThis.__chevyV6Complete?.profile?.().vehicleConditionsV7?.cars?.[vehicle];
       if(savedCondition)presentation.setPersistentCondition(savedCondition);
       driver=createPlayerDriver(THREE,vehicle);
+      cockpitProfile=await layout;
+      signal?.throwIfAborted();
     } catch(error) {
       stage.removeFromParent();
       presentation?.dispose();
@@ -9986,6 +9971,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     return {
       commit(){
         if(committed||released)return;
+        compositionEditor.flush();
         presentation.setReducedRefraction(raceWorld.getPerformanceTier()==='low');
         authoredControlMounts?.restore();
         authoredMirrors?.dispose();
@@ -10000,9 +9986,17 @@ listen(window,'chevy:vehicle-config',(event)=>{
         raceChevyPresentation=presentation;
         window.__asfaltoVehiclePresentations.chevy=presentation;
         window.__asfaltoSelectedPlayerVehicle=vehicle;
-        authoredControlMounts??=createAuthoredControlMounts(THREE,{radio:radioMount,ignition:cockpitIgnition.mount,lights:cockpitLightSwitch.mount,illumination:cockpitLightSwitch.instrumentLight,shifter:shifterAssembly});
         authoredControlMounts.attach(presentation.root,vehicle);
         authoredMirrors=attachAuthoredMirrors(THREE,presentation,vehicle,cockpitMirrors.feeds);
+        compositionEditor.useProfile(cockpitProfile,cockpitProfile.authored ? authoredEditorTargets(presentation.root,vehicle) : compositionTargets);
+        authoredControlMounts.refreshPlacement();
+        backgroundEditor.setVehicle(vehicle);
+        frontCutController.setVehicle(vehicle);
+        if(gameSettingsVehicle!==vehicle){
+          gameSettingsVehicle=vehicle;
+          gameSettings=loadGameSettings(vehicle);
+          if(window.__cockpit)applySettings({persist:false});
+        }
         raceWorld.attachWeatherWindshield(authoredWindshieldMount(THREE,presentation,vehicle)||{cabinMount});
         raceCameraInitialized=false;
         void raceWorld.invalidateVehiclePhysics();
@@ -10010,7 +10004,8 @@ listen(window,'chevy:vehicle-config',(event)=>{
         committed=true;
         const {mode,instrumentPower}=raceWorld.getDrivingLights();
         presentation.setLightMode(mode,instrumentPower);
-        lightingEditor?.applyVehicles();
+        lightingEditor?.setVehicle(vehicle);
+        rayTracingSettings?.setVehicle(vehicle);
         rayTracing?.invalidate();
       },
       dispose(){
@@ -10398,9 +10393,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       return this.getState();
     },
     setCockpitCameraCalibration(state) {
-      compositionState.setCockpitCalibration(state);
-      rememberCockpitCalibration(compositionState.getState().camera.cockpit);
-      compositionEditor?.setCockpitCameraCalibration(compositionState.getState().camera.cockpit);
+      compositionEditor?.setCockpitCameraCalibration(state);
       return this.getState();
     },
     saveLayout() {

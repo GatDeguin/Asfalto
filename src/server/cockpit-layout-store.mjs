@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { lstat, mkdir, open, readFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { sanitizeCompositionState } from '../game/composition-editor-state.mjs?v=854484feaf2bd3fc';
-import { COCKPIT_LENS_PRESETS } from '../game/vehicle-camera-rig.mjs?v=93a85b29944b9925';
+import { sanitizeCompositionState } from '../game/composition-editor-state.mjs?v=c4711cb3438b2dc0';
+import { CAMERA_MODES, COCKPIT_LENS_PRESETS } from '../game/vehicle-camera-rig.mjs?v=467c30948b8f1e07';
+import { getVehicleDefinition } from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_FILE_BYTES = 4 * MAX_BODY_BYTES; // Pretty JSON adds indentation to bounded request data.
@@ -37,14 +38,16 @@ function validateLayout(value) {
       invalid(`El objeto ${id} requiere position, rotation y scale con tres números finitos.`);
     }
   }
-  const camera = value.camera?.cockpit;
-  if (!record(value.camera) || !record(camera) || !vector(camera.positionOffsetM) || !vector(camera.rotationOffsetDeg)) {
-    invalid('camera.cockpit requiere posición y rotación con tres números finitos.');
-  }
-  if (!Object.hasOwn(COCKPIT_LENS_PRESETS, camera.lensMode) && camera.lensMode !== 'manual') invalid('El modo de lente del cockpit es inválido.');
-  for (const field of ['focalLengthMm', 'baseHorizontalFovDeg']) {
-    if ((field === 'focalLengthMm' && camera.lensMode === 'manual') || camera[field] !== undefined) {
-      if (typeof camera[field] !== 'number' || !Number.isFinite(camera[field])) invalid(`${field} debe ser un número finito.`);
+  if (!record(value.camera) || !record(value.camera.cockpit)) invalid('Falta la cámara de cockpit.');
+  for (const [mode, camera] of Object.entries(value.camera)) {
+    if (!CAMERA_MODES.includes(mode) || !record(camera) || !vector(camera.positionOffsetM) || !vector(camera.rotationOffsetDeg)) {
+      invalid('Cada cámara requiere un modo válido y posición y rotación con tres números finitos.');
+    }
+    if (!Object.hasOwn(COCKPIT_LENS_PRESETS, camera.lensMode) && camera.lensMode !== 'manual') invalid('El modo de lente de la cámara es inválido.');
+    for (const field of ['focalLengthMm', 'baseHorizontalFovDeg']) {
+      if ((field === 'focalLengthMm' && camera.lensMode === 'manual') || camera[field] !== undefined) {
+        if (typeof camera[field] !== 'number' || !Number.isFinite(camera[field])) invalid(`${field} debe ser un número finito.`);
+      }
     }
   }
   return sanitizeCompositionState(value);
@@ -70,9 +73,9 @@ export async function atomicWrite(filename, contents) {
   }
 }
 
-function createStore(directory) {
-  const filename = path.join(path.resolve(directory), FILENAME);
-  const backup = path.join(path.dirname(filename), BACKUP_FILENAME);
+function createStore(directory, vehicle = null) {
+  const filename = path.join(path.resolve(directory), vehicle ? `cockpit-layout.${vehicle}.json` : FILENAME);
+  const backup = path.join(path.dirname(filename), vehicle ? `cockpit-layout.${vehicle}.previous.json` : BACKUP_FILENAME);
   let tail = Promise.resolve();
   const enqueue = action => {
     const result = tail.then(action);
@@ -170,18 +173,24 @@ export function readJSONBody(request) {
 // Server-only: storage is opt-in so QA servers never touch personal settings.
 export function createCockpitLayoutEndpoint(directory = null) {
   if (directory !== null && (typeof directory !== 'string' || !directory)) throw new TypeError('cockpitDataDirectory debe ser una ruta o null.');
-  const store = directory === null ? null : createStore(directory);
+  const stores = new Map();
   return async (request, response) => {
     try {
       enforceSameOrigin(request);
       if (request.method !== 'GET' && request.method !== 'PUT') {
         sendJSON(response, 405, { error: 'Método no permitido.', code: 'method_not_allowed' }, { allow: 'GET, PUT' }); return;
       }
-      if (!store) {
+      const vehicle = new URL(request.url, 'http://localhost').searchParams.get('vehicle');
+      if (vehicle !== null && !getVehicleDefinition(vehicle)?.selectable) {
+        throw new CockpitError(400, 'invalid_vehicle', 'El modelo de cockpit no es válido.');
+      }
+      if (directory === null) {
         if (request.method === 'GET') sendJSON(response, 200, { enabled: false });
         else sendJSON(response, 503, { error: 'El guardado en disco está desactivado.', code: 'persistence_disabled' });
         return;
       }
+      if (!stores.has(vehicle)) stores.set(vehicle, createStore(directory, vehicle));
+      const store = stores.get(vehicle);
       if (request.method === 'GET') sendJSON(response, 200, { enabled: true, path: store.path, layout: await store.read() });
       else sendJSON(response, 200, { ok: true, path: store.path, layout: await store.save(await readJSONBody(request)) });
     } catch (error) {

@@ -14,7 +14,7 @@
 <meta name="theme-color" content="#090b0e">
 <title>Asfalto Nacional v8</title>
 <link rel="preload" as="image" href="./assets/loading/workshop.jpg">
-<link rel="stylesheet" href="./assets/styles/inline-01.css?v=01e74fcfa8b85c84">
+<link rel="stylesheet" href="./assets/styles/inline-01.css?v=927aacba0b18fea7">
 
 
 <!-- COCKPIT_V4_SECOND_GEN_HEAD_END -->
@@ -127,11 +127,84 @@
 
   <aside id="settings-panel" class="settings-panel" hidden aria-label="Configuración del cockpit">
     <header class="settings-header">
-      <div><strong>Configuración</strong><span id="audio-status">Audio listo para activar</span></div>
+      <div><strong>Configuración</strong><span id="settings-active-vehicle"></span><span id="audio-status">Audio listo para activar</span></div>
       <button id="settings-close" type="button" aria-label="Cerrar configuración">×</button>
     </header>
 
     <div class="settings-scroll">
+      <section class="settings-section" id="editor-settings-section">
+        <h2>Composición 3D</h2>
+        <button id="editor-mode-toggle" class="editor-mode-button" type="button" aria-pressed="false" aria-controls="editor-controls">
+          <span><b>Modo editor</b><small>Ajustá las cámaras y las piezas del auto seleccionado.</small></span><em>Entrar</em>
+        </button>
+        <div id="editor-controls" hidden>
+          <label class="editor-select-row"><span>Cámara o pieza</span><select id="editor-element-select"></select></label>
+          <p id="editor-availability" class="editor-availability" aria-live="polite" hidden></p>
+          <label class="setting-row switch-row editor-guide-row"><span>Guías 3D<small>Ejes X/Y/Z y caja de selección.</small></span><input id="editor-show-guides" type="checkbox" checked><i></i></label>
+          <p class="editor-tip">Elegí una cámara para encuadrarla. Los cambios se guardan en el perfil de este auto.</p>
+
+          <div id="editor-camera-lens" class="editor-lens-row" hidden>
+            <div class="editor-vector-title">Lente <span>horizontal</span></div>
+            <label class="editor-select-row"><span>Preset</span><select id="editor-camera-lens-preset" aria-label="Preset de lente"><option value="original">Original</option><option value="28mm">28 mm</option><option value="35mm">35 mm</option><option value="50mm">50 mm</option><option value="80mm">80 mm</option><option value="manual">Manual</option></select></label>
+            <label class="editor-axis-row"><b>mm</b><input id="editor-camera-focal-length" type="number" min="18" max="120" step="0.1" inputmode="decimal" aria-label="Longitud focal manual en milímetros"></label>
+          </div>
+
+          <div id="editor-front-cut-card" class="editor-front-cut-card" aria-label="Corte ajustable del frente de la Chevy" hidden>
+            <div class="editor-vector-title">Corte del frente <span>longitudinal</span></div>
+            <label class="slider-row"><span>Lugar del corte<output id="editor-front-cut-value">36.9%</output></span><input id="editor-front-cut" type="range" min="5" max="100" step="0.1" value="36.9" aria-label="Lugar del corte del frente desde la trompa"></label>
+            <div class="editor-front-cut-scale" aria-hidden="true"><span>Trompa</span><span>Parabrisas</span><span>Parte trasera</span></div>
+            <p class="editor-front-cut-help">Define hasta dónde se conserva la carrocería, medido desde la trompa. Al moverlo hacia la derecha se revela una porción mayor del auto.</p>
+            <button id="editor-front-cut-reset" type="button">Restablecer corte original</button>
+          </div>
+
+          <details class="editor-background-card" aria-label="Configuración del fondo">
+            <summary>Fondo de la composición</summary>
+            <label class="setting-row switch-row"><span>Mostrar fondo<small>Activa la imagen detrás del cockpit.</small></span><input id="editor-background-enabled" type="checkbox" checked><i></i></label>
+            <label class="editor-select-row"><span>Ajuste</span><select id="editor-background-fit" aria-label="Ajuste del fondo"><option value="cover">Cubrir</option><option value="contain">Contener</option><option value="fill">Estirar</option></select></label>
+            <label class="slider-row"><span>Opacidad<output id="editor-background-opacity-value">100%</output></span><input id="editor-background-opacity" type="range" min="0" max="1" step="0.01" value="1"></label>
+            <label class="slider-row"><span>Zoom<output id="editor-background-zoom-value">100%</output></span><input id="editor-background-zoom" type="range" min="0.5" max="2.5" step="0.01" value="1"></label>
+            <label class="slider-row"><span>Encuadre horizontal<output id="editor-background-position-x-value">50%</output></span><input id="editor-background-position-x" type="range" min="0" max="100" step="1" value="50"></label>
+            <label class="slider-row"><span>Encuadre vertical<output id="editor-background-position-y-value">50%</output></span><input id="editor-background-position-y" type="range" min="0" max="100" step="1" value="50"></label>
+            <div class="editor-background-actions">
+              <button id="editor-background-upload" type="button">Agregar / cambiar fondo</button>
+              <button id="editor-background-default" type="button">Usar fondo incluido</button>
+              <button id="editor-background-remove" type="button">Quitar fondo</button>
+            </div>
+            <input id="editor-background-file" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
+            <p id="editor-background-status" class="editor-background-status" aria-live="polite">Fondo nocturno incluido</p>
+          </details>
+
+          <div id="editor-position-group" class="editor-vector">
+            <div class="editor-vector-title">Posición <span id="editor-position-units">unidades 3D</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-position-x-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="x" aria-label="Posición X"><input name="editor-position-x-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="x" aria-label="Posición X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-position-y-number" class="editor-number" type="number" inputmode="decimal" min="-2.5" max="2.5" step="0.001" data-editor-kind="position" data-editor-axis="y" aria-label="Posición Y"><input name="editor-position-y-range" class="editor-range" type="range" min="-2.5" max="2.5" step="0.001" data-editor-range-kind="position" data-editor-range-axis="y" aria-label="Posición Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-position-z-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="z" aria-label="Posición Z"><input name="editor-position-z-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="z" aria-label="Posición Z deslizante"></label>
+          </div>
+
+          <div id="editor-rotation-group" class="editor-vector">
+            <div class="editor-vector-title">Rotación <span>grados</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-rotation-x-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="x" aria-label="Rotación X"><input name="editor-rotation-x-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="x" aria-label="Rotación X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-rotation-y-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="y" aria-label="Rotación Y"><input name="editor-rotation-y-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="y" aria-label="Rotación Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-rotation-z-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="z" aria-label="Rotación Z"><input name="editor-rotation-z-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="z" aria-label="Rotación Z deslizante"></label>
+          </div>
+
+          <div id="editor-scale-group" class="editor-vector">
+            <div class="editor-vector-title">Escala <span>factor</span></div>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-scale-x-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="x" aria-label="Escala X"><input name="editor-scale-x-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="x" aria-label="Escala X deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-scale-y-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="y" aria-label="Escala Y"><input name="editor-scale-y-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="y" aria-label="Escala Y deslizante"></label>
+            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-scale-z-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="z" aria-label="Escala Z"><input name="editor-scale-z-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="z" aria-label="Escala Z deslizante"></label>
+            <label class="setting-row switch-row editor-scale-link-row"><span>Escala uniforme<small>Al modificar un eje, aplica el mismo factor a X/Y/Z.</small></span><input id="editor-lock-scale" type="checkbox" checked><i></i></label>
+          </div>
+
+          <div class="editor-actions">
+            <button id="editor-save" type="button">Guardar composición</button>
+            <button id="editor-reset-element" type="button">Restablecer elemento</button>
+            <button id="editor-reset-all" type="button">Restablecer este modelo</button>
+          </div>
+          <p id="editor-save-status" class="editor-save-status" aria-live="polite">Diseño original cargado</p>
+        </div>
+      </section>
+
       <section class="settings-section">
         <h2>Conducción</h2>
         <div class="segmented" role="group" aria-label="Modo de transmisión">
@@ -172,79 +245,6 @@
         <label class="slider-row"><span>Velocidad de cambio<output id="shift-speed-value">100%</output></span><input id="shift-speed" type="range" min="0.65" max="1.45" step="0.01" value="1"></label>
         <label class="setting-row select-row"><span>Calidad gráfica<small>Ajusta la resolución interna según el dispositivo.</small></span><select id="graphics-quality"><option value="auto">Auto</option><option value="high">Alta</option><option value="balanced">Balanceada</option><option value="eco">Ahorro</option></select></label>
         <label class="setting-row select-row"><span>Ray tracing<small>Oclusión ambiental en geometría opaca cercana. Puede reducir los FPS.</small></span><select name="settings-ray-tracing" data-ray-tracing-select aria-label="Calidad de ray tracing"><option value="off">Apagado</option><option value="balanced">Equilibrado · 2 rayos</option><option value="high">Alto · 4 rayos</option></select></label><small data-ray-tracing-status role="status">Desactivado</small>
-      </section>
-
-      <section class="settings-section" id="editor-settings-section">
-        <h2>Composición 3D</h2>
-        <button id="editor-mode-toggle" class="editor-mode-button" type="button" aria-pressed="false" aria-controls="editor-controls">
-          <span><b>Modo editor</b><small>Seleccioná, mové, rotá y escalá cada modelo por separado.</small></span><em>Entrar</em>
-        </button>
-        <div id="editor-controls" hidden>
-          <label class="editor-select-row"><span>Objeto</span><select id="editor-element-select" aria-label="Objeto 3D a editar"></select></label>
-          <p id="editor-availability" class="editor-availability" aria-live="polite" hidden></p>
-          <label class="setting-row switch-row editor-guide-row"><span>Guías 3D<small>Ejes X/Y/Z y caja de selección.</small></span><input id="editor-show-guides" type="checkbox" checked><i></i></label>
-          <p class="editor-tip">También podés tocar directamente un modelo en la escena para seleccionarlo. Los cambios se guardan automáticamente.</p>
-
-          <div id="editor-camera-lens" class="editor-lens-row" hidden>
-            <div class="editor-vector-title">Lente <span>horizontal</span></div>
-            <label class="editor-select-row"><span>Preset</span><select id="editor-camera-lens-preset" aria-label="Preset de lente"><option value="original">Original</option><option value="28mm">28 mm</option><option value="35mm">35 mm</option><option value="50mm">50 mm</option><option value="80mm">80 mm</option><option value="manual">Manual</option></select></label>
-            <label class="editor-axis-row"><b>mm</b><input id="editor-camera-focal-length" type="number" min="18" max="120" step="0.1" inputmode="decimal" aria-label="Longitud focal manual en milímetros"></label>
-          </div>
-
-          <div id="editor-front-cut-card" class="editor-front-cut-card" aria-label="Corte ajustable del frente de la Chevy" hidden>
-            <div class="editor-vector-title">Corte del frente <span>longitudinal</span></div>
-            <label class="slider-row"><span>Lugar del corte<output id="editor-front-cut-value">36.9%</output></span><input id="editor-front-cut" type="range" min="5" max="100" step="0.1" value="36.9" aria-label="Lugar del corte del frente desde la trompa"></label>
-            <div class="editor-front-cut-scale" aria-hidden="true"><span>Trompa</span><span>Parabrisas</span><span>Parte trasera</span></div>
-            <p class="editor-front-cut-help">Define hasta dónde se conserva la carrocería, medido desde la trompa. Al moverlo hacia la derecha se revela una porción mayor del auto.</p>
-            <button id="editor-front-cut-reset" type="button">Restablecer corte original</button>
-          </div>
-
-          <div class="editor-background-card" aria-label="Configuración del fondo">
-            <div class="editor-vector-title">Fondo <span>imagen 2D</span></div>
-            <label class="setting-row switch-row"><span>Mostrar fondo<small>Activa la imagen detrás del cockpit.</small></span><input id="editor-background-enabled" type="checkbox" checked><i></i></label>
-            <label class="editor-select-row"><span>Ajuste</span><select id="editor-background-fit" aria-label="Ajuste del fondo"><option value="cover">Cubrir</option><option value="contain">Contener</option><option value="fill">Estirar</option></select></label>
-            <label class="slider-row"><span>Opacidad<output id="editor-background-opacity-value">100%</output></span><input id="editor-background-opacity" type="range" min="0" max="1" step="0.01" value="1"></label>
-            <label class="slider-row"><span>Zoom<output id="editor-background-zoom-value">100%</output></span><input id="editor-background-zoom" type="range" min="0.5" max="2.5" step="0.01" value="1"></label>
-            <label class="slider-row"><span>Encuadre horizontal<output id="editor-background-position-x-value">50%</output></span><input id="editor-background-position-x" type="range" min="0" max="100" step="1" value="50"></label>
-            <label class="slider-row"><span>Encuadre vertical<output id="editor-background-position-y-value">50%</output></span><input id="editor-background-position-y" type="range" min="0" max="100" step="1" value="50"></label>
-            <div class="editor-background-actions">
-              <button id="editor-background-upload" type="button">Agregar / cambiar fondo</button>
-              <button id="editor-background-default" type="button">Usar fondo incluido</button>
-              <button id="editor-background-remove" type="button">Quitar fondo</button>
-            </div>
-            <input id="editor-background-file" type="file" accept="image/png,image/jpeg,image/webp,image/avif,image/gif" hidden>
-            <p id="editor-background-status" class="editor-background-status" aria-live="polite">Fondo nocturno incluido</p>
-          </div>
-
-          <div id="editor-position-group" class="editor-vector">
-            <div class="editor-vector-title">Posición <span>unidades 3D</span></div>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-position-x-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="x" aria-label="Posición X"><input name="editor-position-x-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="x" aria-label="Posición X deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-position-y-number" class="editor-number" type="number" inputmode="decimal" min="-2.5" max="2.5" step="0.001" data-editor-kind="position" data-editor-axis="y" aria-label="Posición Y"><input name="editor-position-y-range" class="editor-range" type="range" min="-2.5" max="2.5" step="0.001" data-editor-range-kind="position" data-editor-range-axis="y" aria-label="Posición Y deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-position-z-number" class="editor-number" type="number" inputmode="decimal" min="-4" max="4" step="0.001" data-editor-kind="position" data-editor-axis="z" aria-label="Posición Z"><input name="editor-position-z-range" class="editor-range" type="range" min="-4" max="4" step="0.001" data-editor-range-kind="position" data-editor-range-axis="z" aria-label="Posición Z deslizante"></label>
-          </div>
-
-          <div id="editor-rotation-group" class="editor-vector">
-            <div class="editor-vector-title">Rotación <span>grados</span></div>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-rotation-x-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="x" aria-label="Rotación X"><input name="editor-rotation-x-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="x" aria-label="Rotación X deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-rotation-y-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="y" aria-label="Rotación Y"><input name="editor-rotation-y-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="y" aria-label="Rotación Y deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-rotation-z-number" class="editor-number" type="number" inputmode="decimal" min="-180" max="180" step="0.1" data-editor-kind="rotation" data-editor-axis="z" aria-label="Rotación Z"><input name="editor-rotation-z-range" class="editor-range" type="range" min="-180" max="180" step="0.1" data-editor-range-kind="rotation" data-editor-range-axis="z" aria-label="Rotación Z deslizante"></label>
-          </div>
-
-          <div id="editor-scale-group" class="editor-vector">
-            <div class="editor-vector-title">Escala <span>factor</span></div>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-x">X</b><input name="editor-scale-x-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="x" aria-label="Escala X"><input name="editor-scale-x-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="x" aria-label="Escala X deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-y">Y</b><input name="editor-scale-y-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="y" aria-label="Escala Y"><input name="editor-scale-y-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="y" aria-label="Escala Y deslizante"></label>
-            <label class="editor-axis-row"><b class="editor-axis-label axis-z">Z</b><input name="editor-scale-z-number" class="editor-number" type="number" inputmode="decimal" min="0.05" max="4" step="0.001" data-editor-kind="scale" data-editor-axis="z" aria-label="Escala Z"><input name="editor-scale-z-range" class="editor-range" type="range" min="0.05" max="4" step="0.001" data-editor-range-kind="scale" data-editor-range-axis="z" aria-label="Escala Z deslizante"></label>
-            <label class="setting-row switch-row editor-scale-link-row"><span>Escala uniforme<small>Al modificar un eje, aplica el mismo factor a X/Y/Z.</small></span><input id="editor-lock-scale" type="checkbox" checked><i></i></label>
-          </div>
-
-          <div class="editor-actions">
-            <button id="editor-save" type="button">Guardar composición</button>
-            <button id="editor-reset-element" type="button">Restablecer elemento</button>
-            <button id="editor-reset-all" type="button">Restablecer todo</button>
-          </div>
-          <p id="editor-save-status" class="editor-save-status" aria-live="polite">Diseño original cargado</p>
-        </div>
       </section>
     </div>
 
@@ -366,7 +366,7 @@
 <script id="asfalto-v6-cockpit-roof-payload" type="application/octet-stream" data-filename="Techo.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-cockpit-roof/Techo.glb" data-bytes="167652" data-sha256="F369B86D044D6BF9B43D2F2C134AF0F8015F399A7ED1E280C043D1892DAE8820"></script>
 <script id="asfalto-v6-shifter-knob-payload" type="application/octet-stream" data-filename="BochaGrabada.glb" data-encoding="external-url" data-external-url="./assets/extracted/asfalto-v6-shifter-knob/BochaGrabada.glb" data-bytes="373348" data-sha256="9A1A9F5B3D70DD79928E9D29C7AB8F1CDFC7C4800DF29FB12142D9058B4D3710"></script>
 <script id="cockpit-payload" type="application/json" data-encoding="external-url" data-external-url="./assets/manifests/cockpit-payload.json" data-bytes="59003274" data-sha256="B6F8C7AF95BC4A85516E469D511124F49AB68754EFF30D0E638D6A13C647D886"></script>
-<script type="module" src="./src/legacy/module-02.mjs?v=af2f94edc9172a25"></script>
+<script type="module" src="./src/legacy/module-02.mjs?v=3637f2e685024778"></script>
 
 
 

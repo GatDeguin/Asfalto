@@ -26,26 +26,32 @@ test('low race glass drops the transmission prepass and restores the authored ma
 });
 
 test('a vehicle staged before a tier change uses the live tier when committed',async()=>{
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=af2f94edc9172a25',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=3637f2e685024778',import.meta.url),'utf8');
  const start=source.indexOf('  async function preparePlayerVehicle(');
  const end=source.indexOf("  setLoading('Preparando vegetación",start);
  let tier='balanced';
  const refraction=[],mount=new T.Group();
+ const profiles=[];
  const presentation={root:new T.Group(),setReducedRefraction:value=>refraction.push(value),setChassisConfig(){},setLightMode(){}};
  const scope={
   THREE:T,raceChevyV3Model:mount,raceChevyPhysicalRoot:new T.Group(),runtimeDeviceProfile:{phone:false},scene:{},
   window:{__asfaltoVehiclePresentations:{}},getVehicleDefinition:()=>null,
   createVehiclePresentation:async()=>presentation,createPlayerDriver:()=>null,playerDriver:null,
-  authoredControlMounts:{restore(){},attach(){}},authoredMirrors:null,raceChevyPresentation:null,
+  authoredControlMounts:{restore(){},attach(){},refreshPlacement(){}},authoredMirrors:null,raceChevyPresentation:null,
+  vehicleCockpitLayouts:{prepare:async vehicle=>({vehicle,authored:false})},compositionTargets:[],
+  compositionEditor:{flush(){},useProfile(profile){profiles.push(profile.vehicle);}},
+  backgroundEditor:{setVehicle(){}},frontCutController:{setVehicle(){}},gameSettingsVehicle:'chevrolet_1969',
   cockpitMirrors:{feeds:{}},attachAuthoredMirrors:()=>null,authoredWindshieldMount:()=>null,cabinMount:{},
-  raceCameraInitialized:true,lightingEditor:null,rayTracing:null,
+  raceCameraInitialized:true,lightingEditor:null,rayTracing:null,rayTracingSettings:null,
   raceWorld:{getPerformanceTier:()=>tier,attachWeatherWindshield(){},invalidateVehiclePhysics(){},getDrivingLights:()=>({mode:'off'})}
  };
  const prepare=new Function('scope',`with(scope){${source.slice(start,end)};return preparePlayerVehicle;}`)(scope);
  const staged=await prepare('chevrolet_1969');
  assert.equal(mount.children[0].visible,false);
+ assert.deepEqual(profiles,[]);
  tier='low';
  staged.commit();
  assert.equal(mount.children[0].visible,true);
  assert.equal(refraction.at(-1),true);
+ assert.deepEqual(profiles,['chevrolet_1969']);
 });

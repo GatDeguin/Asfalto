@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {mkdir, writeFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import path from 'node:path';
-import {startServer} from '../server.mjs?v=5a11a063822d96e9';
+import {startServer} from '../server.mjs?v=9eba410657deb1ea';
 
 const [output, vehicle = 'chevy_400_1957', root = path.resolve(import.meta.dirname, '..')] = process.argv.slice(2);
 assert.ok(output, 'Indica el directorio de evidencia.');

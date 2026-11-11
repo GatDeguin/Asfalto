@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto';
 import {encodeBinaryBake,BAKE_SCHEMA} from '../src/tracks/visuals/bake-binary-codec.mjs?v=9a206fac5b81dd7a';
 import {prepareBinaryPayload} from './bake-tooling.mjs?v=08383d8a84ffdff4';
 import {bakeTerrainMeshlets} from './build-terrain-meshlets.mjs?v=89d10b22d76fdf36';
-import {startServer} from '../server.mjs?v=5a11a063822d96e9';
+import {startServer} from '../server.mjs?v=9eba410657deb1ea';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const {chromium}=createRequire(process.env.PLAYWRIGHT_PACKAGE||import.meta.url)('playwright');
 const referenceFlag=process.argv.indexOf('--reference');

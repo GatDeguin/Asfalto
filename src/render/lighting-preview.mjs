@@ -1,4 +1,4 @@
-import {sanitizeLightingOverrides,LUT_DEFAULTS} from '../game/lighting-presets.mjs?v=746ea306bd370d04';
+import {sanitizeLightingOverrides,LUT_DEFAULTS} from '../game/lighting-presets.mjs?v=8a945bd345e31282';
 import {VEHICLE_LIGHT_CALIBRATION_DEFAULTS} from './vehicle-lighting.mjs?v=5a49d3e7dc4a2630';
 const degrees=v=>((v*180/Math.PI+180)%360+360)%360-180;
 const hex=color=>'#'+color.getHexString();
