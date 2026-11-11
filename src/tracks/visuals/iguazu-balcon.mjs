@@ -1,4 +1,4 @@
-import {loadRegionalBlenderArt} from './regional-blender-art.mjs?v=3b7ae6f4966be6b4';
+import {loadRegionalBlenderArt} from './regional-blender-art.mjs?v=942ba726ff042432';
 
 export const iguazuBalconAsset = Object.freeze({
   path: 'assets/tracks/iguazu-balcon.glb.gz',

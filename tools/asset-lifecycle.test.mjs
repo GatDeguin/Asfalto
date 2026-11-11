@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {createAssetLifecycleManager,createAssetFrameBudget} from '../src/runtime/asset-lifecycle.mjs?v=a4c55886c0272d57';
-import {parseGlbContainer,decodeGlbDocument} from '../src/runtime/glb-decode-worker.mjs?v=2a59613c05796123';
-import {decodeGlbInWorker} from '../src/runtime/glb-decode-client.mjs?v=91a1751f8f15975f';
+import {parseGlbContainer,decodeGlbDocument} from '../src/runtime/glb-decode-worker.mjs?v=4e5a55f83b79f7c1';
+import {decodeGlbInWorker} from '../src/runtime/glb-decode-client.mjs?v=48575bc898c5b257';
+import {AssetDecodePool} from '../src/runtime/asset-decode-pool.mjs?v=1be266bf7b1e2d93';
 
 const payload=JSON.parse(fs.readFileSync(new URL('../assets/manifests/workshop-bootstrap.json?v=71e24e64d3ef5ec5',import.meta.url),'utf8'));
 const core='data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64');
@@ -28,14 +29,17 @@ class WorkerMock{
  postMessage(message,transfer){
   const received=structuredClone(message,{transfer});
   queueMicrotask(async()=>{
-   const result=await decodeGlbDocument(received.buffer);
-   const response=structuredClone({ok:true,...result},{transfer:[result.bin.buffer]});
+   assert.equal(received.kind,'glb');
+   const result=await decodeGlbDocument(received.data.buffer);
+   const response=structuredClone({requestId:received.requestId,ok:true,result},{transfer:[result.bin.buffer]});
    this.onmessage?.({data:response});
   });
  }
  terminate(){workerTerminated++;}
 }
-const transferred=glb(),decoded=await decodeGlbInWorker(transferred,{WorkerClass:WorkerMock});
+const pool=new AssetDecodePool({WorkerClass:WorkerMock});
+const transferred=glb(),decoded=await decodeGlbInWorker(transferred,{pool});
+pool.close();
 assert.equal(transferred.byteLength,0);assert.equal(decoded.bin.byteLength,36);assert.equal(workerTerminated,1);
 const allocated=[];
 class Material extends T.MeshStandardMaterial{constructor(options){super(options);this.released=0;allocated.push(this);}dispose(){this.released++;super.dispose();}}

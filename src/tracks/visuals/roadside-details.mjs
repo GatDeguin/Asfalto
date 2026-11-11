@@ -1,4 +1,4 @@
-import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=1c8382b3a6fd38d1';
+import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=affc021b947e883e';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
 import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=76e2be9ca5367f98';
 // Blender-authored meshes in local metres, with procedural tree stems at the roadside.

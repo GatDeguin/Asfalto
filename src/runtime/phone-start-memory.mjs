@@ -1,4 +1,4 @@
-import {decodeVehicleTransport} from './vehicle-transport.mjs?v=5ba37f6b7223e2cb';
+import {decodeVehicleTransport} from './vehicle-transport.mjs?v=fbb95f2accf95a56';
 import {phoneCockpitAssets} from './phone-cockpit-assets.mjs?v=2106632bc0111fe4';
 import {readDeferredPayload} from './workshop-bootstrap.mjs?v=2451a6adbe22e7d9';
 export async function readPhoneCockpitPart(key,signal,read=readDeferredPayload){

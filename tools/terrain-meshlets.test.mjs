@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {bakeTerrainMeshlets, buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=89d10b22d76fdf36';
+import {bakeTerrainMeshlets, buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=efb2df9b9dd6246f';
 import {createMeshletCuller, installTerrainMeshletRanges, registerTerrainMeshlets} from '../src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
 
 function terrain(width, height) {

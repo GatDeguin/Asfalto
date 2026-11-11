@@ -2,12 +2,12 @@ import {waterfallCameraProfile} from './regional-waterfall-camera.mjs?v=4147e1c2
 import {regionalReviewPlan} from './regional-review-plan.mjs?v=3ef6be1d326a3487';
 import {createIguazuFern} from './regional-forest.mjs?v=76e2be9ca5367f98';
 import {batchIguazuGround} from './iguazu-ground-batches.mjs?v=657ba3796dce7370';
-import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import {prepareIguazuSurfaces,terrainHeightSampler} from './reference-landscape.mjs?v=62f7607723a931ca';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
 import {findWaterfallImpact,refineWaterfallVolume,connectSidefallToBasin,repairBakedSidefallTransform,createSidefallReceivingLedge} from './waterfall-impact.mjs?v=88a5c279fc1ae5d5';
 import {addRouteDirection} from './route-direction.mjs?v=e9e6dcf49d8bbd2e';
-import {addKilometreMarkers} from './regional-wayfinding.mjs?v=01d189b1a8467e23';
+import {addKilometreMarkers} from './regional-wayfinding.mjs?v=d682d4554fa30414';
 import {addIguazuNativeRoadSigns} from './iguazu-signs.mjs?v=963ecc7c5f8c18fb';
 import {addScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 
@@ -241,7 +241,7 @@ export async function prepareIguazuReturn(root,{sourceRoot,query,startM,lengthM,
   if(!root?.isObject3D||!T)return null;
   if(sourceRoot?.isObject3D&&sourceRoot.userData.asfaltoIguazu)sourceRoot.userData.asfaltoIguazu.ground=batchIguazuGround(T,sourceRoot);
   const templates=sourceTemplates.get(sourceRoot)||[];if(!templates.length)return null;
-  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=5d23af4de3dd9c4f'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
+  const {terrainHeightSampler}=await import('./reference-landscape.mjs?v=62f7607723a931ca'),heightAt=root.userData.asfaltoReturnHeightAt||terrainHeightSampler(T,root),items=[],dummy=new T.Object3D();let count=0;
   delete root.userData.asfaltoReturnHeightAt;
   for(let s=startM+80;s<lengthM-80&&count<6000;s+=18)for(const side of [-1,1])for(const band of [18,45,90,160]){
     if(count>=6000)continue;const seed=s+side*371+band*7;if(rand(seed)>.72)continue;const q=query.sample(s),off=side*(band+rand(seed+2)*25),p=q.position.map((v,i)=>v+q.frame.left[i]*off),y=heightAt(p[0],p[2]);if(!Number.isFinite(y)||Math.abs(y-p[1])>60)continue;

@@ -1,5 +1,5 @@
 // Distances and natural landmarks are located on the authored route, never on the return connector.
-import {instanceDetailTiles} from './roadside-details.mjs?v=22883e922e9447bd';
+import {instanceDetailTiles} from './roadside-details.mjs?v=3cb650a4f1db8714';
 import {addRouteDirection} from './route-direction.mjs?v=e9e6dcf49d8bbd2e';
 import {addRoadSigns,roadSignYaw} from './road-signs.mjs?v=6d823d9e48d15630';
 

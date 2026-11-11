@@ -1,4 +1,4 @@
-import {bakeSignature} from './offline-track-bake.mjs?v=67e9450828b29db5';
+import {bakeSignature} from './bake-signature.mjs?v=5db4514871ae8f85';
 // Read-only route sampling, used only to constrain visible terrain and vegetation.
 export function visualRoadField(query, lengthM) {
   const cells=new Map(), samples=[], size=180, step=20;

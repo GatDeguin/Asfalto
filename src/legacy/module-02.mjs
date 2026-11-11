@@ -1,11 +1,11 @@
-import {decodeGlbInWorker} from '../runtime/glb-decode-client.mjs?v=c745e4689be5365d';
+import {decodeGlbInWorker} from '../runtime/glb-decode-client.mjs?v=48575bc898c5b257';
 import {smoothAnalog} from '../render/cockpit-animator.mjs?v=ee8c18d00412ad91';
 import {AssetPipeline,createAssetLifecycleManager,disposeAssets} from '../runtime/asset-lifecycle.mjs?v=7cd121116512953b';
 import {createEngineControlRing,createEngineControlReader} from '../audio/engine-control-ring.mjs?v=3116f68b8c4c5bb5';
 import {getRenderHost} from '../runtime/render-host.mjs?v=f6fbc04cffe5286d';
 import {getVehicleResourcePool,isBorrowedVehicleResource,releaseVehicleModel} from '../render/vehicle-resource-pool.mjs?v=564628ad31eed1e7';
 import {isRenderPreparationPending,getRenderPreparationDiagnostics} from '../render/pass-preparation.mjs?v=5e96c4931974c8ab';
-import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=5e689f9c17d50329';
+import {readGameCockpitPart} from '../runtime/game-cockpit-memory.mjs?v=f8c197de54adcc4d';
 import {createVehicleTemplateReference} from '../render/vehicle-template-reference.mjs?v=713b9fc276b6e3ef';
 import {vehicleTemplateReference} from '../runtime/vehicle-template-reference.mjs?v=f8e39a699ce36cce';
 import {initialVehicle} from '../runtime/initial-vehicle.mjs?v=4ac03e5fd1c2f96a';
@@ -13,7 +13,7 @@ import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=a89bf393617af8a7
 import {createLazyCockpitOriginals,createCockpitEditorActivation} from '../render/lazy-cockpit-originals.mjs?v=17231b23f171e518';
 import {resolveRenderBudget} from '../render/render-budget.mjs?v=cbd3e7911fbec8e0';
 import {createFrameFailureBoundary} from '../runtime/frame-failure-boundary.mjs?v=e01eabd8e4d9be52';
-import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {decodeVehicleTransport} from '../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 import {ss250InteriorReviewEnabled,ss250ConsoleInspection} from '../render/ss250-interior-review.mjs?v=57f067ff26ce09f2';
 import {createVehicleCockpitWheel} from '../render/vehicle-cockpit-wheel.mjs?v=91d7e0905fe25df9';
 import { attachAuthoredMirrors } from '../render/authored-vehicle-mirrors.mjs?v=2e9cc129c7e77388';
@@ -31,10 +31,10 @@ import {attachPhoneDisplayReference,phoneDisplayReferenceBox,swappableCockpitBin
 import {createBootRenderGate} from '../render/boot-render-gate.mjs?v=5891dc96edfec207';
 import {createSerialTextureQueue} from '../runtime/phone-resource-memory.mjs?v=3776132bc04e6acf';
 import {makeGlbAttribute} from '../runtime/glb-accessors.mjs?v=fe90186fbef5807f';
-import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=55a74ce72fc340f0';
-import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=5ebdf5bf2d7a3ca4';
+import {addTrackApproaches} from '../tracks/visuals/track-approaches.mjs?v=8b87094d439351e1';
+import {loadTrackApproachArt} from '../tracks/visuals/track-approach-art.mjs?v=1ed04832d43cd6e1';
 const phoneTextureQueue=createSerialTextureQueue();
-import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=8f1dba898fcbd7ae';
+import {readPhoneCockpitPart} from '../runtime/phone-start-memory.mjs?v=2bf1cd61131af7de';
 import {applyPhoneCockpitProjection} from '../render/phone-cockpit-projection.mjs?v=c9d3861a0c494f0b';
 import {phoneWheelDragPixels} from '../ui/mobile-wheel-drag.mjs?v=e3741fd151e9f46f';
 import {createMobileDrivingControls,mergeMobileDrivingInput} from '../ui/mobile-driving-controls.mjs?v=f96bb5c406d469ba';
@@ -63,11 +63,11 @@ import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-c
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
 import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=3045f15fc78d12cf';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=0823fc1c5fc16161';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=6dab311a2abb5683';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
-import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=1c8382b3a6fd38d1';
-import { connectModularHost } from '../app/modular-bootstrap.mjs?v=434dcbd0064c51e4';
+import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=affc021b947e883e';
+import { connectModularHost } from '../app/modular-bootstrap.mjs?v=464492a8647bde05';
 import * as chassisConfiguration from '../game/chassis-configuration.mjs?v=052ed38ff08ebd8a';
 import { createDriverControlPipeline } from '../game/driver-control-pipeline.mjs?v=1943044834dd1a69';
 import { createSpawnParkingHold, syncSpawnParkingHint } from '../game/spawn-parking-hold.mjs?v=b2f23ff6e15616b0';
@@ -8464,12 +8464,23 @@ listen(window,'chevy:vehicle-config',(event)=>{
       if (!response.ok) throw new Error('track request failed: ' + response.status + ' ' + url);
       return new Uint8Array(await response.arrayBuffer());
     },
-    async completeGlbToObject(bytes, label, { signal } = {}) {
+    async completeGlbToObject(bytes, label, { signal, workerDecode = false } = {}) {
       if (signal?.aborted) throw signal.reason;
       rememberQaTrackResource('glb-bytes', bytes, label);
       rememberQaTrackResource('glb-buffer', bytes.buffer, label);
+      let helpers = trackGlbHelpers;
+      if (workerDecode) {
+        const buffer = bytes.byteOffset === 0 && bytes.byteLength === bytes.buffer.byteLength
+          ? bytes.buffer : new Uint8Array(bytes).buffer;
+        const decodedDocument = await decodeGlbInWorker(buffer, {signal, label});
+        signal?.throwIfAborted();
+        if (decodedDocument) {
+          rememberQaTrackResource('glb-buffer', decodedDocument.bin.buffer, label);
+          helpers = {...trackGlbHelpers, decodedDocument};
+        }
+      }
       const root = await globalThis.AsfaltoV5GlbCore.completeGlbToObject(
-        THREE, bytes, label, trackGlbHelpers,
+        THREE, helpers.decodedDocument ? null : bytes, label, helpers,
       );
       rememberQaTrackResource('root', root, label);
       if (signal?.aborted) { disposeTrackObjectRoot(root); throw signal.reason; }

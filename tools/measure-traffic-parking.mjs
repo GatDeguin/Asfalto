@@ -1,10 +1,10 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {THREE as T} from './cinematic-three.mjs';
 import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs';
-import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs';
+import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs?v=4e5a55f83b79f7c1';
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=62f7607723a931ca';
 import '../src/legacy/asfalto-v5-glb-runtime.js';
 
 const out=process.argv[2];

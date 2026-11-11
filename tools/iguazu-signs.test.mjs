@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import test from 'node:test';
 import {THREE as T} from './cinematic-three.mjs';
-import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs';
+import {decodeGlbDocument,parseGlbContainer} from '../src/runtime/glb-decode-worker.mjs?v=4e5a55f83b79f7c1';
 import {makeGlbAttribute} from '../src/runtime/glb-accessors.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {addIguazuNativeRoadSigns} from '../src/tracks/visuals/iguazu-signs.mjs?v=963ecc7c5f8c18fb';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=62f7607723a931ca';
 
 test('Iguazú replaces the original 14 sign pairs with grounded plates for real features', async () => {
   const track=new URL('../tracks/cataratas-iguazu/',import.meta.url);

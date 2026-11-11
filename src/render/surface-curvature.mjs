@@ -1,4 +1,4 @@
-import {bakeRead,bakeWrite,bakeSignature,bakeAttributeInput} from '../tracks/visuals/offline-track-bake.mjs?v=67e9450828b29db5';
+import {bakeRead,bakeWrite,bakeSignature,bakeAttributeInput} from '../tracks/visuals/offline-track-bake.mjs?v=6f7a9d7b48d68a4c';
 /** Geometry-derived signed convexity. Positive = convex with respect to triangle winding.
  * This bounded, seam-welded one-ring estimator is a shading attribute, never displacement. */
 const cache = new WeakMap();

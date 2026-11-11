@@ -1,4 +1,4 @@
-import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 
 // Produced by ArtSource/v8-circuitos/lipan-piloto.py. Positions are local to S05.
 export const lipanPilotAsset = Object.freeze({

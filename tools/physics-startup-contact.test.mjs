@@ -32,7 +32,7 @@ test('race startup snapshots typed contact storage as independent immutable arra
 
 
 test('circuit selection preserves the original failure for the retry dialog', async () => {
-  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=439abd3873dfcdc8',import.meta.url),'utf8');
+  const source=fs.readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=b4cce9f6618c1b1d',import.meta.url),'utf8');
   const start=source.indexOf('async function configureExistingGameReady('),end=source.indexOf('\nfunction persistPlayableRoute',start);
   assert.ok(start>=0&&end>start);
   const error=new Error('physics contact initialization failed');

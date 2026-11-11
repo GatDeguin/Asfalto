@@ -1,4 +1,4 @@
-import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 
 /** Load an optional, locked regional GLB. Validate before attaching shared scene state. */
 export async function loadRegionalBlenderArt({root, releaseRoot, asset, label, signal}, {

@@ -1,7 +1,7 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=03ab3972c3d44f53';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=3346fa8947e76fa8';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=62f7607723a931ca';
 import { attachGaribaldiLadera, garibaldiLaderaAsset } from '../visuals/garibaldi-ladera.mjs?v=bb4060bab8241a9c';
-import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
+import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=942ba726ff042432';
 
 const MANIFEST = Object.freeze({
   schema: 'asfalto-track/v1',

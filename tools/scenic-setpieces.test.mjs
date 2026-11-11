@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs';
 import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs';
-import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=923ba99b4659b203';
+import {createClosedRoute} from '../src/tracks/visuals/route-closure.mjs?v=f87ef0744f99cd6c';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {addScenicSetpieces,hasScenicSetpieces,planScenicSetpieces} from '../src/tracks/visuals/scenic-setpieces.mjs?v=02639ca1402db565';
-import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
+import {terrainHeightSampler} from '../src/tracks/visuals/reference-landscape.mjs?v=62f7607723a931ca';
 
 const fixture=id=>{
   const source=readCircuitSource(id),closed=createClosedRoute(source,{id}),query=createRouteQuery(closed.route);

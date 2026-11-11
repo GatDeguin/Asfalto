@@ -1,6 +1,6 @@
-import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=03ab3972c3d44f53';
-import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
-import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
+import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=3346fa8947e76fa8';
+import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=62f7607723a931ca';
+import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=942ba726ff042432';
 import { aconcaguaArtAsset, attachAconcaguaArt } from '../visuals/aconcagua-art.mjs?v=4aea20f8e9afadaa';
 
 const SCENE_LOCK=Object.freeze({bytes:30462168,sha256:'BC1699C6F101E9BE4D5E7C1CC7F4435FD5B1C3C92BC7FE43F752FB06B27A5C92'});

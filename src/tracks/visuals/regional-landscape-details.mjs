@@ -2,7 +2,7 @@ import {addRetainingTalus} from './regional-talus.mjs?v=0e75b680f0881e21';
 import {addSectorCollisionGuardrails} from './sector-collision-guardrails.mjs?v=3cffdc3870c766a7';
 // Regional details follow the read-only route and terrain. All additions are visual.
 import { applyPhotographicLeafCutout } from './regional-forest.mjs?v=76e2be9ca5367f98';
-import { instanceDetailTiles } from './roadside-details.mjs?v=22883e922e9447bd';
+import { instanceDetailTiles } from './roadside-details.mjs?v=3cb650a4f1db8714';
 import { withoutNearbyGenericWarnings } from './route-direction.mjs?v=e9e6dcf49d8bbd2e';
 import { addRoadSigns, roadSignYaw } from './road-signs.mjs?v=6d823d9e48d15630';
 const FOREST=new Set(['dos_lagos','paso_garibaldi']);

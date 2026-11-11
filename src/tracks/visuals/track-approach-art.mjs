@@ -1,4 +1,4 @@
-import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 import {trackApproachArtAssets} from './track-approach-art-assets.mjs?v=d2e5a1b4d9d048d9';
 
 export {trackApproachArtAssets};

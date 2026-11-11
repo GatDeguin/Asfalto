@@ -1,4 +1,4 @@
-import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=67e9450828b29db5';
+import {prepareTrackBake} from '../visuals/offline-track-bake.mjs?v=6f7a9d7b48d68a4c';
 import { prepareOptionalClosedRoute, attachClosedRouteRoots, respawnRouteDistance, sourceStreamingDistance } from './closed-route-support.mjs?v=e12c62b76f1ec198';
 import { createGameplayBridge } from '../gameplay-bridge.mjs?v=c594401a38ba1b3f';
 import { createRouteQuery } from '../route-query.mjs?v=dee7340624ec958a';
@@ -6,9 +6,9 @@ import { createSectorStreamer } from '../sector-streamer.mjs?v=da7786da45940040'
 import { updateSectorVisualQuality } from '../sector-visual-quality.mjs?v=7b6e713402367202';
 import { RESPAWN_CLEARANCE_M, validateTrackManifest } from '../track-contract.mjs?v=7d88fa8e85b8ea4d';
 import { collectMaterialBindings } from '../../environment/material-bindings.mjs?v=458bef43475f6397';
-import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=5d23af4de3dd9c4f';
-import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=f7b5dadf80bbf238';
-import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=f1bc9f99edeee1d5';
+import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=62f7607723a931ca';
+import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=e01b8f5308225a46';
+import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=2b14bd00bbcb1f4c';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -397,15 +397,16 @@ export function createCuestaLipanAdapter(dependencies) {
         async loadVisual({ sector, lod, asset, signal }) {
           const url = safeUrl(asset.url, manifestBase, releaseRoot, `${sector.id} lod${lod}`);
           const bytes = await fetchLocked(url.href, asset, `${sector.id} lod${lod}`, tx, signal);
-          const root = await dependencies.completeGlbToObject(bytes, `Cuesta ${sector.id} lod${lod}`, { signal });
-          current(tx);
+          const root = await dependencies.completeGlbToObject(bytes, `Cuesta ${sector.id} lod${lod}`, { signal, workerDecode: true });
           if (!validRoot(root)) throw new TypeError(`${sector.id} lod${lod} root is invalid`);
-          setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
-          root.visible = false;
-          tx.visualRoot.add(root);
           try {
+            current(tx);
+            signal.throwIfAborted();
+            setPosition(root, toRuntimeYUp(sector.localOrigin, `${sector.id}.localOrigin`));
+            root.visible = false;
+            tx.visualRoot.add(root);
             const detailRange={startM:sector.startM,endM:sector.endM};
-            await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, query: sourceQuery,
+            await prepareTrackVisual(root, { id: 'cuesta_lipan', signal, scenery: false, streamTerrain: true, query: sourceQuery,
               lengthM: sourceRoute.lengthM, detailRange,
               barrierSource: sector.startM < 6100 ? { collisionRoot: tx.collisionById.get(sector.id), sectorId: sector.id } : null,
               prepareSigns: (sectorRoot, options) => prepareLipanAuthoredSigns(sectorRoot, { ...options, sectorId: sector.id }),

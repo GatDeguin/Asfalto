@@ -1,4 +1,4 @@
-import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from './surface-curvature.mjs?v=b65bd00ab81d3d27';
+import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from './surface-curvature.mjs?v=4c6fa9c0ecb6bbe6';
 
 const materialOwners=new WeakMap(),geometryOwners=new WeakMap(),texturePools=new WeakMap();
 const geometrySignature=geometry=>[geometry.attributes.position,geometry.attributes.position.version,geometry.index,geometry.index?.version];

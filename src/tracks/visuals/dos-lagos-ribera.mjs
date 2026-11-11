@@ -1,4 +1,4 @@
-import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=f15233fd0976636d';
+import {decodeVehicleTransport} from '../../runtime/vehicle-transport.mjs?v=fbb95f2accf95a56';
 import {shorelineFromGeometry} from './shore-promontory.mjs?v=d288d03e3f385b93';
 
 // Exported from the editable Dos Lagos - Ribera.blend master.

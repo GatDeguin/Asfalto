@@ -47,7 +47,7 @@ function sendText(response, status, message, headers = {}) {
   response.end(message);
 }
 
-export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitDataDirectory = null } = {}) {
+export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitDataDirectory = null, crossOriginIsolation = true } = {}) {
   if (host !== '127.0.0.1') throw new RangeError('El servidor solo puede enlazarse a 127.0.0.1.');
   if (!root) throw new TypeError('root es obligatorio.');
   const rootReal = await realpath(root);
@@ -67,6 +67,10 @@ export async function startServer({ root, host = '127.0.0.1', port = 0, cockpitD
   let closePromise;
 
   const server = http.createServer(async (request, response) => {
+    if (crossOriginIsolation) {
+      response.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+      response.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+    }
     if ((request.url || '').split(/[?#]/, 1)[0] === '/api/cockpit-layout') {
       await cockpitLayout(request, response);
       return;

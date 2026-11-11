@@ -19,16 +19,8 @@ export function parseGlbContainer(buffer) {
   if(!json||!bin)throw new Error('GLB requires JSON and BIN chunks');
   return {json,bin};
 }
-export async function decodeGlbDocument(buffer){
+export async function decodeGlbDocument(buffer, label = 'GLB'){
   const source=parseGlbContainer(buffer);
-  return globalThis.AsfaltoV5GlbCore.decodeMeshoptDocument(source.json,source.bin,MeshoptDecoder,'Rival GLB');
-}
-if(typeof WorkerGlobalScope!=='undefined'&&globalThis instanceof WorkerGlobalScope){
-  globalThis.onmessage=async({data})=>{
-    try{
-      const document=await decodeGlbDocument(data.buffer);
-      globalThis.postMessage({ok:true,json:document.json,bin:document.bin},[document.bin.buffer]);
-    }catch(error){globalThis.postMessage({ok:false,error:String(error?.message||error)});}
-  };
+  return globalThis.AsfaltoV5GlbCore.decodeMeshoptDocument(source.json,source.bin,MeshoptDecoder,label);
 }
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {loadRegionalBlenderArt} from '../src/tracks/visuals/regional-blender-art.mjs?v=3b7ae6f4966be6b4';
+import {loadRegionalBlenderArt} from '../src/tracks/visuals/regional-blender-art.mjs?v=942ba726ff042432';
 
 const payload = Uint8Array.of(0x67, 0x6c, 0x54, 0x46);
 const asset = {
