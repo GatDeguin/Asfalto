@@ -7,7 +7,7 @@ import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {encodeBinaryBake,BAKE_SCHEMA} from '../src/tracks/visuals/bake-binary-codec.mjs?v=9a206fac5b81dd7a';
 import {prepareBinaryPayload} from './bake-tooling.mjs?v=08383d8a84ffdff4';
-import {bakeDosLagosMeshlets} from './build-terrain-meshlets.mjs?v=3a2812da0a16b70a';
+import {bakeTerrainMeshlets} from './build-terrain-meshlets.mjs?v=89d10b22d76fdf36';
 import {startServer} from '../server.mjs?v=5a11a063822d96e9';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const {chromium}=createRequire(process.env.PLAYWRIGHT_PACKAGE||import.meta.url)('playwright');
@@ -39,7 +39,7 @@ try{
    });
    if(reference)fs.writeFileSync(path.join(reference,id+'.json.gz'),gzipSync(JSON.stringify(payload),{level:6}));
    const binary=prepareBinaryPayload(payload);
-   if(id==='dos_lagos')bakeDosLagosMeshlets(binary);
+   bakeTerrainMeshlets(binary);
    const raw=Buffer.from(encodeBinaryBake(binary)),compressed=gzipSync(raw,{level:9}),file=id+'.bake.gz';fs.writeFileSync(path.join(out,file),compressed);
    manifest.tracks[id]={file,bytes:compressed.length,decodedBytes:raw.length,sha256:createHash('sha256').update(compressed).digest('hex'),entries:payload.entries.length};
    fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');console.log('SAVED',id,compressed.length,raw.length,Date.now()-started);

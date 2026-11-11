@@ -1,1 +1,96 @@
-.v7-vehicle-assistance[hidden]{display:none!important}.v7-vehicle-assistance{position:fixed;z-index:10050;left:50%;bottom:6vh;transform:translateX(-50%);width:min(460px,calc(100vw - 32px));color:#f5f0e7;font:15px/1.5 system-ui,sans-serif}.v7-vehicle-assistance>div{padding:24px;background:linear-gradient(145deg,#272e30,#121b20);border:1px solid #737b7a;border-radius:12px;box-shadow:inset 0 1px #ffffff30,0 5px 0 #080e10,0 24px 70px #0009}.v7-vehicle-assistance[data-mode=fault]{bottom:auto;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 100vmax #071013a8}.v7-assistance-eyebrow{color:#edc68b;font-size:11px;font-weight:700;letter-spacing:.13em}.v7-vehicle-assistance h2{font-size:23px;margin:7px 0}.v7-vehicle-assistance p{color:#ccd3d0;margin:0 0 18px}.v7-vehicle-assistance button{width:100%;padding:12px 16px;border-radius:7px;border:1px solid #f9dda8;background:linear-gradient(#f3d398,#c79654);color:#192126;font:700 15px system-ui;box-shadow:inset 0 1px #fff9,0 3px #755731;cursor:pointer}.v7-vehicle-assistance button:focus-visible{outline:3px solid #fff;outline-offset:4px}.v7-vehicle-assistance button:disabled{opacity:.6;cursor:wait}@media(prefers-reduced-motion:reduce){.v7-vehicle-assistance *{transition:none!important}}
+.v7-vehicle-assistance {
+  --assistance-ink: #f7efe4;
+  --assistance-accent: #e9b979;
+  --assistance-panel: #161817;
+  position: fixed;
+  z-index: 10050;
+  left: 50%;
+  bottom: max(6vh, env(safe-area-inset-bottom));
+  width: min(430px, calc(100vw - 28px));
+  transform: translateX(-50%);
+  color: var(--assistance-ink);
+  font: 15px/1.44 system-ui, sans-serif;
+}
+.v7-vehicle-assistance[hidden], .v7-vehicle-assistance [hidden],
+body.an-race-paused .v7-vehicle-assistance[data-mode=warning] { display: none !important; }
+body.an-vehicle-fault-open #an-mobile-driving-controls,
+body.an-vehicle-fault-open #v6-return-menu { display: none !important; }
+.v7-assistance-card {
+  padding: clamp(15px, 3vw, 25px);
+  background: repeating-linear-gradient(135deg, #ffffff04 0 1px, transparent 1px 5px),
+    linear-gradient(145deg, #292522, var(--assistance-panel) 67%);
+  border: 1px solid #9b8164;
+  border-inline-start: 3px solid var(--assistance-accent);
+  border-radius: 3px;
+  box-shadow: inset 0 1px #ffffff21, 0 14px 45px #000a;
+}
+.v7-assistance-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: .65em;
+  color: var(--assistance-accent);
+  font: 760 11px/1.2 ui-monospace, Consolas, monospace;
+  letter-spacing: .13em;
+}
+.v7-assistance-eyebrow::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: skewX(-20deg);
+  background: linear-gradient(90deg, currentColor 0 36%, transparent 36% 65%, currentColor 65%);
+}
+.v7-assistance-card h2 { margin: 7px 0 5px; font-size: clamp(20px, 3.25vw, 28px); line-height: 1.15; }
+.v7-assistance-card p { color: #e3d9cb; margin: 0; }
+.v7-assistance-faults { margin: 12px 0 0; padding-inline-start: 1.2em; color: #efd3ae; }
+.v7-assistance-faults li + li { margin-top: 3px; }
+.v7-assistance-card button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border: 1px solid #e0b87f;
+  border-radius: 3px;
+  background: linear-gradient(#e7bf88, #bb8751);
+  color: #1a120a;
+  font: 750 15px system-ui, sans-serif;
+  cursor: pointer;
+}
+.v7-assistance-card button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.v7-assistance-card button:disabled { opacity: .65; cursor: wait; }
+.v7-vehicle-assistance[data-cause=fire], .v7-vehicle-assistance[data-cause=wreck] { --assistance-accent: #ff9a70; }
+.v7-vehicle-assistance[data-mode=warning] {
+  top: clamp(105px, 15vh, 150px);
+  bottom: auto;
+  width: min(355px, calc(100vw - 24px));
+  pointer-events: none;
+}
+.v7-vehicle-assistance[data-mode=warning] .v7-assistance-card { padding: 11px 14px; }
+.v7-vehicle-assistance[data-mode=warning] h2 { font-size: 19px; }
+.v7-vehicle-assistance[data-mode=warning] p { font-size: 13px; }
+.v7-vehicle-assistance[data-mode=fault] {
+  inset: 0;
+  transform: none;
+  width: auto;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  justify-items: end;
+  align-items: end;
+  padding: max(12px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: linear-gradient(155deg, #0a0b0d23 30%, #0a0909b0 100%);
+}
+.v7-vehicle-assistance[data-mode=fault] .v7-assistance-card {
+  box-sizing: border-box;
+  width: min(100%, 416px);
+  max-height: 100%;
+  overflow: auto;
+}
+@media (max-width: 640px) {
+  .v7-vehicle-assistance[data-mode=fault] { justify-items: center; padding: 12px 12px max(15px, env(safe-area-inset-bottom)); }
+}
+@media (max-width: 560px) and (orientation: portrait) {
+  body.an-phone-hud .v7-vehicle-assistance[data-mode=warning] {
+    top: auto;
+    bottom: calc(max(10px, env(safe-area-inset-bottom)) + var(--an-mobile-controls-height, 136px) + 8px);
+  }
+}

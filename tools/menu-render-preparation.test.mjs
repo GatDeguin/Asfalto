@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import {waitForSignal} from '../src/runtime/abortable.mjs?v=c91114c944607feb';import {createSessionTransactionRunner} from '../src/menu/v7-session-runtime.mjs?v=70b376bd29cce8c2';
-const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=4daba31bf53e2602',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=2e0a6b8214ee3be4',import.meta.url),'utf8');
+const moduleSource=readFileSync(new URL('../src/legacy/module-02.mjs?v=af2f94edc9172a25',import.meta.url),'utf8'),menuSource=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=439abd3873dfcdc8',import.meta.url),'utf8');
 const extract=(s,start,end)=>s.slice(s.indexOf(start),s.indexOf(end,s.indexOf(start))).trim();
 const bind=(source,scope)=>new Function('scope',`with(scope){return (${source});}`)(scope);
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return{promise,resolve,reject};};const tick=()=>new Promise(r=>setImmediate(r));
@@ -54,6 +54,29 @@ test('actual drive flow waits for configuration and race start before exposing t
 test('launch guard rejects overlapping preparations and releases on failure',async()=>{const gates=[],body=extract(menuSource,'let gameLaunchPreparing=false;','async function prepareExistingGame('),fn=new Function('prepareExistingGame',body+';return configureExistingGame;')(()=>{const g=deferred();gates.push(g);return g.promise;});const p=fn({});assert.equal(await fn({}),false);gates[0].resolve(true);assert.equal(await p,true);const q=fn({}),rejected=assert.rejects(q,/failure/);gates[1].reject(Error('failure'));await rejected;const z=fn({});gates[2].resolve(true);assert.equal(await z,true);});
 
 test('phone render gate opens only after selected shaders complete successfully',async()=>{const compiled=deferred();let released=false;const prepare=bindPrepare({bootRenderGate:{release(){released=true;}},modularHostInitialization:{assertActive(){},waitFor:p=>p},applyMechanicalVisuals(){},updateRaceCamera(){},advancedGraphics:{update(){},syncPreparationQuality(){}},performance:{now:()=>0},cockpitRenderPass:{prepare:()=>compiled.promise}});const p=prepare();await tick();assert.equal(released,false);compiled.resolve();await p;assert.equal(released,true);});
+test('the first selected cockpit waits for the shader variant visible after camera setup',async()=>{
+ const cockpit={visible:true};let released=false,compiledVisibility;
+ const prepare=bindPrepare({cockpit,bootRenderGate:{release(){released=true;}},
+  modularHostInitialization:{assertActive(){},waitFor:promise=>promise},applyMechanicalVisuals(){},
+  updateRaceCamera(){cockpit.visible=false;},advancedGraphics:{update(){}},performance:{now:()=>0},
+  cockpitRenderPass:{async prepare(){compiledVisibility=cockpit.visible;}}});
+ await prepare();
+ assert.equal(compiledVisibility,false);
+ assert.equal(released,true);
+});
+test('a primary render variant replaced during shader compilation waits for its successor',async()=>{
+ let sky='clear',released=false;const first=deferred(),second=deferred(),compiled=[];
+ const prepare=bindPrepare({bootRenderGate:{release(){released=true;}},
+  modularHostInitialization:{assertActive(){},waitFor:promise=>promise},applyMechanicalVisuals(){},
+  updateRaceCamera(){},advancedGraphics:{update(){}},performance:{now:()=>0},
+  raceWorld:{...preparationScope.raceWorld,getRenderEnvironmentSelection:()=>({skyId:sky})},
+  cockpitRenderPass:{prepare(){compiled.push(sky);return compiled.length===1?first.promise:second.promise;}}});
+ const result=prepare();await tick();
+ sky='night';first.resolve();await tick();
+ assert.deepEqual(compiled,['clear','night']);assert.equal(released,false);
+ second.resolve();await result;
+ assert.equal(released,true);
+});
 test('primary readiness does not wait for secondary feeds; they prepare after world',async()=>{
  const water=deferred(),mirror=deferred(),events=[];let released=false;
  const scope={...preparationScope,raceWorld:{...preparationScope.raceWorld,prepareWaterReflections(){events.push('water');return water.promise;}},cockpitMirrors:{prepare(){events.push('mirrors');return mirror.promise;}},bootRenderGate:{release(){released=true;}},modularHostInitialization:{assertActive(){},waitFor:p=>p},applyMechanicalVisuals(){},updateRaceCamera(){},advancedGraphics:{update(){},syncPreparationQuality(){}},performance:{now:()=>0},cockpitRenderPass:{prepare:async()=>events.push('world')}};

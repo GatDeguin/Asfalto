@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=3a2812da0a16b70a';
+import {bakeTerrainMeshlets, buildMeshlets, meshletTree} from './build-terrain-meshlets.mjs?v=89d10b22d76fdf36';
 import {createMeshletCuller, installTerrainMeshletRanges, registerTerrainMeshlets} from '../src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9';
 
 function terrain(width, height) {
@@ -40,6 +40,33 @@ test('meshlets respect local limits and preserve the exact authored index sequen
   const invalid = {...data, localIndices: data.localIndices.slice()};
   invalid.localIndices[0] = 255;
   assert.throws(() => meshletTree(invalid, indices), /índice local/);
+});
+
+test('distributed meshlets cover only the measured Dos Lagos and Garibaldi terrain sheets', () => {
+  const {positions, indices} = terrain(15, 10);
+  const refinement = (region, targetEdgeM) => ({
+    result: {region, targetEdgeM},
+    geometry: {data: {attributes: {position: {array: positions.slice()}}, index: {array: indices.slice()}}},
+  });
+  const hero = refinement('paso_garibaldi', 48);
+  const transition = refinement('paso_garibaldi', 70);
+  const vista = refinement('paso_garibaldi', 130);
+  const prior = structuredClone(hero);
+  const garibaldi = {id: 'paso_garibaldi', entries: [['refine:transition', transition], ['refine:hero', hero], ['refine:vista', vista]]};
+  const expected = meshletTree(buildMeshlets(positions, indices), indices);
+  assert.deepEqual(bakeTerrainMeshlets(garibaldi), {key: 'refine:hero', meshlets: expected.vertexCounts.length, triangles: indices.length / 3});
+  assert.deepEqual(hero, {...prior, terrainMeshlets: expected});
+  assert.equal(transition.terrainMeshlets, undefined);
+  assert.equal(vista.terrainMeshlets, undefined);
+
+  const dosLagos = refinement('dos_lagos', 48);
+  assert.equal(bakeTerrainMeshlets({id: 'dos_lagos', entries: [['refine:continuous', dosLagos]]}).key, 'refine:continuous');
+  assert.deepEqual(dosLagos.terrainMeshlets, expected);
+  for (const id of ['aconcagua_horcones', 'cuesta_lipan', 'cataratas_iguazu']) {
+    const surface = refinement(id, 48);
+    assert.equal(bakeTerrainMeshlets({id, entries: [['refine:terrain', surface]]}), null);
+    assert.equal(surface.terrainMeshlets, undefined);
+  }
 });
 
 test('views conservatively include intersecting meshlets and recover after an empty pass', () => {

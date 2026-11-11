@@ -10,6 +10,12 @@ Pausar conserva el punto del recorrido. Saltar inicia el fundido desde la posici
 
 La comprobación en Chrome 157 con ANGLE/D3D11 y RTX 3060 Ti observó la secuencia completa de puerta, motor, luces, cortina, giro y calle antes de reproducir el video. En la segunda entrada a Dos Lagos la pista apareció directamente. Al retener el manifiesto de Lipán, el video apareció con la carga todavía pendiente. Se comprobó el desplazamiento con capturas temporales de ambos circuitos y el título de Lipán en móvil emulado a 390 × 844 y 844 × 390. Quedan tirones en preparación fría. El perfil de CPU identificó refinamiento del terreno y la traza WebGL registró una consulta de primer uso de shader de 1,42 s.
 
+## Avería y vuelta al taller
+
+Un incendio confirmado por la simulación invalida el intento y activa un aviso textual fuera de los controles. El conductor dispone de 300 pasos de física activa, equivalentes a 2,5 s, con humo y llamas anclados al motor. Puede dirigir, frenar, pausar y reanudar. Una llegada durante ese intervalo cierra el intento por avería. Los demás fallos terminales detienen la marcha al detectarse.
+
+La pantalla final indica la causa principal y las averías simultáneas. El foco va a Volver al taller y el taller conserva el daño registrado. En incendio o destrucción, la cámara cinemática encuadra el auto y el taller recupera la cámara anterior. Con movimiento reducido se conserva el encuadre y las piezas pasan a su estado dañado sin vuelo. Las puertas y el capó siguen la zona del impacto. Los restos visuales pertenecen a la escena y se retiran al regresar. La reparación del motor apaga el incendio y el servicio de pintura retira el hollín.
+
 ## Contexto y alcance observado
 
 La base elegida es `Asfalto_Nacional_v8`: su README la identifica como base actual. Hay versiones anteriores y copias de publicación fuera de ella; no se sincronizan ni publican en esta tarea. No hay repositorio Git en este checkout ni AGENTS.md aplicable. Antes de modificar, se guardó copia de los archivos afectados en `../Reports/Asfalto_Nacional_v8/motion-semantico-2026-10-03/before/`.
@@ -53,7 +59,7 @@ Presentación: animaciones efímeras, sin callbacks de dominio. Invariantes: una
 | Path morph | Omitir / no corresponde | No hay geometrías relacionadas que comunicar | Inventar datos intermedios | Cifras exactas | Datos no animados |
 | Stroke draw | Omitir / rutas | El mapa existente no necesita narrar construcción ni causalidad | Sugerir un progreso inexistente | Ruta completa | No tocar mapas/progreso |
 | Perspective | Adaptar / escena Three.js existente; omitir en UI | Profundidad real del taller/cockpit orienta la conducción; conservarla | Cámara vestibular adicional | Interfaz plana | No nuevos giros/zoom |
-| Particles | Adaptar / clima existente; omitir en feedback UI | Precipitación representa clima real; conservar motor y presupuesto existentes | Confundir éxito con celebración/cantidad | Estado textual original | Sin emisores/loops añadidos |
+| Particles | Adaptar / clima e incendio del motor | La precipitación y la combustión siguen los estados de simulación | Tapar la ruta o exceder el presupuesto | Aviso textual de avería | Un lote de partículas por vehículo y limpieza al salir |
 
 Justificaciones aceptadas: cuando se elige una sección, su entrada ayuda a reconocer el nuevo contexto y evita confundirlo con una actualización dentro del panel, sin interferir con preparar la salida. Cuando se selecciona una prueba, el relevo del detalle ayuda a relacionar la ficha elegida con su objetivo y marca, sin mover la lista ni retrasar selección. Cuando se abre pausa, su entrada identifica el contexto detenido; el foco y el bloqueo del fondo ocurren antes del primer frame. Cuando se cancela un reinicio, el relevo recupera las opciones originales sin reanudar la carrera.
 

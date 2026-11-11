@@ -102,6 +102,14 @@ El bake agrupa los 329.999 triángulos de la malla continua en 5.998 meshlets co
 
 El piloto con orden original se midió con Chrome 157, ANGLE D3D11, RTX 3060 Ti, 1280 × 800 y calidad Alta. En cuatro encuadres con cielo fijo y sin tránsito, las consultas WebGL dieron medianas de 1,98 → 1,95 ms, 1,78 → 1,75 ms, 1,63 → 1,56 ms y 1,43 → 1,32 ms para el envío del terreno. El tiempo del cuadro completo varió entre repeticiones. El bake comprimido creció 262.261 bytes. `tools/build-track-bakes.mjs` genera los meshlets al preparar los bakes. Para regenerarlos desde un bake existente se puede ejecutar `node tools/build-terrain-meshlets.mjs <bake de origen> <directorio de salida>`.
 
+### Evaluación en los demás circuitos
+
+Con el mismo equipo, calidad Alta fija y cuatro estaciones por circuito se alternaron dos repeticiones de control y dos de la variante. En Paso Garibaldi se habilitó el recorte en la malla principal de 179.999 triángulos. En los km 17,52 y 21,36 se enviaron 86.266 y 66.490 triángulos en un solo dibujo. La mediana GPU de ese dibujo pasó de 1,200 a 1,151 ms y de 0,574 a 0,541 ms. El cálculo del intervalo costó entre 1,17 y 1,66 µs por cámara en un microbenchmark. El bake comprimido creció 168.167 bytes.
+
+La comparación de profundidad aislada pasó en las cámaras principal y auxiliares. A 0,36 km, después de estabilizar los reflejos, la mediana del terreno completo fue 1,489 → 1,494 ms y los cuatro últimos p95 de GPU de cuadro quedaron alrededor de 19,1 ms. Las pruebas muestran ahorro de GPU en los dibujos indicados. El cuadro completo varió entre repeticiones.
+
+Aconcagua conservó el conteo de triángulos. Lipán e Iguazú recortaron envíos de geometría con resultados mixtos de tiempo GPU. Los tres conservan sus bakes de terreno originales.
+
 ### Preparación compartida de retrovisores
 
 Three r180 compila los programas de ambos retrovisores con la misma escena, estado del renderizador y capas de cámara. La preparación usa un solo pase mientras coincida esa configuración. Cada espejo conserva su cámara, textura, resolución y frecuencia de actualización. Si las capas difieren, se preparan ambos pases antes de mostrar los reflejos.
@@ -137,6 +145,8 @@ La pasada registró cerca de 52 FPS hasta la llegada y 33 ms p95 de presentació
 ### Primera salida del taller y primer cuadro de carrera
 
 En Three r180, varios pases consultaban por separado el estado de los mismos programas. La espera se comparte por contexto físico y programa WebGL. Se conservan las variantes de los materiales de cada pase, incluidas las caras del vidrio y la transmisión. El sondeo cede el hilo después de 4 ms o 64 consultas, y termina cuando se vacía la cola o se pierde el contexto. Los navegadores sin la extensión siguen usando la preparación asíncrona de Three. [Código de WebGLRenderer r180](https://github.com/mrdoob/three.js/blob/r180/src/renderers/WebGLRenderer.js) · [KHR_parallel_shader_compile](https://registry.khronos.org/webgl/extensions/KHR_parallel_shader_compile/)
+
+La preparación primaria toma la variante después de aplicar la cámara y las capas del auto seleccionado. Si el estado cambia al preparar la hidrología o los shaders, espera la variante vigente antes de habilitar el primer cuadro. La preparación de los reflejos sigue en paralelo después de habilitar la vista principal.
 
 En Viaje y Conducción libre, la largada prepara el mundo con el tráfico ya cargado. En el relevo al circuito, el cargador espera que se envíe un cuadro nuevo antes de comenzar su salida. La apertura de cámara conserva su tiempo completo y se inicia al quedar visible la escena. En movimiento reducido la secuencia de cámara se omite y el relevo también espera el cuadro nuevo.
 

@@ -7,7 +7,9 @@ export function normalizeVehicleAppearanceCondition(input={}){
  const condition={};
  for(const key of ['engine','oil','brakes','tires','body','paint','fuel','steering','suspension'])condition[key]=clamp(input?.[key],0,100,100);
  condition.dirt=clamp(input?.dirt,0,100,0);
+ condition.scorch=clamp(input?.scorch,0,1,0);
  condition.damageZones=Object.fromEntries(ZONES.map(key=>[key,clamp(input?.damageZones?.[key],0,1,0)]));
+ condition.panelDamage=Object.fromEntries(['hood','leftDoor','rightDoor'].map(key=>[key,clamp(input?.panelDamage?.[key],0,1,0)]));
  if(input?.mechanical?.body){
   condition.mechanical={body:{}};
   for(const key of ['frontCondition','sideCondition','undersideCondition'])condition.mechanical.body[key]=clamp(input.mechanical.body[key],0,1,1);
@@ -17,15 +19,16 @@ export function normalizeVehicleAppearanceCondition(input={}){
 
 function structuralDamage(condition){
  const {front,rear,left,right,roof}=condition.damageZones;
+ const {hood,leftDoor,rightDoor}=condition.panelDamage;
  const body=condition.mechanical?.body;
  const frontLoss=1-(body?.frontCondition??1),sideLoss=1-(body?.sideCondition??1),underside=1-(body?.undersideCondition??1);
  // Older saves can have aggregate chassis wear without any contact locations.
  const legacy=front||rear||left||right||roof||frontLoss||sideLoss||underside?0:(1-condition.body/100)*.46;
  return [
-  Math.max(front,frontLoss,legacy),
+  Math.max(front,frontLoss,hood*.88,legacy),
   Math.max(rear,legacy),
-  Math.max(left,(!right||left)?sideLoss:0,legacy),
-  Math.max(right,(!left||right)?sideLoss:0,legacy),
+  Math.max(left,(!right||left)?sideLoss:0,leftDoor*.84,legacy),
+  Math.max(right,(!left||right)?sideLoss:0,rightDoor*.84,legacy),
   Math.max(roof,legacy*.75),
   Math.max(underside,legacy*.65),
  ];
@@ -40,17 +43,23 @@ const FIELDS=[
  {center:[.06,.28,0],radius:[.59,.20,.39],axis:1,depth:-.131},
  {center:[0,-.20,0],radius:[.78,.15,.45],axis:1,depth:.104},
 ];
+const crushReach=.28;
 function displacement(x,y,z,damage,out){
  out[0]=out[1]=out[2]=0;
  let crease;
  for(let i=0;i<FIELDS.length;i++){
   if(!damage[i])continue;
   const {center:[cx,cy,cz],radius:[rx,ry,rz],axis,depth}=FIELDS[i];
-  const distance=((x-cx)/rx)**2+((y-cy)/ry)**2+((z-cz)/rz)**2;
+  const severity=clamp((damage[i]-.4)/.6,0,1,0),crush=severity*severity*(3-2*severity);
+  const reach=1+crush*crushReach;
+  const distance=(((x-cx)/rx)**2+((y-cy)/ry)**2+((z-cz)/rz)**2)/(reach*reach);
   if(distance>=2)continue;
   const weight=1-distance*.5;
   crease??=.76+.24*Math.cos(x*29+y*38+z*31);
-  out[axis]+=damage[i]*depth*weight**3*crease;
+  const fold=weight**3;
+  out[axis]+=(damage[i]+crush*.85)*depth*fold*crease;
+  if(axis===0){out[1]+=(-.064+.028*Math.sin(x*20+z*6))*crush*fold;out[2]+=.038*Math.sin(y*14+z*4+.8)*crush*fold;}
+  else if(axis===2)out[1]+=(.034*Math.sin(x*12)-.036)*crush*fold;
  }
  return out;
 }
@@ -101,7 +110,7 @@ export function createVehicleConditionAppearance(T){
      const axis=['x','y','z'][k],gap=Math.max(box.min[axis]-v,v-box.max[axis],0);
      return sum+(gap/radius[k])**2;
     },0);
-    return distance<2?[i]:[];
+    return distance<2*(1+crushReach)**2?[i]:[];
    });
    const surface={mesh,original,matrix:matrix.clone(),inverse:matrix.clone().invert(),fields,key:''};
    surfaces.push(surface);

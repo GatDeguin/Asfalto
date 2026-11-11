@@ -25,13 +25,15 @@ for(const height of [.56,3])for(const configured of [false,true]){
 }
 console.log('physics runtime: 64 real Rapier ticks matched baseline; grounded/airborne, ABS/chassis, impact, buffer reuse and historical copy passed');
 
-vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=5c927ea089ff205a',root),'utf8'),context);
+vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=a5d05c0233a7e691',root),'utf8'),context);
 const proto=context.AsfaltoV6Integration.RaceSimulationV6.prototype;
 const live=session(context,.56,false);live.stepFixed({});
 let recorded,maintenance;
-const host={_snapshot:live.getSnapshot(),_physicalEnvironmentQuery:{},_physicalEnvironment:{},_physicalFrameView:{},_physicalObservers:new Set(),_vehicleMaintenance:{sample(frame){maintenance=frame;}},_physicsSession:live,_projection:{s:1,raceProgress:1},_browserOptions:{},_physicalSessionSequence:1,_physicalQAMutated:false,_playerTeleportCount:0,_physicalTeleportBaseline:0,_recoveryCount:0,_referenceChart:0,getPhysicsSnapshotCopy:proto.getPhysicsSnapshotCopy};
+const host={state:{status:'RUNNING'},_snapshot:live.getSnapshot(),_physicalEnvironmentQuery:{},_physicalEnvironment:{},_physicalFrameView:{},_physicalObservers:new Set(),_vehicleMaintenance:{sample(frame){maintenance=frame;}},_physicsSession:live,_projection:{s:1,raceProgress:1},_browserOptions:{},_physicalSessionSequence:1,_physicalQAMutated:false,_playerTeleportCount:0,_physicalTeleportBaseline:0,_recoveryCount:0,_referenceChart:0,getPhysicsSnapshotCopy:proto.getPhysicsSnapshotCopy};
 proto._emitPhysicalStep.call(host,'RUNNING',0);assert.equal(maintenance.snapshot,host._snapshot);assert.ok(!Object.isFrozen(host._snapshot));
-host._physicalObservers.add({sample(frame){recorded=frame;}});proto._emitPhysicalStep.call(host,'RUNNING',0);
+assert.equal(maintenance.statusBefore,'RUNNING');assert.equal(maintenance.statusAfter,'RUNNING');
+host.state.status='FINISHED';host._physicalObservers.add({sample(frame){recorded=frame;}});proto._emitPhysicalStep.call(host,'RUNNING',0);
+assert.equal(maintenance.statusAfter,'FINISHED');assert.equal(maintenance.running,true);
 assert.ok(Object.isFrozen(recorded.snapshot));assert.notEqual(recorded.snapshot,host._snapshot);const time=recorded.snapshot.timeSeconds;
 for(let i=0;i<3;i++)live.stepFixed({});assert.equal(recorded.snapshot.timeSeconds,time);assert.ok(!Object.isFrozen(host._snapshot));
 live.mutableSnapshots=false;const immutable=live.stepFixed({});assert.ok(Object.isFrozen(immutable));const originalTime=immutable.timeSeconds;live.stepFixed({});assert.equal(immutable.timeSeconds,originalTime);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {applyWorkshopPerformance,workshopPerformanceSetup} from '../src/game/workshop-performance.mjs?v=bc1ff950c62515a0';
-import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=90a703f379ef0e55';
+import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
 
 const context=vm.createContext({});
 vm.runInContext(readFileSync(new URL('../src/legacy/asfalto-v6-vehicle-model.js?v=097dce2916d04203',import.meta.url),'utf8'),context);

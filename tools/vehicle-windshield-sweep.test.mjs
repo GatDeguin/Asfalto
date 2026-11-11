@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {authoredWindshieldMount} from '../src/game/expansion-vehicle-runtime.mjs?v=aaacadfb3c716f14';
-import {createWeatherWindshield, windshieldLayout} from '../src/render/weather-windshield.mjs?v=b0d766ee92317059';
+import {createWeatherWindshield, windshieldLayout} from '../src/render/weather-windshield.mjs?v=9dc1482154f3463e';
 
 for (const vehicle of ['chevy', 'chevrolet_1969', 'chevy_400_1957', 'pickup_3100', 'belair_1957']) {
   test(`${vehicle} wiper blades and cleared film follow the glass throughout the sweep`, () => {

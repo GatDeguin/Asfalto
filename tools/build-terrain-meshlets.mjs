@@ -93,19 +93,33 @@ function copyViews(value) {
   return value;
 }
 
-export function bakeDosLagosMeshlets(payload) {
-  assert.equal(payload.id, 'dos_lagos');
-  const refined = payload.entries.filter(([key, value]) => key.startsWith('refine:') && value.result.region === payload.id);
-  assert.equal(refined.length, 1, 'Se espera una malla continua de terreno de Dos Lagos');
+const measuredTerrain = new Map([
+  ['dos_lagos', () => true],
+  // Garibaldi's HERO sheet uses the 48 m refinement. Transition and vista use 70 m and 130 m.
+  ['paso_garibaldi', result => result.targetEdgeM === 48],
+]);
+
+export function bakeTerrainMeshlets(payload) {
+  const select = measuredTerrain.get(payload.id);
+  if (!select) return null;
+  const refined = payload.entries.filter(([key, value]) =>
+    key.startsWith('refine:') && value.result?.region === payload.id && select(value.result));
+  assert.equal(refined.length, 1, `Se espera una malla de terreno medida para ${payload.id}`);
   const [key, value] = refined[0];
-  const {attributes, index} = value.geometry.data;
+  const {attributes, index, groups} = value.geometry.data;
+  assert.ok(index && !groups?.length, 'Se espera terreno indexado sin grupos de material');
   const layout = buildMeshlets(attributes.position.array, index.array);
   value.terrainMeshlets = meshletTree(layout, index.array);
   return {key, meshlets: layout.meshlets.length / 4, triangles: index.array.length / 3};
 }
 
-function compileDosLagos(sourceDirectory, outputDirectory) {
-  const id = 'dos_lagos';
+export function bakeDosLagosMeshlets(payload) {
+  assert.equal(payload.id, 'dos_lagos');
+  return bakeTerrainMeshlets(payload);
+}
+
+function compileTrack(sourceDirectory, outputDirectory, id) {
+  assert.ok(measuredTerrain.has(id), `No hay una malla de terreno medida para ${id}`);
   const hash = bytes => createHash('sha256').update(bytes).digest('hex');
   const manifest = JSON.parse(fs.readFileSync(path.join(sourceDirectory, 'manifest.json'), 'utf8'));
   assert.equal(manifest.schema, BAKE_SCHEMA);
@@ -117,8 +131,9 @@ function compileDosLagos(sourceDirectory, outputDirectory) {
   const bytes = Uint8Array.from(gunzipSync(source));
   assert.equal(bytes.length, entry.decodedBytes);
   const payload = copyViews(decodeBinaryBake(bytes.buffer));
+  assert.equal(payload.id, id);
   assert.equal(payload.entries.length, entry.entries);
-  const summary = bakeDosLagosMeshlets(payload);
+  const summary = bakeTerrainMeshlets(payload);
   const encoded = encodeBinaryBake(payload);
   assert.deepEqual(decodeBinaryBake(encoded.slice(0)), payload);
   const compressed = gzipSync(new Uint8Array(encoded), {level: 9});
@@ -134,7 +149,7 @@ function compileDosLagos(sourceDirectory, outputDirectory) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [source, output] = process.argv.slice(2);
-  assert.ok(source && output, 'Uso: node tools/build-terrain-meshlets.mjs <bake de origen> <directorio de salida>');
-  compileDosLagos(source, output);
+  const [source, output, id = 'dos_lagos'] = process.argv.slice(2);
+  assert.ok(source && output, 'Uso: node tools/build-terrain-meshlets.mjs <bake de origen> <directorio de salida> [circuito]');
+  compileTrack(source, output, id);
 }

@@ -102,7 +102,7 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
   const contact=scene?.getObjectByName('Workshop_Vehicle_Contact');
   const contactPosition=contact?.position.clone(),contactRotation=contact?.quaternion.clone();
   const vehicleCue=vehiclePresentation?.beginDepartureCue?.();
-  let door=prepareDepartureDoor(workshop.T,vehiclePresentation?.root,workshop.vehicleId);
+  let door=vehiclePresentation?.canAnimateDepartureDoor?.()===false?null:prepareDepartureDoor(workshop.T,vehiclePresentation?.root,workshop.vehicleId);
   door?.setOpen(1);
   const reflections=new Map();
   vehiclePresentation?.root?.traverse(object=>{

@@ -24,9 +24,9 @@
     },
     "paso_garibaldi": {
       "file": "paso_garibaldi.bake.gz",
-      "bytes": 5832660,
-      "decodedBytes": 10123004,
-      "sha256": "c52add3feb5cf4cf12c5adc14c42e0061bf7961cc9c58157a54f0015c7cb5eab",
+      "bytes": 6000827,
+      "decodedBytes": 10427340,
+      "sha256": "3253d714ec0fd1ad6d7549c3d527188276160688a06fa0a94ea13f6006a8460d",
       "entries": 65
     },
     "cataratas_iguazu": {
@@ -48,6 +48,6 @@
     "tracks\\cataratas-iguazu\\manifest.json": "1ad2ca83d5e0510001933ded4623254d9917b78badadfafd7116b8b03b7accbf",
     "src/tracks/visuals/terrain-refinement.mjs?v=025b3f7e349de378": "025b3f7e349de378118daa21b7d195de3617ad1062f00191f3499a049099d605",
     "src/render/terrain-meshlets.mjs?v=e25fb31f401ba6c9": "e25fb31f401ba6c9aa2769aa0373f91801755379a619a6727d610a607174a90a",
-    "tools/build-terrain-meshlets.mjs": "3a2812da0a16b70a527250dcbef28d5beca63ea42afc9f59c95d734813cd5aed"
+    "tools/build-terrain-meshlets.mjs": "89d10b22d76fdf36add1d2147ae2e218daf7f14fae0d3d88ab28055b5aed995d"
   }
 }

@@ -2,13 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=c2ea69acda3ee7c3';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=e05daa86e83f35d2';
-import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=56be296de9a809d6';
-import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=90a703f379ef0e55';
-import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=b0d766ee92317059';
+import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=7b22bfeb24f7b084';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=03174439df407898';
+import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=e41d4bbdb923cfdf';
+import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
+import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=9dc1482154f3463e';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=2cb0605f3be95739';
+import {createVehicleWeatherParticles} from '../src/render/vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 
 const payload=JSON.parse(readFileSync(new URL('../assets/manifests/cockpit-payload.json',import.meta.url),'utf8'));
 const T=await import('data:text/javascript;base64,'+gunzipSync(Buffer.from(payload.threeCoreGz,'base64')).toString('base64'));
@@ -20,6 +21,35 @@ test('deformation follows physical impact axes and preserves distinct underbody 
  const underneath={body:60,mechanical:{body:{undersideCondition:.6}}};
  assert.ok(damageDisplacement([0,-.2,0],underneath)[1]>.02);
  assert.deepEqual(damageDisplacement([0,.28,0],underneath),[0,0,0]);
+});
+
+test('severe contact folds the affected end while a light dent stays local',()=>{
+ const nose=[-.86,.015,0];
+ const light=damageDisplacement(nose,{damageZones:{front:.25}});
+ const crushed=damageDisplacement(nose,{body:12,damageZones:{front:1},panelDamage:{hood:1}});
+ assert.ok(light[0]>.02&&light[0]<.055);
+ assert.ok(crushed[0]>.24&&crushed[1]<-.025);
+ assert.deepEqual(damageDisplacement([.86,.015,0],{damageZones:{front:1}}),[0,0,0]);
+});
+
+test('a moving engine fire emits flames and dark smoke in the existing bounded pool',()=>{
+ const root=new T.Group(),fx=createVehicleWeatherParticles(T,root);
+ const position=new T.Vector3(),velocity=new T.Vector3(17,0,0);
+ const vehicle={id:'pickup_3100',position,groundY:-.5};
+ const emission={fire:0,sparks:0,spray:0,dust:0,tireSmoke:0,engineSmoke:.9,engineFire:.8};
+ const policy={tier:{particles:80}};
+ for(let i=0;i<40;i++){
+  position.addScaledVector(velocity,1/60);
+  fx.update({dt:1/60,vehicle,emission,policy,velocity});
+ }
+ const live=fx.diagnostics();
+ assert.ok(live.engineFlames>=6&&live.engineSmoke>=10,JSON.stringify(live));
+ assert.equal(live.drawBatches,1);
+ assert.ok(live.alive<=policy.tier.particles);
+ fx.reset();
+ assert.equal(fx.diagnostics().engineFlames,0);
+ assert.equal(fx.diagnostics().engineSmoke,0);
+ fx.dispose();assert.equal(root.children.length,0);
 });
 
 test('deformation owns its clone and restores the exact shared geometry after service',()=>{
@@ -59,10 +89,11 @@ test('the installed vehicle binds its window and structural finishes to independ
  assert.match(glass.fragmentShader,/vehicleGlassFracture/);
  assert.match(structure.fragmentShader,/vehicleDirtMask/);
  for(const part of ['lamp','gauge'])assert.doesNotMatch(compile(a.meshes[part]).fragmentShader,/vehicleGlassFracture/);
- a.view.setPersistentCondition({body:62,paint:40,dirt:70,damageZones:{front:.5}});
+ a.view.setPersistentCondition({body:62,paint:40,dirt:70,scorch:.72,damageZones:{front:.5}});
  assert.equal(glass.uniforms.vehicleDirt.value,.7);
  assert.equal(glass.uniforms.vehicleDamageFrontRear.value.x,.5);
  assert.equal(painted.uniforms.vehiclePaintWear.value,.6);
+ assert.equal(painted.uniforms.vehicleScorch.value,.72);
  assert.equal(otherGlass.uniforms.vehicleDirt.value,0);
  a.view.resetCondition();
  assert.equal(glass.uniforms.vehicleDirt.value,.7);

@@ -1356,7 +1356,7 @@
       const environment=this._physicsSession.environment?.(q,this._physicalEnvironment)||this._physicalEnvironment;
       const frame=this._physicalFrameView;
       frame.sessionSequence=this._physicalSessionSequence;frame.tick=Math.round(snapshot.timeSeconds*120);
-      frame.statusBefore=statusBefore;frame.running=statusBefore==='RUNNING';frame.snapshot=snapshot;
+      frame.statusBefore=statusBefore;frame.statusAfter=this.state.status;frame.running=statusBefore==='RUNNING';frame.snapshot=snapshot;
       frame.projection=this._projection;frame.environment=environment;frame.qa=this._physicalQAMutated;
       frame.teleports=this._playerTeleportCount-this._physicalTeleportBaseline;frame.recoveries=this._recoveryCount;frame.referenceChart=this._referenceChart;
       // Maintenance consumes the borrowed view synchronously. Historical observers
@@ -1825,7 +1825,7 @@
     }
 
     resume() {
-      if(this._vehicleMaintenance && !this._vehicleMaintenance.canDrive()) return this.getState();
+      if(this._vehicleMaintenance && !(this._vehicleMaintenance.canResume?.()??this._vehicleMaintenance.canDrive())) return this.getState();
       this._championshipPaused = false;
       this._rules.resume();
       this._resetSnapshotHistory(this._snapshot);

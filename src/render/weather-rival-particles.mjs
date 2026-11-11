@@ -1,4 +1,4 @@
-import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=3dfc627d3b0ebe51';
+import {createVehicleWeatherParticles} from './vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 import {createVehicleEmissionState} from './weather-effects-policy.mjs?v=46da8d8e8b960aa3';
 const METAL=new Set(['metal','steel','guardrail','vehicle-metal']);
 const EMPTY=Object.freeze([]);
