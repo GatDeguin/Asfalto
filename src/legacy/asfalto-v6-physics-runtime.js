@@ -700,7 +700,7 @@
     out.contactState={contacts,rotation:null,translation:out.translation};
     out.snapshots=Array.from({length:2},()=>({fixedHz:120,timeSeconds:0,chassis:{position:[0,0,0],rotation:[0,0,0,1],linearVelocity:[0,0,0],angularVelocity:[0,0,0],acceleration:[0,0,0]},
       wheels:session.wheels.map(w=>({...w,point:[0,0,0],normal:[0,1,0],tire:{}})),steering:{frontAligningTorqueNm:0,frontContactRatio:0},
-      engine:{ignition:{state:'ready',sequence:0,startedAtS:0}},gearbox:{},clutch:{},brakes:{locked:[false,false,false,false],wheelBrakeTorquesNm:[0,0,0,0],absModulation:[1,1,1,1]},controls:{},chassisConfig:null,impact:false,impacts:[],scrapeContact:null,damage:session.core.createMutableDamageState(),debugForces:{suspensionN:[0,0,0],tireN:[0,0,0],resistanceN:[0,0,0]}}));
+      engine:{ignition:{state:'ready',sequence:0,startedAtS:0}},gearbox:{},clutch:{},brakes:{locked:[false,false,false,false],wheelBrakeTorquesNm:[0,0,0,0],absModulation:[1,1,1,1]},controls:{},chassisConfig:null,impact:false,impacts:[],scrapeContact:null,damage:session.core.createMutableDamageState(),drivetrainLoss:{wear:0,impact:0},debugForces:{suspensionN:[0,0,0],tireN:[0,0,0],resistanceN:[0,0,0]}}));
     const impactRecord=()=>({sequence:0,timeSeconds:0,impulseNs:0,magnitude:0,otherId:'world',material:'unknown',localPointM:[0,0,0],relativeVelocityMps:[0,0,0]});
     const scrapeRecord=()=>({timeSeconds:-Infinity,normalForceN:0,tangentialSpeedMps:0,localSideM:0,material:'unknown'});
     out.scrapeContact=scrapeRecord();out.scrapeSnapshotSlots=[scrapeRecord(),scrapeRecord()];
@@ -767,6 +767,7 @@
         rearTemperatureC: 20,
       };
       this.damage = this.core.createMutableDamageState();
+      this.drivetrainLoss = { wear: 0, impact: 0 };
       this.impacts = [];
       this.timeSeconds = 0;
       this.ignitionSequence = 0;
@@ -976,14 +977,26 @@
         s.resistance[0]=s.velocity[0]/planarSpeed*force;s.resistance[2]=s.velocity[2]/planarSpeed*force;this.body.addForce(rapierInto(s.force,s.resistance),true);}
       fromRapierInto(s.angularVelocity,this.body.angvel(s.rapierAngular));this.world.step(this.impactEvents||undefined);this.timeSeconds+=FIXED_DT;if(this.ignitionState==='starting')this.ignitionState='running';
       const hadImpact=this._captureImpacts(s.velocity,s.angularVelocity);
-      const wear=s.wear;wear.engineRpm=this.powertrainState.engineRpm;wear.engineTemperatureC=finite(this.powertrainState.engineTemperatureC,this.powertrainState.temperatureC);wear.frontBrakeTemperatureC=this.brakeState.frontTemperatureC;wear.rearBrakeTemperatureC=this.brakeState.rearTemperatureC;wear.clutchSlipPowerW=Math.abs(this.powertrainState.clutchSlipRadps*powertrain.engineTorqueNm);wear.shiftShock=0;wear.bottomOut=bottomOut;
-      this.core.applyMechanicalWearInto(this.damage,this.damage,wear,FIXED_DT);
+      const wear = s.wear;
+      wear.engineRpm = this.powertrainState.engineRpm;
+      wear.engineTemperatureC = finite(this.powertrainState.engineTemperatureC, this.powertrainState.temperatureC);
+      wear.frontBrakeTemperatureC = this.brakeState.frontTemperatureC;
+      wear.rearBrakeTemperatureC = this.brakeState.rearTemperatureC;
+      wear.clutchSlipPowerW = powertrain.clutchSlipPowerW;
+      wear.shiftShock = 0;
+      wear.bottomOut = bottomOut;
+      const conditionBeforeWear = this.damage.drivetrain.condition;
+      this.core.applyMechanicalWearInto(this.damage, this.damage, wear, FIXED_DT);
+      this.drivetrainLoss.wear += Math.max(0, conditionBeforeWear - this.damage.drivetrain.condition);
+      fieldsInto(snapshot.drivetrainLoss, this.drivetrainLoss);
       const ch=snapshot.chassis,q=this.body.rotation(s.rapierRotation);fromRapierInto(ch.position,this.body.translation(s.rapierTranslation));ch.rotation[0]=q.x;ch.rotation[1]=q.y;ch.rotation[2]=q.z;ch.rotation[3]=q.w;
       fromRapierInto(ch.linearVelocity,this.body.linvel(s.rapierVelocity));fromRapierInto(ch.angularVelocity,this.body.angvel(s.rapierAngular));
       for(let k=0;k<3;k++){ch.acceleration[k]=(ch.linearVelocity[k]-finite(this.previousLinearVelocity[k],ch.linearVelocity[k]))/FIXED_DT;this.previousLinearVelocity[k]=ch.linearVelocity[k];snapshot.debugForces.suspensionN[k]=s.sumSuspension[k];snapshot.debugForces.tireN[k]=s.sumTire[k];snapshot.debugForces.resistanceN[k]=s.resistance[k];}
       snapshot.timeSeconds=this.timeSeconds;snapshot.steering.frontAligningTorqueNm=frontAligning;snapshot.steering.frontContactRatio=frontContacts/2;
       this._engineStatusInto(snapshot.engine);snapshot.engine.rpm=this.powertrainState.engineRpm;snapshot.engine.temperatureC=wear.engineTemperatureC;snapshot.engine.load=controls.throttle;snapshot.engine.torqueNm=powertrain.engineTorqueNm*clamp(finite(this.damage?.engine?.powerFactor,1),.2,1);
       snapshot.gearbox.gear=this.powertrainState.gear;snapshot.gearbox.requestedGear=controls.requestedGear;snapshot.clutch.engagement=this.powertrainState.clutchEngagement;snapshot.clutch.slipRadps=this.powertrainState.clutchSlipRadps;
+      snapshot.clutch.slipPowerW = powertrain.clutchSlipPowerW;
+      snapshot.clutch.temperatureC = this.powertrainState.temperatureC;
       snapshot.brakes.frontTemperatureC=this.brakeState.frontTemperatureC;snapshot.brakes.rearTemperatureC=this.brakeState.rearTemperatureC;snapshot.brakes.frontFade=brakes.frontFade;snapshot.brakes.rearFade=brakes.rearFade;
       for(let i=0;i<4;i++){snapshot.brakes.locked[i]=s.locked[i];snapshot.brakes.wheelBrakeTorquesNm[i]=s.brakeTorques[i];snapshot.brakes.absModulation[i]=this.absModulation[i];}
       fieldsInto(snapshot.controls,controls);snapshot.chassisConfig=this.chassisConfig;snapshot.impact=hadImpact;this._copyImpactsInto(snapshot);
@@ -1117,7 +1130,9 @@
       const s=this.scratch,impulse=Math.max(0,finite(event?.impulseNs,0)),record=s.impactHistory[s.impactHistoryIndex];s.impactHistoryIndex=(s.impactHistoryIndex+1)%8;
       record.sequence=++nextImpactSequence;record.timeSeconds=this.timeSeconds;record.impulseNs=impulse;record.magnitude=clamp(impulse/20000,0,1);record.otherId=String(event?.otherId||'world');record.material=String(event?.material||'unknown');
       for(let k=0;k<3;k++){record.localPointM[k]=finite(event?.localPointM?.[k],0);record.relativeVelocityMps[k]=finite(event?.relativeVelocityMps?.[k],0);}
+      const conditionBeforeImpact = this.damage.drivetrain.condition;
       this.core.applyImpactDamageInto(this.damage,this.damage,record);
+      this.drivetrainLoss.impact += Math.max(0, conditionBeforeImpact - this.damage.drivetrain.condition);
       if(this.impacts.length===8){for(let i=0;i<7;i++)this.impacts[i]=this.impacts[i+1];this.impacts[7]=record;}else this.impacts.push(record);
     }
 
@@ -1127,10 +1142,11 @@
       // An external discrete collision can occur between fixed ticks.
       if(this.lastSnapshot){
         if(!this.mutableSnapshots||Object.isFrozen(this.lastSnapshot)) {
-          this.lastSnapshot=this.core.finiteSnapshot({...this.lastSnapshot,engine:{...this.lastSnapshot.engine,...this._engineStatus()},impact:finite(event?.impulseNs,0)>0,impacts:this.impacts,damage:this.damage});
+          this.lastSnapshot=this.core.finiteSnapshot({...this.lastSnapshot,engine:{...this.lastSnapshot.engine,...this._engineStatus()},impact:finite(event?.impulseNs,0)>0,impacts:this.impacts,damage:this.damage,drivetrainLoss:this.drivetrainLoss});
         } else {
           this._engineStatusInto(this.lastSnapshot.engine);this.lastSnapshot.impact=finite(event?.impulseNs,0)>0;
           this.core.copyDamageInto(this.lastSnapshot.damage,this.damage);this._copyImpactsInto(this.lastSnapshot);
+          fieldsInto(this.lastSnapshot.drivetrainLoss, this.drivetrainLoss);
         }
       }
       return this.lastSnapshot;
@@ -1194,6 +1210,8 @@
       this.absModulation = [1, 1, 1, 1];
       if (options?.damageState) this.core.copyDamageInto(this.damage, options.damageState);
       else if (options?.resetDamage !== false) this.damage = this.core.createMutableDamageState();
+      this.drivetrainLoss.wear = 0;
+      this.drivetrainLoss.impact = 0;
       if (options?.resetClock !== false) this.timeSeconds = 0;
       if (options?.startEngine === true) {
         this.ignitionSequence = ++nextIgnitionSequence;
@@ -1230,7 +1248,7 @@
           torqueNm: 0,
         },
         gearbox: { gear: initialGear, requestedGear: initialGear },
-        clutch: { engagement: initialClutchEngagement, slipRadps: 0 },
+        clutch: { engagement: initialClutchEngagement, slipRadps: 0, slipPowerW: 0, temperatureC: this.powertrainState.temperatureC },
         brakes: {
           frontTemperatureC: 20,
           rearTemperatureC: 20,
@@ -1243,6 +1261,7 @@
         impacts: [],
         scrapeContact: null,
         damage: this.damage,
+        drivetrainLoss: this.drivetrainLoss,
       });
       return this.lastSnapshot;
     }
@@ -1336,6 +1355,7 @@
           requestedGear: this.powertrainState.requestedGear,
         },
         damage: this.damage,
+        drivetrainLoss: this.drivetrainLoss,
         impacts: this.impacts.slice(),
       };
       let recovered = {};

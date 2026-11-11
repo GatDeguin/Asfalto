@@ -2937,7 +2937,7 @@
     {
       "path": "index.html",
       "bytes": 82580,
-      "sha256": "703CEAB240C6A5422E7A9F71DBF0FF063B431BFDC5CA51A427C308D7221A0B74"
+      "sha256": "64A684F653FA362C4D7A64EB196824B56422246DD950CB5D2063FF4458B54C2C"
     },
     {
       "path": "release-version.json",
@@ -3301,8 +3301,8 @@
     },
     {
       "path": "src/legacy/asfalto-v6-physics-runtime.js",
-      "bytes": 83771,
-      "sha256": "DBED2456D5C78CAFDD039E6C942083858E44CA390BF393C6DC3EC9F35E8947DF"
+      "bytes": 84768,
+      "sha256": "40A7288E64FBE77B4FB21AC2DD9158F438964698DB6DDC4C2BA0AD8CFA602213"
     },
     {
       "path": "src/legacy/asfalto-v6-rapier.js",
@@ -3316,8 +3316,8 @@
     },
     {
       "path": "src/legacy/asfalto-v6-vehicle-model.js",
-      "bytes": 69518,
-      "sha256": "097DCE2916D04203F538077824338BC3831600E379B9D529EF4BA0561D58E518"
+      "bytes": 69655,
+      "sha256": "CB996A51D98043A7383F889776921FB547F15F434FAFFD0E4CF90383D3BEE25E"
     },
     {
       "path": "src/legacy/chevy-hud-3d-runtime.js",
@@ -5397,17 +5397,17 @@
     {
       "path": "tools/physical-route-projection.test.mjs",
       "bytes": 1509,
-      "sha256": "6116D767FA09C2B029FB9AFF837956226FD5982D2124F00256954F1510C484BD"
+      "sha256": "7D03C72CFF536E40FC3126EE6E4921AB3A50C504B9285C9991D2EA038DE02E11"
     },
     {
       "path": "tools/physics-runtime-scratch.test.mjs",
-      "bytes": 8987,
-      "sha256": "54B78E74023B8AA521FD582EA01F9D526C9A28E1CEA58E9BFF3975DB04F4DB93"
+      "bytes": 11229,
+      "sha256": "4188710DDC396346F87D1744C4D05E43790FCA1AD8EF415B582A175239AA6132"
     },
     {
       "path": "tools/physics-scratch.test.mjs",
       "bytes": 2287,
-      "sha256": "B1AFF1E67F1F0C2580DDD8B67101AB0762DA80F96FFFB41236F288A76A83D849"
+      "sha256": "43BE13230496B916F170B683558F7E075FE4DCDA48C15BF6F901061B2618D9EA"
     },
     {
       "path": "tools/physics-startup-contact.test.mjs",
@@ -5637,7 +5637,7 @@
     {
       "path": "tools/v7-sep12-condition.test.mjs",
       "bytes": 8376,
-      "sha256": "01B2F83D9AFCF78BA6F811AF2C4548ED818B42C4D0FC1D4FD1BD2ECDB391F2CE"
+      "sha256": "D18CEDF816D65525B8BC54EB2852439D40B427F8F1BD378785E11A1F629FDB30"
     },
     {
       "path": "tools/v7-sep12-environment-clock.test.mjs",
@@ -5777,7 +5777,7 @@
     {
       "path": "tools/workshop-performance.test.mjs",
       "bytes": 2806,
-      "sha256": "6B2295418AA343C0794EF51E96877B9DB80B851F6CF654B9B5B799CDBCDDBC2E"
+      "sha256": "BB2234376B0C115AA1BAFAB06C90F99EB6548C53DAEA7CEC644B4E08BFBB013C"
     },
     {
       "path": "tracks/aconcagua-horcones/distant-aconcagua-dem.LICENSE.txt",
@@ -6081,6 +6081,6 @@
     }
   ],
   "fileCount": 1201,
-  "totalBytes": 944610750,
-  "inventorySha256": "5AF29C61217A02D16B477C67D828C8A8FD86B2193F147ADEEFD4AEE44BB37C53"
+  "totalBytes": 944614126,
+  "inventorySha256": "867C6290C89EB0EAAD0D3A19F33B67B855AF06FC9FA2C324354DDA10A2755417"
 }

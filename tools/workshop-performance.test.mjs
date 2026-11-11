@@ -6,7 +6,7 @@ import {applyWorkshopPerformance,workshopPerformanceSetup} from '../src/game/wor
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
 
 const context=vm.createContext({});
-vm.runInContext(readFileSync(new URL('../src/legacy/asfalto-v6-vehicle-model.js?v=097dce2916d04203',import.meta.url),'utf8'),context);
+vm.runInContext(readFileSync(new URL('../src/legacy/asfalto-v6-vehicle-model.js?v=cb996a51d98043a7',import.meta.url),'utf8'),context);
 const core=context.AsfaltoV6VehicleCore, original=core.CHEVY_ORIGINAL_SPEC;
 const configured=applyWorkshopPerformance(original,workshopPerformanceSetup({
   parts:{intake:'restomod',cooling:'restomod',differential:'restomod',lightweight:'restomod',longRangeTank:'restomod',suspension:'restomod'},

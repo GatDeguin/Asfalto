@@ -49,6 +49,55 @@ console.log('physics integration: synchronous maintenance view, immutable observ
  console.log('physics impacts: 16 real Rapier wall-collision ticks and damage aggregation matched baseline');
 }
 
+test('revving in gear with the clutch open leaves the transmission and clutch temperature intact', () => {
+ const car = session(context, .56, false);
+ try {
+  const before = car.getSnapshot();
+  for (let i = 0; i < 120; i++) {
+   car.stepFixed({throttle: .65, requestedGear: 1, clutchEngagement: 0});
+  }
+  const after = car.getSnapshot();
+  assert.ok(after.engine.rpm > 2200 && after.engine.torqueNm > 0);
+  assert.ok(Math.abs(after.clutch.slipRadps) > 100);
+  assert.equal(after.damage.drivetrain.condition, before.damage.drivetrain.condition);
+  assert.equal(after.clutch.slipPowerW, 0);
+  assert.equal(after.clutch.temperatureC, before.clutch.temperatureC);
+ } finally {
+  car.dispose();
+  car.world.free();
+ }
+});
+
+test('the loss of transmission condition distinguishes clutch wear from physical impacts', () => {
+ const car = session(context, .56, false);
+ try {
+  for (let i = 0; i < 120; i++) {
+   car.stepFixed({throttle: .65, brake: 1, requestedGear: 1, clutchEngagement: .35});
+  }
+  const before = car.getSnapshotCopy();
+  assert.ok(before.clutch.slipPowerW > 0);
+  const expectedSlipPower = Math.abs(before.clutch.slipRadps * before.engine.torqueNm * .35);
+  assert.ok(Math.abs(before.clutch.slipPowerW - expectedSlipPower) < 1e-9);
+  assert.ok(before.drivetrainLoss.wear > 0);
+  assert.equal(before.drivetrainLoss.impact, 0);
+  assert.equal(before.damage.drivetrain.condition + before.drivetrainLoss.wear, 1);
+  car.applyImpact({impulseNs: 12000, localPointM: [-1, -.3, .2]});
+  const after = car.getSnapshotCopy();
+  assert.equal(after.drivetrainLoss.wear, before.drivetrainLoss.wear);
+  assert.ok(after.drivetrainLoss.impact > 0);
+  assert.equal(after.drivetrainLoss.impact, before.damage.drivetrain.condition - after.damage.drivetrain.condition);
+  const recovered = car.teleport({x: 2, y: .56, z: 0}, {x: 0, y: 0, z: 0}, {recovery: true});
+  assert.deepEqual(recovered.drivetrainLoss, after.drivetrainLoss);
+  const reset = car.reset({spawn: {x: 0, y: .56, z: 0}, resetDamage: false});
+  assert.equal(reset.damage.drivetrain.condition, after.damage.drivetrain.condition);
+  assert.equal(reset.drivetrainLoss.wear, 0);
+  assert.equal(reset.drivetrainLoss.impact, 0);
+ } finally {
+  car.dispose();
+  car.world.free();
+ }
+});
+
 test('recovery resets wheel motion and contact positions while retaining condition',()=>{
  const car=session(context,.56,false);
  try{

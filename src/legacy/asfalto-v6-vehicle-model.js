@@ -701,12 +701,13 @@
     );
     const clutchSlipRadps = ratio === 0 ? 0 : (engineRpm - coupledTargetRpm) * Math.PI * 2 / 60;
     const engineTorqueNm = torqueAtRpm(spec, engineRpm, throttle);
+    const clutchTorqueNm = ratio === 0 ? 0 : engineTorqueNm * clutchEngagement;
+    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const openDiffUnloaded = driven.some((index) => wheels[index].contact === false
       || finiteNumber(wheels[index].normalLoadN, 0) < 100);
     const differentialFactor = openDiffUnloaded && spec.drivetrain.differential === 'open' ? 0.08 : 1;
-    const driveTorqueNm = ratio === 0 ? 0
-      : engineTorqueNm * ratio * spec.gearbox.finalDrive * spec.drivetrain.efficiency
-        * clutchEngagement * differentialFactor;
+    const driveTorqueNm = clutchTorqueNm * ratio * spec.gearbox.finalDrive
+      * spec.drivetrain.efficiency * differentialFactor;
     const wheelDriveTorquesNm = [0, 0, 0, 0];
     distributeDriveTorque(wheelDriveTorquesNm,wheels,spec.drivetrain,driveTorqueNm,driven.length,openDiffUnloaded);
     // Coolant temperature is independent of clutch slip heat. The thermostat
@@ -727,11 +728,12 @@
       clutchEngagement,
       clutchSlipRadps,
       temperatureC: clamp(finiteNumber(state?.temperatureC, 20)
-        + Math.abs(clutchSlipRadps * engineTorqueNm) * stepSeconds / 60_000, 20, 220),
+        + clutchSlipPowerW * stepSeconds / 60_000, 20, 220),
     });
     return Object.freeze({
       state: nextState,
       engineTorqueNm,
+      clutchSlipPowerW,
       driveTorqueNm,
       wheelDriveTorquesNm: Object.freeze(wheelDriveTorquesNm),
       differentialUnloaded: openDiffUnloaded,
@@ -1278,10 +1280,11 @@ scratch.input.normalLoadN = input?.normalLoadN;
     );
     const clutchSlipRadps = ratio === 0 ? 0 : (engineRpm - coupledTargetRpm) * Math.PI * 2 / 60;
     const engineTorqueNm = torqueAtRpmUnchecked(spec, engineRpm, throttle);
+    const clutchTorqueNm = ratio === 0 ? 0 : engineTorqueNm * clutchEngagement;
+    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const differentialFactor = openDiffUnloaded && spec.drivetrain.differential === 'open' ? 0.08 : 1;
-    const driveTorqueNm = ratio === 0 ? 0
-      : engineTorqueNm * ratio * spec.gearbox.finalDrive * spec.drivetrain.efficiency
-        * clutchEngagement * differentialFactor;
+    const driveTorqueNm = clutchTorqueNm * ratio * spec.gearbox.finalDrive
+      * spec.drivetrain.efficiency * differentialFactor;
     const wheelDriveTorquesNm = out.wheelDriveTorquesNm;
     wheelDriveTorquesNm.fill(0);
     distributeDriveTorque(wheelDriveTorquesNm,wheels,spec.drivetrain,driveTorqueNm,drivenCount,openDiffUnloaded);
@@ -1295,21 +1298,20 @@ scratch.input.normalLoadN = input?.normalLoadN;
       * engineCooling * (spec.engine.coolingMultiplier??1) * (1 + Math.min(40, roadSpeedMps) / 45);
     const engineTemperatureC = clamp(previousEngineTemperature
       + (thermalLoad + (controls?.engineFire === true ? 3 : 0) - radiatorCooling) * stepSeconds, -30, 220);
-copyFields(out.state, state);
-      out.state.engineTemperatureC = engineTemperatureC;
-      out.state.engineRpm = engineRpm;
-      out.state.gear = gear;
-      out.state.clutchEngagement = clutchEngagement;
-      out.state.clutchSlipRadps = clutchSlipRadps;
-      out.state.temperatureC = clamp(finiteNumber(state?.temperatureC, 20)
-        + Math.abs(clutchSlipRadps * engineTorqueNm) * stepSeconds / 60_000, 20, 220);
-    const nextState = out.state;
-    { out.state = nextState;
-      out.engineTorqueNm = engineTorqueNm;
-      out.driveTorqueNm = driveTorqueNm;
-      out.wheelDriveTorquesNm = wheelDriveTorquesNm;
-      out.differentialUnloaded = openDiffUnloaded;
-      return out; }
+    const temperatureC = clamp(finiteNumber(state?.temperatureC, 20)
+      + clutchSlipPowerW * stepSeconds / 60_000, 20, 220);
+    copyFields(out.state, state);
+    out.state.engineTemperatureC = engineTemperatureC;
+    out.state.engineRpm = engineRpm;
+    out.state.gear = gear;
+    out.state.clutchEngagement = clutchEngagement;
+    out.state.clutchSlipRadps = clutchSlipRadps;
+    out.state.temperatureC = temperatureC;
+    out.engineTorqueNm = engineTorqueNm;
+    out.clutchSlipPowerW = clutchSlipPowerW;
+    out.driveTorqueNm = driveTorqueNm;
+    out.differentialUnloaded = openDiffUnloaded;
+    return out;
   }
 
   function stepBrakesInto(out, state, controls, wheels, dt, spec) {
