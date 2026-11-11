@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
-const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=e8c40ad860009021', import.meta.url), 'utf8');
+const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=cd8524eab6e150c1', import.meta.url), 'utf8');
 function section(start, end, offset = 0) {
   const from = host.indexOf(start, offset);
   const to = host.indexOf(end, from);

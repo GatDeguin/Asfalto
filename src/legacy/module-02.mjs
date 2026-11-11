@@ -59,11 +59,12 @@ import {renderPixelRatio} from '../render/render-resolution.mjs?v=790d07ac82043c
 import {withFrameMatrices} from '../render/frame-matrices.mjs?v=711167562fad7c51';
 import {bindSharedInstanceWindows} from '../tracks/seam-copy-factory.mjs?v=24bdf88876427050';
 import {createGpuFrameTimer} from '../performance/gpu-frame-timer.mjs?v=6f67b1dbf7ea22a5';
+import {patchOpaqueTransmissionSource} from '../render/opaque-transmission.mjs?v=74188532df76e9a7';
 import {restoreCockpitFront,installCockpitFrontFinish} from '../render/vehicle-cockpit-front.mjs?v=ec10ff29633a1e47';
 import {createPmremCache} from '../render/pmrem-cache.mjs?v=b308851ccc37e7b5';
 import {getVehicleDefinition} from '../render/vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 import {createAuthoredControlMounts} from '../render/authored-control-mounts.mjs?v=3045f15fc78d12cf';
-import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=a521c8cb66989be3';
+import {createAdvancedGraphics} from '../render/advanced-graphics.mjs?v=83514b5dcfde9a28';
 import {isHighGraphicsQuality,graphicsQualityFamily} from '../render/graphics-quality-policy.mjs?v=263cf7ae8c411df4';
 import {installAdvancedGraphicsSettings,readAdvancedGraphics} from '../render/advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefQuality,surfaceReliefDiagnostics} from '../tracks/visuals/surface-relief.mjs?v=affc021b947e883e';
@@ -1569,7 +1570,7 @@ async function loadThree() {
   const coreUrl = URL.createObjectURL(new Blob([coreSource], { type: 'text/javascript' }));
   const moduleCompressedSource = payload.threeModuleGz;
   delete payload.threeModuleGz;
-  const moduleSource = (await gunzipBase64ToText(moduleCompressedSource))
+  const moduleSource = patchOpaqueTransmissionSource(await gunzipBase64ToText(moduleCompressedSource))
     .replaceAll('./three.core.min.js', coreUrl);
   const moduleUrl = URL.createObjectURL(new Blob([moduleSource], { type: 'text/javascript' }));
   try {
@@ -8983,7 +8984,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     globalThis.__asfaltoNacionalV41?.radio?.releaseFocus?.();
     updateKeyUi();
   }
-  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
+  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
   let hoverControl = null;
   let pointerVisualX = 0;
   let pointerVisualY = 0;

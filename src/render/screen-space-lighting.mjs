@@ -3,6 +3,7 @@ import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLS
 import {compileVisiblePass} from './pass-preparation.mjs?v=5e96c4931974c8ab';
 import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
+import {createOpaqueTransmission} from './opaque-transmission.mjs?v=74188532df76e9a7';
 import {gtaoShaderDefinitions} from './vendor/gtao-shader-factory.mjs?v=b7634bbada9ccfa0';
 const policies=Object.freeze({
  cinematic:Object.freeze({enabled:true,maxWidth:960,maxPixels:518400,scale:.5,aoSamples:32,giRays:6,giSteps:12,dfao:true,volume:true}),
@@ -15,9 +16,11 @@ export const screenLightingPolicy=tier=>policies[tier]||policies.balanced;
 export function depthToViewDistance(depth,near,far,logarithmic=false){return logarithmic?Math.expm1(Math.log1p(far)*depth):near*far/(far-depth*(far-near));}
 const gtaoAdapter="uniform bool anGtaoLogDepth;\nfloat anGtaoDecode(float d){if(!anGtaoLogDepth||d>=1.)return d;float z=max(cameraNear,exp2(d*log2(cameraFar+1.))-1.);return cameraFar/(cameraFar-cameraNear)-cameraFar*cameraNear/((cameraFar-cameraNear)*z);}\nvec3 getViewPosition(";
 
-export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,spatialResolve=false,onStage=null}={}){
+export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=null,distanceField=null,quality='balanced',samples=2,phone=false,framePassCount=2,spatialResolve=false,reuseOpaqueRefraction=false,onStage=null}={}){
  let disposed=false,rendering=false,frames=0,targets=null,historyValid=false,historyIndex=0,policy=screenLightingPolicy(quality),lastError=null,features={gtao:true,ssgi:true,dfao:true,volumetrics:true};
  const hdrSupported=supportsScreenSpaceHDR(renderer);
+ const refraction=reuseOpaqueRefraction&&hdrSupported?createOpaqueTransmission(T,renderer):null;
+ const suspendRefraction=()=>refraction?.release();
  const previousWorld=new T.Matrix4(),previousView=new T.Matrix4(),previousProjection=new T.Matrix4();
  let previousNear=camera.near,previousFar=camera.far;
  const atmosphereState=new Float64Array(12);
@@ -54,11 +57,12 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
  function volumeEnabled(){return !!(atmosphere&&features.volumetrics&&policy.volume&&atmosphere.uniforms?.anAtmoEnabled?.value!==0);}
  function hasIndirect(){return !!(features.gtao&&policy.aoSamples>0||features.ssgi&&policy.giRays>0||distanceField&&features.dfao&&policy.dfao);}
  function hasEffects(){return hdrSupported&&(hasIndirect()||volumeEnabled());}
- function releaseTargets(){historyValid=false;if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;allocationBudget=null;}
+ function releaseTargets(){historyValid=false;suspendRefraction();if(!targets)return;for(const t of Object.values(targets))t.dispose();targets=null;allocationBudget=null;}
  function requestedCaptureSamples(){return Math.min(renderSampleLimit(quality,phone),samples===0?0:policy===screenLightingPolicy('cinematic')?Math.max(4,samples):samples);}
  function captureSamples(){return supportedHdrSamples(renderer,requestedCaptureSamples());}
  let targetSamples=captureSamples();
  const contextRestored=()=>{releaseTargets();releasePreparationTargets();targetSamples=captureSamples();};
+ renderer.domElement?.addEventListener?.('webglcontextlost',suspendRefraction);
  renderer.domElement?.addEventListener?.('webglcontextrestored',contextRestored);
  let preparationTargets=null;
  function releasePreparationTargets(){
@@ -163,7 +167,9 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
     gtaoUniforms.cameraNear.value=camera.near;gtaoUniforms.cameraFar.value=camera.far;gtaoUniforms.cameraProjectionMatrix.value.copy(camera.projectionMatrix);gtaoUniforms.cameraProjectionMatrixInverse.value.copy(camera.projectionMatrixInverse);gtaoUniforms.cameraWorldMatrix.value.copy(camera.matrixWorld);
     uniforms.anUseDfa.value=distanceField&&features.dfao&&policy.dfao?1:0;
     renderer.setRenderTarget(targets.color);renderer.setScissorTest(false);renderer.autoClear=true;
-    onStage?.('Primer cuadro: captura del mundo');draw();restoreFog();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
+    onStage?.('Primer cuadro: captura del mundo');
+    if(refraction)refraction.draw(targets.color,draw);else draw();
+    restoreFog();scene.fog=oldFog;renderer.info.autoReset=false;renderer.autoClear=false;
     renderer.setRenderTarget(targets['metadata'+historyIndex]);quad.material=metadata;renderer.render(passScene,passCamera);
     onStage?.('Primer cuadro: oclusión GTAO');renderer.setRenderTarget(targets.ao);renderer.setClearColor(0xffffff,1);renderer.clear(true,false,false);if(features.gtao&&policy.aoSamples>0){quad.material=gtao;renderer.render(passScene,passCamera);}
     onStage?.('Primer cuadro: iluminación indirecta');renderer.setRenderTarget(targets.lighting);renderer.setClearColor(0x000000,1);renderer.clear(true,false,false);if(hasIndirect()){quad.material=bounce;renderer.render(passScene,passCamera);}
@@ -176,7 +182,8 @@ export function createScreenSpaceLighting(T,{renderer,scene,camera,atmosphere=nu
    }catch(error){historyValid=false;lastError=error.message;throw error;}
    finally{restoreFog();scene.fog=oldFog;renderer.setRenderTarget(oldTarget,oldFace,oldMip);renderer.setViewport(viewport);renderer.setScissor(scissor);renderer.setScissorTest(oldScissor);renderer.setClearColor(clearColor,oldAlpha);renderer.autoClear=oldAutoClear;renderer.info.autoReset=oldInfo;if(renderer.getCurrentViewport&&renderer.state?.viewport)renderer.state.viewport(currentViewport);rendering=false;}
   },
-  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],hdrSupported,spatialOnly:!volumeEnabled(),fogHistoryValid:historyValid,targets:targets?Object.keys(targets).length:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'half-resolution RGB GI + A AO, symmetric plane/depth/normal bilateral',fog:'8 blue-noise strata with reprojected clamped history',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
-  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();preparationTargets=null;noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();metadata.dispose();volume.dispose();history.dispose();composite.dispose();}
+  suspendRefraction,
+  diagnostics:()=>({enabled:policy.enabled,policy,frames,requestedSamples:requestedCaptureSamples(),supportedSamples:targetSamples,allocationBudget,allocations:targets?Object.values(targets).map(describeRenderTarget):[],hdrSupported,refraction:refraction?.diagnostics()??null,spatialOnly:!volumeEnabled(),fogHistoryValid:historyValid,targets:targets?Object.keys(targets).length:0,samples:targets?.color.samples??null,size:targets?[targets.color.width,targets.color.height]:null,effectSize:targets?[targets.ao.width,targets.ao.height]:null,techniques:{gtao:'Three r180 horizon integration',ssgi:'half-resolution RGB GI + A AO, symmetric plane/depth/normal bilateral',fog:'8 blue-noise strata with reprojected clamped history',dfao:!!distanceField,volumetric:!!atmosphere},lastError,disposed}),
+  dispose(){if(disposed)return;disposed=true;renderer.domElement?.removeEventListener?.('webglcontextlost',suspendRefraction);renderer.domElement?.removeEventListener?.('webglcontextrestored',contextRestored);releaseTargets();if(preparationTargets)for(const target of Object.values(preparationTargets))target.dispose();preparationTargets=null;noise.dispose();geometry.dispose();gtao.dispose();bounce.dispose();metadata.dispose();volume.dispose();history.dispose();composite.dispose();}
  };
 }

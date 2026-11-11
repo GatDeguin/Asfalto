@@ -7,7 +7,7 @@ import {createAdvancedMaterials}from'./advanced-materials.mjs?v=9c4d214f51c3abfd
 import {createPivotPainter}from'./pivot-painter.mjs?v=51fc8374f2d1160e';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=cd25059b36d94dd7';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=85d450c23e36764c';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=8323c5f9d777ad62';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=719dd8a188fd7a98';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=affc021b947e883e';
 import {createSpatialAntialias} from './spatial-antialias.mjs?v=91c748367cbfcf06';
@@ -42,7 +42,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
  const governed=()=>getQuality?.()??performanceGovernor?.tier()??'high';
  let quality=effectiveGraphicsQuality(settings,governed()),frameTime=null,lastFrameTime=null,pendingFrame=false,lastLimitCheck=-Infinity;
  const filtering=createTextureFiltering(T,{root:scene,renderer,quality});
- const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,phone,framePassCount:scope==='workshop'?1:2,spatialResolve:!phone,onStage:onRenderStage});
+ const pivot=createPivotPainter(T,{root:scene,quality,enabled:allowPivotPainter});pivot.refresh();const materials=createAdvancedMaterials(T,{root:scene,scope,quality}),field=createDistanceFieldOcclusion(T,{scene}),atmosphere=createPhysicalAtmosphere(T,{scene,scope,quality}),post=createScreenSpaceLighting(T,{renderer,scene,camera,distanceField:field,atmosphere,quality,samples,phone,framePassCount:scope==='workshop'?1:2,spatialResolve:!phone,reuseOpaqueRefraction:scope==='world'&&!phone,onStage:onRenderStage});
  const outputAA=createSpatialAntialias(T,{renderer,quality,phone,passCount:scope==='workshop'?1:2}),capabilities=createRenderCapabilities({renderer});
  function configure(){
   performanceGovernor?.setMaximumTier(maximum());rendererBudget?.apply(governed());quality=effectiveGraphicsQuality(settings,governed());filtering.setQuality(quality);outputAA.setQuality(quality);const budget=screenLightingPolicy(quality);
@@ -75,6 +75,7 @@ export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',ge
    frames++;
   },
   prepare,prepareOutput:compile=>outputAA.prepare(compile),renderOutput:draw=>outputAA.render(draw),
+  suspendRefraction:()=>post.suspendRefraction(),
   syncPreparationQuality(){if(!disposed&&effectiveGraphicsQuality(settings,governed())!==quality)configure();},
   render(draw=()=>renderer.render(scene,camera)){
    if(scope==='workshop'){
