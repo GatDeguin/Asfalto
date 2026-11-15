@@ -1,107 +1,12 @@
-import { OCCUPANT_JOINTS, OCCUPANT_MESHES } from './traffic-occupant-meshes.mjs';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=3757b6cb8ba6727a';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
-const CONTACT_ARC = 1.2;
+const CONTACT_ARC = 1.12;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const wrap = (n, cycle) => ((n % cycle) + cycle) % cycle;
 const ease = t => t * t * (3 - 2 * t);
-const decode = source => Uint8Array.from(atob(source), char => char.charCodeAt(0));
-const ignoreRay = () => {};
-
-// Wrist at the origin, fingers along Y and palm facing -Z. Curled fingers
-// leave space around the rim and fit in the same draw as the palm.
-function makeGripGeometry(T, side) {
-  const positions = [], index = [];
-  function append(shape) {
-    const offset = positions.length / 3;
-    for (const value of shape.attributes.position.array) positions.push(value);
-    for (const vertex of shape.index.array) index.push(offset + vertex);
-    shape.dispose();
-  }
-  const oval = (x, y, z, sx, sy, sz) => new T.SphereGeometry(1, 12, 8).scale(sx, sy, sz).translate(x, y, z);
-  append(oval(0, .023, -.002, .032, .038, .016));
-  function curvedDigit(points, radius) {
-    const path = new T.CatmullRomCurve3(points.map(point => new T.Vector3(...point)));
-    append(new T.TubeGeometry(path, 6, radius, 9, false));
-    const tip = points.at(-1);
-    append(oval(...tip, radius, radius, radius));
-  }
-  for (let finger = 0; finger < 4; finger++) {
-    const x = (.025 - finger * .017) * side;
-    const tip = [.074, .08, .076, .066][finger];
-    curvedDigit([[x, .041, .001], [x, tip, -.012], [x * .96, tip - .009, -.035], [x * .9, tip - .021, -.041]], .008);
-  }
-  curvedDigit([[.021 * side, .005, 0], [.039 * side, .018, -.009], [.04 * side, .035, -.019], [.033 * side, .044, -.028]], .011);
-  const geometry = new T.BufferGeometry();
-  geometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
-  geometry.setIndex(index);
-  geometry.computeVertexNormals();
-  return geometry;
-}
-
-// The near Blender mesh has rigid weights, so its sleeves can be kept in
-// isolation and positioned at the shoulder and elbow.
-function makeArms(T) {
-  const { p, s, i } = OCCUPANT_MESHES.near[0];
-  const points = new Int16Array(decode(p).buffer);
-  const joints = decode(s);
-  const indices = new Uint16Array(decode(i).buffer);
-  const names = Object.keys(OCCUPANT_JOINTS);
-  const sleeve = new T.MeshStandardMaterial({ name: 'Cockpit driver sleeves', color: 0x344650, roughness: .89 });
-  const skin = new T.MeshStandardMaterial({ name: 'Cockpit driver hands', color: 0xc89370, roughness: .76 });
-  const up = new T.Vector3(0, 1, 0), point = new T.Vector3();
-  const root = new T.Group();
-  root.name = 'CockpitDriverArms';
-  const arms = ['L', 'R'].map((suffix, sideIndex) => {
-    const pieces = ['upperArm', 'forearm'].map(part => {
-      const name = `${part}.${suffix}`, joint = names.indexOf(name);
-      const [from, to] = OCCUPANT_JOINTS[name];
-      const origin = new T.Vector3(...from), direction = new T.Vector3(...to).sub(origin);
-      const length = direction.length();
-      const rotate = new T.Quaternion().setFromUnitVectors(direction.normalize(), up);
-      const positions = [], index = [], vertices = new Map();
-      for (let triangle = 0; triangle < indices.length; triangle += 3) {
-        if (joints[indices[triangle]] !== joint) continue;
-        for (let corner = 0; corner < 3; corner++) {
-          const source = indices[triangle + corner];
-          if (!vertices.has(source)) {
-            const offset = source * 3;
-            point.set(points[offset], points[offset + 1], points[offset + 2]).multiplyScalar(.0001).sub(origin).applyQuaternion(rotate);
-            vertices.set(source, positions.length / 3);
-            positions.push(point.x, point.y, point.z);
-          }
-          index.push(vertices.get(source));
-        }
-      }
-      const geometry = new T.BufferGeometry();
-      geometry.setAttribute('position', new T.Float32BufferAttribute(positions, 3));
-      geometry.setIndex(index);
-      geometry.computeVertexNormals();
-      geometry.computeBoundingSphere();
-      const mesh = new T.Mesh(geometry, sleeve);
-      mesh.name = `CockpitDriver_${name}`;
-      mesh.raycast = ignoreRay;
-      root.add(mesh);
-      return { mesh, length };
-    });
-    const palm = new T.Mesh(makeGripGeometry(T, sideIndex === 0 ? 1 : -1), skin);
-    palm.name = `CockpitDriver_hand.${suffix}`;
-    palm.raycast = ignoreRay;
-    root.add(palm);
-    return { pieces, palm, shoulder: new T.Vector3(), elbow: new T.Vector3(), hand: new T.Vector3() };
-  });
-  return {
-    root, arms,
-    dispose() {
-      root.removeFromParent();
-      for (const mesh of root.children) mesh.geometry.dispose();
-      sleeve.dispose();
-      skin.dispose();
-      root.clear();
-    },
-  };
-}
+const lerp = (a, b, t) => a + (b - a) * t;
 
 function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
   parent.updateWorldMatrix(true, false);
@@ -138,7 +43,11 @@ function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
     maxDepth = Math.max(maxDepth, depth);
   });
   if (!Number.isFinite(minDepth)) return null;
-  return { right, up, center: right.clone().multiplyScalar(x0).addScaledVector(up, y0).addScaledVector(axis, (minDepth + maxDepth) * .5), radius: outer * .934 };
+  const halfDepth = clamp((maxDepth - minDepth) * .5, outer * .035, outer * .115);
+  return {
+    right, up, halfDepth, radius: outer - halfDepth,
+    center: right.clone().multiplyScalar(x0).addScaledVector(up, y0).addScaledVector(axis, (minDepth + maxDepth) * .5),
+  };
 }
 
 export function createCockpitDriverArms(T) {
@@ -146,10 +55,10 @@ export function createCockpitDriverArms(T) {
   const inverse = new T.Matrix4(), wheelFrame = new T.Matrix4(), restInverse = new T.Quaternion(), turn = new T.Quaternion();
   const center = new T.Vector3(), wheelHand = new T.Vector3(), wheelNormal = new T.Vector3(), radial = new T.Vector3();
   const knobGrip = new T.Vector3(), aim = new T.Vector3(), shiftAim = new T.Vector3();
-  const direction = new T.Vector3(), pole = new T.Vector3(), delta = new T.Vector3();
+  const direction = new T.Vector3(), pole = new T.Vector3();
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
   let mount = null, fit, model = null, disposed = false;
-  let previousGear = null, progress = 0, linger = 0, shiftBlend = 0;
+  let previousGear = null, progress = 0, linger = 0, shiftBlend = 0, sleeveUpdates = 0;
 
   function hide() {
     if (model) model.root.visible = false;
@@ -160,6 +69,7 @@ export function createCockpitDriverArms(T) {
     hide();
     model?.dispose();
     model = null;
+    sleeveUpdates = 0;
   }
   function bind({ parent, pivot, wheel = pivot, knob, axis = [0, 0, 1], back = [0, 0, 1], rest = pivot?.quaternion } = {}) {
     suspend();
@@ -170,14 +80,6 @@ export function createCockpitDriverArms(T) {
       right.crossVectors(up, mount.back).normalize();
     }
   }
-  function alignSleeve(part, from, to, scale) {
-    const { mesh, length } = part;
-    delta.subVectors(to, from);
-    const distance = delta.length();
-    mesh.position.copy(from);
-    mesh.quaternion.setFromUnitVectors(up, delta.normalize());
-    mesh.scale.set(scale, distance / length, scale);
-  }
   function update({ settings, active, gear, shifting, grabbing, wheelSpinRad, dt, paused, reducedMotion } = {}) {
     if (disposed) return;
     if (!settings?.enabled) { if (model) suspend(); return; }
@@ -185,7 +87,7 @@ export function createCockpitDriverArms(T) {
     const { parent, pivot, axis, back, knob } = mount;
     if (fit === undefined) fit = measureWheel(T, mount);
     if (!fit) return;
-    if (!model) { model = makeArms(T); parent.add(model.root); }
+    if (!model) { model = createCockpitDriverAvatar(T, fit.halfDepth / fit.radius * .18); parent.add(model.root); }
     model.root.visible = true;
 
     pivot.updateWorldMatrix(true, false);
@@ -217,39 +119,52 @@ export function createCockpitDriverArms(T) {
     for (let index = 0; index < model.arms.length; index++) {
       const arm = model.arms[index];
       const side = index === 0 ? -1 : 1;
-      const phaseAtRest = index === 0 ? .61 : .54;
+      // Stagger the regrip windows so one hand always has the rim.
+      const phaseAtRest = index === 0 ? .19 : .22;
       const phase = wrap(phaseAtRest - side * sweep, GRIP_CYCLE);
       const release = clamp((phase - CONTACT_ARC) / (GRIP_CYCLE - CONTACT_ARC), 0, 1);
       const arc = release > 0 ? (1 - ease(release)) * CONTACT_ARC : phase;
       const angle = side * (settings.gripDeg * DEG + arc - phaseAtRest) + twist;
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
-      radial.copy(wheelHand).sub(center).normalize();
-      arm.hand.copy(wheelHand).addScaledVector(wheelNormal, scale * (.027 + .026 * Math.sin(Math.PI * release)));
-      aim.copy(radial).multiplyScalar(-1).addScaledVector(wheelNormal, -.33).normalize();
-      if (side === 1 && shiftBlend > 0) {
-        wheelHand.copy(knobGrip).addScaledVector(up, scale * .036).addScaledVector(back, scale * .023);
-        arm.hand.lerp(wheelHand, shiftBlend).addScaledVector(up, Math.sin(Math.PI * shiftBlend) * scale * .045);
-        aim.lerp(shiftAim.copy(up).negate().addScaledVector(back, -.48).normalize(), shiftBlend).normalize();
+      const shift = side === 1 ? shiftBlend : 0;
+      const onlyWheelHand = side === -1 && shiftBlend > 0;
+      const loosen = reducedMotion || onlyWheelHand ? 0 : Math.sin(Math.PI * release);
+      const transit = Math.sin(Math.PI * shift);
+      const grasp = ease(clamp((shift - .53) / .47, 0, 1));
+      const open = Math.max(loosen * (1 - shift), transit) * (1 - grasp);
+      radial.subVectors(wheelHand, center).normalize();
+      arm.grip.copy(wheelHand).addScaledVector(wheelNormal, loosen * scale * .017);
+      aim.copy(radial).negate().addScaledVector(wheelNormal, -model.wheel.lean).normalize();
+      palmBack.copy(wheelNormal);
+      if (shift > 0) {
+        arm.grip.lerp(knobGrip, shift).addScaledVector(up, transit * scale * .080).addScaledVector(back, transit * scale * .067);
+        aim.lerp(shiftAim.copy(back).negate().addScaledVector(up, -.24).normalize(), shift).normalize();
+        palmBack.lerp(up, shift);
       }
+      palmRight.crossVectors(aim, palmBack).normalize();
+      palmBack.crossVectors(palmRight, aim);
+      const anchorY = lerp(model.wheel.y, .075, shift);
+      const anchorDepth = lerp(model.wheel.depth, .028, shift);
+      arm.wrist.copy(arm.grip).addScaledVector(aim, -scale * anchorY).addScaledVector(palmBack, scale * anchorDepth);
+      arm.contact = shift > .99 ? 'shifter' : shift > 0 || loosen > .02 ? 'reach' : 'wheel';
       arm.shoulder.copy(center).addScaledVector(back, scale * (.49 + settings.shoulderReachCm / 100))
-        .addScaledVector(up, scale * (.022 + settings.shoulderHeightCm / 100)).addScaledVector(right, scale * .168 * side);
-      direction.subVectors(arm.hand, arm.shoulder);
+        .addScaledVector(up, scale * (.062 + settings.shoulderHeightCm / 100)).addScaledVector(right, scale * .151 * side);
+      direction.subVectors(arm.wrist, arm.shoulder);
       const distance = Math.max(.00001, direction.length());
       direction.normalize();
       const armLength = Math.max(scale * .56, distance + scale * .012);
       const upper = armLength * .52, lower = armLength * .48;
       const along = clamp((upper * upper - lower * lower + distance * distance) / (2 * distance), -upper, upper);
-      pole.copy(up).negate().addScaledVector(right, side * .36).addScaledVector(direction, -pole.dot(direction)).normalize();
+      pole.copy(up).negate().addScaledVector(right, side * .18).addScaledVector(direction, -pole.dot(direction)).normalize();
       arm.elbow.copy(arm.shoulder).addScaledVector(direction, along).addScaledVector(pole, Math.sqrt(Math.max(0, upper * upper - along * along)));
-      alignSleeve(arm.pieces[0], arm.shoulder, arm.elbow, scale);
-      alignSleeve(arm.pieces[1], arm.elbow, arm.hand, scale);
-      palmBack.copy(wheelNormal).lerp(back, side === 1 ? shiftBlend : 0);
-      palmRight.crossVectors(aim, palmBack).normalize();
-      palmBack.crossVectors(palmRight, aim);
-      arm.palm.position.copy(arm.hand);
-      arm.palm.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
-      arm.palm.scale.setScalar(scale);
+      const { handMesh, sleeve } = arm;
+      handMesh.position.copy(arm.wrist);
+      handMesh.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
+      handMesh.scale.set(-side * scale, scale, scale);
+      const targets = handMesh.morphTargetInfluences;
+      targets[0] = open; targets[1] = grasp;
+      if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, aim, palmRight, scale)) sleeveUpdates++;
     }
   }
 
@@ -257,8 +172,12 @@ export function createCockpitDriverArms(T) {
     bind, update, suspend,
     diagnostics: () => ({
       visible: model?.root.visible === true, fitted: !!fit, shiftBlend,
-      hands: model?.arms.map(arm => arm.hand.toArray()) ?? [],
+      hands: model?.arms.map(arm => arm.wrist.toArray()) ?? [],
       shoulders: model?.arms.map(arm => arm.shoulder.toArray()) ?? [],
+      grips: model?.arms.map(arm => arm.grip.toArray()) ?? [],
+      cuffs: model?.arms.map(arm => arm.sleeve.cuff.toArray()) ?? [],
+      contacts: model?.arms.map(arm => arm.contact) ?? [],
+      triangles: model?.triangles ?? 0, sleeveUpdates,
     }),
     dispose() { suspend(); mount = null; fit = undefined; disposed = true; },
   };

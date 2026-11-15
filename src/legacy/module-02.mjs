@@ -97,7 +97,7 @@ import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=1bbc92775a4
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=5ed1d32c8cc8fcf7';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aee43660313b9773';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18ec';
-import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=e2b1cf3b3f9c446c';
+import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=f9a1f6f8e1f7dda2';
 import { installDriverArmsSettings, sanitizeDriverArmsSettings } from '../game/cockpit-driver-arms-settings.mjs?v=8e4913a8b8088612';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=cd6a96359a0b579c';
 import { drivingAudioState, sampleTrafficAudio } from '../audio/race-driving-state.mjs?v=51a660aeafa28587';
@@ -8462,7 +8462,14 @@ listen(window,'chevy:vehicle-config',(event)=>{
   let virtualTerrainSettings=null;
   let modularRuntimeShutdown = null,cockpitHudTimer=null;
   const documentFlags={hidden:document.hidden,menuOpen:false,introOpen:false,reducedMotion:false};
-  function syncDocumentFlags(){documentFlags.hidden=document.hidden;documentFlags.menuOpen=document.body.classList.contains('v6-menu-open');documentFlags.introOpen=document.body.classList.contains('an-intro-open');documentFlags.reducedMotion=document.body.classList.contains('v6-reduce-motion');}
+  function syncDocumentFlags(){
+    const wasInWorkshop=documentFlags.menuOpen;
+    documentFlags.hidden=document.hidden;
+    documentFlags.menuOpen=document.body.classList.contains('v6-menu-open');
+    documentFlags.introOpen=document.body.classList.contains('an-intro-open');
+    documentFlags.reducedMotion=document.body.classList.contains('v6-reduce-motion');
+    if(documentFlags.menuOpen&&!wasInWorkshop)driverArms.suspend();
+  }
   syncDocumentFlags();const documentFlagObserver=new MutationObserver(syncDocumentFlags);documentFlagObserver.observe(document.body,{attributes:true,attributeFilter:['class']});document.addEventListener('visibilitychange',syncDocumentFlags);
   const modularRuntimeCleanup = { attempts: 0, completed: 0, failures: [] };
   function disposeModularRuntime() {
