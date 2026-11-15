@@ -5,10 +5,13 @@ body.v6-driving #chevy-hud-overlay{
 }
 body.v6-driving #chevy-hud-telemetry{transform:scale(var(--chevy-telemetry-scale));transform-origin:100% 100%}
 body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:var(--chevy-hud-lower-inset)}
-/* Leave the windshield and both mirror faces clear in the cockpit. */
+/* Use the original timer anchor with a narrower face beside the cockpit mirror. */
 body.v6-driving:not(.an-phone-hud):has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer{
-  top:auto;
-  bottom:calc(var(--chevy-hud-lower-inset) + var(--chevy-telemetry-width) * var(--chevy-telemetry-scale) / 1.72 + 8px);
+  width:clamp(168px,17vw,310px);
+  max-width:calc(49vw - 16px);
 }
+body.v6-driving:not(.an-phone-hud):has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer .chevy-hud-copy{gap:8px}
+body.v6-driving:not(.an-phone-hud):has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer-label{font-size:clamp(10px,1.02vw,16px)}
+body.v6-driving:not(.an-phone-hud):has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer-value{font-size:clamp(16px,1.9vw,33px)}
 @media(max-width:680px){body.v6-driving #chevy-hud-overlay{--chevy-hud-lower-inset:calc(max(8px,env(safe-area-inset-bottom)) + 96px)}}
 @media(max-height:500px) and (orientation:landscape){body.v6-driving #chevy-hud-overlay{--chevy-hud-lower-inset:5px}}

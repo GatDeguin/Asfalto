@@ -1996,8 +1996,8 @@
     },
     {
       "path": "assets/styles/asfalto-v4-1-hud-adjustments.css",
-      "bytes": 929,
-      "sha256": "EB502DD3F599551CE7242E689573D02FD9F63D5B0953C3BA6EA266E0A0984272"
+      "bytes": 1271,
+      "sha256": "474F57172ABD2320EEB96AEB2BBAD1E16453F37D821F43E113EA790365AD8CC6"
     },
     {
       "path": "assets/styles/asfalto-v4-1-radio-style.css",
@@ -2056,8 +2056,8 @@
     },
     {
       "path": "assets/styles/mobile-hud.css",
-      "bytes": 5821,
-      "sha256": "A35028F143796144F14241ACC726EE533D9077084C6BF50C9D9E606D6477EE50"
+      "bytes": 5455,
+      "sha256": "D3B0D8DEAD1A0570886B4A06E562E835DABCBA4E2EBC09AD3D7513025F45ACA5"
     },
     {
       "path": "assets/styles/mobile-menu.css",
@@ -2942,7 +2942,7 @@
     {
       "path": "index.html",
       "bytes": 84517,
-      "sha256": "87B5A490BD1A84E85B95B4FE0C18D09CAACB2E7333C638C8595D3228FEEABDF5"
+      "sha256": "F6FE98F780D99A6B3F696DD5C7407BF500948DFBD2C6571A74E8D41520DB667D"
     },
     {
       "path": "release-version.json",
@@ -3332,7 +3332,7 @@
     {
       "path": "src/legacy/chevy-hud-3d-runtime.js",
       "bytes": 27904,
-      "sha256": "C2D410C647AE8C9F0EE27A90BCA58D9825F4140813E1FFE8873C41A70387B5D5"
+      "sha256": "055B32F8671A7F81E87A605F3A163DD2B92713057BF33A22A096159B7D3DBC60"
     },
     {
       "path": "src/legacy/cockpit-v5-browser.js",
@@ -5002,7 +5002,7 @@
     {
       "path": "src/ui/mobile-hud.mjs",
       "bytes": 2619,
-      "sha256": "D6FC9F7622F1F52CAC1FC41692C802A0D91856E93DF7CF21AC4D11B04269AA1E"
+      "sha256": "B0F3AD3DB634CF5D5B2F36817BF6047D8641A780B5E1A20F37BBE33244CD84A9"
     },
     {
       "path": "src/ui/mobile-wheel-drag.mjs",
@@ -6141,6 +6141,6 @@
     }
   ],
   "fileCount": 1213,
-  "totalBytes": 945537172,
-  "inventorySha256": "01141A1202FC6BB87EB355F431E18093ED664B394E4AB6D51D11E927A8BB1BFA"
+  "totalBytes": 945537148,
+  "inventorySha256": "2CB97ACF70D0DEFBEB5ADDDBFD07B5415E0D2FF5A7A540542674D8BC3993A274"
 }
