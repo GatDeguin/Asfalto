@@ -1,4 +1,4 @@
-import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=2aacf9d0c5b05ede';
+import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=21d9c68c304dd9c7';
 import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=711e1ffef018f681';
 import { createCockpitDriverSleeve } from './cockpit-driver-sleeve.mjs?v=f317b0ca312cefec';
 
@@ -71,20 +71,30 @@ function handGeometry(T, tube) {
     normal: toHand(new T.Vector3(0, 0, 1)),
   };
   const coordinates = name => new Int16Array(decode(poses[name]));
-  const narrow = coordinates('thin'), wide = coordinates('thick');
-  const base = Float32Array.from(narrow, (value, i) => lerp(value, wide[i], fit) / units);
-  fitRim(T, base, wheel);
+  const rimPose = suffix => {
+    const narrow = coordinates(`thin${suffix}`), wide = coordinates(`thick${suffix}`);
+    const pose = Float32Array.from(narrow, (value, i) => lerp(value, wide[i], fit) / units);
+    fitRim(T, pose, wheel);
+    return pose;
+  };
+  const base = rimPose(''), rimOpen = rimPose('Open');
+  const loadPose = name => Float32Array.from(coordinates(name), value => value / units);
+  const poseVertices = [
+    ['wheel', base],
+    ['reach', loadPose('reach')],
+    ['shifter', loadPose('shifter')],
+    ['rimOpen', rimOpen],
+  ];
   const positions = [], normals = [], colors = [];
   const noContact = new Float32Array(base.length).fill(1);
-  for (const name of ['wheel', 'reach', 'shifter']) {
-    const pose = name === 'wheel' ? base : Float32Array.from(coordinates(name), value => value / units);
+  for (const [name, pose] of poseVertices) {
     welded.setAttribute('position', new T.BufferAttribute(pose, 3));
     welded.computeVertexNormals();
     positions.push(withUvSeams(pose, name));
     const normal = welded.getAttribute('normal').array;
     normals.push(withUvSeams(normal, name));
     // As a hand releases, only the localized rim contact shading fades away.
-    colors.push(withUvSeams(name === 'wheel' ? gripColors(T, pose, normal, wheel) : noContact, name));
+    colors.push(withUvSeams(name === 'wheel' || name === 'rimOpen' ? gripColors(T, pose, normal, wheel) : noContact, name));
   }
   geometry.setAttribute('position', positions[0]);
   geometry.setAttribute('normal', normals[0]);

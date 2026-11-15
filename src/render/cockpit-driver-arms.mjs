@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=27827c07728ea7be';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=aa21829bf4f954da';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -7,6 +7,7 @@ const FOLLOW_THROUGH = 34 * DEG;
 const FULL_REGRIP = 106 * DEG;
 const UPPER_GRIP = 40 * DEG;
 const LOWER_GRIP = 146 * DEG;
+const RIM_CLOSURE = .17;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const wrap = (n, cycle) => ((n % cycle) + cycle) % cycle;
 const ease = t => t * t * (3 - 2 * t);
@@ -121,7 +122,8 @@ export function createCockpitDriverArms(T) {
       if (!reachable) progress = linger = 0;
     } else progress = linger = 0;
     if (!paused || previousGear === null) previousGear = gear ?? null;
-    shiftBlend = ease(progress);
+    // Reserve the wheel end of the shift for opening and closing on the rim.
+    shiftBlend = ease(clamp((progress - RIM_CLOSURE) / (1 - RIM_CLOSURE), 0, 1));
 
     for (let index = 0; index < model.arms.length; index++) {
       const arm = model.arms[index], { handMesh, sleeve } = arm;
@@ -140,11 +142,15 @@ export function createCockpitDriverArms(T) {
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
       const shift = side === 1 ? shiftBlend : 0;
-      const onlyWheelHand = side === -1 && shiftBlend > 0;
-      const loosen = onlyWheelHand ? 0 : Math.sin(Math.PI * release) * regrip;
+      const onlyWheelHand = side === -1 && progress > 0;
+      const reposition = onlyWheelHand ? 0 : regrip;
+      const loosen = ease(clamp((release - .12) / .18, 0, 1)) * ease(clamp((.80 - release) / .18, 0, 1)) * reposition;
+      const releaseFingers = ease(clamp(release / .18, 0, 1)) * ease(clamp((1 - release) / .16, 0, 1)) * reposition;
+      const shiftFingers = side === 1 ? ease(clamp(progress / RIM_CLOSURE, 0, 1)) * (1 - ease(clamp(shift / .26, 0, 1))) : 0;
       const transit = Math.sin(Math.PI * shift);
       const grasp = ease(clamp((shift - .53) / .47, 0, 1));
-      const open = Math.max(loosen * (1 - shift), transit) * (1 - grasp);
+      const open = transit * (1 - grasp);
+      const rimOpen = Math.min(1 - open - grasp, Math.max(releaseFingers * (1 - shift), shiftFingers));
       radial.subVectors(wheelHand, center).normalize();
       tangent.crossVectors(wheelNormal, radial).multiplyScalar(side);
       arm.grip.copy(wheelHand).addScaledVector(wheelNormal, loosen * scale * .017);
@@ -185,7 +191,7 @@ export function createCockpitDriverArms(T) {
       handMesh.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
       handMesh.scale.set(-side * scale, scale, scale);
       const targets = handMesh.morphTargetInfluences;
-      targets[0] = open; targets[1] = grasp;
+      targets[0] = open; targets[1] = grasp; targets[2] = rimOpen;
       if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, cuffAim, palmRight, scale)) sleeveUpdates++;
     }
   }
