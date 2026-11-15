@@ -1,31 +1,47 @@
-import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=5c638abbe34caac8';
-import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=55c04d12129bea83';
+import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=2aacf9d0c5b05ede';
+import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=711e1ffef018f681';
 import { createCockpitDriverSleeve } from './cockpit-driver-sleeve.mjs?v=f317b0ca312cefec';
 
 const ignoreRay = () => {};
 const decode = source => Uint8Array.from(atob(source), character => character.charCodeAt(0)).buffer;
 const lerp = (a, b, t) => a + (b - a) * t;
+const REFERENCE_RADIUS = .18;
 
-function fitRim(points, { y, depth, lean, tube }) {
-  const unit = 1 / Math.hypot(1, lean), tilt = lean * unit;
-  const centerY = y + .18 * unit, centerZ = -depth + .18 * tilt;
+// Offset from the nearest point on the rim's centerline, in hand coordinates.
+function rimOffset(delta, planar, { center, normal }) {
+  delta.sub(center);
+  planar.copy(delta).addScaledVector(normal, -delta.dot(normal)).normalize();
+  return delta.addScaledVector(planar, -REFERENCE_RADIUS);
+}
+
+function fitRim(T, points, wheel) {
+  const delta = new T.Vector3(), planar = new T.Vector3();
   for (let i = 0; i < points.length; i += 3) {
-    const x = points[i], dy = points[i + 1] - centerY, dz = points[i + 2] - centerZ;
-    const radial = dy * unit + dz * tilt, normal = dz * unit - dy * tilt;
-    const delta = 1 - .18 / Math.hypot(x, radial);
-    const dx = x * delta, dr = radial * delta;
-    const distance = Math.hypot(dx, dr, normal);
-    const correction = tube - .0011 - distance;
+    const distance = rimOffset(delta.fromArray(points, i), planar, wheel).length();
+    const correction = wheel.tube - .0011 - distance;
     if (correction <= 0 || distance < 1e-6) continue;
     const amount = Math.min(.008, correction) / distance;
-    points[i] += dx * amount;
-    points[i + 1] += (dr * unit - normal * tilt) * amount;
-    points[i + 2] += (dr * tilt + normal * unit) * amount;
+    points[i] += delta.x * amount;
+    points[i + 1] += delta.y * amount;
+    points[i + 2] += delta.z * amount;
   }
 }
 
+function gripColors(T, points, normals, wheel) {
+  const delta = new T.Vector3(), planar = new T.Vector3(), normal = new T.Vector3();
+  const colors = new Float32Array(points.length);
+  for (let i = 0; i < points.length; i += 3) {
+    const distance = rimOffset(delta.fromArray(points, i), planar, wheel).length();
+    const proximity = Math.min(1, Math.max(0, 1 - (distance - wheel.tube) / .014));
+    const facingRim = Math.max(0, -normal.fromArray(normals, i).dot(delta) / Math.max(distance, .00001));
+    const shade = 1 - .27 * proximity * proximity * facingRim;
+    colors.fill(shade, i, i + 3);
+  }
+  return colors;
+}
+
 function handGeometry(T, tube) {
-  const { units, index, weld, uv, poses, grip: { lean, thin, thick } } = COCKPIT_HAND_MESH;
+  const { units, index, weld, uv, poses, grip: { basis, thin, thick } } = COCKPIT_HAND_MESH;
   const geometry = new T.BufferGeometry(), welded = new T.BufferGeometry();
   const indices = new Uint16Array(decode(index)), sourceVertices = new Uint16Array(decode(weld));
   geometry.setIndex(new T.BufferAttribute(indices, 1));
@@ -45,23 +61,37 @@ function handGeometry(T, tube) {
     return attribute;
   }
   const fit = Math.min(1, Math.max(0, (tube - thin.tube) / (thick.tube - thin.tube)));
-  const wheel = { tube, lean, y: lerp(thin.y, thick.y, fit), depth: lerp(thin.depth, thick.depth, fit) };
+  const [thumbward, forward, back] = basis.map(axis => new T.Vector3(...axis));
+  const toHand = vector => new T.Vector3(vector.dot(thumbward), vector.dot(forward), vector.dot(back));
+  const origin = new T.Vector3(...thin.origin).lerp(new T.Vector3(...thick.origin), fit);
+  const wheel = {
+    tube, forward, back,
+    anchor: toHand(origin.clone().negate()),
+    center: toHand(new T.Vector3(REFERENCE_RADIUS, 0, 0).sub(origin)),
+    normal: toHand(new T.Vector3(0, 0, 1)),
+  };
   const coordinates = name => new Int16Array(decode(poses[name]));
   const narrow = coordinates('thin'), wide = coordinates('thick');
   const base = Float32Array.from(narrow, (value, i) => lerp(value, wide[i], fit) / units);
-  fitRim(base, wheel);
-  const positions = [], normals = [];
+  fitRim(T, base, wheel);
+  const positions = [], normals = [], colors = [];
+  const noContact = new Float32Array(base.length).fill(1);
   for (const name of ['wheel', 'reach', 'shifter']) {
     const pose = name === 'wheel' ? base : Float32Array.from(coordinates(name), value => value / units);
     welded.setAttribute('position', new T.BufferAttribute(pose, 3));
     welded.computeVertexNormals();
     positions.push(withUvSeams(pose, name));
-    normals.push(withUvSeams(welded.getAttribute('normal').array, name));
+    const normal = welded.getAttribute('normal').array;
+    normals.push(withUvSeams(normal, name));
+    // As a hand releases, only the localized rim contact shading fades away.
+    colors.push(withUvSeams(name === 'wheel' ? gripColors(T, pose, normal, wheel) : noContact, name));
   }
   geometry.setAttribute('position', positions[0]);
   geometry.setAttribute('normal', normals[0]);
+  geometry.setAttribute('color', colors[0]);
   geometry.morphAttributes.position = positions.slice(1);
   geometry.morphAttributes.normal = normals.slice(1);
+  geometry.morphAttributes.color = colors.slice(1);
   geometry.computeBoundingSphere();
   return { surface: geometry, wheel };
 }

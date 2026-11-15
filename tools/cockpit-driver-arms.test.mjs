@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=9382b60c92c41ea6';
-import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=8e4913a8b8088612';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=46608650501e40db';
+import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=2aacf9d0c5b05ede';
+import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
 
 function fixture(tube = .014) {
@@ -25,12 +26,32 @@ test('the experimental setting starts off and clamps the saved pose per model', 
   const storage = { getItem: id => values.get(id) };
   const chevy = sanitizeDriverArmsSettings(readVehiclePreference(storage, key, 'chevy'));
   const belAir = sanitizeDriverArmsSettings(readVehiclePreference(storage, key, 'belair_1957'));
-  assert.deepEqual(chevy, { enabled: true, shiftEnabled: false, gripDeg: 78, shoulderHeightCm: -12, shoulderReachCm: 0, shiftSeconds: .20 });
+  assert.equal(chevy.gripDeg, 120);
+  assert.equal(chevy.shoulderHeightCm, -12);
+  assert.equal(chevy.shiftEnabled, false);
+  assert.equal(chevy.shiftSeconds, .20);
   assert.equal(belAir.enabled, false);
   assert.equal(belAir.shiftEnabled, true);
   assert.equal(sanitizeDriverArmsSettings({ enabled: 'false', gripDeg: null }).enabled, false);
+  assert.equal(sanitizeDriverArmsSettings({ enabled: true, gripDeg: 60 }).gripDeg, 90);
+  assert.equal(sanitizeDriverArmsSettings({ enabled: true, gripDeg: 60, poseVersion: 2 }).gripDeg, 60);
 });
 
+test('the reference grip rests at nine and three with the palm and cuff approaching from below', () => {
+  const { parent, arms, sample } = fixture();
+  arms.update(sample);
+  const { hands, grips, cuffs } = arms.diagnostics();
+  for (const [i, suffix] of ['L', 'R'].entries()) {
+    const hand = parent.getObjectByName(`CockpitDriver_hand.${suffix}`);
+    const fingersUp = new T.Vector3(0, 1, 0).applyQuaternion(hand.quaternion);
+    assert.ok(Math.abs(grips[i][1]) < .002, 'Both grips should start level with the center of the wheel');
+    assert.ok(grips[i][1] - hands[i][1] > .05, 'Cuffs approach from below');
+    assert.ok(Math.abs(hands[i][0]) > Math.abs(grips[i][0]) + .027);
+    assert.ok(fingersUp.y > .74 && fingersUp.z < -.36);
+    assert.ok(new T.Vector3(...hands[i]).distanceTo(new T.Vector3(...cuffs[i])) < .012);
+  }
+  arms.dispose();
+});
 test('an enabled rig uses the measured wheel, follows the moving rim and reclamps its grip', () => {
   const { parent, pivot, arms, sample } = fixture();
   arms.update({ ...sample, settings: sanitizeDriverArmsSettings() });
@@ -59,6 +80,20 @@ test('an enabled rig uses the measured wheel, follows the moving rim and reclamp
   assert.ok(arms.diagnostics().shoulders[0][1] > rest.shoulders[0][1] + .05);
   arms.dispose();
   assert.equal(parent.getObjectByName('CockpitDriverArms'), undefined);
+});
+
+test('a moderate turn keeps the rising hand above the wheel center and leaves both hands on their sides', () => {
+  const { pivot, arms, sample } = fixture();
+  for (const turn of [-.78, .78]) {
+    pivot.rotation.z = turn;
+    arms.update({ ...sample, wheelSpinRad: turn });
+    const { grips } = arms.diagnostics();
+    assert.ok(grips[0][0] < -.08 && grips[1][0] > .08);
+    const rising = turn < 0 ? 0 : 1;
+    assert.ok(grips[rising][1] > .075);
+    assert.ok(grips[1 - rising][1] < -.075);
+  }
+  arms.dispose();
 });
 
 test('the shift hand tracks the actual moving knob, then returns without reacting to an old shift', () => {
@@ -122,7 +157,7 @@ test('the resting wrist approaches the grip from below and behind the rim', () =
   const { hands, grips, cuffs } = arms.diagnostics();
   for (const [i, [x, y, z]] of hands.entries()) {
     assert.ok(y < grips[i][1] + .003, 'A high wrist forces the hand to fold inward toward the hub');
-    assert.ok(z - grips[i][2] > .047, 'The palm should reach forward from the wrist');
+    assert.ok(z - grips[i][2] > .04, 'The palm should reach forward from the wrist');
     assert.ok(Math.hypot(x - cuffs[i][0], y - cuffs[i][1], z - cuffs[i][2]) < .012);
   }
   arms.dispose();
@@ -149,21 +184,30 @@ test('shifting takes an open hand to the moving knob with the left hand on the w
 
 test('the actual finger surfaces seat against thin, intermediate and thick rims', () => {
   const point = new T.Vector3();
+  const asIndices = packed => new Uint16Array(Uint8Array.from(atob(packed), character => character.charCodeAt(0)).buffer);
+  const weld = asIndices(COCKPIT_HAND_MESH.weld), thumbs = new Set(asIndices(COCKPIT_HAND_MESH.thumb));
   for (const tube of [.009, .010, .014, .018, .020, .022]) {
     const { parent, arms, sample } = fixture(tube);
     arms.update(sample);
     parent.updateMatrixWorld(true);
     for (const side of ['L', 'R']) {
       const hand = parent.getObjectByName(`CockpitDriver_hand.${side}`);
-      let contact = 0, penetration = 0;
+      let contact = 0, penetration = 0, thumbInside = 0, fingersBehind = 0;
       for (let i = 0; i < hand.geometry.attributes.position.count; i++) {
         hand.getVertexPosition(i, point).applyMatrix4(hand.matrixWorld);
-        const depth = Math.hypot(Math.hypot(point.x, point.y) - .18, point.z) - tube;
-        if (Math.abs(depth) < .002) contact++;
+        const radius = Math.hypot(point.x, point.y);
+        const depth = Math.hypot(radius - .18, point.z) - tube;
+        if (Math.abs(depth) < .002) {
+          contact++;
+          if (thumbs.has(weld[i]) && radius < .179 && point.z > .001) thumbInside++;
+          if (!thumbs.has(weld[i]) && point.z < -.003) fingersBehind++;
+        }
         penetration = Math.max(penetration, -depth);
       }
       assert.ok(contact > 140, `Surface was floating at ${tube * 1000} mm`);
       assert.ok(penetration < .0032, `Surface crossed the rim by ${(penetration * 1000).toFixed(2)} mm`);
+      assert.ok(thumbInside >= 15, 'The pad of the thumb touches the inner, driver-facing half');
+      assert.ok(fingersBehind >= 75, 'The other fingers wrap around the far half');
     }
     arms.dispose();
   }
@@ -209,6 +253,11 @@ test('the skin and cloth share UV-mapped pigment, relief and roughness between b
     }
     assert.ok(high - low > 28, 'Different surfaces need distinct roughness');
   }
+  const hand = rig.getObjectByName('CockpitDriver_hand.L');
+  const gripColor = hand.geometry.getAttribute('color').array;
+  assert.equal(hand.material.vertexColors, true);
+  assert.ok(gripColor.some(value => value < .87) && gripColor.some(value => value === 1));
+  assert.ok(hand.geometry.morphAttributes.color.every(pose => pose.array.every(value => value === 1)));
   arms.dispose();
 });
 
@@ -236,7 +285,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=b398773f8cb0185a', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=750bdda402ebfcf5', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

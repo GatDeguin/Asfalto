@@ -1,12 +1,15 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=3bc88207a41a0a9c';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=27827c07728ea7be';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
 const CONTACT_ARC = 1.12;
+const FOLLOW_THROUGH = 34 * DEG;
+const FULL_REGRIP = 106 * DEG;
+const UPPER_GRIP = 40 * DEG;
+const LOWER_GRIP = 146 * DEG;
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const wrap = (n, cycle) => ((n % cycle) + cycle) % cycle;
 const ease = t => t * t * (3 - 2 * t);
-const lerp = (a, b, t) => a + (b - a) * t;
 
 function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
   parent.updateWorldMatrix(true, false);
@@ -54,6 +57,7 @@ export function createCockpitDriverArms(T) {
   const up = new T.Vector3(0, 1, 0), right = new T.Vector3();
   const inverse = new T.Matrix4(), wheelFrame = new T.Matrix4(), restInverse = new T.Quaternion(), turn = new T.Quaternion();
   const center = new T.Vector3(), wheelHand = new T.Vector3(), wheelNormal = new T.Vector3(), radial = new T.Vector3();
+  const tangent = new T.Vector3(), anchor = new T.Vector3(), gearAnchor = new T.Vector3(0, .075, -.028);
   const knobGrip = new T.Vector3(), aim = new T.Vector3(), shiftAim = new T.Vector3();
   const direction = new T.Vector3(), pole = new T.Vector3();
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
@@ -102,6 +106,8 @@ export function createCockpitDriverArms(T) {
     // The camera-space Chevy wheel can turn several full revolutions. Use its
     // actual unwrapped angle for regrips and the pivot for the final placement.
     const sweep = Number.isFinite(wheelSpinRad) ? wheelSpinRad * axis.z : twist;
+    const regrip = reducedMotion ? 0 : ease(clamp((Math.abs(sweep) - FOLLOW_THROUGH) / (FULL_REGRIP - FOLLOW_THROUGH), 0, 1));
+    const baseGrip = settings.gripDeg * DEG;
 
     if (knob && settings.shiftEnabled && !reducedMotion) {
       knob.getWorldPosition(knobGrip).applyMatrix4(inverse);
@@ -125,19 +131,27 @@ export function createCockpitDriverArms(T) {
       const phase = wrap(phaseAtRest - side * sweep, GRIP_CYCLE);
       const release = clamp((phase - CONTACT_ARC) / (GRIP_CYCLE - CONTACT_ARC), 0, 1);
       const arc = release > 0 ? (1 - ease(release)) * CONTACT_ARC : phase;
-      const angle = side * (settings.gripDeg * DEG + arc - phaseAtRest) + twist;
+      // In an ordinary turn both hands first move with the actual rim. Larger
+      // rotations gradually transfer into regrips within each hand's sector.
+      const follow = clamp(baseGrip - side * sweep, UPPER_GRIP, LOWER_GRIP);
+      const recover = clamp(baseGrip + arc - phaseAtRest, UPPER_GRIP, LOWER_GRIP);
+      const sector = follow + (recover - follow) * regrip;
+      const angle = side * sector + twist;
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
       const shift = side === 1 ? shiftBlend : 0;
       const onlyWheelHand = side === -1 && shiftBlend > 0;
-      const loosen = reducedMotion || onlyWheelHand ? 0 : Math.sin(Math.PI * release);
+      const loosen = onlyWheelHand ? 0 : Math.sin(Math.PI * release) * regrip;
       const transit = Math.sin(Math.PI * shift);
       const grasp = ease(clamp((shift - .53) / .47, 0, 1));
       const open = Math.max(loosen * (1 - shift), transit) * (1 - grasp);
       radial.subVectors(wheelHand, center).normalize();
+      tangent.crossVectors(wheelNormal, radial).multiplyScalar(side);
       arm.grip.copy(wheelHand).addScaledVector(wheelNormal, loosen * scale * .017);
-      aim.copy(radial).negate().addScaledVector(wheelNormal, -model.wheel.lean).normalize();
-      palmBack.copy(wheelNormal);
+      // The authored frame points toward the hub, along the rim and toward the driver.
+      const { forward, back: dorsal } = model.wheel;
+      aim.copy(radial).multiplyScalar(-forward.x).addScaledVector(tangent, forward.y).addScaledVector(wheelNormal, forward.z);
+      palmBack.copy(radial).multiplyScalar(-dorsal.x).addScaledVector(tangent, dorsal.y).addScaledVector(wheelNormal, dorsal.z);
       if (shift > 0) {
         arm.grip.lerp(knobGrip, shift).addScaledVector(up, transit * scale * .080).addScaledVector(back, transit * scale * .067);
         aim.lerp(shiftAim.copy(back).negate().addScaledVector(up, -.24).normalize(), shift).normalize();
@@ -145,9 +159,9 @@ export function createCockpitDriverArms(T) {
       }
       palmRight.crossVectors(aim, palmBack).normalize();
       palmBack.crossVectors(palmRight, aim);
-      const anchorY = lerp(model.wheel.y, .075, shift);
-      const anchorDepth = lerp(model.wheel.depth, .028, shift);
-      handMesh.position.copy(arm.grip).addScaledVector(aim, -scale * anchorY).addScaledVector(palmBack, scale * anchorDepth);
+      anchor.copy(model.wheel.anchor).lerp(gearAnchor, shift);
+      handMesh.position.copy(arm.grip).addScaledVector(palmRight, side * anchor.x * scale)
+        .addScaledVector(aim, -anchor.y * scale).addScaledVector(palmBack, -anchor.z * scale);
       // The grip frame follows the rim. The cuffs follow the authored wrist in
       // that frame, using the same weights as the surface morphs.
       const { wheel, reach, shifter } = model.wrists, planted = 1 - open - grasp;

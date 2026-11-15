@@ -91,7 +91,7 @@ export function createCockpitDriverMaterials(T) {
   const [twill, thread] = fabricMaps(T);
   const skin = new T.MeshStandardMaterial({
     name: 'Piel del conductor', map: skinColor, bumpMap: skinSurface, roughnessMap: skinSurface,
-    bumpScale: .52, roughness: 1, envMapIntensity: .33,
+    bumpScale: .52, roughness: 1, vertexColors: true, envMapIntensity: .33,
   });
   const fabric = new T.MeshPhysicalMaterial({
     name: 'Sarga de algodón azul', map: twill, bumpMap: thread, roughnessMap: thread,
