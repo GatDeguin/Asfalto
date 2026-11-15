@@ -2942,7 +2942,7 @@
     {
       "path": "index.html",
       "bytes": 84516,
-      "sha256": "28892F18A2F340EC603C59BEF95C23AADE3D2E198AEACC5D3926B75D2F7791E8"
+      "sha256": "6A62F8F7F0E6947E25B5A03F841B152E5BFE826A25E8F1B086E403DB9A94C1C5"
     },
     {
       "path": "release-version.json",
@@ -3031,8 +3031,8 @@
     },
     {
       "path": "src/audio/workshop-departure-audio.mjs",
-      "bytes": 4089,
-      "sha256": "55FB7202CDFB2F7BF3CB4D13271C3932CCC24B0A478905B1AD0DB47A18E865CF"
+      "bytes": 5069,
+      "sha256": "9E765D1AA59E00AB98916D2FC0B5C95F430CCD90456889200B26C6F495F0D834"
     },
     {
       "path": "src/environment/av3hdri-loader.mjs",
@@ -3357,7 +3357,7 @@
     {
       "path": "src/legacy/v6-complete-runtime.js",
       "bytes": 144510,
-      "sha256": "66EB237EEC767B3CFE8A75354E3EDE8349EB6046729854FBDE670DB662B14303"
+      "sha256": "4CB6A00969D8B9097F4BA33517F736D15FD9DBBE39574B73EB085635CBFCA473"
     },
     {
       "path": "src/menu/activity-rewards.mjs",
@@ -4351,8 +4351,8 @@
     },
     {
       "path": "src/render/workshop-departure.mjs",
-      "bytes": 14113,
-      "sha256": "35FC1F393A8083DA6D3ADB84BF5C8125679CD819B5954415FD4EBE6FFB74096C"
+      "bytes": 14420,
+      "sha256": "B05234667B4F5E1AE2EFBCCAD8D240450DB50A926B5AA2CE6F56A23D40BD2E08"
     },
     {
       "path": "src/render/workshop-detail-pass.mjs",
@@ -5357,7 +5357,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 17847,
-      "sha256": "1686D35296E7281C8DF8FB36F1068C70264638D1C085A0C7B08DF45B11B13933"
+      "sha256": "6F87A1088ADBF4D7B2A2744CB96A2E2596A3C83C28FA4D28117D4E9C46412F10"
     },
     {
       "path": "tools/minimap-clock.test.mjs",
@@ -5437,7 +5437,7 @@
     {
       "path": "tools/physics-startup-contact.test.mjs",
       "bytes": 3111,
-      "sha256": "48F4375DFA64DAB3D05D8802FC70B0AC484461D33F53F9AE82FFBFC4B0B9AE3D"
+      "sha256": "91531CBDDFFB478DA954A669EB31AB61F7D29FE149B0D63437717A09CBBD24B6"
     },
     {
       "path": "tools/player-driver.test.mjs",
@@ -5547,7 +5547,7 @@
     {
       "path": "tools/session-result-consistency.test.mjs",
       "bytes": 6983,
-      "sha256": "87BEFD328FE3164550D57B81C47FDBD419981CD02A451289B158FAC2F9C3FDDD"
+      "sha256": "F516C702D7B43D36DDF94F8C2A4531E4E6A548CA5829E2FBE257632154AF5582"
     },
     {
       "path": "tools/shader-program-readiness.test.mjs",
@@ -5637,7 +5637,7 @@
     {
       "path": "tools/v7-earned-collection.test.mjs",
       "bytes": 4665,
-      "sha256": "47F9CB8F6BAD4D4A8673AAF669940DF9C42ED1C1E56CF5FBEA81D2C56518D6D1"
+      "sha256": "521D8F350F8901FDD3088E945973CF75F30C7FFD49113C912DCB4E52E70A5BFD"
     },
     {
       "path": "tools/v7-earned-photo-store.test.mjs",
@@ -5806,8 +5806,8 @@
     },
     {
       "path": "tools/workshop-departure.test.mjs",
-      "bytes": 13967,
-      "sha256": "31DAF08FB96BF4D190513FEEC4E27EF1707150CCC6BE730F2F6B06F643B60823"
+      "bytes": 15623,
+      "sha256": "CAE8590AC9651FA4E830DAD9BBCDB355118134F27CB9598FCE6B6661041D63FE"
     },
     {
       "path": "tools/workshop-performance.test.mjs",
@@ -6116,6 +6116,6 @@
     }
   ],
   "fileCount": 1208,
-  "totalBytes": 944806537,
-  "inventorySha256": "0BEA5D08F302265EF67284EDB2C693D35D68C03096156486CEC07215A400CCCD"
+  "totalBytes": 944809480,
+  "inventorySha256": "5806087553461E77043D1EAFF1C2744062EB5E7C1F6B84FA58EE882990396765"
 }

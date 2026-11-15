@@ -1,11 +1,11 @@
-import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=55fb7202cdfb2f7b';
+import {createWorkshopDepartureAudio} from '../audio/workshop-departure-audio.mjs?v=9e765d1aa59e00ab';
 import {prepareDepartureDoor} from './workshop-departure-door.mjs?v=47519597b1833cf9';
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
 
 const DOOR_LATCH=.72, DOOR_SETTLED=.92, IGNITION=1.02, HEADLAMPS=2.08, LIGHTS=2.94;
 const GATE=3.78, GATE_OPEN=5.54, ROLL=5.65, EXIT=5.68, NIGHT=9.44;
 const THRESHOLD_Z=6.50, TURN_Z=9.55, TURN_RADIUS=4.80, STREET_RUN=26;
-const TURN_LENGTH=TURN_RADIUS*Math.PI/2;
+const TURN_LENGTH=TURN_RADIUS*Math.PI/2, WHEEL_RADIUS=.34;
 const ROLL_END=12.48, FADE=11.40, BLACK=12.64, END=12.84;
 const phases=[
   [0,'door','Cerrando la puerta…'],
@@ -114,7 +114,8 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
   let raf=0,lastFrame=null,elapsed=0,phaseIndex=-1,finished=false,lastGate=gate,lastDistance=0,lastTurn=0,latch=false;
   const departureYaw=Math.PI/2-(vehiclePresentation?.root?.rotation.y||0);
   const straightDistance=Math.max(0,TURN_Z-position.z);
-  const streetDistance=TURN_LENGTH+STREET_RUN;
+  const travelLength=straightDistance+TURN_LENGTH+STREET_RUN;
+  const travelSeconds=ROLL_END-ROLL;
   car.rotation.set(0,departureYaw,0);
   if(exterior)exterior.visible=true;
   contact?.rotateZ(yaw-departureYaw);
@@ -167,8 +168,10 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         const dark=smooth((elapsed-LIGHTS)/.33);
         const opening=smooth((elapsed-GATE)/(GATE_OPEN-GATE)),nextGate=lerp(gate,1,opening);
         const spill=smooth((nextGate-.04)/.72);
-        const rollout=clamp((elapsed-ROLL)/(ROLL_END-ROLL));
-        const distance=(straightDistance+streetDistance)*rollout*rollout*(1.85-.85*rollout);
+        const rollout=clamp((elapsed-ROLL)/travelSeconds);
+        const distance=travelLength*rollout*rollout*(1.85-.85*rollout);
+        // Differentiate the camera-independent path so frame pacing doesn't modulate pitch.
+        const speed=rollout<1?travelLength*rollout*(3.70-2.55*rollout)/travelSeconds:0;
         const straightProgress=straightDistance>0?clamp(distance/straightDistance):1;
         const streetTravel=Math.max(0,distance-straightDistance);
         const night=smooth((streetTravel-TURN_LENGTH-1.1)/18);
@@ -202,7 +205,7 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         lastTurn=turn;
         const steer=.46*smooth((distance-straightDistance+.55)/1.1)*(1-smooth((streetTravel-TURN_LENGTH+.55)/1.1));
         const headlamps=smooth((elapsed-HEADLAMPS)/.33);
-        vehicleCue?.setFrame({wheelRotationRad:-distance/.34,steeringRad:steer,headlamps,brake:1-smooth((elapsed-ROLL)/.26)});
+        vehicleCue?.setFrame({wheelRotationRad:-distance/WHEEL_RADIUS,steeringRad:steer,headlamps,brake:1-smooth((elapsed-ROLL)/.26)});
         if(beam&&vehiclePresentation?.root){
           const root=vehiclePresentation.root;
           root.updateWorldMatrix(true,false);
@@ -221,7 +224,10 @@ export function playWorkshopDeparture(workshop,{signal,settings,onPhase=()=>{},o
         if(finished)return;
         const clutch=smooth((elapsed-ROLL+.34)/.34)*(1-smooth((elapsed-ROLL)/.39));
         const throttle=clutch*.47+smooth(rollout*2)*.46;
-        sound.update({cranking,gate:nextGate,speed:(distance-lastDistance)/Math.max(.001,dt),gateSpeed:gateDelta/Math.max(.001,dt),throttle,distanceFade:night,fade});
+        sound.update({
+          cranking,speed,wheelRps:speed/(2*Math.PI*WHEEL_RADIUS),canUpshift:streetTravel>=TURN_LENGTH,dt,
+          gate:nextGate,gateSpeed:gateDelta/Math.max(.001,dt),throttle,distanceFade:night,fade,
+        });
         lastDistance=distance;
         workshop.renderView.frame(()=>advancedGraphics?advancedGraphics.render():renderer.render(scene,camera));
       }catch(error){

@@ -1,7 +1,15 @@
 import {createAudioTargets} from './audio-targets.mjs?v=d16a18410f46456b';
 
 const clamp=value=>Math.max(0,Math.min(1,value));
+// A representative Chevy driveline for the scripted departure.
+const IDLE_RPM=825,FINAL_DRIVE=3.36,FIRST_RATIO=3.11,SECOND_RATIO=2.2;
+const UPSHIFT_RPM=2350,SHIFT_SECONDS=.42,ENGAGE_SECOND=.23;
 const silent={phase(){},update(){},dispose(){}};
+
+function smooth(value){
+  const t=clamp(value);
+  return t*t*(3-2*t);
+}
 
 export function createWorkshopDepartureAudio(settings){
   const AudioContext=globalThis.AudioContext||globalThis.webkitAudioContext;
@@ -47,7 +55,7 @@ export function createWorkshopDepartureAudio(settings){
       osc.onended=()=>{osc.disconnect();gain.disconnect();};
     }
     void context.resume().catch(()=>{});
-    let disposed=false;
+    let disposed=false,shiftTime=-1;
     return {
       phase(id){
         if(id==='door'){click(96,.24,.13);click(325,.065,.05);}
@@ -59,13 +67,22 @@ export function createWorkshopDepartureAudio(settings){
         if(id==='exit')click(176,.105,.085);
         if(id==='threshold')click(96,.24,.19);
       },
-      update({cranking,speed,gate,gateSpeed,throttle=0,distanceFade=0,fade}){
+      update({cranking,speed,wheelRps,canUpshift,dt,gate,gateSpeed,throttle,distanceFade,fade}){
         const starter=cranking>=0&&cranking<.52?(1-clamp((cranking-.34)/.18))*(.59+.41*Math.sin(cranking*108)**2):0;
         const catchAmount=clamp((cranking-.30)/.32),motion=clamp(speed/6.2),lifting=clamp(gateSpeed/.88);
-        const load=clamp(motion*.72+throttle);
+        const inputRpm=wheelRps*60*FINAL_DRIVE;
+        if(shiftTime>=0)shiftTime=Math.min(SHIFT_SECONDS,shiftTime+dt);
+        else if(canUpshift&&inputRpm*FIRST_RATIO>=UPSHIFT_RPM)shiftTime=0;
+        // Lift, let the revs fall to the new ratio, then feed torque back in.
+        const engagement=smooth((shiftTime-.06)/(ENGAGE_SECOND-.06));
+        const ratio=FIRST_RATIO+(SECOND_RATIO-FIRST_RATIO)*engagement;
+        const uncoupledRpm=IDLE_RPM+throttle*850*(1-smooth(speed/3));
+        const engineRpm=Math.max(uncoupledRpm,inputRpm*ratio);
+        const lift=smooth(shiftTime/.08)*(1-smooth((shiftTime-ENGAGE_SECOND)/(SHIFT_SECONDS-ENGAGE_SECOND)));
+        const load=clamp(motion*.72+throttle)*(1-.90*lift);
         target(crank.gain,starter*.24,.021);
         target(engine.gain,catchAmount*(.12+load*.23));
-        target(engine.source.frequency,24+catchAmount*18+load*44,.047);
+        target(engine.source.frequency,24+catchAmount*(engineRpm*3/60-24),.039);
         target(engine.filter.frequency,245+load*310);
         target(roller.source.frequency,72+lifting*32);
         target(roller.gain,lifting*.12);

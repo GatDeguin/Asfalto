@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=35fc1f393a8083da';
+import {playWorkshopDeparture} from '../src/render/workshop-departure.mjs?v=b05234667b4f5e1a';
 import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=aee43660313b9773';
 import {createWorkshopArchitectureE31,WORKSHOP_E31_LAYOUT} from '../src/render/workshop-architecture-e31.mjs?v=a3ad738f3e2cc180';
 
@@ -108,10 +108,10 @@ test('canceling or enabling reduced motion restores the workshop even mid-depart
   assert.equal(f.play(),null);
 });
 
-test('procedural voices start with the matching visible beats and close after abort',async t=>{
-  const f=fixture(t),contexts=[];
+function installAudioFixture(t,f){
+  const contexts=[];
   class AudioContext {
-    state='running';currentTime=0;sampleRate=8000;destination={};voices=[];clicks=[];
+    state='running';currentTime=0;sampleRate=8000;destination={};voices=[];oscillators=[];clicks=[];
     constructor(){contexts.push(this);}
     param(){return {value:0,events:[],setTargetAtTime(value){this.events.push({phase:f.phases.at(-1),value});},
       setValueAtTime(value){this.value=value;},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){},cancelScheduledValues(){}};}
@@ -121,6 +121,7 @@ test('procedural voices start with the matching visible beats and close after ab
     createBufferSource(){return {start(){},stop(){},connect(next){return next;}};}
     createOscillator(){
       const context=this,frequency=this.param();
+      this.oscillators.push(frequency);
       return {frequency,start(){},stop(when){
         if(Number.isFinite(when))context.clicks.push({
           frequency:frequency.value,phase:f.phases.at(-1),z:f.workshop.car.position.z,gate:f.workshop.presentation.getDepartureGate(),
@@ -133,6 +134,11 @@ test('procedural voices start with the matching visible beats and close after ab
   const old=Object.getOwnPropertyDescriptor(globalThis,'AudioContext');
   Object.defineProperty(globalThis,'AudioContext',{value:AudioContext,configurable:true});
   t.after(()=>old?Object.defineProperty(globalThis,'AudioContext',old):delete globalThis.AudioContext);
+  return contexts;
+}
+
+test('procedural voices start with the matching visible beats and close after abort',async t=>{
+  const f=fixture(t),contexts=installAudioFixture(t,f);
   for(const settings of [{soundEnabled:false},{masterVolume:0}]){
     const controller=new AbortController(),done=f.play(controller.signal,settings);f.step(16);controller.abort();await done;
   }
@@ -151,6 +157,32 @@ test('procedural voices start with the matching visible beats and close after ab
   assert.ok(audio.clicks.some(cue=>cue.frequency===96&&cue.phase==='Saliendo del taller…'&&cue.z>=6.5&&cue.z<7.2));
   assert.ok(audio.voices.some(voice=>voice.events.some(e=>e.phase==='Saliendo del taller…'&&e.value>0)));
   controller.abort();await done;
+  assert.equal(audio.state,'closed');
+  f.assertRestored();
+});
+
+test('the engine climbs in first, shifts on the street and picks up in second before the fade',async t=>{
+  const f=fixture(t),contexts=installAudioFixture(t,f);
+  const done=f.play(undefined,{soundEnabled:true});
+  const audio=contexts[0],rows=[];
+  const frequency=audio.oscillators[0],engineGain=audio.voices[1];
+  for(let frame=0;frame<840&&f.frames.size;frame++){
+    f.step(16.667);
+    rows.push({...f.draws.at(-1),pitch:frequency.events.at(-1)?.value,gain:engineGain.events.at(-1)?.value});
+  }
+  await done;
+  const atGate=rows.find(row=>row.z>=6.5);
+  const corner=rows.filter(row=>row.yaw>0&&row.yaw<.2);
+  const street=rows.filter(row=>row.yaw===0&&row.x<-4.8&&row.fade===0);
+  const first=corner.at(-1);
+  const second=street.reduce((lowest,row)=>row.pitch<lowest.pitch?row:lowest,street[0]);
+  const pickup=street.find(row=>row.x<second.x-2&&row.gain>=first.gain*.9&&row.pitch>second.pitch+1);
+
+  assert.ok(first.pitch>atGate.pitch*1.3,`First gear did not climb: ${atGate.pitch} → ${first.pitch} Hz`);
+  assert.ok(second.pitch>first.pitch*.6&&second.pitch<first.pitch*.82,`No downstep into second: ${first.pitch} → ${second.pitch} Hz`);
+  assert.ok(street.some(row=>row.x>second.x&&row.gain<first.gain*.6),'Torque never cut for the shift');
+  assert.ok(pickup,'Second gear did not pick up after the shift');
+  assert.ok(street.filter(row=>row.x<pickup.x).every(row=>row.pitch>=second.pitch&&row.gain>=first.gain*.9));
   assert.equal(audio.state,'closed');
   f.assertRestored();
 });

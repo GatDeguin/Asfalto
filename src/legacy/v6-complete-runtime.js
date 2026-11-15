@@ -12,7 +12,7 @@ let activityRewards=null,activityRewardsPromise=null,activityRewardStore=null,re
 const phoneMemoryReady=import(new URL('src/runtime/phone-start-memory.mjs?v=2bf1cd61131af7de',document.baseURI));
 const startupDemandReady=import(new URL('src/runtime/startup-demand.mjs?v=cdc80b4586de6db3',document.baseURI));
 const experienceToolsReady=import(new URL('src/menu/v7-session-runtime.mjs?v=70b376bd29cce8c2',document.baseURI)).then(module=>(experienceTools=module));
-const workshopDepartureReady=import(new URL('src/render/workshop-departure.mjs?v=35fc1f393a8083da',document.baseURI));
+const workshopDepartureReady=import(new URL('src/render/workshop-departure.mjs?v=b05234667b4f5e1a',document.baseURI));
 const q=(s,r=document)=>r.querySelector(s), qa=(s,r=document)=>Array.from(r.querySelectorAll(s));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const lerp=(a,b,t)=>a+(b-a)*t;
