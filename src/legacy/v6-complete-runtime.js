@@ -130,11 +130,11 @@ let profilePersistencePromise=null,profileExpectedRevision=`${profile.storageRev
 function saveProfile(){renderProfileSummary();profilePersistencePromise||=import(new URL('src/runtime/profile-persistence.mjs?v=34c8f093c015eb86',document.baseURI));return profilePersistencePromise.then(m=>m.saveOrdinaryProfile({storage:globalThis.__asfaltoV7Storage,getProfile:()=>profile,getExpectedRevision:()=>profileExpectedRevision,onCommitted:revision=>profileExpectedRevision=revision})).then(()=>{void syncWorkshopCollection();return true;}).catch(error=>{toast('No se pudo guardar el archivo local: '+String(error.message||error)+'. Exportalo desde Historial.','warn');return false;});}
 function clearLocalCompetitionClassification(){const world=localCompetitionWorld;localCompetitionWorld=null;world?.configureChampionship({enabled:false});}
 async function leaveChampionship(){clearLocalCompetitionClassification();earnedAlbum?.cancelCapture();const ending=championshipMenu?.cancel();if(championshipDayEnabled!==null){const enabled=championshipDayEnabled;championshipDayEnabled=null;await window.__cockpit?.raceWorld?.setDayCycleOptions?.({enabled},{persist:false});}await ending;}
-async function loadEarnedAlbum(){if(earnedAlbum)return earnedAlbum;return earnedAlbumPromise||(earnedAlbumPromise=import(new URL('src/menu/v7-earned-album.mjs?v=9f80051b7daa4301',document.baseURI)).then(m=>{earnedAlbum=m.createEarnedAlbum({getProfile:()=>profile,replaceProfile:p=>{profile=p;profileExpectedRevision=`${p.storageRevision||0}:${p.motorsportV7?.revision||0}`;renderProfileSummary();},getThree:()=>workshop.T,canSetPosters:()=>!!workshop.presentation?.setCollectionMemories,setPosters:posters=>workshop.presentation?.setCollectionMemories?.(posters),toast,onStatus:()=>{const status=q('#v7-earned-album-status');if(status)status.textContent='Consultá el cuaderno para ver fotos guardadas o pendientes.';}});return earnedAlbum;}).catch(error=>{earnedAlbumPromise=null;throw error;}));}
+async function loadEarnedAlbum(){if(earnedAlbum)return earnedAlbum;return earnedAlbumPromise||(earnedAlbumPromise=import(new URL('src/menu/v7-earned-album.mjs?v=bc4893a52a64dc13',document.baseURI)).then(m=>{earnedAlbum=m.createEarnedAlbum({getProfile:()=>profile,replaceProfile:p=>{profile=p;profileExpectedRevision=`${p.storageRevision||0}:${p.motorsportV7?.revision||0}`;renderProfileSummary();},getThree:()=>workshop.T,canSetPosters:()=>!!workshop.presentation?.setCollectionMemories,setPosters:posters=>workshop.presentation?.setCollectionMemories?.(posters),toast,onStatus:()=>{const status=q('#v7-earned-album-status');if(status)status.textContent='Consultá el cuaderno para ver fotos guardadas o pendientes.';}});return earnedAlbum;}).catch(error=>{earnedAlbumPromise=null;throw error;}));}
 async function openEarnedAlbum(){try{await (await loadEarnedAlbum()).mount(q('#v7-earned-album'));q('#v7-earned-album').scrollIntoView({block:'nearest'});}catch(error){toast('No se pudo abrir el álbum: '+String(error.message||error),'warn');}}
 async function loadChampionshipMenu(){
  if(championshipMenu)return championshipMenu;
- return championshipMenuPromise||(championshipMenuPromise=import(new URL('src/menu/v7-championship-menu.mjs?v=0788f2398b7785ce',document.baseURI)).then(m=>{
+ return championshipMenuPromise||(championshipMenuPromise=import(new URL('src/menu/v7-championship-menu.mjs?v=26c29e302d053f63',document.baseURI)).then(m=>{
   const world=()=>window.__cockpit?.raceWorld;
   const getEntrant=async()=>{reconcileChassisConfig();const ui=world()?.getState?.().ui;if(!ui?.assists)throw Error('Las ayudas físicas todavía no están disponibles.');const configuration={vehicleId:workshop.vehicleId,class:vehicleClass(),parts:deepClone(profile.parts),tuning:deepClone(profile.tuning),chassis:profile.chassis?deepClone(profile.chassis):null,wheel:profile.appearance.wheel,tire:profile.appearance.tire,assists:deepClone(ui.assists),tireWear:ui.tireWear};return{vehicleId:workshop.vehicleId,class:vehicleClass(),configuration,configurationHash:await m.configurationFingerprint(configuration)};};
   championshipMenu=m.mountChampionshipMenu({root:q('#v7-championship-content'),getProfile:()=>profile,replaceProfile:p=>{profile=p;profileExpectedRevision=`${p.storageRevision||0}:${p.motorsportV7?.revision||0}`;renderProfileSummary();void syncWorkshopCollection();},world,getEntrant,toast,
@@ -153,19 +153,23 @@ async function loadChampionshipMenu(){
 function canLeaveWorkshop(){const state=globalThis.__asfaltoVehicleMaintenance?.getState();if(state&&!state.canDrive){toast(state.faults.map(f=>f.label).join(" · ")+". Repará el auto antes de salir.","warn");openMenu("workshop");return false;}return true;}
 async function openChampionship(){if(!canLeaveWorkshop())return false;q('#v7-championship-content').hidden=false;try{const menu=await loadChampionshipMenu();menu.render();q('#v7-championship-select')?.focus();}catch(error){q('#v7-championship-content').textContent='No se pudo abrir el campeonato. Volvé a elegir Campeonato nacional para reintentar.';}}
 function showChampionshipResults(info){
- const player=info.final?.participants?.find(p=>p.id==='player'),saved=info.phase==='result';
+ const player=info.final?.participants?.find(p=>p.id==='player'),saved=info.phase==='result',saving=info.phase==='saving',saveError=info.phase==='save-error',complete=info.run?.status==='completed';
  const progress=window.__cockpit?.raceWorld?.state?.raceProgress;
  const distance=Number.isFinite(progress)&&progress>=0?progress:activeSession.distance;
- showResults({title:'Clasificación de etapa',class:info.run?.entrant.class,main:player?.officialSeconds?.toFixed(3)||'—',unit:'segundos oficiales',elapsed:(player?.activeSeconds||0)*1000,maxSpeed:activeSession.maxSpeed,distance,valid:saved,saving:info.phase==='saving',reasons:info.error?[info.error]:[],series:activeSession.series,experienceFacts:{activeSeconds:player?.activeSeconds,penaltySeconds:player?.penaltySeconds,totalSeconds:player?.officialSeconds,valid:saved,progress:saved?'Etapa guardada.':'Sin publicar premios.'}});
- q('#v6-results-verdict').textContent=saved?'Clasificación guardada.':info.phase==='saving'?'Guardando clasificación…':info.error||'Intento inválido; la etapa no avanzó.';
- q('#v6-results-progress').textContent=saved?`${info.run.nextStageIndex}/${info.run.schedule.length} etapas guardadas.${info.tokensAwarded?` ${earnedTokensLabel(info.tokensAwarded)}.`:''}`:'No se publicaron premios de este intento.';
  const stateNames={finished:'finalizó',dnf:'abandono',dq:'descalificado'};
- q('#v6-results-details').replaceChildren();for(const p of info.final?.participants||[]){const row=document.createElement('li');row.textContent=(p.id==='player'?'Vos':'Falcon')+' · '+(stateNames[p.status]||p.status)+' · '+(Number.isFinite(p.officialSeconds)?p.officialSeconds.toFixed(3)+' s':'sin tiempo')+' · penalización '+(p.penaltySeconds||0)+' s';q('#v6-results-details').append(row);}
- const repeat=q('#v6-results-repeat');repeat.disabled=info.phase==='saving'||info.run?.status==='completed';repeat.textContent=info.phase==='save-error'?'Reintentar guardado':saved?'Siguiente etapa':'Reintentar etapa';
- if(saved&&info.run?.status==='completed')q('#v6-results-workshop')?.focus?.();
+ const details=(info.final?.participants||[]).map(p=>{
+  const name=p.id==='player'?'Vos':'Falcon';
+  const terminalTime=Number.isFinite(p.officialSeconds)?`${p.officialSeconds.toFixed(3)} s`:'sin tiempo';
+  const finish=`${name} · ${stateNames[p.status]||p.status} · ${terminalTime}`;
+  return p.status==='finished'?`${finish} · penalización ${p.penaltySeconds||0} s`:p.terminalReason?`${finish} · ${p.terminalReason}`:finish;
+ });
+ const recorded=Number.isFinite(player?.officialSeconds)&&(saved||saveError||saving&&!info.error),retired=player?.status==='dnf'||player?.status==='dq';
+ const verdict=saved?(complete?'Campeonato completado.':'Clasificación guardada.'):saving?'Guardando clasificación…':saveError?'Guardado pendiente.':retired?classificationEnding(player):info.error||'Intento inválido. Podés volver a intentar la etapa.';
+ const savedProgress=saved?`${info.run.nextStageIndex}/${info.run.schedule.length} etapas guardadas.${info.tokensAwarded?` ${earnedTokensLabel(info.tokensAwarded)}.`:''}`:'';
+ showResults({title:'Clasificación de etapa',class:info.run?.entrant.class,main:recorded?player.officialSeconds.toFixed(3):'—',unit:recorded?'segundos oficiales':'sin tiempo oficial',elapsed:(player?.activeSeconds||0)*1000,maxSpeed:activeSession.maxSpeed,distance,valid:saved,saving,details,verdict,hideRepeat:complete,repeatLabel:saveError?'Reintentar guardado':saved?'Siguiente etapa':'Reintentar etapa',progress:savedProgress||(saving?'Verificando el guardado en el navegador.':saveError?'Podés reintentar el guardado de la etapa.':'La etapa sigue pendiente. Sin premios para este intento.'),series:activeSession.series,showRaceTiming:recorded,experienceFacts:{activeSeconds:player?.activeSeconds,penaltySeconds:player?.penaltySeconds,totalSeconds:player?.officialSeconds}});
 }
 
-function loadCollectionReader(){return collectionReaderPromise||(collectionReaderPromise=import(new URL('src/menu/v7-earned-collection.mjs?v=d29fd9886d233552',document.baseURI)).catch(error=>{collectionReaderPromise=null;throw error;}));}
+function loadCollectionReader(){return collectionReaderPromise||(collectionReaderPromise=import(new URL('src/menu/v7-earned-collection.mjs?v=7838748e05ba9177',document.baseURI)).catch(error=>{collectionReaderPromise=null;throw error;}));}
 function renderEarnedCollectionDetails(reader,items){
  const status=q('#v6-earned-collection-status'),list=q('#v6-earned-collection-list');
  if(status)status.textContent=items.length+' de 20 piezas obtenidas · '+(20-items.length)+' pendientes. Los espacios vacíos se conservan hasta un logro válido.';
@@ -217,7 +221,8 @@ function publishHomeReadiness(){
  app.homeReady=true;app.homeReadyAt=performance.now();app.homeReadyMode=technicalFallback?'technical-fallback':'rendered-workshop';window.dispatchEvent(new CustomEvent('asfalto-home-ready',{detail:{at:app.homeReadyAt,mode:app.homeReadyMode}}));return true;
 }
 function silenceLegacyV5(){const legacy=window.__cockpitV5App;if(legacy){for(const surface of [legacy.hub,legacy.pause,legacy.results])if(surface){surface.hidden=true;surface.style.setProperty('display','none','important')}legacy._clearModal?.();legacy.shell?.setAttribute('aria-hidden','true')}document.body.classList.remove('v5-menu-open');const shell=q('#v6-game-shell');if(shell)shell.inert=false}
-function openMenu(panel=profile.lastPanel||'drive'){
+function openMenu(panel=profile.lastPanel||'drive',{showPanel=false}={}){
+ dismissResults();
  const condition=globalThis.__asfaltoVehicleMaintenance?.flush({end:true});globalThis.__asfaltoVehicleAssistance?.hide();restoreBreakdownCamera();
  globalThis.__asfaltoVehiclePresentations?.chevy?.resetCondition?.();
  if(condition)workshop.vehiclePresentation?.setPersistentCondition?.(condition);
@@ -225,9 +230,9 @@ function openMenu(panel=profile.lastPanel||'drive'){
  sessionRequestRunner?.cancel('menu');window.__cockpit?.raceWorld?.clearDriveTraffic?.();window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
  setSessionPaused(true);sessionLoop.stop();window.__cockpit?.raceWorld?.pause?.({reason:'menu'});globalThis.__asfaltoRacePresentation?.closePause();
  silenceLegacyV5();workshop.restoreAfterRace();lastFocused=document.activeElement;document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');q('#v6-main-menu').classList.remove('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','false');openPanel(panel,false);workshop.setActive(true);setTimeout(()=>q(`.v6-nav-btn[data-v6-panel="${panel}"]`)?.focus(),30);ambient.start();
- globalThis.__asfaltoMenuPresentation?.onMenu(true);if(panel==='workshop')globalThis.__asfaltoMenuPresentation?.onPanel(panel);void syncWorkshopCollection();
+ globalThis.__asfaltoMenuPresentation?.onMenu(true);if(showPanel||panel==='workshop')globalThis.__asfaltoMenuPresentation?.onPanel(panel);void syncWorkshopCollection();
 }
-function closeMenu(){silenceLegacyV5();document.body.classList.remove('v6-menu-open');document.body.classList.add('v6-driving');q('#v6-main-menu').classList.add('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','true');workshop.setActive(false);globalThis.__asfaltoRaceRenderView?.activate();ambient.stop();globalThis.__asfaltoMenuPresentation?.onMenu(false);globalThis.__asfaltoNacionalV41?.radio?.setKeyboardArmed?.(false);const playfield=q('#viewport canvas');if(playfield){playfield.tabIndex=-1;playfield.focus({preventScroll:true})}else document.activeElement?.blur?.();}
+function closeMenu(){silenceLegacyV5();q('#v6-return-menu').textContent=isUnscoredDrive()?'Finalizar recorrido':'Volver al taller';document.body.classList.remove('v6-menu-open');document.body.classList.add('v6-driving');q('#v6-main-menu').classList.add('v6-hidden');q('#v6-main-menu').setAttribute('aria-hidden','true');workshop.setActive(false);globalThis.__asfaltoRaceRenderView?.activate();ambient.stop();globalThis.__asfaltoMenuPresentation?.onMenu(false);globalThis.__asfaltoNacionalV41?.radio?.setKeyboardArmed?.(false);const playfield=q('#viewport canvas');if(playfield){playfield.tabIndex=-1;playfield.focus({preventScroll:true})}else document.activeElement?.blur?.();}
 function trapFocus(e,root){if(e.key!=='Tab')return;const list=qa('button:not([disabled]),select:not([disabled]),input:not([disabled]),[tabindex="0"]',root).filter(x=>x.offsetParent!==null);if(!list.length)return;const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}
 function syncTouchPause(){
  const button=q('#v6-touch-pause');if(!button)return;
@@ -255,9 +260,9 @@ function setupNavigation(){
  setupTouchPause();
  qa('.v6-nav-btn').forEach(btn=>btn.addEventListener('click',()=>openPanel(btn.dataset.v6Panel)));
  qa('[data-open-panel]').forEach(btn=>btn.addEventListener('click',()=>openPanel(btn.dataset.openPanel)));
- q('#v6-menu-toggle').addEventListener('click',()=>openMenu());q('#v6-return-menu').addEventListener('click',()=>openMenu('drive'));
+ q('#v6-menu-toggle').addEventListener('click',()=>openMenu());q('#v6-return-menu').addEventListener('click',()=>exitDrive());
  q('#v6-main-menu').addEventListener('keydown',e=>{trapFocus(e,q('#v6-main-menu'));if(e.key==='Escape'){if(document.body.classList.contains('v6-driving'))return;e.preventDefault();e.stopPropagation();globalThis.__asfaltoMenuPresentation?.onBack()}if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(e.key)&&document.activeElement?.classList.contains('v6-nav-btn')){e.preventDefault();const list=qa('.v6-nav-btn'),i=list.indexOf(document.activeElement),d=['ArrowDown','ArrowRight'].includes(e.key)?1:-1;list[(i+d+list.length)%list.length].focus()}});
- document.addEventListener('keydown',e=>{const results=q('#v6-results-sheet');if(results?.classList.contains('v6-open')){trapFocus(e,results);if(e.key==='Escape'){e.preventDefault();closeResults('drive')}return}if(e.defaultPrevented)return;if(e.target.isContentEditable||e.target.closest?.('[contenteditable=true],.an-v7-preferences'))return;if((e.key==='m'||e.key==='M')&&!['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();document.body.classList.contains('v6-menu-open')?globalThis.__asfaltoMenuPresentation?.onBack():openMenu()}if(e.key==='Escape'&&document.body.classList.contains('v6-driving')&&!document.body.classList.contains('editor-mode-active')&&document.querySelector('#settings-panel')?.hidden!==false){e.preventDefault();globalThis.__asfaltoRacePresentation?.requestPause()}});
+ document.addEventListener('keydown',e=>{if(q('#v6-results-sheet')?.open)return;if(e.defaultPrevented)return;if(e.target.isContentEditable||e.target.closest?.('[contenteditable=true],.an-v7-preferences'))return;if((e.key==='m'||e.key==='M')&&!['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();document.body.classList.contains('v6-menu-open')?globalThis.__asfaltoMenuPresentation?.onBack():exitDrive(profile.lastPanel)}if(e.key==='Escape'&&document.body.classList.contains('v6-driving')&&!document.body.classList.contains('editor-mode-active')&&document.querySelector('#settings-panel')?.hidden!==false){e.preventDefault();globalThis.__asfaltoRacePresentation?.requestPause()}});
  q('#v6-confirm-cancel').addEventListener('click',()=>closeConfirm(false));q('#v6-confirm-ok').addEventListener('click',()=>closeConfirm(true));
 }
 function renderModeCards(){
@@ -302,7 +307,7 @@ async function waitForExistingGameReady(timeoutMs=180000,{signal,onStage,initial
 async function getSessionRequestRunner(){
  const [tools,{playWorkshopDeparture}]=await Promise.all([experienceToolsReady,workshopDepartureReady]);
  if(!sessionRequestRunner)sessionRequestRunner=tools.createSessionTransactionRunner({
-  onCancel:metadata=>openMenu(metadata?.editor?'settings':metadata?.championship?'competition':'drive'),
+  onCancel:metadata=>openMenu(metadata?.editor?'settings':metadata?.panel||(metadata?.championship?'competition':'drive')),
   begin({metadata,signal,cancel,retry}){
    const presentationOwner={};sessionPresentationOwner=presentationOwner;const phoneLoadToken=globalThis.__asfaltoPhoneLoad?.begin();
    globalThis.__asfaltoRacePresentationHeld=true;workshop.setActive(false);
@@ -406,14 +411,14 @@ function readRoadTestConfiguration(){
 }
 async function loadRoadTestTools(){
  if(roadTestTools)return roadTestTools;
- return roadTestToolsPromise||(roadTestToolsPromise=Promise.all([import(new URL('src/menu/v7-roadtest-session.mjs?v=22c7b5507d2ba232',document.baseURI)),import(new URL('src/menu/v7-roadtest-profile.mjs?v=4d9be36a45a6bfa7',document.baseURI))]).then(([session,store])=>{
+ return roadTestToolsPromise||(roadTestToolsPromise=Promise.all([import(new URL('src/menu/v7-roadtest-session.mjs?v=22c7b5507d2ba232',document.baseURI)),import(new URL('src/menu/v7-roadtest-profile.mjs?v=c2364cd5c138589a',document.baseURI))]).then(([session,store])=>{
   roadTestTools={...session,...store};roadTestReceiptStore=store.createRoadTestProfileStore({getProfile:()=>profile,replaceProfile:p=>{profile=p;profileExpectedRevision=(p.storageRevision||0)+':'+(p.motorsportV7?.revision||0);renderProfileSummary();void syncWorkshopCollection();}});return roadTestTools;
  }).catch(error=>{roadTestToolsPromise=null;throw error;}));
 }
 function invalidateRoadTestConfiguration(){roadTestConfigVersion++;if(activeSession.type==='roadtest'&&roadTestSession&&!activeSession.completed)roadTestSession.cancel('configuration-changed');}
 function loadActivityRewards(){
  if(activityRewards)return Promise.resolve(activityRewards);
- return activityRewardsPromise||(activityRewardsPromise=import(new URL('src/menu/activity-rewards.mjs?v=684503a891f85e8a',document.baseURI)).then(module=>{
+ return activityRewardsPromise||(activityRewardsPromise=import(new URL('src/menu/activity-rewards.mjs?v=7736130247585143',document.baseURI)).then(module=>{
   activityRewards=module;activityRewardStore=module.createActivityRewardStore({getProfile:()=>profile,replaceProfile:p=>{profile=p;profileExpectedRevision=`${p.storageRevision||0}:${p.motorsportV7?.revision||0}`;renderProfileSummary();renderHistory();void syncWorkshopCollection();}});return module;
  }).catch(error=>{activityRewardsPromise=null;throw error;}));
 }
@@ -431,10 +436,13 @@ function setSessionPaused(paused){
 }
 async function restartSession(){
  if(activeSession.type==='championship'){await leaveChampionship();return (await loadChampionshipMenu()).start();}
- const type=activeSession.type,config=activeSession.config||{};
- if(config.track)reflectValue(['#v6-drive-route','#v6-comp-track'],config.track);
- if(config.weather)reflectValue(['#v6-drive-weather','#v6-comp-weather'],config.weather);
+ const {type,definition}=activeSession,config=activeSession.config||{};
+ const competition=type==='competition';
+ if(config.track)reflectValue([competition?'#v6-comp-track':'#v6-drive-route'],config.track);
+ if(config.weather)reflectValue([competition?'#v6-comp-weather':'#v6-drive-weather'],config.weather);
  if(config.difficulty)reflectValue(['#v6-comp-difficulty'],config.difficulty);
+ if(type==='roadtest')profile.selectedTest=definition.id;
+ if(competition)profile.selectedCompetition=definition.id;
  return type==='roadtest'?startRoadTest():type==='competition'?startCompetition():startDrive(type||'free');
 }
 function invalidate(reason){if(!activeSession.valid)return;activeSession.valid=false;activeSession.reasons.push(reason);toast(`INTENTO INVALIDADO · ${reason}`,'warn');updateObjective()}
@@ -495,7 +503,7 @@ async function startRoadTest(){
    activeSession.roadTestIsCurrent=isCurrent;
    roadTestSession=tools.createRoadTestSession({testId:def.id,sessionId,configurationHash,trackId:track,vehicleId:configuration.vehicleId,class:configuration.class,sessionSequence:observation.sessionSequence,definition,world:w,isCurrent,getInstrument:()=>window.__cockpit.getInstrumentReadings?.(),onCompleted:receipt=>queueMicrotask(()=>{void finishRoadTest(receipt,sessionId);}),onInvalidated:state=>queueMicrotask(()=>finishInvalidRoadTest(state,sessionId))});
    activeSession.phase=roadTestSession.getState().phase;return openPreparedRace(tx);
-  },{track,roadtest:true});
+  },{track,roadtest:true,panel:'tests'});
   if(success){toast('PRUEBA PREPARADA · '+def.title,'ok');sessionLoop.start();}
   else cancelRoadTest();return success;
  }catch(error){cancelRoadTest();toast('No se pudo preparar la prueba: '+roadTestMessage(error),'warn');return false;}
@@ -514,7 +522,7 @@ async function startCompetition(){
    await tx.wait(window.__cockpit.raceStart({signal:tx.signal,onStage:tx.stage}));if(!tx.isCurrent())return false;
    stampActivitySession(world,def);prepared=await openPreparedRace(tx);return prepared;
   }finally{if(!prepared&&def.mode==='race'&&activeSession.config===config)clearLocalCompetitionClassification();}
- },{track:requestedTrack});if(success){toast('COMPETENCIA · '+def.title,'ok');sessionLoop.start();}return success;
+ },{track:requestedTrack,panel:'competition'});if(success){toast('COMPETENCIA · '+def.title,'ok');sessionLoop.start();}return success;
 }function updateObjective(){const now=performance.now();if(now-lastExperienceUiTime<100)return;lastExperienceUiTime=now;const main=q('#v6-objective-main'),sub=q('#v6-objective-sub');if(!activeSession.type){main.textContent='Sin sesión';sub.textContent='Volvé al taller para elegir una actividad';return}const d=activeSession.definition,s=getGameState(),elapsed=(activeSession.pausedAt??performance.now())-activeSession.startTime;
  if(experienceTools)globalThis.__asfaltoV7Experience?.update(experienceTools.sessionTelemetry({snapshot:s.snapshot,race:s.raw||{},speedKph:s.speed,gear:s.gear,activity:activeSession.type}));main.textContent=d?.title||activeSession.type;if(activeSession.type==='roadtest'){
   const state=roadTestSession?.getState(),phase=state?.phase||activeSession.phase;
@@ -539,14 +547,25 @@ const sessionLoop={running:false,raf:0,start(){if(this.running)return;this.runni
 function updateSession(t){if(!activeSession.type||activeSession.completed||activeSession.vehicleFault||activeSession.pausedAt!==null)return;if(activeSession.type==='roadtest'){updateObjective();return;}const s=getGameState();if(s.raw?.status==='IDLE'||s.raw?.status==='COUNTDOWN'){activeSession.startTime+=Math.max(0,t-activeSession.lastTime);activeSession.lastTime=t;updateObjective();return;}const dt=clamp((t-activeSession.lastTime)/1000,0,0.1);activeSession.lastTime=t;activeSession.distance+=Math.max(0,s.speed)/3.6*dt;activeSession.maxSpeed=Math.max(activeSession.maxSpeed,s.speed);if(activeSession.series.length<2400&&(!activeSession.series.length||t-activeSession.startTime-activeSession.series.at(-1).t>100)){activeSession.series.push({t:t-activeSession.startTime,speed:s.speed,rpm:s.rpm,distance:activeSession.distance,lateral:s.lateral})}
  if(activeSession.type!=='championship'){if(s.offTrack)invalidate('SALIDA FUERA DE ZONA');if(s.collision)invalidate('CHOQUE');if(s.penalty>0&&!activeSession.reasons.includes('PENALIZACIÓN'))invalidate('PENALIZACIÓN');}
  if(activeSession.type==='journey'&&s.finished)finishJourney(s,t);
- else if(activeSession.type==='free'&&s.finished)finishFreeDrive(t);
+ else if(isUnscoredDrive()&&s.finished)finishFreeDrive(t);
  else if(activeSession.type==='competition'&&(s.finished||activityRewards?.activityGoal(activeSession.activityReceiptBase,s.raw)||t-activeSession.startTime>45*60*1000))finishCompetition(s,t);updateObjective();activeSession.lastSpeed=s.speed;
 }
-function finishFreeDrive(t){
+function isUnscoredDrive(){return ['free','practice'].includes(activeSession.type)}
+function exitDrive(destination='drive'){
+ if(isUnscoredDrive()&&!activeSession.completed&&document.body.classList.contains('v6-driving')){
+  finishFreeDrive(performance.now(),{voluntary:true});return;
+ }
+ openMenu(typeof destination==='string'?destination:'drive');
+}
+function finishFreeDrive(t,{voluntary=false}={}){
+ if(activeSession.completed)return;
+ const world=window.__cockpit?.raceWorld,elapsed=(activeSession.pausedAt??t)-activeSession.startTime;
  activeSession.completed=true;sessionLoop.stop();
- showResults({title:'Llegada · Conducción libre',main:(activeSession.distance/1000).toFixed(1),unit:'kilómetros',
-  valid:true,unscored:true,elapsed:t-activeSession.startTime,distance:activeSession.distance,maxSpeed:activeSession.maxSpeed,
-  series:activeSession.series,reasons:[],class:vehicleClass()});
+ if(voluntary)world?.pause?.({reason:'result'});
+ applyWear();
+ showResults({title:'Conducción libre',main:(activeSession.distance/1000).toFixed(2),unit:'kilómetros',
+  unscored:true,verdict:voluntary?'Recorrido finalizado.':'Llegada completada.',elapsed,distance:activeSession.distance,
+  maxSpeed:activeSession.maxSpeed,series:activeSession.series,class:vehicleClass()});
 }
 function roadTestMessage(value){
  const reason=String(value?.message||value||'');
@@ -584,21 +603,22 @@ function roadTestMessage(value){
 }
 function finishInvalidRoadTest(state,sessionId){
  if(activeSession.roadTestSessionId!==sessionId||activeSession.completed)return;activeSession.completed=true;activeSession.valid=false;activeSession.phase='invalid';activeSession.reasons=[...state.invalidReasons];sessionLoop.stop();window.__cockpit?.raceWorld?.pause?.({reason:'result'});
- const telemetry=roadTestSession?.getTelemetry()||{series:[],maxSpeed:0};showResults({title:activeSession.definition.title,main:'—',unit:'sin marca válida',valid:false,reasons:activeSession.reasons.map(roadTestMessage),elapsed:state.activeSeconds*1000,distance:state.distanceM,maxSpeed:telemetry.maxSpeed,series:telemetry.series,class:activeSession.config.class});
- q('#v6-results-progress').textContent='La prueba terminó sin una marca válida. Revisá el motivo y elegí Repetir actividad para intentarlo de nuevo.';
+ const telemetry=roadTestSession?.getTelemetry()||{series:[],maxSpeed:0};
+ showResults({title:activeSession.definition.title,main:'—',unit:'sin marca válida',valid:false,reasons:activeSession.reasons.map(roadTestMessage),elapsed:state.activeSeconds*1000,distance:state.distanceM,maxSpeed:telemetry.maxSpeed,series:telemetry.series,class:activeSession.config.class,progress:'Sin medalla ni fichas para este intento.'});
 }
 async function finishRoadTest(receipt,sessionId){
  if(activeSession.roadTestSessionId!==sessionId||!activeSession.roadTestIsCurrent?.()||activeSession.roadTestSavePhase==='saving')return false;
  activeSession.completed=true;activeSession.roadTestReceipt=receipt;activeSession.roadTestSavePhase='saving';sessionLoop.stop();window.__cockpit?.raceWorld?.pause?.({reason:'result'});
  const telemetry=roadTestSession?.getTelemetry()||{series:[],maxSpeed:0},sheet=roadTestTools.roadTestResultSheet(receipt,{title:activeSession.definition.title,series:telemetry.series});sheet.maxSpeed=telemetry.maxSpeed;
- showResults({...sheet,valid:false,saving:true,progress:'Esperá a que termine el guardado para confirmar tu medalla.'});q('#v6-results-verdict').textContent='Prueba completada. Guardando el resultado…';
+ showResults({...sheet,saving:true,verdict:'Prueba completada. Guardando el resultado…',progress:'Verificando la marca y la medalla en el navegador.'});
  try{
   const {tokensAwarded}=await roadTestReceiptStore.accept(receipt,{isCurrent:activeSession.roadTestIsCurrent,sheet});
-  if(activeSession.roadTestSessionId!==sessionId)return false;activeSession.roadTestSavePhase='saved';activeSession.valid=true;showResults(sheet);
-  q('#v6-results-verdict').textContent='Prueba completada y resultado guardado.';
-  q('#v6-results-progress').textContent=`${earnedTokensLabel(tokensAwarded)} · Medalla disponible en la vitrina.`+(receipt.testId==='consumption'?' El consumo mostrado se estima por modelo.':'');void syncWorkshopCollection();return true;
+  if(activeSession.roadTestSessionId!==sessionId)return false;activeSession.roadTestSavePhase='saved';activeSession.valid=true;
+  showResults({...sheet,verdict:'Prueba completada y resultado guardado.',progress:`${earnedTokensLabel(tokensAwarded)} · Medalla disponible en la vitrina.`});
+  void syncWorkshopCollection();return true;
  }catch(error){
-  if(activeSession.roadTestSessionId!==sessionId)return false;activeSession.roadTestSavePhase='save-error';activeSession.valid=false;showResults({...sheet,valid:false,reasons:[roadTestMessage(error)]});q('#v6-results-verdict').textContent=roadTestMessage(error);q('#v6-results-progress').textContent='La medalla todavía no está confirmada. Reintentá el guardado; no necesitás repetir la conducción.';q('#v6-results-repeat').textContent='Reintentar guardado';return false;
+  if(activeSession.roadTestSessionId!==sessionId)return false;activeSession.roadTestSavePhase='save-error';activeSession.valid=false;
+  showResults({...sheet,valid:false,verdict:roadTestMessage(error),progress:'La medalla está pendiente de confirmación.',repeatLabel:'Reintentar guardado'});return false;
  }
 }
 function finishJourney(s,t){finishRewardActivity(s,t,true);}
@@ -608,52 +628,89 @@ function finishRewardActivity(s,t,journey){
  if(activeSession.completed)return;activeSession.completed=true;sessionLoop.stop();
  const world=window.__cockpit?.raceWorld,race=s.raw||{},observation=world?.getPhysicalObservationState?.();
  const qaMode=new URLSearchParams(location.search).get('qa')==='1'||observation?.qa!==false;
- const base=activeSession.activityReceiptBase,goal=activityRewards.activityGoal(base,race);
- const receipt=activityRewards.buildActivityReceipt(base,{observation,race,final:world?.getFinalClassification?.(),finishedAt:new Date().toISOString(),maxSpeed:activeSession.maxSpeed,qaMode,valid:journey||activeSession.valid});
+ const base=activeSession.activityReceiptBase,goal=activityRewards.activityGoal(base,race),final=world?.getFinalClassification?.();
+ const receipt=activityRewards.buildActivityReceipt(base,{observation,race,final,finishedAt:new Date().toISOString(),maxSpeed:activeSession.maxSpeed,qaMode,valid:journey||activeSession.valid});
  if(!s.finished)world?.pause?.({reason:'result'});
  clearLocalCompetitionClassification();applyWear();
  const distance=receipt?.distanceM??(Number.isFinite(race.raceProgress)&&race.raceProgress>=0?race.raceProgress:activeSession.distance),km=distance/1000;
  const seconds=receipt?.seconds??[race.totalWithPenalty,race.totalTime].find(value=>Number.isFinite(value)&&value>=0);
  const elapsed=Number.isFinite(seconds)?seconds*1000:t-activeSession.startTime,position=activityRewards.activityRacePosition(receipt);
  const timedSector=goal?.source==='timed-sector',speedTrap=goal?.source==='speed-trap';
- const reasons=[...(journey?[]:activeSession.reasons)];
- if(!receipt&&!reasons.length)reasons.push(qaMode?'Sesión de QA sin premios':!goal&&!s.finished?'Tiempo límite sin completar el objetivo':'No se confirmó una llegada válida');
- const result={title:journey?'Bitácora de viaje':activeSession.definition.title,valid:!!receipt,main:journey?km.toFixed(1):position?`P${position}`:receipt?(speedTrap?receipt.goalValue.toFixed(1):(timedSector?receipt.goalValue:seconds).toFixed(3)):'—',unit:journey?'kilómetros':position?'clasificación':receipt?speedTrap?'km/h':'segundos':'sin marca válida',maxSpeed:round(activeSession.maxSpeed),elapsed,distance,series:activeSession.series,reasons,class:base?.class||vehicleClass()};
+ const player=final?.participants?.find(row=>row.id==='player'),reasons=[...(journey?[]:activeSession.reasons)];
+ if(!receipt){
+  if(!goal&&!s.finished)reasons.unshift('Tiempo límite sin completar el objetivo');
+  if(player?.status==='dnf'||player?.status==='dq')reasons.unshift(classificationEnding(player));
+  if(qaMode)reasons.unshift('Sesión de QA sin premios');
+  if(!reasons.length)reasons.push('No se confirmó una llegada válida');
+ }
+ const result={title:journey?'Bitácora de viaje':activeSession.definition.title,valid:!!receipt,main:journey?km.toFixed(1):position?`P${position}`:receipt?(speedTrap?receipt.goalValue.toFixed(1):(timedSector?receipt.goalValue:seconds).toFixed(3)):'—',unit:journey?'kilómetros':position?'clasificación':receipt?speedTrap?'km/h':'segundos':'sin marca válida',maxSpeed:round(activeSession.maxSpeed),elapsed,distance,series:activeSession.series,reasons,class:base?.class||vehicleClass(),showRaceTiming:!!receipt&&!journey&&!speedTrap&&!timedSector};
  if(!receipt){showResults(result);return;}
  activeSession.activityCompletion={receipt,result};void saveActivityReward();
 }
 async function saveActivityReward(){
  const completion=activeSession.activityCompletion;if(!completion||activeSession.activitySavePhase==='saving')return;
  const {receipt,result}=completion,isCurrent=()=>{const observation=window.__cockpit?.raceWorld?.getPhysicalObservationState?.();return activeSession.activityCompletion===completion&&observation?.qa===false&&observation.sessionSequence===receipt.sessionSequence;};
- activeSession.activitySavePhase='saving';showResults({...result,saving:true,progress:'Guardando el resultado y las fichas…'});
+ activeSession.activitySavePhase='saving';showResults({...result,saving:true,verdict:'Guardando el resultado…',progress:'Verificando el guardado en el navegador.'});
  try{
   const {tokensAwarded}=await activityRewardStore.accept(receipt,{isCurrent});if(activeSession.activityCompletion!==completion)return;
   activeSession.activitySavePhase='saved';showResults({...result,progress:tokensAwarded>0?`Resultado guardado · ${earnedTokensLabel(tokensAwarded)}.`:'Resultado guardado.'});
  }catch(error){
-  if(activeSession.activityCompletion!==completion)return;activeSession.activitySavePhase='save-error';showResults({...result,progress:'El resultado todavía no se guardó. Podés reintentar sin volver a conducir.'});q('#v6-results-repeat').textContent='Reintentar guardado';toast(String(error?.message||error),'warn');
+  if(activeSession.activityCompletion!==completion)return;activeSession.activitySavePhase='save-error';showResults({...result,verdict:'Guardado pendiente.',progress:'Podés reintentar el guardado sin volver a conducir.',repeatLabel:'Reintentar guardado'});toast(String(error?.message||error),'warn');
  }
 }
+function classificationEnding(row){
+ const state=row.status==='dnf'?'Abandono':'Descalificación';
+ return row.terminalReason?`${state} · ${row.terminalReason}`:state;
+}
 function applyWear(){globalThis.__asfaltoVehicleMaintenance?.flush();}
-function verdictFor(r){if(!r.valid)return `El intento no produjo una marca válida: ${(r.reasons||[]).join(', ').toLowerCase()}.`;if(r.title?.includes('Frenada')&&Number(r.main)<48)return'Frenada consistente. El auto quedó alineado.';if(r.maxSpeed>170)return'Buena recta; régimen correcto y caja precisa.';if(r.consistency>88)return'Salida limpia y repetible. La configuración trabaja pareja.';return'Intento válido. Hay margen para afinar técnica y puesta a punto.'}
 function showResults(r){
  const repeat=q('#v6-results-repeat'),workshopButton=q('#v6-results-workshop'),continueButton=q('#v6-results-close'),sheet=q('#v6-results-sheet'),journey=activeSession.type==='journey';
- repeat.disabled=workshopButton.disabled=continueButton.disabled=!!r.saving;repeat.textContent='Repetir actividad';
+ repeat.disabled=workshopButton.disabled=continueButton.disabled=!!r.saving;repeat.textContent=r.repeatLabel||'Repetir actividad';repeat.hidden=!!r.hideRepeat;
  workshopButton.classList.toggle('v6-btn-primary',journey);continueButton.classList.toggle('v6-btn-primary',!journey);sheet.setAttribute('aria-busy',String(!!r.saving));
  const roadTest=activeSession.type==='roadtest';
- const measured=getGameState(),temperatureC=measured.snapshot?.engine?.temperatureC,race=measured.raw||{};r.experienceFacts=r.experienceFacts||experienceTools?.sessionResultFacts({activity:activeSession.type,race,elapsedMs:r.elapsed,valid:r.valid,reason:(r.reasons||[]).join(', '),progress:r.unscored?'Recorrido completado.':r.valid?'Intento válido registrado.':'Intento registrado sin marca válida.'});
+ const measured=getGameState(),temperatureC=measured.snapshot?.engine?.temperatureC,race=measured.raw||{};
+ const facts=r.experienceFacts||experienceTools?.sessionResultFacts({activity:activeSession.type,race,elapsedMs:r.elapsed,valid:r.valid});
  window.__cockpit?.raceWorld?.clearDriveTraffic?.();window.__cockpit?.raceWorld?.clearInputs?.();window.__cockpit?.raceWorld?.releaseTouchCaptures?.();
  // Own the modern modal before either finish observer can let V5 reclaim it.
- document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');silenceLegacyV5();
- q('#v6-results-title').textContent=r.title||'Ficha técnica';q('#v6-results-subtitle').textContent=`Chevy Serie 2 · ${r.class||vehicleClass()} · ${dateStamp()}`;q('#v6-results-main').textContent=r.main??'—';q('#v6-results-unit').textContent=r.unit||'resultado';q('#v6-results-verdict').textContent=verdictFor(r);
+ document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');globalThis.__asfaltoRacePresentation?.closePause();silenceLegacyV5();
+ const title=q('#v6-results-title');title.textContent=r.title||'Ficha técnica';
+ q('#v6-results-context').textContent=` · ${r.class||vehicleClass()} · ${dateStamp()}`;q('#v6-results-main').textContent=r.main??'—';q('#v6-results-unit').textContent=r.unit||'resultado';
+ q('#v6-results-verdict').textContent=r.verdict||(r.valid?'Actividad completada.':r.reasons?.[0]||'Intento sin marca válida.');
  const metrics=[[roadTest?'Duración del intento':'Tiempo',fmtTime(r.elapsed||0)],['Velocidad máxima',`${Math.round(r.maxSpeed||0)} km/h`],['Distancia',`${Math.round(r.distance||0)} m`],['Consistencia',Number.isFinite(r.consistency)?`${Math.round(r.consistency)} %`:'Sin dato'],['Temperatura',Number.isFinite(temperatureC)?`${Math.round(temperatureC)} °C`:'Sin dato'],['Daño',`${Math.round(100-profile.condition.body)} %`]];q('#v6-results-metrics').innerHTML=metrics.map(([a,b])=>`<div class="v6-sheet-metric"><small>${a}</small><b>${b}</b></div>`).join('');
- const details=[`Clase registrada: ${r.class||vehicleClass()}`,`Condición general: ${Math.round(conditionAverage())} %`,`Neumáticos: ${Math.round(profile.condition.tires)} %`,`Frenos: ${Math.round(profile.condition.brakes)} %`,r.unscored?'Recorrido libre completado.':r.valid?'Intento válido para archivo.':`Sin marca válida${r.reasons?.length?`: ${r.reasons.join(', ')}`:'.'}`];
+ const details=r.details?.length?r.details:[`Condición general: ${Math.round(conditionAverage())} %`,`Neumáticos: ${Math.round(profile.condition.tires)} %`,`Frenos: ${Math.round(profile.condition.brakes)} %`,...(r.reasons||[]).slice(r.verdict?0:1)];
  const list=q('#v6-results-details');list.replaceChildren(...details.map(text=>{const row=document.createElement('li');row.textContent=text;return row;}));
- q('#v6-results-progress').textContent=r.progress||(r.unscored?'Recorrido sin puntuación de club.':r.valid?'Actividad completada.':'Sin fichas ni marca válida.');
- drawResultChart(r.series||[]);sheet.classList.add('v6-open');if(r.experienceFacts)globalThis.__asfaltoV7Experience?.showResult(r.experienceFacts,q('#v6-results-metrics'),{showRaceTiming:!roadTest});globalThis.__asfaltoV7Experience?.syncPhase();
- if(r.saving){sheet.tabIndex=-1;sheet.focus();}else (journey?workshopButton:repeat).focus();
+ q('#v6-results-progress').textContent=r.progress||(r.unscored?'Recorrido libre, sin puntuación.':r.valid?'Actividad completada.':'Sin fichas para este intento.');
+ q('#v6-results-chart').hidden=(r.series?.length||0)<2;
+ if(r.series?.length>=2)drawResultChart(r.series);
+ if(facts&&r.showRaceTiming)globalThis.__asfaltoV7Experience?.showResult(facts,q('#v6-results-metrics'),{showStatus:false});
+ if(!sheet.open){sheet.classList.add('v6-open');sheet.showModal();}
+ title.focus({preventScroll:true});globalThis.__asfaltoV7Experience?.syncPhase();
 }
 function drawResultChart(series){const c=q('#v6-results-chart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle='#eee7d9';ctx.fillRect(0,0,w,h);ctx.strokeStyle='#a49d90';ctx.lineWidth=1;for(let i=1;i<6;i++){ctx.beginPath();ctx.moveTo(0,h*i/6);ctx.lineTo(w,h*i/6);ctx.stroke()}if(series.length<2)return;const max=Math.max(60,...series.map(x=>x.speed)),tmax=series.at(-1).t||1;ctx.strokeStyle='#b54e1c';ctx.lineWidth=3;ctx.beginPath();series.forEach((p,i)=>{const x=p.t/tmax*w,y=h-8-p.speed/max*(h-16);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle='#222';ctx.font='700 18px monospace';ctx.fillText('VELOCIDAD / TIEMPO',14,24)}
-function closeResults(destination='drive'){const sheet=q('#v6-results-sheet');if(sheet.getAttribute('aria-busy')==='true')return;sheet.classList.remove('v6-open');resetSession();q('#v6-objective-hud').classList.remove('v6-visible');openMenu(destination)}
+function resultsPanel(){
+ const type=activeSession.type;
+ return type==='roadtest'?'tests':['championship','competition'].includes(type)?'competition':'drive';
+}
+function dismissResults(){
+ const sheet=q('#v6-results-sheet');
+ if(sheet?.open)sheet.close();
+ sheet?.classList.remove('v6-open');
+}
+function closeResults(destination=resultsPanel()){
+ if(q('#v6-results-sheet').getAttribute('aria-busy')==='true')return;
+ resetSession();q('#v6-objective-hud').classList.remove('v6-visible');openMenu(destination,{showPanel:true});
+}
+async function repeatResults(){
+ const sheet=q('#v6-results-sheet');
+ if(!sheet.open||q('#v6-results-repeat').disabled||q('#v6-results-repeat').hidden)return;
+ if(activeSession.activitySavePhase==='save-error'){await saveActivityReward();return;}
+ if(activeSession.roadTestSavePhase==='save-error'){await finishRoadTest(activeSession.roadTestReceipt,activeSession.roadTestSessionId);return;}
+ if(activeSession.type==='championship'&&championshipMenu?.diagnostics().pending){await championshipMenu.repeat();return;}
+ const panel=resultsPanel();dismissResults();
+ try{if(await restartSession())return;}
+ catch(error){toast(String(error?.message||error),'warn');}
+ if(q('#v6-main-menu').classList.contains('v6-hidden'))openMenu(panel);
+}
 function setupActions(){
  qa('[data-drive-mode]').forEach(card=>{card.addEventListener('click',()=>{profile.selectedDrive=card.dataset.driveMode;qa('[data-drive-mode]').forEach(x=>x.setAttribute('aria-selected',String(x===card)));saveProfile()});card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();card.click()}})});q(`[data-drive-mode="${profile.selectedDrive}"]`)?.click();
  q('#v7-championship-open').addEventListener('click',openChampionship);q('#v7-earned-album-open').addEventListener('click',openEarnedAlbum);window.addEventListener('pagehide',event=>{if(!event.persisted)earnedAlbum?.dispose();});
@@ -671,7 +728,13 @@ function setupActions(){
  q('#v6-photo-focus').addEventListener('change',e=>workshop.focus(e.target.value));q('#v6-photo-lens').addEventListener('change',e=>workshop.setLens(Number(e.target.value)));q('#v6-photo-exposure').addEventListener('input',e=>{q('#v6-photo-exposure-output').textContent=`${Number(e.target.value).toFixed(1)} EV`;workshop.setExposure(Number(e.target.value))});q('#v6-photo-capture').addEventListener('click',capturePhoto);q('#v6-photo-reset').addEventListener('click',()=>{workshop.focus('general');q('#v6-photo-focus').value='general';q('#v6-photo-lens').value='50';q('#v6-photo-exposure').value=0;workshop.setLens(50);workshop.setExposure(0)});
  q('#v6-open-original-settings').addEventListener('click',()=>void openOriginalSettings());document.addEventListener('click',event=>{if(event.target.closest?.('#settings-toggle')&&!window.__cockpit?.ready){event.preventDefault();event.stopImmediatePropagation();void openOriginalSettings();}},true);q('#v6-fullscreen').addEventListener('click',()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen?.());q('#v6-reset-profile').addEventListener('click',resetProfile);
  qa('[data-v6-preset]').forEach(b=>b.addEventListener('click',()=>applyPreset(b.dataset.v6Preset)));for(const id of ['ui-large','reduce-motion','high-contrast','captions','photosafe'])q(`#v6-${id}`).addEventListener('change',readAccessibility);
- q('#v6-results-close').addEventListener('click',()=>closeResults('drive'));q('#v6-results-workshop').addEventListener('click',()=>closeResults('workshop'));q('#v6-results-repeat').addEventListener('click',()=>{if(activeSession.activitySavePhase==='save-error'){void saveActivityReward();return;}q('#v6-results-sheet').classList.remove('v6-open');const type=activeSession.type,def=activeSession.definition;if(type==='championship'){void loadChampionshipMenu().then(menu=>menu.repeat());}else if(type==='roadtest'){if(activeSession.roadTestSavePhase==='save-error')void finishRoadTest(activeSession.roadTestReceipt,activeSession.roadTestSessionId);else{profile.selectedTest=def.id;startRoadTest()}}else if(type==='competition'){profile.selectedCompetition=def.id;startCompetition()}else startDrive(type||'free')});
+ const results=q('#v6-results-sheet');
+ results.addEventListener('cancel',event=>{event.preventDefault();closeResults();});
+ results.addEventListener('keydown',event=>{
+  if(event.key==='Tab'&&results.getAttribute('aria-busy')==='true')event.preventDefault();
+  else trapFocus(event,results);
+ });
+ q('#v6-results-close').addEventListener('click',()=>closeResults());q('#v6-results-workshop').addEventListener('click',()=>closeResults('workshop'));q('#v6-results-repeat').addEventListener('click',()=>void repeatResults());
  qa('[data-workshop-camera]').forEach(b=>b.addEventListener('click',()=>{qa('[data-workshop-camera]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));if(b.dataset.workshopCamera==='collection')openCollectionInspection();else workshop.focus(b.dataset.workshopCamera)}));
 }
 function openCollectionInspection(){workshop.collectionInspectionReturn=true;openPanel('workshop',false);openWorkshopTab('photo');const focus=q('#v6-photo-focus');if(focus)focus.value='collection';workshop.focus('collection');requestAnimationFrame(()=>q('#v6-photo-focus')?.focus({preventScroll:true}));}
@@ -711,7 +774,7 @@ class WorkshopRenderer{
  ensureLoaded(){if(this.memorySuspended)return this.loadingTask;if(this.loaded||this.failed||this.restoring)return this.loadingTask;if(this.loading)return this.loadingTask;this.loadingTask=this.loadScene();return this.loadingTask}
  async loadScene(){this.loading=true;const loading=q('#v6-workshop-loading');const stage=globalThis.__asfaltoLoading.workshop(loading);const bar=q('.v6-progress>i',loading);loading.classList.remove('v6-hidden');try{stage('Preparando el taller…');bar.style.width='4%';this.T=await loadThreeModule();stage('Cargando paredes, herramientas y materiales…');bar.style.width='12%';const node=q('#v6-workshop-payload');if(!node)throw new Error('Modelo del taller no encontrado');const glb=node.dataset.encoding === 'external-url' ? (await globalThis.AsfaltoV6AssetCore.readExternalPayload(node)).buffer : await decodeGzipBase64(node.textContent,p=>bar.style.width=`${12+p*62}%`);stage('Montando el auto, luces y reflejos…');bar.style.width='76%';await this.initScene(glb,p=>bar.style.width=`${76+p*22}%`);stage('Preparando el auto seleccionado…');if(this.vehicleSelector&&!(await this.vehicleSelector.restore()))throw new Error('No se pudo preparar el vehículo seleccionado');stage('Preparando materiales del taller…');this.advancedGraphics?.update({time:performance.now()/1000});await this.advancedGraphics?.prepare();this.loaded=true;this.loading=false;stage('Taller listo');loading.setAttribute('aria-busy','false');stage.dispose?.();bar.style.width='100%';setTimeout(()=>{loading.classList.add('v6-hidden');publishHomeReadiness();},450);q('#v6-workshop-fallback').classList.add('v6-hidden');this.loop();toast('TALLER MECÁNICO 1973 CARGADO','ok')}catch(err){console.error('[V6 workshop]',err);this.releaseScene();this.failed=true;this.loading=false;loading.setAttribute('aria-busy','false');stage.dispose?.();loading.classList.remove('an-cinema-loading');loading.textContent=`Vista técnica activa · ${err.message}`;q('#v6-workshop-fallback').classList.remove('v6-hidden');publishHomeReadiness();}}
  async initScene(glb,onProgress){const {detectDeviceProfile,deviceGraphicsQuality}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));this.deviceProfile=detectDeviceProfile();const T=this.T;const host=globalThis.__asfaltoRenderHost;if(!host)throw Error('Render host unavailable');this.renderView=host.acquireView('workshop',{container:this.canvas.parentNode,getDimensions:()=>{const r=this.canvas.parentNode?.getBoundingClientRect();return {width:Math.max(2,Math.floor(r?.width||2)),height:Math.max(2,Math.floor(r?.height||2))};},onSuspend:()=>{this.releaseInput();this.last=0;}});this.renderer=this.renderView.renderer;if(document.body.classList.contains('v6-menu-open'))this.renderView.activate();this.renderer.setPixelRatio(Math.min(devicePixelRatio||1,this.deviceProfile.phone?1.25:innerWidth<720?1.25:1.75));this.renderer.toneMapping=T.ACESFilmicToneMapping??0;this.renderer.toneMappingExposure=1.06;if('outputColorSpace'in this.renderer)this.renderer.outputColorSpace=T.SRGBColorSpace;this.scene=new T.Scene();this.scene.background=new T.Color(0x111416);this.scene.fog=new T.FogExp2(0x111416,.018);this.camera=new T.PerspectiveCamera(46,1,.05,120);this.hemi=new T.HemisphereLight(0xc9d7dd,0x342418,1.45);this.scene.add(this.hemi);this.key=new T.DirectionalLight(0xffe2bd,3.2);this.key.position.set(7,12,5);this.scene.add(this.key);this.fill=new T.DirectionalLight(0x9ebcd2,1.15);this.fill.position.set(-8,7,-7);this.scene.add(this.fill);this.warm=new T.PointLight(0xff8b42,2.8,18,1.5);this.warm.position.set(4,3,-3);this.scene.add(this.warm);
- const parsed=this.parseGLB(glb),root=await this.buildGLTF(parsed,onProgress);this.scene.add(root);const box=new T.Box3().setFromObject(root),size=new T.Vector3(),center=new T.Vector3();box.getSize(size);box.getCenter(center);const max=Math.max(size.x,size.z,size.y*.7)||1,scale=18/max;root.scale.set(scale,scale*.8,scale);root.position.set(-center.x*scale,-box.min.y*scale*.8,-center.z*scale);root.rotation.y=Math.PI;root.updateMatrixWorld(true);const rotatedBox=new T.Box3().setFromObject(root),rotatedCenter=new T.Vector3();rotatedBox.getCenter(rotatedCenter);root.position.x-=rotatedCenter.x;root.position.y-=rotatedBox.min.y;root.position.z-=rotatedCenter.z;root.updateMatrixWorld(true);this.workshopRoot=root;this.addChevyV3Car();const appearance=await import(new URL('src/render/workshop-presentation.mjs?v=172956c3cd13ab6b',document.baseURI));await appearance.enhanceWorkshop(this);const {createVehiclePresentation}=await import(new URL('src/render/vehicle-presentation.mjs?v=03174439df407898',document.baseURI));const {initialVehicle}=await import(new URL('src/runtime/initial-vehicle.mjs?v=4ac03e5fd1c2f96a',document.baseURI));this.vehicleId=initialVehicle();this.vehiclePresentation=await createVehiclePresentation(T,{vehicle:this.vehicleId,lodLevels:[0],modelRoot:this.car,loadGlb:window.__asfaltoLoadVehicleModel,paintColor:this.paintColor||globalThis.__chevyPaintColor||'#d66a24'});this.vehiclePresentation.setPersistentCondition(profile.vehicleConditionsV7?.cars?.[this.vehicleId]);const exteriorBounds=new T.Box3().setFromObject(this.vehiclePresentation.root);this.car.position.y+=(this.car.userData.surfaceY||0)-exteriorBounds.min.y;this.car.userData.floorY=this.car.position.y;this.vehiclePresentation.setEnvironment(this.presentation.getRoomEnvironment());const {createWorkshopInspection}=await import(new URL('src/render/workshop-inspection.mjs?v=d821e83eed74ae0e',document.baseURI));this.inspection=createWorkshopInspection(T,this);const {createWorkshopEngine}=await import(new URL('src/render/workshop-engine.mjs?v=dc843a5408a70fa5',document.baseURI));this.engine=createWorkshopEngine(T,this);const {createWorkshopChassis}=await import(new URL('src/render/workshop-chassis.mjs?v=13b36eb3a7d8a770',document.baseURI));this.chassis=createWorkshopChassis(T,this);const {createWorkshopCameraConstraint}=await import(new URL('src/render/workshop-camera-constraint.mjs?v=6bb6a252c77710d0',document.baseURI));this.cameraConstraint=createWorkshopCameraConstraint(T,root,{obstacleRoots:[root,...this.scene.children.filter(o=>o.name==='Workshop_Blender_Service_Details'||o.name==='Workshop_Detail_Pass_1973'||o.name==='WorkshopCollection'||o.name==='Workshop_Architecture_E31'||o.name==='Workshop_LivedIn_E31')]});const {createRayTracedOcclusion}=await import(new URL('src/render/ray-traced-occlusion.mjs?v=bce6dfbce11d570c',document.baseURI));this.rayTracing=createRayTracedOcclusion({THREE:T,renderer:this.renderer,scene:this.scene,camera:this.camera,excludeOccluders:()=>[this.car,this.engine?.mount],mode:globalThis.__asfaltoRayTracing?.getMode()||'off'});this.resize();this.focus('general',true);globalThis.__asfaltoMenuPresentation?.configureWorkshop(this);const {installWorkshopVehicleSelector}=await import(new URL('src/menu/workshop-vehicle-selector.mjs?v=2b928f4bb20e8e4d',document.baseURI));const {prepareWorkshopVehicle}=await import(new URL('src/render/workshop-vehicle-selection.mjs?v=3bc9198df0ca01d6',document.baseURI));const {createDeferredRaceVehicle}=await import(new URL('src/menu/deferred-race-vehicle.mjs?v=b9bc455102368bbe',document.baseURI));this.raceVehicleSelection=createDeferredRaceVehicle();this.vehicleSelector=installWorkshopVehicleSelector({workshop:this,prepareWorkshop:id=>prepareWorkshopVehicle(T,this,id),prepareRace:id=>this.raceVehicleSelection.prepare(id)});const {createAdvancedGraphics}=await import(new URL('src/render/advanced-graphics.mjs?v=83514b5dcfde9a28',document.baseURI));this.advancedGraphics=createAdvancedGraphics(T,{renderer:this.renderer,scene:this.scene,camera:this.camera,scope:'workshop',phone:this.deviceProfile.phone,getMaximumQuality:()=>{let master='auto';try{master=globalThis.__asfaltoAdvancedGraphics?.getMasterQuality?.()||JSON.parse(globalThis.__asfaltoV7Storage?.getItem('cockpit-chevy-settings-v6')||'{}').graphicsQuality||'auto';}catch{}return deviceGraphicsQuality(master,this.deviceProfile);},getEnvironment:()=>({skyId:this.presentation?.diagnostics().lighting==='night'?'night':'clear',weather:'clear',keyLightDirection:this.key.position.toArray(),keyLightColor:'#'+this.key.color.getHexString(),sunIntensity:this.key.intensity})});}
+ const parsed=this.parseGLB(glb),root=await this.buildGLTF(parsed,onProgress);this.scene.add(root);const box=new T.Box3().setFromObject(root),size=new T.Vector3(),center=new T.Vector3();box.getSize(size);box.getCenter(center);const max=Math.max(size.x,size.z,size.y*.7)||1,scale=18/max;root.scale.set(scale,scale*.8,scale);root.position.set(-center.x*scale,-box.min.y*scale*.8,-center.z*scale);root.rotation.y=Math.PI;root.updateMatrixWorld(true);const rotatedBox=new T.Box3().setFromObject(root),rotatedCenter=new T.Vector3();rotatedBox.getCenter(rotatedCenter);root.position.x-=rotatedCenter.x;root.position.y-=rotatedBox.min.y;root.position.z-=rotatedCenter.z;root.updateMatrixWorld(true);this.workshopRoot=root;this.addChevyV3Car();const appearance=await import(new URL('src/render/workshop-presentation.mjs?v=91afd84971fde366',document.baseURI));await appearance.enhanceWorkshop(this);const {createVehiclePresentation}=await import(new URL('src/render/vehicle-presentation.mjs?v=aee43660313b9773',document.baseURI));const {initialVehicle}=await import(new URL('src/runtime/initial-vehicle.mjs?v=4ac03e5fd1c2f96a',document.baseURI));this.vehicleId=initialVehicle();this.vehiclePresentation=await createVehiclePresentation(T,{vehicle:this.vehicleId,lodLevels:[0],modelRoot:this.car,loadGlb:window.__asfaltoLoadVehicleModel,paintColor:this.paintColor||globalThis.__chevyPaintColor||'#d66a24'});this.vehiclePresentation.setPersistentCondition(profile.vehicleConditionsV7?.cars?.[this.vehicleId]);const exteriorBounds=new T.Box3().setFromObject(this.vehiclePresentation.root);this.car.position.y+=(this.car.userData.surfaceY||0)-exteriorBounds.min.y;this.car.userData.floorY=this.car.position.y;this.vehiclePresentation.setEnvironment(this.presentation.getRoomEnvironment());const {createWorkshopInspection}=await import(new URL('src/render/workshop-inspection.mjs?v=d821e83eed74ae0e',document.baseURI));this.inspection=createWorkshopInspection(T,this);const {createWorkshopEngine}=await import(new URL('src/render/workshop-engine.mjs?v=dc843a5408a70fa5',document.baseURI));this.engine=createWorkshopEngine(T,this);const {createWorkshopChassis}=await import(new URL('src/render/workshop-chassis.mjs?v=13b36eb3a7d8a770',document.baseURI));this.chassis=createWorkshopChassis(T,this);const {createWorkshopCameraConstraint}=await import(new URL('src/render/workshop-camera-constraint.mjs?v=6bb6a252c77710d0',document.baseURI));this.cameraConstraint=createWorkshopCameraConstraint(T,root,{obstacleRoots:[root,...this.scene.children.filter(o=>o.name==='Workshop_Blender_Service_Details'||o.name==='Workshop_Detail_Pass_1973'||o.name==='WorkshopCollection'||o.name==='Workshop_Architecture_E31'||o.name==='Workshop_LivedIn_E31')]});const {createRayTracedOcclusion}=await import(new URL('src/render/ray-traced-occlusion.mjs?v=bce6dfbce11d570c',document.baseURI));this.rayTracing=createRayTracedOcclusion({THREE:T,renderer:this.renderer,scene:this.scene,camera:this.camera,excludeOccluders:()=>[this.car,this.engine?.mount],mode:globalThis.__asfaltoRayTracing?.getMode()||'off'});this.resize();this.focus('general',true);globalThis.__asfaltoMenuPresentation?.configureWorkshop(this);const {installWorkshopVehicleSelector}=await import(new URL('src/menu/workshop-vehicle-selector.mjs?v=2b928f4bb20e8e4d',document.baseURI));const {prepareWorkshopVehicle}=await import(new URL('src/render/workshop-vehicle-selection.mjs?v=b32c7f7f56a10dbf',document.baseURI));const {createDeferredRaceVehicle}=await import(new URL('src/menu/deferred-race-vehicle.mjs?v=b9bc455102368bbe',document.baseURI));this.raceVehicleSelection=createDeferredRaceVehicle();this.vehicleSelector=installWorkshopVehicleSelector({workshop:this,prepareWorkshop:id=>prepareWorkshopVehicle(T,this,id),prepareRace:id=>this.raceVehicleSelection.prepare(id)});const {createAdvancedGraphics}=await import(new URL('src/render/advanced-graphics.mjs?v=ae547173ed2f3b51',document.baseURI));this.advancedGraphics=createAdvancedGraphics(T,{renderer:this.renderer,scene:this.scene,camera:this.camera,scope:'workshop',phone:this.deviceProfile.phone,getMaximumQuality:()=>{let master='auto';try{master=globalThis.__asfaltoAdvancedGraphics?.getMasterQuality?.()||JSON.parse(globalThis.__asfaltoV7Storage?.getItem('cockpit-chevy-settings-v6')||'{}').graphicsQuality||'auto';}catch{}return deviceGraphicsQuality(master,this.deviceProfile);},getEnvironment:()=>({skyId:this.presentation?.diagnostics().lighting==='night'?'night':'clear',weather:'clear',keyLightDirection:this.key.position.toArray(),keyLightColor:'#'+this.key.color.getHexString(),sunIntensity:this.key.intensity})});}
  parseGLB(buffer){const dv=new DataView(buffer);if(dv.getUint32(0,true)!==0x46546c67)throw new Error('GLB inválido');const length=dv.getUint32(8,true);let off=12,json=null,bin=null;while(off<length){const len=dv.getUint32(off,true),type=dv.getUint32(off+4,true),data=buffer.slice(off+8,off+8+len);if(type===0x4e4f534a)json=JSON.parse(new TextDecoder().decode(data).replace(/\0+$/,''));else if(type===0x004e4942)bin=data;off+=8+len}if(!json||!bin)throw new Error('GLB incompleto');return{json,bin}}
  accessor(parsed,index){const {json,bin}=parsed,a=json.accessors[index],v=json.bufferViews[a.bufferView],components={SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT2:4,MAT3:9,MAT4:16}[a.type],types={5120:Int8Array,5121:Uint8Array,5122:Int16Array,5123:Uint16Array,5125:Uint32Array,5126:Float32Array},Ctor=types[a.componentType],bytes=Ctor.BYTES_PER_ELEMENT,itemBytes=components*bytes,stride=v.byteStride||itemBytes,start=(v.byteOffset||0)+(a.byteOffset||0);let array;if(stride===itemBytes&&start%bytes===0)array=new Ctor(bin,start,a.count*components).slice();else{array=new Ctor(a.count*components);const view=new DataView(bin);const getter={5120:'getInt8',5121:'getUint8',5122:'getInt16',5123:'getUint16',5125:'getUint32',5126:'getFloat32'}[a.componentType];for(let i=0;i<a.count;i++)for(let c=0;c<components;c++)array[i*components+c]=view[getter](start+i*stride+c*bytes,true)}return{array,itemSize:components,normalized:Boolean(a.normalized),count:a.count}}
  async buildGLTF(parsed,onProgress){const mobileDecode=this.deviceProfile?.phone?(await import(new URL('src/performance/mobile-image-decode.mjs?v=7924431ea96dad26',document.baseURI))).decodeMobileBoundedImage:null;const T=this.T,{json,bin}=parsed,images=[];for(let i=0;i<(json.images||[]).length;i++){const im=json.images[i];try{let blob;if(im.bufferView!=null){const v=json.bufferViews[im.bufferView],bytes=bin.slice(v.byteOffset||0,(v.byteOffset||0)+v.byteLength);blob=new Blob([bytes],{type:im.mimeType||'image/png'})}else if(im.uri?.startsWith('data:')){const [head,b64]=im.uri.split(',');blob=new Blob([Uint8Array.from(atob(b64),c=>c.charCodeAt(0))],{type:head.match(/data:([^;]+)/)?.[1]||'image/png'})}else{images[i]=null;continue}const bitmap=mobileDecode?await mobileDecode(blob,1536):await createImageBitmap(blob,{premultiplyAlpha:'none'}),tex=new T.Texture(bitmap);tex.needsUpdate=true;tex.flipY=false;if('colorSpace'in tex)tex.colorSpace=T.NoColorSpace||'';tex.wrapS=tex.wrapT=T.RepeatWrapping;images[i]=tex;this.resources.push(tex,bitmap)}catch(e){console.warn('Workshop texture',i,e);images[i]=null}onProgress?.((i+1)/Math.max(1,(json.images||[]).length)*.25)}
@@ -820,7 +883,7 @@ async function initV6(){
  window.addEventListener('chevy:paint-change',event=>{if(!/^#[a-f0-9]{6}$/i.test(event.detail?.hex||''))return;profile.vehiclePaintV7||={};profile.vehiclePaintV7[selectedVehicle()]=event.detail.hex;});
  window.addEventListener('asfalto:vehicle-selected',event=>{globalThis.__asfaltoVehicleMaintenance.selected(event.detail.id);restoreVehiclePaint(event.detail.id);void saveProfile();});restoreVehiclePaint(selectedVehicle());
  window.addEventListener('pagehide',()=>globalThis.__asfaltoVehicleMaintenance.flush());
- if(window.__chevyV6Complete?.initialized)return;silenceLegacyV5();window.__chevyV6Complete={initialized:true,menuReady:false,homeReady:false,version:V6_VERSION,profile:()=>deepClone(profile),getVehicleServiceState:()=>globalThis.__asfaltoVehicleMaintenance.getState(),serviceVehicle:serviceItem,setChassisConfig,openMenu,prepareCockpit:options=>waitForExistingGameReady(180000,options),openOriginalSettings,openCollectionInspection,closeCollectionInspection,startRoadTest,startDrive,startCompetition,openChampionship,openEarnedAlbum,albumDiagnostics:()=>earnedAlbum?.diagnostics()||null,championshipDiagnostics:()=>championshipMenu?.diagnostics()||null,restartSession,setSessionPaused,sessionTitle:()=>activeSession.definition?.title||'',sessionDiagnostics:()=>({type:activeSession.type,paused:activeSession.pausedAt!==null,completed:activeSession.completed,activeMilliseconds:Math.max(0,(activeSession.pausedAt??performance.now())-activeSession.startTime),samples:activeSession.type==='roadtest'?(roadTestSession?.getState().sampleCount||0):activeSession.series.length,roadTest:roadTestSession?.getState()||null,roadTestSave:roadTestReceiptStore?.diagnostics()||null,request:sessionRequestRunner?.diagnostics()||null}),workshop,setMenuAudioActive:active=>globalThis.__asfaltoRacePresentation?.setMenuAudioActive(active),manifest:{
+ if(window.__chevyV6Complete?.initialized)return;silenceLegacyV5();window.__chevyV6Complete={initialized:true,menuReady:false,homeReady:false,version:V6_VERSION,profile:()=>deepClone(profile),getVehicleServiceState:()=>globalThis.__asfaltoVehicleMaintenance.getState(),serviceVehicle:serviceItem,setChassisConfig,openMenu,prepareCockpit:options=>waitForExistingGameReady(180000,options),openOriginalSettings,openCollectionInspection,closeCollectionInspection,startRoadTest,startDrive,startCompetition,openChampionship,openEarnedAlbum,albumDiagnostics:()=>earnedAlbum?.diagnostics()||null,championshipDiagnostics:()=>championshipMenu?.diagnostics()||null,restartSession,exitDrive,setSessionPaused,sessionTitle:()=>activeSession.definition?.title||'',sessionDiagnostics:()=>({type:activeSession.type,paused:activeSession.pausedAt!==null,completed:activeSession.completed,activeMilliseconds:Math.max(0,(activeSession.pausedAt??performance.now())-activeSession.startTime),samples:activeSession.type==='roadtest'?(roadTestSession?.getState().sampleCount||0):activeSession.series.length,roadTest:roadTestSession?.getState()||null,roadTestSave:roadTestReceiptStore?.diagnostics()||null,request:sessionRequestRunner?.diagnostics()||null}),workshop,setMenuAudioActive:active=>globalThis.__asfaltoRacePresentation?.setMenuAudioActive(active),manifest:{
   mainMenu:true,workshop3D:true,appearance:true,mechanics:true,tuning:true,condition:true,history:true,photography:true,collection:true,progression:true,narrative:true,roadTests:TESTS.map(x=>x.id),competitions:COMPETITIONS.map(x=>x.id),travel:true,resultsSheets:true,persistence:true,exportImport:true,accessibility:true,originalRestomodSeparation:true
  }};
  setupNavigation();setupActions();bindRoutePersistence();applySavedSelectors();renderAll();applyVehicleConfig();q('#v6-main-menu').classList.remove('v6-hidden');document.body.classList.add('v6-menu-open');document.body.classList.remove('v6-driving');openPanel(profile.lastPanel||'drive',false);

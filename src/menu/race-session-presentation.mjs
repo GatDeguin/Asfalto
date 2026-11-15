@@ -1,6 +1,7 @@
-import { mountV7Experience } from './v7-experience.mjs?v=26a1693695363bd7';
-import { createRacePauseMenu } from './race-pause-menu.mjs?v=bf825346d7cfee3f';
+import { mountV7Experience } from './v7-experience.mjs?v=bbec4f4b2f5ab527';
+import { createRacePauseMenu } from './race-pause-menu.mjs?v=07f938cad06708c8';
 import { createMenuMusic } from './menu-music.mjs?v=a4f79eee7063acc3';
+import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=0d60824a2ee0ea4d';
 
 const body = document.body;
 const world = () => globalThis.__cockpit?.raceWorld;
@@ -16,15 +17,20 @@ const pause = createRacePauseMenu({
   onResume() { world()?.resume(); },
   onRestart() { void Promise.resolve(game()?.restartSession?.()).catch(error => { showPause(); console.error('No se pudo reiniciar la sesión', error); }); },
   onSettings() { settingsFromPause = true; body.classList.remove('an-race-pause-visible'); globalThis.__cockpit?.openCockpitSettings(true); },
-  onReturnToWorkshop() { game()?.openMenu('drive'); },
+  onReturnToWorkshop() {
+    const app=game();
+    if(app?.exitDrive)app.exitDrive();
+    else app?.openMenu?.('drive');
+  },
 });
 
 const experienceV7 = mountV7Experience();
+const resultVehicleLabels = bindSelectedVehicleLabels({root:document.querySelector('#v6-results-sheet')});
 
 function showPause() {
   if (body.classList.contains('v6-menu-open') || body.classList.contains('an-intro-open')) return;
   body.classList.add('an-race-paused', 'an-race-pause-visible');
-  pause.show({ sessionLabel:[world()?.track?.name, game()?.sessionTitle?.()].filter(Boolean).join(' · ') || 'Carrera en curso', detail:'La carrera está detenida.', returnFocus:document.querySelector('#viewport canvas') });
+  pause.show({ sessionLabel:[world()?.track?.name, game()?.sessionTitle?.()].filter(Boolean).join(' · ') || 'Carrera en curso', detail:'La carrera está detenida.', exitLabel:document.querySelector('#v6-return-menu')?.textContent, returnFocus:document.querySelector('#viewport canvas') });
   syncAudio();
 }
 function closePause() {
@@ -59,7 +65,7 @@ function onState(event) {
   game()?.setSessionPaused?.(status === 'PAUSED');
   if (status === 'PAUSED') {
     body.classList.add('an-race-paused');
-    if (!['menu','settings','mobile-inspection'].includes(reason)) showPause();
+    if (!['menu','settings','mobile-inspection','result'].includes(reason)) showPause();
   } else closePause();
   syncAudio();
 }
@@ -90,7 +96,7 @@ globalThis.__asfaltoRacePresentation = Object.freeze({
   syncAudio,
   diagnostics() { return { pauseOpen:pause.isOpen(), music:music.diagnostics() }; },
   dispose() {
-    if (disposed) return; disposed = true; observer.disconnect(); experienceV7?.dispose(); pause.dispose(); music.dispose(); audio.remove();
+    if (disposed) return; disposed = true; observer.disconnect(); experienceV7?.dispose(); resultVehicleLabels.dispose(); pause.dispose(); music.dispose(); audio.remove();
     window.removeEventListener('asfalto:race-state', onState); window.removeEventListener('asfalto:race-settings', onSettings); window.removeEventListener('asfalto:audio-settings', syncAudio);
     document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onGesture); document.removeEventListener('visibilitychange', onVisibility);
     body.classList.remove('an-race-paused', 'an-race-pause-visible');

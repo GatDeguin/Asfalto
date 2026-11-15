@@ -3,7 +3,7 @@ import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
 import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=76e9c5fc6321daf4';
 import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=f67b304abe73b633';
-import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=7b22bfeb24f7b084';
+import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionBacking,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=9cf02d5ce1fb2de5';
 import {createVehicleDamagePanels} from './vehicle-damage-panels.mjs?v=212e81c2b33906ed';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
@@ -55,8 +55,8 @@ export function createVehiclePresentationState(vehicle='chevy') {
   };
 }
 
-function releaseModels(models,extraGeometries=[]) {
-  const geometry=new Set(extraGeometries),material=new Set(),texture=new Set();
+function releaseModels(models) {
+  const geometry=new Set(),material=new Set(),texture=new Set();
   for(const model of models)model?.traverse?.(o=>{if(o.geometry)geometry.add(o.geometry);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m){material.add(m);for(const [key,value] of Object.entries(m))if(value?.isTexture&&key!=='envMap')texture.add(value);}});
   geometry.forEach(x=>{if(!isBorrowedVehicleResource(x))x.dispose();});material.forEach(x=>x.dispose());texture.forEach(x=>{if(!isBorrowedVehicleResource(x))x.dispose();});models.forEach(releaseVehicleModel);
 }
@@ -104,6 +104,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const windshieldCondition={dirt:0,damage:0};
   let instrumentFuel=1;const steeringPivots=[],instrumentPivots=[];const steeringAxis=new T.Vector3(...(definition?.steeringAxis||[1,0,0])).normalize();
   const staticWiperNodes=[],engineBayAncillaryNodes=[],engineBayNodes=[],brakes=[],headlamps=[],flexible=[],tiers=[],materials=new Set(),replacedMaterials=new Set(),replacedGeometries=new Set();
+  const deformingMeshes=[];
   const colorValue=new T.Color(),worldPosition=new T.Vector3(),scaleVector=new T.Vector3();
   for(let level=0;level<lods.length;level++) {
     const hoods=[];
@@ -123,10 +124,15 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       if(vehicle==='chevy_400_1957'&&o.geometry?.attributes.uv2){if(!isBorrowedVehicleResource(o.geometry))o.geometry.setAttribute('uv1',o.geometry.attributes.uv2);for(const m of Array.isArray(o.material)?o.material:[o.material])if(m?.aoMap){if(!isBorrowedVehicleResource(m.aoMap))m.aoMap.channel=1;m.needsUpdate=true;}}
       if(/Glass/.test(o.material?.name)&&!definition?.preserveAuthoredMaterials){const original=thickenVehicleGlass(T,o,model);if(original)replacedGeometries.add(original);}
       o.castShadow=!/Glass/.test(o.material?.name);o.receiveShadow=true;
-      const surfaceType=m=>wheelId?null:vehicleConditionSurface(m?.name,o.name);
+      // Baked primitives can keep names from another mesh or an indexed
+      // material slot. The GLB node is the owner of an assembled surface.
+      const authoredName=owner!==o?owner.name:(/_Primitive_/.test(o.name)?o.parent.name:o.name);
+      const surfaceType=m=>wheelId?null:vehicleConditionSurface(m?.name,authoredName);
       const surfaceMaterials=Array.isArray(o.material)?o.material:[o.material];
-      const conditionMatrix=surfaceMaterials.some(surfaceType)?conditionTransform.clone().multiply(model.matrixWorld.clone().invert().multiply(o.matrixWorld)):null;
-      if(conditionMatrix)appearance.add(o,conditionMatrix);
+      const backing=vehicleConditionBacking(authoredName);
+      const deforms=!wheelId&&(surfaceMaterials.some(surfaceType)||backing);
+      const conditionMatrix=deforms?conditionTransform.clone().multiply(model.matrixWorld.clone().invert().multiply(o.matrixWorld)):null;
+      if(conditionMatrix)deformingMeshes.push({mesh:o,matrix:conditionMatrix,backing});
       const mapMaterial=m=>{if(!m)return m;
         // Some supplied GLBs share red lens material with cabin controls and
         // passive quarter reflectors. Only rear-facing tail assemblies emit.
@@ -229,6 +235,17 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const chassis=createVehicleChassis(T,{root,tiers,centers});let chassisInspection=null;
   const lighting=createVehicleLighting(T,{vehicle,root,scene:lightScene,headlamps,brakes,lampAnchor:definition?.lampAnchor});
   const interiorRig=installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetail});
+  // Take ownership of the active geometry after the cabin rig has assigned
+  // its upholstery UVs and added fittings to the authored shells.
+  for(const {mesh,matrix,backing} of deformingMeshes)appearance.add(mesh,matrix,{backing});
+  for(const model of lods){
+    model.updateWorldMatrix(true,true);
+    const toCondition=conditionTransform.clone().multiply(model.matrixWorld.clone().invert());
+    model.traverse(o=>{
+      if(o.isMesh&&/^(?:DoorPull|WindowCrank|FirewallPad|(?:Driver)?FirewallInsulationPad)/.test(o.name))
+        appearance.add(o,toCondition.clone().multiply(o.matrixWorld),{backing:true});
+    });
+  }
   // Include newly installed instrument/trim materials and upholstery clones in environment updates.
   root.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])if(material)materials.add(material);});
   const refraction=createVehicleRefractionPolicy(materials);
@@ -324,7 +341,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       return true;
     },
     diagnostics:()=>({...state.diagnostics(),persistentCondition:appearance.diagnostics(),damagePanels:damagePanels.map(rig=>rig.diagnostics()),paintColor:'#'+uniforms.vehiclePaint.value.getHexString(),lod:lodIndex,chassis:chassis.diagnostics(),calibration:calibration?.diagnostics()||null,hoodAngleRad:hoodAmount*1.04,headlights:lighting.diagnostics().mode!=='off',lightMode:lighting.diagnostics().mode,lighting:lighting.diagnostics(),engineBayVisible,engineBayNodes:engineBayNodes.length,engineAncillariesVisible,engineBayAncillaryNodes:engineBayAncillaryNodes.length,wheels:{...wheelDiagnostics},sourceFrontAxis:'-X',presentationYawRad:root.rotation.y,materials:materials.size,drawMeshes:tiers.map(t=>{let count=0;t.model.traverse(o=>{if(o.isMesh)count++;});return count;})}),
-    dispose(){if(disposed)return false;disposed=true;for(const panelRig of damagePanels)panelRig.dispose();interiorRig.dispose();state.dispose();chassis.dispose();lighting.dispose();root.removeFromParent();previous.forEach(({object,visible})=>{object.visible=visible;});releaseModels(lods,appearance.originalGeometries());appearance.dispose();return true;},
+    dispose(){if(disposed)return false;disposed=true;for(const panelRig of damagePanels)panelRig.dispose();appearance.dispose();interiorRig.dispose();state.dispose();chassis.dispose();lighting.dispose();root.removeFromParent();previous.forEach(({object,visible})=>{object.visible=visible;});releaseModels(lods);return true;},
   };
   controller.update({dt:0});return controller;
 }

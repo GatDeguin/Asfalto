@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPhysicalRoadTestValidator} from '../src/game/physical-road-tests.mjs?v=9ff50f2b5edd041b';
-import {getEarnedDisplayItems} from '../src/menu/v7-earned-collection.mjs?v=d29fd9886d233552';
+import {getEarnedDisplayItems} from '../src/menu/v7-earned-collection.mjs?v=7838748e05ba9177';
 const sessionModule=await import('../src/menu/v7-roadtest-session.mjs?v=22c7b5507d2ba232').catch(()=>({}));
-const profileModule=await import('../src/menu/v7-roadtest-profile.mjs?v=4d9be36a45a6bfa7').catch(()=>({}));
+const profileModule=await import('../src/menu/v7-roadtest-profile.mjs?v=c2364cd5c138589a').catch(()=>({}));
 const receiptModule=await import('../src/menu/v7-roadtest-receipts.mjs?v=dcb56ddf32510097').catch(()=>({}));
 const identity={testId:'vmax',sessionId:'session-1',configurationHash:'a'.repeat(64),trackId:'dos_lagos',vehicleId:'chevy',class:'Histórica',sessionSequence:7};
 function frame(tick,{speed=50,running=true,...extra}={}){return{tick,sessionSequence:7,running,snapshot:{fixedHz:120,chassis:{position:[speed*tick/120,0,0],rotation:[0,0,0,1],linearVelocity:[speed,0,0],acceleration:[0,0,0]},wheels:Array.from({length:4},()=>({contact:true})),controls:{throttle:1,brake:0,steer:0},gearbox:{gear:4},clutch:{engagement:1},brakes:{wheelBrakeTorquesNm:[0,0,0,0]},engine:{rpm:2600,torqueNm:80}},projection:{raceProgress:speed*tick/120,lateral:0,speedAlongRouteMps:speed,routeHalfWidthM:5,valid:true,continuous:true},environment:{wetness:0,gripMultiplier:1},qa:false,teleports:0,recoveries:0,referenceChart:0,...extra};}
@@ -45,6 +45,32 @@ test('all twelve validator receipts replay to twelve distinct catalog medals and
  const profile={roadTestsV7:{schema:'asfalto-road-tests/v1',revision:12,receipts}},items=getEarnedDisplayItems(JSON.parse(JSON.stringify(profile)));
  assert.deepEqual(items.map(x=>x.id),ids.map(id=>'test:'+id));assert.equal(new Set(items.map(x=>x.shape)).size,12);
  const corrupted=structuredClone(profile);corrupted.roadTestsV7.receipts['result-slalom'].evidence.gates[4].tick=0;assert.equal(getEarnedDisplayItems(corrupted).length,11);
+});
+
+test('the menu displays each physical record with its stored unit, with a seconds fallback for legacy lap-style marks',async()=>{
+ const menu=await import('../src/menu/roadtest-records.mjs?v=bc0cb24679839530');
+ const units={vmax:'km/h',accel100:'s',accel160:'s',m500:'s',m1000:'s',recovery:'s',brake100:'m',slalom:'puertas',turn:'m',wet:'m',speedo:'km/h RMS',consumption:'L/100 km estimados por modelo'};
+ for(const [id,unit] of Object.entries(units)){
+  const sheet=receiptModule.roadTestResultSheet(physicalReceipt(id));
+  assert.equal(menu.formatRoadTestRecord(sheet),`${sheet.main} ${unit}`,id);
+ }
+ assert.equal(menu.formatRoadTestRecord({testId:'accel100',main:'00:11.42'}),'11.42 s');
+});
+
+test('each of the twelve objectives times out from physical ticks without creating a receipt',()=>{
+ const ids=['vmax','accel100','accel160','m500','m1000','recovery','brake100','slalom','turn','wet','speedo','consumption'];
+ const gates=Array.from({length:8},(_,index)=>({id:`slalom-${index+1}`,center:[20+16*index,0,0],forward:[1,0,0],left:[0,0,1],halfWidthM:1.5}));
+ for(const testId of ids){
+  const w=world(),invalid=[],receipts=[];
+  const session=sessionModule.createRoadTestSession({...identity,testId,world:w,definition:{gates,displacementLiters:4.097,maxActiveSeconds:3/120},onInvalidated:state=>invalid.push(state),onCompleted:receipt=>receipts.push(receipt)});
+  for(let tick=1;tick<=12;tick++)w.emit(frame(tick,{speed:0,environment:{wetness:1,gripMultiplier:.65}}));
+  assert.equal(invalid.length,1,testId);
+  assert.deepEqual(invalid[0].invalidReasons,['time-limit-objective-incomplete'],testId);
+  assert.equal(invalid[0].sampleCount,4,testId);
+  assert.equal(receipts.length,0,testId);
+  assert.equal(session.getReceipt(),null,testId);
+  assert.equal(w.count(),0,testId);
+ }
 });
 test('two tabs sharing one lock cannot overwrite another accepted physical receipt',async()=>{
  let disk='{}',a={},b={},queue=Promise.resolve();const storage={getItemPersistent:()=>disk,setItemPersistent(_key,value){disk=value;}},withLock=fn=>{const result=queue.then(fn);queue=result.catch(()=>{});return result;};

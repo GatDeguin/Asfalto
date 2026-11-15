@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
-import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=7b22bfeb24f7b084';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=03174439df407898';
+import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=9cf02d5ce1fb2de5';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=aee43660313b9773';
 import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=e41d4bbdb923cfdf';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
-import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=9dc1482154f3463e';
+import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=6e7278185b0b3269';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';
 import {createAuthoredControlMounts} from '../src/render/authored-control-mounts.mjs?v=3045f15fc78d12cf';
 import {createVehicleWeatherParticles} from '../src/render/vehicle-weather-particles.mjs?v=24710f5e31929cc1';
@@ -67,6 +67,14 @@ test('deformation owns its clone and restores the exact shared geometry after se
  appearance.set({dirt:70,paint:10});
  assert.equal(mesh.geometry,geometry);
  assert.equal(released,1);
+ appearance.set({body:30,damageZones:{front:.8}});
+ let activeDisposals=0,originalDisposals=0;
+ mesh.geometry.addEventListener('dispose',()=>activeDisposals++);
+ geometry.addEventListener('dispose',()=>originalDisposals++);
+ appearance.dispose();
+ assert.equal(mesh.geometry,geometry);
+ assert.equal(activeDisposals,1);
+ assert.equal(originalDisposals,0);
 });
 
 test('the installed vehicle binds its window and structural finishes to independent service values',()=>{

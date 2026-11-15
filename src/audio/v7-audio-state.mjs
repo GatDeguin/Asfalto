@@ -9,4 +9,15 @@ export function engineMix({rpm=0,load=0,throttle=0,cameraMode='cockpit',reducedR
 }
 /** No timer invents an event: transitions must originate in the mechanical snapshot. */
 export function mechanicalEvents(previous,current={}){if(!previous)return[];const out=[];if(previous.gear!==undefined&&current.gear!==undefined&&previous.gear!==current.gear)out.push('shift');if(!previous.cranking&&current.cranking)out.push('starter');if(previous.rpm>400&&current.rpm<200&&current.running===false)out.push('stall');if(previous.rpm<400&&current.rpm>=650&&current.running!==false)out.push('ignition');return out;}
-export function regionalAcoustics({trackId='',forest=null,night=false,rainIntensity=0}={}){const proximity=clamp(forest?.proximity),quiet=1-clamp(rainIntensity)*.76;const region={dos_lagos:{birds:.038,insects:.003,leaf:.014},paso_garibaldi:{birds:.024,insects:0,leaf:.023},cataratas_iguazu:{birds:.07,insects:night?.045:.024,leaf:.019}}[trackId]||{birds:0,insects:0,leaf:0};return{proximity,birds:region.birds*proximity*quiet*(night?.1:1),insects:region.insects*proximity*quiet,leaf:region.leaf*proximity};}
+const forestAcoustics={
+ dos_lagos:{birds:.038,insects:.003,leaf:.014},
+ paso_garibaldi:{birds:.024,insects:0,leaf:.023},
+ cataratas_iguazu:{birds:.07,insects:.024,nightInsects:.021,leaf:.019},
+};
+export function regionalAcoustics({trackId='',forest=null,nightAmount=0,rainIntensity=0}={}){
+ const proximity=clamp(forest?.proximity),quiet=1-clamp(rainIntensity)*.76,night=clamp(nightAmount);
+ const region=forestAcoustics[trackId];
+ if(!region)return{proximity,birds:0,insects:0,leaf:0};
+ return {proximity,birds:region.birds*proximity*quiet*(1-.9*night),
+  insects:(region.insects+(region.nightInsects||0)*night)*proximity*quiet,leaf:region.leaf*proximity};
+}

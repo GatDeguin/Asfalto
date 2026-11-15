@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=b2a461c67d1aca74';
-import {bindSharedInstanceWindows,installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
+import * as iguazu from '../src/tracks/visuals/iguazu-landscape.mjs?v=1a5ea620c59c272f';
+import {bindSharedInstanceWindows,installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=998dbd3ed43b3655';
 
 test('ordinary roadside windows prepare their buffer before drawing and skip hidden or off-layer passes',()=>{
  const scene=new T.Scene(),root=new T.Group(),tile=new T.Group(),geometry=new T.BoxGeometry(),material=new T.MeshBasicMaterial();

@@ -14,6 +14,7 @@ const MODELS = Object.keys(FLEET);
 const MAX_REGULAR_SPEED = 60 / 3.6;
 const VISIBILITY_M = 270;
 const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+export const trafficVehicleSlot = car => car.kind === 'parked' ? car.model + ':parked' : car.model;
 
 function finishFor(model,index) {
   const [color,rim,tire,brake]=FLEET[model][index];
@@ -79,8 +80,18 @@ export function createDriveTrafficPlan({lengthM, seed, trackId, canPark = () => 
 }
 
 export function createDriveTraffic(plan, {lengthM}) {
-  const active = [];
-  let cursor = 0, elapsed = 0;
+  const active = [], pending = [];
+  let cursor = 0, triggered = 0, skipped = 0, elapsed = 0;
+  const passingSpeed = (car,speedMps) => Math.min(car.speedMps, Math.max(24, speedMps + 8));
+  function hasPassingRoom(progressM, speedMps, pace) {
+    // From 105 m behind to 42 m ahead, plus time to merge back to the right.
+    const mergeTime = 147 / (pace - speedMps) + 2;
+    return active.every(car => {
+      if (car.kind === 'parked') return true;
+      const gap = car.progressM - progressM;
+      return car.direction > 0 && (gap < -125 || gap > (pace - car.speedMps) * mergeTime - 105 + 48);
+    });
+  }
   function update({progressM, speedMps, lateralM, dt, passingAllowed = () => true}) {
     if (!(dt >= 0) || !Number.isFinite(progressM)) return active;
     elapsed += dt;
@@ -91,7 +102,16 @@ export function createDriveTraffic(plan, {lengthM}) {
       if (car.kind === 'parked') {
         car.hazards = elapsed % 1.08 < .54;
       } else if (car.kind === 'passing') {
-        car.currentSpeedMps = Math.min(car.speedMps, Math.max(24, speedMps + 8));
+        car.currentSpeedMps = passingSpeed(car,speedMps);
+        if (car.side >= .25) {
+          for (const ahead of active) {
+            const space = ahead.progressM - car.progressM;
+            if (ahead.kind !== 'regular' || ahead.direction < 0 || space <= 0) continue;
+            const followingDistance = 8 + ahead.speedMps * .75;
+            car.currentSpeedMps = Math.min(car.currentSpeedMps,
+              Math.max(0,ahead.speedMps + (space - followingDistance) * .38));
+          }
+        }
         car.progressM = Math.min(lengthM, car.progressM + dt * car.currentSpeedMps);
         const before=car.side;
         if (gap > 42) car.side = Math.min(1, car.side + dt * .52);
@@ -103,26 +123,30 @@ export function createDriveTraffic(plan, {lengthM}) {
         active.splice(i, 1);
       }
     }
-    while (cursor < plan.length) {
-      const event = plan[cursor], gap = event.atM - progressM;
-      if (event.kind === 'passing') {
-        if (gap > 0) break;
-        if (gap < -500) { cursor++; continue; }
-        if (lateralM < -.35 || speedMps < 4 || speedMps > 26 ||
-          active.some(car => car.kind !== 'parked') || !passingAllowed()) break;
-        active.push({...event, progressM:Math.max(1, progressM - 105), side:-1, hazards:false, poseTimeS:0});
+    while (cursor < plan.length && plan[cursor].atM - progressM <= 210) pending.push(plan[cursor++]);
+    for (let i = 0; i < pending.length;) {
+      const event = pending[i], gap = event.atM - progressM;
+      const passing = event.kind === 'passing', parked = event.kind === 'parked';
+      if (passing ? gap <= 0 && progressM > lengthM - 280 : gap < -45) {
+        pending.splice(i,1);skipped++;continue;
+      }
+      if (gap > 210 || active.some(car => car.model === event.model && (car.kind === 'parked') === parked)) { i++;continue; }
+      if (passing) {
+        const pace = passingSpeed(event,speedMps);
+        if (gap > 0 || lateralM < -.35 || speedMps < 4 || speedMps > 26 || pace <= speedMps ||
+          !hasPassingRoom(progressM,speedMps,pace) || !passingAllowed()) { i++;continue; }
+        active.push({...event, currentSpeedMps:pace, progressM:Math.max(1, progressM - 105), side:-1, hazards:false, poseTimeS:0});
       } else {
-        if (gap > 210) break;
-        if (gap < -45) { cursor++; continue; }
-        if (event.kind === 'regular' && active.some(car => car.kind !== 'parked')) break;
-        const parked = event.kind === 'parked';
-        const lead=event.direction===1?165:212;
+        if (!parked && active.some(car => car.kind !== 'parked' &&
+          (car.direction === event.direction || (car.kind === 'passing' && car.side < .96)))) { i++;continue; }
+        const lead=event.direction===1?128:212;
         active.push({...event, progressM:parked ? event.atM : Math.min(lengthM - 1, progressM + lead),
           side:parked ? 1 : event.direction, hazards:parked && elapsed % 1.08 < .54, poseTimeS:0});
       }
-      cursor++;
+      pending.splice(i,1);triggered++;
     }
     return active;
   }
-  return {update, clearActive(){active.length=0;}, diagnostics:() => ({scheduled:plan.length, triggered:cursor, next:plan[cursor]?.kind||null, active:active.map(car => ({...car}))})};
+  return {update, clearActive(){active.length=0;}, diagnostics:() => ({scheduled:plan.length, triggered, skipped,
+    next:pending[0]?.kind||plan[cursor]?.kind||null, active:active.map(car => ({...car}))})};
 }

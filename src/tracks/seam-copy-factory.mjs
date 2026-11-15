@@ -80,7 +80,7 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
   // Upload only changed matrices, while still evaluating dynamic eligibility.
   if(firstChanged>=0){mesh.instanceMatrix.addUpdateRange(firstChanged*16,(lastChanged-firstChanged+1)*16);mesh.instanceMatrix.needsUpdate=true;}
  }
- const selection={T,mesh,select,bound:false};
+ const selection={T,mesh,select,source,eligible,bound:false};
  viewSelections.set(mesh,selection);
  mesh.onBeforeRender=(_renderer,_scene,camera)=>{
   beforeRender?.();
@@ -106,6 +106,17 @@ export function installSharedInstanceWindow(T,mesh,{rangeM=500,matrices=null,eli
   return copy;
  };
  return{source,replace(next){if(next.length!==source.length)throw new TypeError('Canonical replacement must preserve capacity');source.set(next);rebuildBlocks();packedIndices.fill(-1);canonicalInfo.version++;mesh.instanceMatrix.array.set(source);mesh.count=maximum;mesh.instanceMatrix.clearUpdateRanges();mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();},diagnostics:()=>({maximum,visibleCount,testedCandidates})};
+}
+
+/** Inspect source instances independently of the most recent render camera. */
+export function visitAuthoredInstances(mesh,matrix,visit){
+ const selection=viewSelections.get(mesh);
+ if(selection){
+  const {source,eligible}=selection;
+  for(let i=0;i<source.length/16;i++)if(!eligible||eligible(i,source))visit(matrix.fromArray(source,i*16));
+  return;
+ }
+ for(let i=0;i<mesh.count;i++){mesh.getMatrixAt(i,matrix);visit(matrix);}
 }
 
 /** Three uploads instance buffers while building the render list, before object callbacks. */

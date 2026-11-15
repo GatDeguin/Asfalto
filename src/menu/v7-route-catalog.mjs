@@ -1,4 +1,4 @@
-import {routePreviewKey} from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import {routePreviewKey} from './menu-refinement-state.mjs?v=e963acb8e7d5b097';
 export function normalizeRouteMap(samples,{width=240,height=140,padding=14,maxPoints=360}={}){
  const points=samples.map(sample=>sample.position).filter(point=>Array.isArray(point)&&point.length>=3&&point.every(Number.isFinite));if(points.length<2)throw new Error('Route needs at least two valid world positions');
  let minX=Infinity,minZ=Infinity,maxX=-Infinity,maxZ=-Infinity;for(const [x,,z]of points){minX=Math.min(minX,x);maxX=Math.max(maxX,x);minZ=Math.min(minZ,z);maxZ=Math.max(maxZ,z);}

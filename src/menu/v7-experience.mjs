@@ -75,7 +75,7 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
     },
    };
   },
-  showResult(data,host=doc.querySelector('#v6-results-metrics'),{showRaceTiming=true}={}){
+  showResult(data,host=doc.querySelector('#v6-results-metrics'),{showRaceTiming=true,showStatus=true}={}){
    const result=resultSummary(data);if(!host)return result;
    let section=host.querySelector('.an-v7-result-facts');
    if(!section){section=doc.createElement('section');section.className='an-v7-result-facts';host.append(section);}
@@ -85,8 +85,11 @@ export function mountV7Experience({document:doc=globalThis.document}={}){
      const row=doc.createElement('p');row.textContent=label+': '+(value===null?'Sin dato':value.toFixed(2)+' s');section.append(row);
     }
    }
-   const status=doc.createElement('p');status.textContent=[result.validity,result.reason,result.progress].filter(Boolean).join(' · ');
-   section.append(status);announce(status.textContent);return result;
+   if(showStatus){
+    const status=doc.createElement('p');status.textContent=[result.validity,result.reason,result.progress].filter(Boolean).join(' · ');
+    section.append(status);announce(status.textContent);
+   }
+   return result;
   },
   diagnostics:()=>({phase:flow.state,preferences:{...prefs},panels:panels.length,audio:audio?.diagnostics(),loadActive:!!loadTicket}),
   dispose(){if(disposed)return;disposed=true;observer.disconnect();flow.dispose();audio?.dispose();for(const n of [style,hud,live,quality,load,...panels])n.remove();doc.removeEventListener('change',onChange);doc.removeEventListener('input',onChange);doc.removeEventListener('click',onClick);doc.removeEventListener('visibilitychange',syncPhase);globalThis.removeEventListener('asfalto:race-state',syncPhase);globalThis.removeEventListener('asfalto:race-settings',syncPhase);globalThis.removeEventListener('asfalto-menu-ready',mountPanels);doc.body.classList.remove('an-v7-lean-hud','an-v7-free-hud','an-v7-high-contrast','an-v7-reduce-motion');delete doc.body.dataset.v7Phase;if(globalThis.__asfaltoV7Experience===api)delete globalThis.__asfaltoV7Experience;}

@@ -1,6 +1,6 @@
 import {createSoundscapeBanks} from './soundscape-banks.mjs?v=ab85d85161d96bc7';
 import {createAudioTargets} from './audio-targets.mjs?v=d16a18410f46456b';
-import {regionalAcoustics} from './v7-audio-state.mjs?v=e6720400866e4cbf';
+import {regionalAcoustics} from './v7-audio-state.mjs?v=cd6a96359a0b579c';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 /** Ambient-only bus. Engine, brakes, tire squeal, rivals and music remain with host mixer. */
 export function createRaceSoundscape({context,destination=context?.destination,seed=6147,prepared=null}={}){
@@ -25,7 +25,7 @@ export function createRaceSoundscape({context,destination=context?.destination,s
   function setActive(value){if(disposed||active===!!value)return;active=!!value;if(!active){automation.clear();lastContextTime=context.currentTime;master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const channel of Object.values(channels)){channel.gain.gain.cancelScheduledValues(context.currentTime);channel.gain.gain.setValueAtTime(0,context.currentTime);channel.target=0;}for(const entry of oneshots){try{entry.source.stop();}catch{}entry.dispose();}oneshots.clear();}}
   return{
     setActive,
-    update({active:enabled=true,paused=false,masterGain=1,ambientGain=1,cameraMode='chase',windMps=0,speedMps=0,rainIntensity=0,water=null,waterfall=null,forest=null,night=false,trackId=''}={}){
+    update({active:enabled=true,paused=false,masterGain=1,ambientGain=1,cameraMode='chase',windMps=0,speedMps=0,rainIntensity=0,water=null,waterfall=null,forest=null,night=false,nightAmount=Number(night),trackId=''}={}){
       if(disposed)return;setActive(enabled&&!paused);if(!active)return;
       sceneTime+=Math.max(0,Math.min(.05,context.currentTime-lastContextTime));lastContextTime=context.currentTime;
       const gust=.72+variation(sceneTime*.16,8)*.38+variation(sceneTime*.63,67)*.12;
@@ -35,15 +35,19 @@ export function createRaceSoundscape({context,destination=context?.destination,s
       const windLevel=clamp((wind*.8+speed*.44)/42)*(inside?.045:.11)*gust;automation.target(channels.wind.filter.frequency,inside?260+speed*7:480+wind*70,.25);
       gain(channels.rain,rain*(inside?.027:.12),.22);automation.target(channels.rain.filter.frequency,inside?600:1200,.2);
       gain(channels.roof,inside?rain*.15:rain*.012,.18);automation.target(channels.roof.filter.frequency,inside?680:1300,.12);
-      worldState={trackId,cameraMode,rainIntensity:rain,waterfall:waterfall?{...waterfall}:null,forest:forest?{...forest}:null,night,water:water?{kind:water.kind,distanceM:water.distanceM,flowMps:water.flowMps,source:water.source}:null};
+      worldState={trackId,cameraMode,rainIntensity:rain,waterfall:waterfall?{...waterfall}:null,forest:forest?{...forest}:null,
+        night:nightAmount>=.5,nightAmount,water:water?{kind:water.kind,distanceM:water.distanceM,flowMps:water.flowMps,source:water.source}:null};
       const distance=Number(water?.distanceM??Infinity),near=Number.isFinite(distance)?Math.exp(-Math.max(0,distance)/65):0,river=water?.kind==='river'||water?.kind==='drain';
       const swell=.35+variation(sceneTime*.19,101)*.65,crest=Math.pow(variation(sceneTime*.37,203),3),flow=clamp(water?.flowMps??.5,0,2);
       gain(channels.water,near*(inside?.026:.075)*(river?(.6+flow*.3)*(.92+variation(sceneTime*.72,303)*.16):.35+swell*.42+crest*.24),river?.22:.7);automation.target(channels.water.filter.frequency,river?680:280,.4);
       const fallDistance=Number(waterfall?.distanceM??Infinity),impactDistance=Number(waterfall?.impactDistanceM??fallDistance),fallNear=Number.isFinite(fallDistance)?1/(1+Math.pow(Math.max(0,fallDistance)/150,1.4)):0,impactNear=Number.isFinite(impactDistance)?1/(1+Math.pow(Math.max(0,impactDistance)/90,1.5)):0;
       gain(channels.waterfall,(fallNear*.11+impactNear*.1)*clamp(waterfall?.scale??1,.2,1.5)*(inside?.28:1)*(.84+variation(sceneTime*.21,504)*.2),.55);
       automation.target(channels.waterfall.filter.frequency,450+fallNear*1600,.5);automation.target(channels.waterfall.panner.pan,clamp(waterfall?.pan??0,-.8,.8),.25);
-      const regional=regionalAcoustics({trackId,forest,night,rainIntensity:rain}),jungle=regional.proximity,quiet=inside?.15:1,leaf=1+gust*.15;
-      gain(channels.birds,regional.birds*quiet,.65);gain(channels.insects,regional.insects*quiet,.8);automation.target(channels.birds.panner.pan,clamp(forest?.pan??0,-.7,.7),.6);
+      const regional=regionalAcoustics({trackId,forest,nightAmount,rainIntensity:rain}),jungle=regional.proximity,quiet=inside?.15:1,leaf=1+gust*.15;
+      const forestPan=clamp(forest?.pan??0,-.7,.7);
+      gain(channels.birds,regional.birds*quiet,.65);gain(channels.insects,regional.insects*quiet,.8);
+      automation.target(channels.birds.panner.pan,forestPan,.6);
+      automation.target(channels.insects.panner.pan,forestPan,.6);
       gain(channels.wind,windLevel+regional.leaf*(inside?.2:1)*clamp(wind/8)*leaf);
       return{trackId,active,inside,waterProximity:near,waterfallProximity:fallNear,forestProximity:jungle};
     },

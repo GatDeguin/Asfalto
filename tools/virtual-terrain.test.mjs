@@ -7,7 +7,7 @@ import {gunzipSync} from 'node:zlib';
 import {GARIBALDI_TERRAIN_MANIFEST, TRIANGLE_BYTES, packTerrainTriangles, selectTerrainDetail, validateTerrainManifest}
   from '../src/render/virtual-terrain-data.mjs?v=3cb3d32add0067b4';
 import {createTerrainResidency} from '../src/render/virtual-terrain-residency.mjs?v=266f386fd7a0ca46';
-import {createSurfaceVisibilityAtlas, createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=ef8b4f345a25645e';
+import {createSurfaceVisibilityAtlas, createVirtualTerrainAtlas} from '../src/render/virtual-terrain-composite.mjs?v=656f55b960fae067';
 import {packGaribaldiSurfaces, readGaribaldiSurfaceMeshes} from '../src/render/virtual-terrain-surface.mjs?v=77a4d00a9e536abb';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {orientedBoundary, readVistaBake, spatialTrianglePages} from './build-virtual-terrain.mjs?v=fa84db1d20d99e97';

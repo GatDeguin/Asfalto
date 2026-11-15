@@ -31,6 +31,9 @@ body.an-phone-hud #chevy-hud-gear-label{left:42px;top:12px;font-size:11px}
 body.an-phone-hud #chevy-hud-rpm{left:auto;right:10px;top:13px;font-size:13px}
 body.an-phone-hud #chevy-hud-statuses{left:10px;right:10px;bottom:9px;font-size:9px;gap:8px;justify-content:space-between}
 @media(orientation:landscape){body.an-phone-hud #chevy-hud-objective{width:29%;height:50px}body.an-phone-hud #chevy-hud-timer{width:23%;height:50px}body.an-phone-hud #chevy-hud-navigation{width:clamp(168px,25.5vw,215px);height:56px}body.an-phone-hud #chevy-hud-telemetry{width:32%;height:54px}body.an-phone-hud #chevy-hud-statuses{font-size:8px;bottom:6px}}
+body.an-phone-hud:has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer{
+ top:auto;bottom:calc(max(8px,env(safe-area-inset-bottom)) + var(--an-mobile-controls-height,0px) + 62px)
+}
 
 /* Speed is primary on a phone; distance remains a separate, labelled value. */
 body.an-phone-hud #an-mobile-speed{position:absolute;left:0;top:0;display:flex;align-items:baseline;gap:2px;color:#fff;font:800 clamp(15px,4.6vw,19px)/1.05 var(--chevy-hud-digits);white-space:nowrap}
@@ -38,6 +41,7 @@ body.an-phone-hud #an-mobile-speed span{font:700 7px/1 system-ui,sans-serif;colo
 body.an-phone-hud #chevy-hud-navigation-value{font-size:11px}
 body.an-phone-hud #chevy-hud-navigation-mode{font-size:7px}
 @media(orientation:portrait){
+ body.an-phone-hud:has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer{bottom:calc(max(8px,env(safe-area-inset-bottom)) + var(--an-mobile-controls-height,0px) + 8px)}
  body.an-phone-hud #chevy-hud-navigation,body.an-phone-hud #chevy-hud-telemetry{top:calc(max(8px,env(safe-area-inset-top)) + 70px);bottom:auto;height:54px}
  body.an-phone-hud #chevy-hud-navigation{width:48%;height:62px}
  body.an-phone-hud #chevy-hud-telemetry{width:45%}

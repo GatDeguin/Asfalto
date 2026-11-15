@@ -5,16 +5,16 @@ import {mountainProfile,mountainAngleAtFraction} from './mountain-profile.mjs?v=
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=affc021b947e883e';
 import {applySurfaceVertexColors} from './surface-vertex-colors.mjs?v=60d9521f76c1d1f1';
 import { exposeAuthoredRiver } from './regional-river-channel.mjs?v=12b4d6432562307f';
-import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=d682d4554fa30414';
+import { addRegionalWayfinding } from './regional-wayfinding.mjs?v=f0c9855f0259fca6';
 import { refineRegionalBoulders } from './regional-boulders.mjs?v=0dc30b04c3b29b97';
 import { refineRegionalShoreline } from './regional-shoreline.mjs?v=3ca186fb7d49227a';
 import { improveRegionalRoadMaterials } from './regional-road-surfaces.mjs?v=060f8214fda55900';
-import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=ebfeb17aac19884b';
+import { addRegionalLandscapeDetails, regionalCameraProfiles } from './regional-landscape-details.mjs?v=dd53373fff12ea24';
 import {addScenicSetpieces,hasScenicSetpieces} from './scenic-setpieces.mjs?v=02639ca1402db565';
 // Visual-only correction of authored track assets. The route is sampled read-only; physics geometry is never edited.
 // Source maps and the rendered tree impostors are CC0; see assets/tracks/visual-correction/provenance.json.
 import { closeTerrainEdges } from './terrain-edge-closure.mjs?v=a497d4c665a5d19a';
-import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=3cb650a4f1db8714';
+import { addRoadsideDetails, loadRoadsideTemplates } from './roadside-details.mjs?v=0fb8f90e49b02971';
 import { forestBackfill, visualRoadField } from './forest-terrain-detail.mjs?v=8e17cf50d6fbaefc';
 import { refineTerrainSurface, joinTerrainTiles } from './terrain-refinement.mjs?v=8ac034d3920ac072';
 import {refineStreamedTerrain} from './terrain-refinement-client.mjs?v=b334e74f460216f0';

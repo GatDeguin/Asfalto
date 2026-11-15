@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {gzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=a5fcd85eb3e18b4b';
+import {routeSpatialField} from '../src/tracks/visuals/closure-terrain.mjs?v=0d43e5c151cc6d98';
 import {visualRoadField} from '../src/tracks/visuals/forest-terrain-detail.mjs?v=8e17cf50d6fbaefc';
 import {refineTerrainSurface} from '../src/tracks/visuals/terrain-refinement.mjs?v=8ac034d3920ac072';
 import {computeSurfaceCurvature,releaseSurfaceCurvatureCache} from '../src/render/surface-curvature.mjs?v=4c6fa9c0ecb6bbe6';

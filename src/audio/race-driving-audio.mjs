@@ -1,7 +1,7 @@
 import {createDrivingAudioBanks} from './driving-audio-banks.mjs?v=81162803ee9cade0';
 import {createAudioTargets} from './audio-targets.mjs?v=d16a18410f46456b';
-import { mechanicalEvents } from './v7-audio-state.mjs?v=e6720400866e4cbf';
-import { drivingAudioState } from './race-driving-state.mjs?v=84ddd7aeddea355c';
+import { mechanicalEvents } from './v7-audio-state.mjs?v=cd6a96359a0b579c';
+import { drivingAudioState, NEARBY_VEHICLE_RANGE_M } from './race-driving-state.mjs?v=51a660aeafa28587';
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,Number(v)||0));
 const metalMaterials=new Set(['metal','steel','guardrail','vehicle-metal']);
 const strikeVoices={
@@ -13,7 +13,7 @@ const strikeVoices={
   other:{frequency:630,brightness:340,resonance:.6,duration:.14,tail:.15,level:.32},
 };
 
-/** Physical contacts and one spatial rival. All nodes belong to the supplied context. */
+/** Physical contacts and the nearby vehicles. All nodes belong to the supplied context. */
 export function createRaceDrivingAudio({context,destination=context?.destination,seed=7139,prepared=null}={}) {
   if(!context?.createGain)throw new TypeError('An authorized AudioContext is required');
   let disposed=false,active=false,lastImpactSequence=0;
@@ -34,16 +34,64 @@ export function createRaceDrivingAudio({context,destination=context?.destination
   layer('gravel','bandpass',1550,.55);layer('wetRoad','highpass',1650,.6);layer('brakeFriction','bandpass',2450,1.2);
   layer('scrape','bandpass',1300,1.4,0,collisionGain);
   const brakeOsc=own(context.createOscillator()),brakeGain=own(context.createGain());brakeOsc.type='sine';brakeOsc.frequency.value=2380;brakeGain.gain.value=0;brakeOsc.connect(brakeGain).connect(master);brakeOsc.start();sources.push(brakeOsc);
-  // A pulse harmonic bank with a quieter mechanical order replaces the old sawtooth rival.
-  const rivalFilter=own(context.createBiquadFilter()),rivalGain=own(context.createGain()),rivalPan=own(context.createStereoPanner());
-  rivalFilter.type='lowpass';rivalFilter.Q.value=.6;rivalGain.gain.value=0;rivalFilter.connect(rivalGain).connect(rivalPan).connect(master);
-  const rivalVoices=[{order:3,level:.066},{order:6,level:.024},{order:1,level:.015}].map(({order,level})=>{
-    const osc=own(context.createOscillator()),gain=own(context.createGain());osc.type=order===1?'sine':'triangle';gain.gain.value=level;osc.connect(gain).connect(rivalFilter);osc.start();sources.push(osc);return{osc,order};});
-  let lastState=null,inside=true,rivalLevel=0,previousMechanical=null;
+  // The traffic controller allows one moving car in each direction. Reuse a
+  // bounded pair of harmonic banks and keep each assigned to the same car.
+  const vehicleVoices=Array.from({length:2},()=>{
+    const filter=own(context.createBiquadFilter()),gain=own(context.createGain()),pan=own(context.createStereoPanner());
+    filter.type='lowpass';filter.Q.value=.6;gain.gain.value=0;filter.connect(gain).connect(pan).connect(master);
+    const harmonics=[.066,.024,.015].map((level,i)=>{
+      const osc=own(context.createOscillator()),part=own(context.createGain());
+      osc.type=i===2?'sine':'triangle';part.gain.value=level;osc.connect(part).connect(filter);osc.start();sources.push(osc);
+      return osc;
+    });
+    return {filter,gain,pan,harmonics,id:null,state:{}};
+  });
+  let lastState=null,inside=true,previousMechanical=null;
   const automation=createAudioTargets(context),target=automation.target;
   const set=(name,value,hz)=>{const c=channels[name];c.target=value;target(c.gain.gain,value);if(hz)target(c.filter.frequency,hz,.08);};
   function stopTransient(t){try{t.source.stop();}catch{}t.dispose();}
-  function setActive(value){if(disposed||active===!!value)return;active=!!value;if(!active){automation.clear();master.gain.cancelScheduledValues(context.currentTime);master.gain.setValueAtTime(0,context.currentTime);for(const c of Object.values(channels)){c.gain.gain.cancelScheduledValues(context.currentTime);c.gain.gain.setValueAtTime(0,context.currentTime);c.target=0;}brakeGain.gain.cancelScheduledValues(context.currentTime);brakeGain.gain.setValueAtTime(0,context.currentTime);rivalGain.gain.setValueAtTime(0,context.currentTime);rivalLevel=0;for(const t of [...transients])stopTransient(t);bumpState.clear();previousMechanical=null;}}
+  function silence(param){param.cancelScheduledValues(context.currentTime);param.setValueAtTime(0,context.currentTime);}
+  function setActive(value){
+    if(disposed||active===!!value)return;
+    active=!!value;
+    if(active)return;
+    automation.clear();silence(master.gain);silence(brakeGain.gain);
+    for(const channel of Object.values(channels)){silence(channel.gain.gain);channel.target=0;}
+    for(const voice of vehicleVoices){silence(voice.gain.gain);voice.id=null;}
+    for(const t of [...transients])stopTransient(t);
+    bumpState.clear();previousMechanical=null;
+  }
+  function updateVehicle(voice,source,id){
+    const distanceM=Math.max(0,source.distanceM),engineOrder=source.engineOrder||3;
+    const pan=clamp(source.pan,-1,1),radialSpeedMps=clamp(source.radialSpeedMps,-70,70);
+    const pitchScale=clamp(343/(343+radialSpeedMps),.82,1.22),rpm=clamp(source.rpm||750,300,7000);
+    const edge=clamp((NEARBY_VEHICLE_RANGE_M-distanceM)/45);
+    const level=(.22+.78*clamp(source.throttle))*Math.pow(1+distanceM/7,-1.25)*edge*(inside?.38:1);
+    voice.id=id;
+    Object.assign(voice.state,{id,model:source.model||'falcon',kind:source.kind||'rival',distanceM,pan,
+      radialSpeedMps,pitchScale,rpm,engineOrder,level});
+    target(voice.gain.gain,level,.045);target(voice.pan.pan,pan);
+    const firing=rpm/60*pitchScale;
+    target(voice.harmonics[0].frequency,firing*engineOrder,.022);
+    target(voice.harmonics[1].frequency,firing*engineOrder*2,.022);
+    target(voice.harmonics[2].frequency,firing,.022);
+    target(voice.filter.frequency,(inside?2100:5700)/(1+distanceM/60),.12);
+  }
+  function updateVehicles(rival,traffic){
+    for(const voice of vehicleVoices){
+      if(voice.id==='falcon'?Number.isFinite(rival?.distanceM)&&rival.distanceM<NEARBY_VEHICLE_RANGE_M:
+        traffic?.some(source=>source.id===voice.id))continue;
+      voice.id=null;target(voice.gain.gain,0,.045);
+    }
+    if(Number.isFinite(rival?.distanceM)&&rival.distanceM<NEARBY_VEHICLE_RANGE_M){
+      const voice=vehicleVoices.find(bank=>bank.id==='falcon')||vehicleVoices.find(bank=>bank.id===null);
+      if(voice)updateVehicle(voice,rival,'falcon');
+    }
+    for(const source of traffic||[]){
+      const voice=vehicleVoices.find(bank=>bank.id===source.id)||vehicleVoices.find(bank=>bank.id===null);
+      if(voice)updateVehicle(voice,source,source.id);
+    }
+  }
   function transient({intensity,pan=0,voice='other',collision=false}) {
     if(!active||disposed||intensity<=0||transients.size>=8)return false;
     const now=context.currentTime,source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain(),panner=context.createStereoPanner();
@@ -69,7 +117,8 @@ export function createRaceDrivingAudio({context,destination=context?.destination
   }
   return {
     setActive,
-    update({snapshot={},controls={},speedMps,wetness=0,active:enabled=true,paused=false,cameraMode='cockpit',tiresGain=1,roadGain=1,brakesGain=.56,impactsGain=.78,rival=null}={}) {
+    level:name=>channels[name]?.target||0,
+    update({snapshot={},controls={},speedMps,wetness=0,active:enabled=true,paused=false,cameraMode='cockpit',tiresGain=1,roadGain=1,brakesGain=.56,impactsGain=.78,rival=null,traffic=null}={}) {
       if(disposed)return;setActive(enabled&&!paused);const strike=consumeImpacts(snapshot);if(!active)return;
       inside=cameraMode==='cockpit';lastState=drivingAudioState({snapshot,controls,speedMps,wetness});const speed=lastState.speedMps;
       const prefs=globalThis.__asfaltoV7Experience?.preferences?.()||{};
@@ -111,15 +160,13 @@ export function createRaceDrivingAudio({context,destination=context?.destination
         target(channels.scrape.panner.pan,clamp(scrape.localSideM*.8,-.85,.85),.045);
       }else set('scrape',0);
       for(const w of wheels){const previous=bumpState.get(w.id)||0;if(collisionVolume&&w.bump>.24&&w.bump>previous+.18)transient({intensity:w.bump,pan:w.pan,voice:'bump',collision:true});bumpState.set(w.id,w.bump);}
-      const distance=Math.max(0,Number(rival?.distanceM)||0),audible=rival&&Number.isFinite(rival.distanceM)&&distance<160;
-      rivalLevel=audible?(.22+.78*clamp(rival.throttle))*Math.pow(1+distance/7,-1.25)*(inside?.38:1):0;
-      target(rivalGain.gain,rivalLevel,.045);target(rivalPan.pan,audible?clamp(rival.pan,-1,1):0);
-      const doppler=clamp(343/(343+clamp(rival?.radialSpeedMps,-70,70)),.82,1.22),rpm=clamp(rival?.rpm||750,300,7000);
-      for(const voice of rivalVoices)target(voice.osc.frequency,rpm/60*voice.order*doppler,.022);
-      target(rivalFilter.frequency,(inside?2100:5700)/(1+distance/60),.12);
+      updateVehicles(rival,traffic);
       return lastState;
     },
-    diagnostics:()=>({active,disposed,inside,loopingSources:sources.length,transientSources:transients.size,rivalLevel,targets:Object.fromEntries(Object.entries(channels).map(([k,v])=>[k,v.target])),wheelContacts:lastState?.wheels||[]}),
+    diagnostics:()=>({active,disposed,inside,loopingSources:sources.length,transientSources:transients.size,
+      rivalLevel:vehicleVoices.find(voice=>voice.id==='falcon')?.state.level||0,
+      nearbyVehicles:vehicleVoices.filter(voice=>voice.id!==null).map(voice=>({...voice.state})),
+      targets:Object.fromEntries(Object.entries(channels).map(([k,v])=>[k,v.target])),wheelContacts:lastState?.wheels||[]}),
     dispose(){if(disposed)return;setActive(false);disposed=true;for(const source of sources)try{source.stop();}catch{}for(const n of nodes)try{n.disconnect();}catch{}sources.length=nodes.length=0;},
   };
 }

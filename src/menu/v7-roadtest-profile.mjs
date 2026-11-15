@@ -1,6 +1,6 @@
 import {PROFILE_KEY,withProfileWriteLock,profileRevision,readPersistentProfile} from '../runtime/profile-persistence.mjs?v=34c8f093c015eb86';
 import {validateRoadTestReceipt,freezeRoadTestData,roadTestResultSheet} from './v7-roadtest-receipts.mjs?v=dcb56ddf32510097';
-import {applyWorkshopProgress,ROAD_TEST_TOKENS} from './activity-rewards.mjs?v=684503a891f85e8a';
+import {applyWorkshopProgress,ROAD_TEST_TOKENS} from './activity-rewards.mjs?v=7736130247585143';
 export {roadTestResultSheet};
 const equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 // Same workshop progression as the activity cards, granted atomically from a new physical receipt.

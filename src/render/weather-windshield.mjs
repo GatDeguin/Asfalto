@@ -1,4 +1,4 @@
-import {VEHICLE_GLASS_FRACTURE_GLSL} from './vehicle-condition-appearance.mjs?v=7b22bfeb24f7b084';
+import {VEHICLE_GLASS_FRACTURE_GLSL} from './vehicle-condition-appearance.mjs?v=9cf02d5ce1fb2de5';
 
 /**
  * Measured against cabinaGz normalized to COCKPIT_LAYOUT.cabin.targetWidth=2.20.

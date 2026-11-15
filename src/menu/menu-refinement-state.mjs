@@ -1,4 +1,4 @@
-import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=680bf8ce08be7252';
+import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=bc0cb24679839530';
 
 export function testPresentationState({ sheets, testId, vehicleClass, locked = false, selected = false }) {
   const records = summarizeRoadTestRecords(sheets, testId, vehicleClass);

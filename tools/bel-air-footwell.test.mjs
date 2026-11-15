@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
 import {installClassicCabinSurfaces} from '../src/render/classic-cabin-surfaces.mjs?v=7acecb476191cf1b';
-import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=03174439df407898';
+import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=aee43660313b9773';
 import {authoredCockpitAnchors} from '../src/game/expansion-vehicle-runtime.mjs?v=aaacadfb3c716f14';
 import {createVehicleCameraRig} from '../src/game/vehicle-camera-rig.mjs?v=467c30948b8f1e07';
 import {HEAD_MOTION_LIMITS} from '../src/game/cockpit-head-motion.mjs';
 import {sampleCockpitEntrance} from '../src/game/race-camera-entrance.mjs';
-import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs?v=34e746db17e10157';
+import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs?v=d5045cbd1690ebd9';
 
 test('the Bel Air toe board closes the sight lines from the driver to the road under the dashboard', () => {
   const model = new T.Group();

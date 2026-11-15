@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createChampionshipClassificationLedger } from '../src/game/championship-classification.mjs';
-import { buildActivityReceipt, createActivityRewardStore, getActivityRouteAwards } from '../src/menu/activity-rewards.mjs?v=684503a891f85e8a';
-import { getEarnedDisplayItems } from '../src/menu/v7-earned-collection.mjs?v=d29fd9886d233552';
+import { buildActivityReceipt, createActivityRewardStore, getActivityRouteAwards } from '../src/menu/activity-rewards.mjs?v=7736130247585143';
+import { getEarnedDisplayItems } from '../src/menu/v7-earned-collection.mjs?v=7838748e05ba9177';
 
 const session = { resultId: 'activity-1', sessionSequence: 17, type: 'journey', trackId: 'dos_lagos', vehicleId: 'chevy', class: 'Histórica', startedAt: '2026-11-10T10:00:00.000Z' };
 const observation = { qa: false, sessionSequence: 17 };
@@ -76,7 +76,7 @@ test('an uncertain write recovers its original result without adding more fichas
   assert.equal(f.current().workshopTokens, 103);
 });
 
-test('solo competitions award a completed objective without inventing a podium', async () => {
+test('a speed trap archives the measured speed and solo rewards without a podium', async () => {
   const f = storeFixture();
   const drag = { ...session, type: 'competition', competitionId: 'drag', mode: 'speedTrap' };
   assert.equal(buildActivityReceipt(drag, context), null);
@@ -84,11 +84,45 @@ test('solo competitions award a completed objective without inventing a podium',
   const receipt = buildActivityReceipt(drag, { ...context, race: measured });
   assert.equal((await f.create().accept(receipt)).tokensAwarded, 2);
   assert.equal(f.current().championship.wins, 0);
+  assert.match(f.current().history[0].copy, /91\.0 km\/h/);
   assert.deepEqual(getActivityRouteAwards(f.current()), []);
 });
 
+test('a timed sector archives the measured sector time instead of the total session time', async () => {
+  const f = storeFixture();
+  const club = { ...session, type: 'competition', competitionId: 'club', mode: 'sectors' };
+  const measured = { ...race, status: 'RUNNING', finishReason: null, raceProgress: 100, sectorPractice: { completed: 1, lastTime: 12.625 } };
+  const receipt = buildActivityReceipt(club, { ...context, race: measured });
+  await f.create().accept(receipt);
+  assert.match(f.current().history[0].copy, /12\.625 s/);
+  assert.doesNotMatch(f.current().history[0].copy, /24\.000 s/);
+});
+
+const offers = [
+  ['sprint','race'], ['regularity','timeTrial'], ['circuit','race'], ['timetrial','timeTrial'],
+  ['drag','speedTrap'], ['endurance','race'], ['club','sectors'],
+];
+for (const [competitionId,mode] of offers) {
+  for (const vehicleClass of ['Histórica','Restomod']) test(`${competitionId} in ${vehicleClass} archives just the completed, eligible objective`, async () => {
+    const f=storeFixture(),store=f.create(),isDuel=mode==='race';
+    const entry={...session,type:'competition',competitionId,mode,class:vehicleClass};
+    const measured=mode==='speedTrap'?{...race,status:'RUNNING',speedTrap:{attempts:1,bestKmh:111.4}}
+      :mode==='sectors'?{...race,status:'RUNNING',sectorPractice:{completed:1,lastTime:9.75}}:race;
+    const eligible={...context,race:measured,final:isDuel?finalClassification({playerWins:true}):null};
+    const receipt=buildActivityReceipt(entry,eligible);
+    assert.equal(receipt.class,vehicleClass);
+    assert.equal((await store.accept(receipt)).tokensAwarded,isDuel?5:2);
+    assert.equal((await store.accept(receipt)).changed,false);
+    assert.equal(f.current().championship.events,1);
+    assert.deepEqual(getActivityRouteAwards(f.current()).map(award=>award.id),isDuel?['route:dos_lagos']:[]);
+    assert.equal(buildActivityReceipt(entry,{...eligible,valid:false}),null);
+    assert.equal(buildActivityReceipt(entry,{...eligible,qaMode:true}),null);
+    assert.equal(buildActivityReceipt(entry,{...eligible,race:{...race,status:'RUNNING',finishReason:null,completedLaps:0,raceProgress:100}}),null);
+  });
+}
+
 test('routes without authored trap bounds still register a physical speed pass', () => {
-  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=0444be15fcfd3791', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=3117f8225a6efd77', import.meta.url), 'utf8');
   const method = source.slice(source.indexOf('    _updateSpeedTrap('), source.indexOf('    _recordGhost('));
   const update = new Function(`return ({${method}})._updateSpeedTrap;`)();
   const trap = { active: false, peakMps: 0, attempts: 0, bestKmh: 0 };

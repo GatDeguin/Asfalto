@@ -1,7 +1,7 @@
 import {createRun,beginStage,cancelStage,acceptStage,resumeRun,earnedAwards} from './v7-championship-state.mjs?v=54514a098688545f';
-import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=d29fd9886d233552';
+import {getEarnedDisplayItems} from './v7-earned-collection.mjs?v=7838748e05ba9177';
 import {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock,profileRevision} from '../runtime/profile-persistence.mjs?v=34c8f093c015eb86';
-import {RACE_WIN_TOKENS,CHAMPIONSHIP_WIN_TOKENS} from './activity-rewards.mjs?v=684503a891f85e8a';
+import {RACE_WIN_TOKENS,CHAMPIONSHIP_WIN_TOKENS} from './activity-rewards.mjs?v=7736130247585143';
 export {PROFILE_KEY,PROFILE_LOCK_NAME,withProfileWriteLock};
 const clone=x=>structuredClone(x),revision=p=>p?.motorsportV7?.revision||0;
 function extension(profile){const old=profile.motorsportV7;if(old&&old.schema!=='asfalto-motorsport/v1')throw new Error('Unsupported motorsport profile');return old||{schema:'asfalto-motorsport/v1',revision:0,activeRunId:null,runs:{},awards:{},memories:{}};}
@@ -54,7 +54,9 @@ export function createChampionshipProfileStore({storage=globalThis.__asfaltoV7St
    throw new Error('Profile revision conflict; reload the saved profile');
   }
   const draft=applyChampionshipProfileAction(current,intent);const tokensAwarded=intent.type==='accept'?draft.motorsportV7.tokenAwards?.[intent.receipt.resultId]||0:0;if(draft===current){pending=null;return{profile:current,changed:false,persisted:true,tokensAwarded};}
-  draft.storageRevision=(disk?.storageRevision||0)+1;storage.setItemPersistent(key,JSON.stringify(draft));
+  draft.storageRevision=(disk?.storageRevision||0)+1;const serialized=JSON.stringify(draft);
+  storage.setItemPersistent(key,serialized);
+  if(storage.getItemPersistent(key)!==serialized)throw new Error('No se pudo verificar el guardado de la clasificación.');
   freezeReceipts(draft);replaceProfile(draft);pending=null;return{profile:draft,changed:true,persisted:true,tokensAwarded};
  }));queue=task.catch(()=>{});return task.catch(error=>{pending={action:intent,error:String(error.message||error)};throw error;});}
  return Object.freeze({transact,retryPending(){if(!pending)return Promise.resolve(null);return transact(pending.action);},diagnostics:()=>({pending:!!pending,error:pending?.error||null,action:pending?.action.type||null}),clearPending(){pending=null;}});

@@ -113,7 +113,7 @@ export function createRaceVirtualTerrain({THREE, renderer, scene, camera, surfac
       {createVirtualTerrainAtlas, createVirtualTerrainComposite, createVirtualTerrainSurfaceComposite}] = await Promise.all([
       readBytes(GARIBALDI_TERRAIN_MANIFEST, signal),
       import('./virtual-terrain-gpu.mjs?v=32f875c9c2e76637'),
-      import('./virtual-terrain-composite.mjs?v=ef8b4f345a25645e'),
+      import('./virtual-terrain-composite.mjs?v=656f55b960fae067'),
     ]);
     const manifest = validateTerrainManifest(JSON.parse(new TextDecoder().decode(bytes)));
     signal.throwIfAborted();

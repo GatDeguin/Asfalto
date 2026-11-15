@@ -1,5 +1,14 @@
 
-body.v6-driving #chevy-hud-telemetry{transform:scale(.86);transform-origin:100% 100%}
-body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:max(var(--chevy-hud-safe-bottom),calc(3.8vh - 16px))}
-@media(max-width:680px){body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 96px)}}
-@media(max-height:500px) and (orientation:landscape){body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:5px}}
+body.v6-driving #chevy-hud-overlay{
+  --chevy-hud-lower-inset:max(var(--chevy-hud-safe-bottom),calc(3.8vh - 16px));
+  --chevy-telemetry-scale:.86;
+}
+body.v6-driving #chevy-hud-telemetry{transform:scale(var(--chevy-telemetry-scale));transform-origin:100% 100%}
+body.v6-driving #chevy-hud-navigation,body.v6-driving #chevy-hud-telemetry{bottom:var(--chevy-hud-lower-inset)}
+/* Leave the windshield and both mirror faces clear in the cockpit. */
+body.v6-driving:not(.an-phone-hud):has(#race-camera-control[data-mode=cockpit]) #chevy-hud-timer{
+  top:auto;
+  bottom:calc(var(--chevy-hud-lower-inset) + var(--chevy-telemetry-width) * var(--chevy-telemetry-scale) / 1.72 + 8px);
+}
+@media(max-width:680px){body.v6-driving #chevy-hud-overlay{--chevy-hud-lower-inset:calc(max(8px,env(safe-area-inset-bottom)) + 96px)}}
+@media(max-height:500px) and (orientation:landscape){body.v6-driving #chevy-hud-overlay{--chevy-hud-lower-inset:5px}}

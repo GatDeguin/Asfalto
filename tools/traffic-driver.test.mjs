@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { THREE as T } from './cinematic-three.mjs?v=1538801f0545ceb6';
 import { createTrafficDriver } from '../src/render/traffic-driver.mjs?v=9229a704a8fd763a';
-import { createDriveTrafficView } from '../src/render/drive-traffic-view.mjs?v=fc2c05d15d3d494a';
-import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs';
+import { createDriveTrafficView } from '../src/render/drive-traffic-view.mjs?v=dd3e7f7ef057b516';
+import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs?v=d5045cbd1690ebd9';
 
 test('the seated driver fits below the roof and changes appearance without replacing the pose', () => {
   const driver = createTrafficDriver(T, {eye:[.48,1.13,.43], wheel:[-.05,.89,.43], roofM:1.39});
@@ -51,7 +51,8 @@ test('the traffic view draws the same poses and body footprint it admits to phys
   const parked={id:1,kind:'parked',model:'chevy',progressM:20,direction:1,side:1,color:'#465565',driver:0,rim:0,tire:0,brake:0};
   const duplicate={...parked,id:2,progressM:80};
   const missing={...parked,id:3,model:'falcon'};
-  await view.prepare([parked,duplicate,missing]);
+  const moving={...parked,kind:'regular',id:4,progressM:41,speedMps:14};
+  await view.prepare([parked,duplicate,missing,moving]);
   const sample=s=>({position:[s,0,0],frame:{tangent:[1,0,0],normal:[0,1,0],left:[0,0,1]},widthM:7});
   const poses=view.stage([parked,duplicate,missing],sample);
   assert.deepEqual(poses.map(p=>p.id),[1]);
@@ -59,12 +60,16 @@ test('the traffic view draws the same poses and body footprint it admits to phys
   assert.ok(Math.abs(poses[0].hull.halfExtents[0]-2.5)<1e-6);
   assert.ok(Math.abs(poses[0].hull.halfExtents[2]-.925)<1e-6,'the mirror does not enlarge the body');
   view.update(poses,20);
-  const model=scene.getObjectByName('DriveTraffic_chevy');
+  const model=scene.getObjectByName('DriveTraffic_chevy_parked');
   assert.equal(model.visible,true);
   assert.deepEqual(model.position.toArray(),poses[0].position);
   assert.deepEqual(model.quaternion.toArray(),poses[0].rotation);
   view.update(view.stage([],sample),20);
   assert.equal(model.visible,false);
+  const pair=view.stage([parked,moving],sample);
+  assert.deepEqual(pair.map(p=>p.id),[1,4]);
+  view.update(pair,20);
+  assert.deepEqual(Object.values(view.diagnostics().runningLightsById).map(light=>light.mode),['position','low']);
 });
 
 test('each shipped traffic model uses its optics and running state, and keeps a far occupant',async t=>{
@@ -72,13 +77,14 @@ test('each shipped traffic model uses its optics and running state, and keeps a 
   const view=createDriveTrafficView(T,{scene,loadGlb:async url=>loadVehicleGeometry(url.split('/').at(-1).split('-lod')[0],2)});
   t.after(()=>view.dispose());
   const models=['chevy','chevrolet_1969','chevy_400_1957','falcon','belair_1957','pickup_3100'];
-  const cars=models.map((model,id)=>({id,model,kind:'regular',direction:1,side:1,progressM:250,
+  const cars=models.map((model,id)=>({id,model,kind:'regular',direction:1,side:1,progressM:250,speedMps:14,
     finish:'daily',color:'#465565',driver:id,passenger:(id+1)%6,rim:0,tire:0,brake:0,poseTimeS:1.2}));
-  await view.prepare(cars);
+  await view.prepare([...cars,...cars.map(car=>({...car,kind:'parked'}))]);
   assert.deepEqual(view.diagnostics().errors,[]);
   const sample=s=>({position:[s,0,0],frame:{tangent:[1,0,0],normal:[0,1,0],left:[0,0,1]},widthM:7,curvaturePerM:.005});
   for(const car of cars) {
     const poses=view.stage([car],sample);
+    assert.deepEqual(poses[0].velocity,[14,0,0]);
     view.update(poses,198,1);
     const night=view.diagnostics(),light=night.runningLights[car.model];
     assert.equal(light.mode,'low',car.model);
@@ -90,7 +96,9 @@ test('each shipped traffic model uses its optics and running state, and keeps a 
     assert.equal(scene.children[0].children.filter(node=>node.isSpotLight&&node.intensity>0).length,2);
     view.update(poses,230,0);
     const day=view.diagnostics();
-    assert.equal(day.runningLights[car.model].mode,'position',car.model);
+    assert.equal(day.runningLights[car.model].mode,'low',car.model);
+    assert.equal(day.runningLights[car.model].positions,true,car.model);
+    assert.equal(scene.children[0].children.filter(node=>node.isSpotLight&&node.intensity>0).length,0);
     assert.equal(day.occupants[car.model].driver.lod,'near',car.model);
     view.update(poses,212,0);
     assert.equal(view.diagnostics().occupants[car.model].driver.lod,'near','the 34–41 m band preserves the current LOD');
@@ -99,7 +107,7 @@ test('each shipped traffic model uses its optics and running state, and keeps a 
     assert.deepEqual(stopped[0].position,[250,.085,4.3]);
     view.update(stopped,243,1);
     const parkedView=view.diagnostics();
-    assert.equal(parkedView.runningLights[car.model].hazards,true,car.model);
-    assert.equal(parkedView.occupants[car.model].driver.parkBlend,1,car.model);
+    assert.equal(parkedView.runningLightsById[parked.id].hazards,true,car.model);
+    assert.equal(parkedView.occupants[car.model+':parked'].driver.parkBlend,1,car.model);
   }
 });

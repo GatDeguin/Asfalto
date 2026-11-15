@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs';
+import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs?v=d5045cbd1690ebd9';
 import {createVehicleDamagePanels} from '../src/render/vehicle-damage-panels.mjs?v=212e81c2b33906ed';
 
 function fixture({cameraCanHideMount = false} = {}) {

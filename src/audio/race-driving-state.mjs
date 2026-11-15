@@ -1,5 +1,41 @@
 const finite=(v,fallback=0)=>Number.isFinite(v)?v:fallback;
 const clamp=(v,a=0,b=1)=>Math.max(a,Math.min(b,finite(v)));
+export const NEARBY_VEHICLE_RANGE_M=160;
+const trafficEngines={
+  chevy:{engineOrder:3,idle:735,rpmPerMps:79},
+  chevrolet_1969:{engineOrder:3,idle:780,rpmPerMps:84},
+  chevy_400_1957:{engineOrder:3,idle:710,rpmPerMps:75},
+  falcon:{engineOrder:3,idle:690,rpmPerMps:82},
+  belair_1957:{engineOrder:4,idle:650,rpmPerMps:67},
+  pickup_3100:{engineOrder:3,idle:690,rpmPerMps:91},
+};
+
+// Traffic follows the route at an authored pace and has no drivetrain solver.
+// Distance and Doppler come from its live pose. RPM and load voice that pace.
+export function sampleTrafficAudio(poses,listener,listenerVelocity,right,out){
+  let count=0;
+  for(const {car,position,velocity} of poses){
+    if(car.kind==='parked')continue;
+    const dx=position[0]-listener.x,dy=position[1]-listener.y,dz=position[2]-listener.z;
+    const distanceM=Math.hypot(dx,dy,dz);
+    if(distanceM>=NEARBY_VEHICLE_RANGE_M)continue;
+    const inverse=distanceM>0?1/distanceM:0;
+    const speed=car.currentSpeedMps??car.speedMps;
+    const engine=trafficEngines[car.model]||trafficEngines.chevy;
+    const source=out[count]||(out[count]={});count++;
+    if(source.eventId!==car.id){source.eventId=car.id;source.id='traffic:'+car.id;}
+    source.model=car.model;source.kind=car.kind;source.engineOrder=engine.engineOrder;
+    source.distanceM=distanceM;
+    source.pan=(dx*right.x+dy*right.y+dz*right.z)*inverse;
+    source.radialSpeedMps=((velocity[0]-listenerVelocity[0])*dx+(velocity[1]-listenerVelocity[1])*dy+
+      (velocity[2]-listenerVelocity[2])*dz)*inverse;
+    source.rpm=engine.idle+speed*engine.rpmPerMps;
+    source.throttle=car.kind==='passing'?.8:.22+clamp(speed/16.67)*.32;
+  }
+  out.length=count;
+  return out;
+}
+
 export function drivingAudioState({snapshot={},controls={},speedMps,wetness=0}={}) {
   const velocity=snapshot.chassis?.linearVelocity||[0,0,0];
   const speed=Math.abs(finite(speedMps,Math.hypot(...velocity.map(v=>finite(v)))));

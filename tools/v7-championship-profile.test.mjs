@@ -1,11 +1,24 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=764f0804702e984d';
+import test from 'node:test';import assert from 'node:assert/strict';import {applyChampionshipProfileAction,createChampionshipProfileStore} from '../src/menu/v7-championship-profile.mjs?v=ff6922be6f879e18';
 const entrant={vehicleId:'chevy',class:'Histórica',configurationHash:'config',configuration:{parts:{brakes:'original'}}};
 const enroll={type:'enroll',id:'run',championshipId:'cinco_horizontes',entrant,at:'2026-09-09T12:00:00Z'};
 const base=()=>({name:'Jugador',parts:{brakes:'original'},championship:{points:99,events:10,wins:3},sheets:[{id:'old'}]});
 function receipt(profile){const r=profile.motorsportV7.runs.run,s=r.schedule[0];return{resultId:'result',runId:r.id,stageId:s.id,attemptId:r.attempt.id,configurationHash:'config',trackId:s.trackId,skyId:s.skyId,weather:s.weather,source:'authoritative-race',qa:false,valid:true,finishedAt:'2026-09-09T12:01:00Z',classification:[{entrantId:'player',status:'finished',checkpointsComplete:true,activeSeconds:100,penaltySeconds:0,officialSeconds:100,finishTick:12000},{entrantId:'falcon',status:'finished',checkpointsComplete:true,activeSeconds:101,penaltySeconds:0,officialSeconds:101,finishTick:12120}]};}
-function fixture(){let profile=base(),disk=JSON.stringify(profile),writes=0,fail=false;const storage={getItemPersistent:()=>disk,setItemPersistent(_k,v){if(fail)throw Error('quota');disk=v;writes++;return v;}},store=createChampionshipProfileStore({storage,getProfile:()=>profile,replaceProfile:p=>profile=p,withLock:fn=>fn()});return{store,get profile(){return profile},get disk(){return disk},set disk(v){disk=v},get writes(){return writes},set fail(v){fail=v}};}
+function fixture(){let profile=base(),disk=JSON.stringify(profile),writes=0,fail=false,drop=false;const storage={getItemPersistent:()=>disk,setItemPersistent(_k,v){if(fail)throw Error('quota');if(!drop){disk=v;writes++;}return v;}},store=createChampionshipProfileStore({storage,getProfile:()=>profile,replaceProfile:p=>profile=p,withLock:fn=>fn()});return{store,get profile(){return profile},get disk(){return disk},set disk(v){disk=v},get writes(){return writes},set fail(v){fail=v},set drop(v){drop=v}};}
 test('enrollment and accepted stage preserve club history and duplicate result is immutable',()=>{const p=base(),a=applyChampionshipProfileAction(p,enroll);assert.equal(p.motorsportV7,undefined);assert.deepEqual(a.championship,p.championship);const b=applyChampionshipProfileAction(a,{type:'begin',runId:'run',attemptId:'a'}),c=applyChampionshipProfileAction(b,{type:'accept',runId:'run',receipt:receipt(b)});assert.equal(c.motorsportV7.revision,3);assert.equal(c.motorsportV7.runs.run.nextStageIndex,1);assert.equal(Object.keys(c.motorsportV7.awards).length,1);assert.equal(applyChampionshipProfileAction(c,{type:'accept',runId:'run',receipt:receipt(b)}),c);});
 test('failed persistence keeps live awards unchanged; retry publishes once',async()=>{const f=fixture();await f.store.transact(enroll);await f.store.transact({type:'begin',runId:'run',attemptId:'a'});const r=receipt(f.profile);f.fail=true;await assert.rejects(f.store.transact({type:'accept',runId:'run',receipt:r}),/quota/);assert.equal(f.profile.motorsportV7.runs.run.nextStageIndex,0);assert.equal(Object.keys(f.profile.motorsportV7.awards).length,0);f.fail=false;await f.store.retryPending();assert.equal(f.profile.motorsportV7.runs.run.nextStageIndex,1);const count=f.writes;await f.store.transact({type:'accept',runId:'run',receipt:r});assert.equal(f.writes,count);assert.ok(Object.isFrozen(f.profile.motorsportV7.runs.run.accepted[0]));});
+test('a silently dropped stage write publishes neither progress nor rewards until retry is verified',async()=>{
+ const f=fixture();await f.store.transact(enroll);await f.store.transact({type:'begin',runId:'run',attemptId:'a'});
+ const finish={type:'accept',runId:'run',receipt:receipt(f.profile)};
+ f.drop=true;
+ await assert.rejects(f.store.transact(finish),/verificar el guardado/);
+ assert.equal(f.profile.motorsportV7.runs.run.nextStageIndex,0);
+ assert.equal(f.profile.workshopTokens,undefined);
+ assert.deepEqual(f.profile.motorsportV7.awards,{});
+ f.drop=false;
+ assert.equal((await f.store.retryPending()).tokensAwarded,5);
+ assert.equal(JSON.parse(f.disk).motorsportV7.runs.run.nextStageIndex,1);
+ assert.equal(f.profile.workshopTokens,5);
+});
 test('memory-only facade and stale revision cannot claim persistent success',async()=>{const f=fixture();const bad=createChampionshipProfileStore({storage:{setItem(){}},getProfile:base,replaceProfile(){throw Error('never');},withLock:fn=>fn()});await assert.rejects(bad.transact(enroll),/persistent/);const remote=base();remote.motorsportV7={schema:'asfalto-motorsport/v1',revision:2,runs:{},awards:{}};f.disk=JSON.stringify(remote);await assert.rejects(f.store.transact(enroll),/revision/);assert.equal(f.writes,0);});
 test('canceled attempt cannot accept a late physical receipt',()=>{let p=applyChampionshipProfileAction(base(),enroll);p=applyChampionshipProfileAction(p,{type:'begin',runId:'run',attemptId:'a'});const r=receipt(p);p=applyChampionshipProfileAction(p,{type:'cancel',runId:'run',attemptId:'a'});assert.throws(()=>applyChampionshipProfileAction(p,{type:'accept',runId:'run',receipt:r}),/attempt/);assert.equal(Object.keys(p.motorsportV7.awards).length,0);});
 test('uncertain disk success is recovered idempotently without publishing duplicate rewards',async()=>{let profile=base(),disk=JSON.stringify(profile),uncertain=false,writes=0;const store=createChampionshipProfileStore({storage:{getItemPersistent:()=>disk,setItemPersistent(_k,v){disk=v;writes++;if(uncertain)throw Error('verification transport failed');return v;}},getProfile:()=>profile,replaceProfile:p=>profile=p,withLock:fn=>fn()});await store.transact(enroll);await store.transact({type:'begin',runId:'run',attemptId:'a'});uncertain=true;await assert.rejects(store.transact({type:'accept',runId:'run',receipt:receipt(profile)}));assert.equal(profile.motorsportV7.runs.run.nextStageIndex,0);const count=writes;uncertain=false;const result=await store.retryPending();assert.equal(result.recovered,true);assert.equal(writes,count);assert.equal(profile.motorsportV7.runs.run.nextStageIndex,1);});
@@ -25,4 +38,23 @@ test('confirmed stage wins and the final cup award fichas once',async()=>{
  assert.ok(f.profile.motorsportV7.awards['cup:cinco_horizontes']);
  const duplicate=await f.store.transact(finalAction);assert.equal(duplicate.changed,false);
  assert.equal(f.profile.workshopTokens,35);
+});
+
+test('all 30 scheduled stages replay from disk with five distinct route trophies and three cups',async()=>{
+ const f=fixture(),series=[['cinco_horizontes',5],['oficio_ruta',10],['gran_nacional',15]];
+ for(const [championshipId,count] of series){
+  const runId=`run-${championshipId}`;await f.store.transact({...enroll,id:runId,championshipId});
+  for(let index=0;index<count;index++){
+   const attemptId=`${championshipId}-attempt-${index}`;await f.store.transact({type:'begin',runId,attemptId});
+   const run=f.profile.motorsportV7.runs[runId],stage=run.schedule[index];
+   const template=receipt({...f.profile,motorsportV7:{runs:{run}}});
+   const result={...template,resultId:`${championshipId}-result-${index}`,runId,stageId:stage.id,trackId:stage.trackId,skyId:stage.skyId,weather:stage.weather};
+   assert.equal((await f.store.transact({type:'accept',runId,receipt:result})).tokensAwarded,index===count-1?15:5);
+  }
+  assert.equal(JSON.parse(f.disk).motorsportV7.runs[runId].accepted.length,count);
+ }
+ const disk=JSON.parse(f.disk);
+ assert.equal(disk.workshopTokens,180);
+ assert.equal(Object.values(disk.motorsportV7.awards).filter(award=>award.kind==='route-trophy').length,5);
+ assert.equal(Object.values(disk.motorsportV7.awards).filter(award=>award.kind==='cup').length,3);
 });

@@ -3,10 +3,10 @@ import {createRoutePrefetch} from '../runtime/route-prefetch.mjs?v=f36bc97c0e56d
 import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=0d60824a2ee0ea4d';
 import { initialMenuState, reduceMenu } from './menu-state.mjs?v=56c7046fc4b119fb';
 import { createIntroSession } from './intro-player.mjs?v=bf81b1e13c8d583d';
-import { mountMenuSections } from './menu-sections.mjs?v=7b68da90e8888410';
-import { mountMenuRefinements } from './menu-refinements.mjs?v=4cd9cf0189437d3c';
+import { mountMenuSections } from './menu-sections.mjs?v=e5b30da74dc69969';
+import { mountMenuRefinements } from './menu-refinements.mjs?v=ad336af8c6fcabd3';
 import { mountWorkshopService } from './workshop-service.mjs?v=5703aaf5208743b2';
-import { fitMenuCar } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { fitMenuCar } from './menu-refinement-state.mjs?v=e963acb8e7d5b097';
 import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 const ICONS = {

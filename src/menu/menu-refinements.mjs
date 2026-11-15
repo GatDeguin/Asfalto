@@ -1,6 +1,6 @@
 import { createRoutePreviewLoader } from './route-preview-loader.mjs?v=6e39a6240f2b3fa2';
-import { selectRoutePhoto } from './v7-route-catalog.mjs?v=4a4037fb3a06754c';
-import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { selectRoutePhoto } from './v7-route-catalog.mjs?v=58e0f1feb42ea4f3';
+import { routePreviewKey, testCollectionSummary } from './menu-refinement-state.mjs?v=e963acb8e7d5b097';
 import { mountDriveRouteSheet } from './drive-route-sheet.mjs?v=8af0468b53b20f46';
 
 export function mountMenuRefinements({root,game}) {

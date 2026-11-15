@@ -1,5 +1,5 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
-import {createVehiclePresentation} from './vehicle-presentation.mjs?v=03174439df407898';
+import {createVehiclePresentation} from './vehicle-presentation.mjs?v=aee43660313b9773';
 import {createWorkshopInspection} from './workshop-inspection.mjs?v=d821e83eed74ae0e';
 import {createWorkshopChassis} from './workshop-chassis.mjs?v=13b36eb3a7d8a770';
 import {createWorkshopEngine} from './workshop-engine.mjs?v=dc843a5408a70fa5';

@@ -35,31 +35,51 @@ function structuralDamage(condition){
 }
 
 // Physics +X is forward. Saved right (+Z) maps to -Z on the authored shell.
+// Each anchor is the inner plane where that direction of crush stops.
 const FIELDS=[
- {center:[-.86,.015,0],radius:[.34,.29,.54],axis:0,depth:.16},
- {center:[.86,.015,0],radius:[.33,.27,.54],axis:0,depth:-.14},
- {center:[-.06,.015,.35],radius:[.74,.27,.20],axis:2,depth:-.137},
- {center:[-.06,.015,-.35],radius:[.74,.27,.20],axis:2,depth:.137},
- {center:[.06,.28,0],radius:[.59,.20,.39],axis:1,depth:-.131},
- {center:[0,-.20,0],radius:[.78,.15,.45],axis:1,depth:.104},
+ {center:[-.86,.015,0],radius:[.34,.29,.54],axis:0,depth:.16,anchor:-.35},
+ {center:[.86,.015,0],radius:[.33,.27,.54],axis:0,depth:-.14,anchor:.35},
+ {center:[-.06,.015,.35],radius:[.74,.27,.20],axis:2,depth:-.137,anchor:.025},
+ {center:[-.06,.015,-.35],radius:[.74,.27,.20],axis:2,depth:.137,anchor:-.025},
+ {center:[.06,.28,0],radius:[.59,.20,.39],axis:1,depth:-.131,anchor:.02},
+ {center:[0,-.20,0],radius:[.78,.15,.45],axis:1,depth:.104,anchor:-.03},
 ];
+const axes=['x','y','z'];
 const crushReach=.28;
-function displacement(x,y,z,damage,out){
+function displacement(x,y,z,damage,out,backing=false){
  out[0]=out[1]=out[2]=0;
- let crease;
  for(let i=0;i<FIELDS.length;i++){
   if(!damage[i])continue;
-  const {center:[cx,cy,cz],radius:[rx,ry,rz],axis,depth}=FIELDS[i];
+  const {center:[cx,cy,cz],radius:[rx,ry,rz],axis,depth,anchor}=FIELDS[i];
+  const crest=axis===0?cx:axis===1?cy:cz;
+  const coord=axis===0?x:axis===1?y:z;
+  const thickness=Math.abs(crest-anchor);
+  const inward=Math.sign(depth);
+  const offset=(crest-coord)*inward;
+  const depthShare=1+Math.min(0,offset)/thickness;
+  if(depthShare<=0)continue;
+  const u=axis===0?Math.max(offset,0)/rx:(x-cx)/rx;
+  const v=axis===1?Math.max(offset,0)/ry:(y-cy)/ry;
+  const w=axis===2?Math.max(offset,0)/rz:(z-cz)/rz;
   const severity=clamp((damage[i]-.4)/.6,0,1,0),crush=severity*severity*(3-2*severity);
   const reach=1+crush*crushReach;
-  const distance=(((x-cx)/rx)**2+((y-cy)/ry)**2+((z-cz)/rz)**2)/(reach*reach);
+  const distance=(u*u+v*v+w*w)/(reach*reach);
   if(distance>=2)continue;
   const weight=1-distance*.5;
-  crease??=.76+.24*Math.cos(x*29+y*38+z*31);
+  const crease=.86+.14*Math.cos((axis===0?0:x-cx)*19+(axis===1?0:y-cy)*24+(axis===2?cz*4:(z-cz)*22));
   const fold=weight**3;
-  out[axis]+=(damage[i]+crush*.85)*depth*fold*crease;
-  if(axis===0){out[1]+=(-.064+.028*Math.sin(x*20+z*6))*crush*fold;out[2]+=.038*Math.sin(y*14+z*4+.8)*crush*fold;}
-  else if(axis===2)out[1]+=(.034*Math.sin(x*12)-.036)*crush*fold;
+  // Compress the outer sheet and its backing about the same inner plane.
+  // Strength that grows faster than depth would let the layers cross.
+  // A small inward allowance covers different sampling of the crease on
+  // laminated panels and on coarse inner meshes.
+  const dent=(damage[i]+crush*.85)*Math.abs(depth)*fold*crease;
+  const clearance=backing?(damage[i]*.038+dent*.26)*weight:0;
+  const normal=Math.min(dent+clearance,thickness*.87);
+  out[axis]+=normal*inward*depthShare;
+  if(axis===0){
+   out[1]+=(-.064+.028*Math.sin(cx*20+z*6))*crush*fold*depthShare;
+   out[2]+=.038*Math.sin(y*14+z*4+.8)*crush*fold*depthShare;
+  }else if(axis===2)out[1]+=(.034*Math.sin(x*12)-.036)*crush*fold*depthShare;
  }
  return out;
 }
@@ -71,13 +91,17 @@ export function createVehicleConditionAppearance(T){
  let condition=normalizeVehicleAppearanceCondition(),damage=structuralDamage(condition),geometryDamage=damage,disposed=false;
  const surfaces=[],p=new T.Vector3(),delta=[0,0,0];
 
+ function restore({mesh,original}){
+  if(mesh.geometry!==original){mesh.geometry.dispose();mesh.geometry=original;}
+ }
+
  function apply(surface){
-  const {mesh,original,matrix,inverse,fields}=surface;
+  const {mesh,original,matrix,inverse,fields,backing}=surface;
   const key=fields.map(i=>geometryDamage[i]).join(',');
   if(key===surface.key)return;
   surface.key=key;
   if(!fields.some(i=>geometryDamage[i]>0)){
-   if(mesh.geometry!==original){mesh.geometry.dispose();mesh.geometry=original;}
+   restore(surface);
    return;
   }
   if(mesh.geometry===original){
@@ -89,7 +113,7 @@ export function createVehicleConditionAppearance(T){
   const {position}=mesh.geometry.attributes;
   for(let i=0;i<position.count;i++){
    p.fromBufferAttribute(original.attributes.position,i).applyMatrix4(matrix);
-   displacement(p.x,p.y,p.z,geometryDamage,delta);
+   displacement(p.x,p.y,p.z,geometryDamage,delta,backing);
    p.set(p.x+delta[0],p.y+delta[1],p.z+delta[2]).applyMatrix4(inverse);
    position.setXYZ(i,p.x,p.y,p.z);
   }
@@ -100,19 +124,22 @@ export function createVehicleConditionAppearance(T){
  }
 
  return {
-  add(mesh,matrix){
+  add(mesh,matrix,{backing=false}={}){
    const original=mesh.geometry;
    if(disposed||!original?.attributes.position)return false;
    if(!original.boundingBox)original.computeBoundingBox();
    const box=original.boundingBox.clone().applyMatrix4(matrix);
-   const fields=FIELDS.flatMap(({center,radius},i)=>{
+   const fields=FIELDS.flatMap(({center,radius,axis,depth,anchor},i)=>{
+    const sign=-Math.sign(depth),normal=axes[axis];
+    if(sign*(box[sign>0?'max':'min'][normal]-anchor)<=0)return [];
     const distance=center.reduce((sum,v,k)=>{
-     const axis=['x','y','z'][k],gap=Math.max(box.min[axis]-v,v-box.max[axis],0);
+     const key=axes[k];
+     const gap=k===axis?Math.max(sign>0?box.min[key]-v:v-box.max[key],0):Math.max(box.min[key]-v,v-box.max[key],0);
      return sum+(gap/radius[k])**2;
     },0);
     return distance<2*(1+crushReach)**2?[i]:[];
    });
-   const surface={mesh,original,matrix:matrix.clone(),inverse:matrix.clone().invert(),fields,key:''};
+   const surface={mesh,original,matrix:matrix.clone(),inverse:matrix.clone().invert(),fields,backing,key:''};
    surfaces.push(surface);
    apply(surface);
    return true;
@@ -129,22 +156,37 @@ export function createVehicleConditionAppearance(T){
    return true;
   },
   visualState:()=>({condition,damage}),
-  originalGeometries:()=>surfaces.filter(s=>s.mesh.geometry!==s.original).map(s=>s.original),
   diagnostics:()=>({condition:structuredClone(condition),surfaces:surfaces.length,deformedGeometries:surfaces.filter(s=>s.mesh.geometry!==s.original).length,disposed}),
-  // The presentation releases both active and original geometry with its GLB.
-  dispose(){if(disposed)return false;disposed=true;surfaces.length=0;return true;},
+  dispose(){if(disposed)return false;disposed=true;surfaces.forEach(restore);surfaces.length=0;return true;},
  };
 }
 
 export function vehicleConditionSurface(materialName='',objectName=''){
  if(/enginebay|^interior|^cabin|_interior|habitaculo|motor|steeringwheel|instrument/i.test(objectName))return null;
  if(/gauge|instrument|mirror|optical_silver/i.test(materialName))return null;
- if(/headlamp|faro|BrakeLens|LampLens|Optica|Window_seals|Burletes/i.test(materialName))return 'mounted';
+ if(/headlamp|faro|BrakeLens|LampLens|Optica|Window_seals|Burletes/i.test(materialName)||/_Glass_.*_Gasket/i.test(objectName))return 'mounted';
  if(/glass|vidrio/i.test(materialName))return 'glass';
  if(/Paint|StripeAtlas|Black_lacquer|SatinStripe|Franjas_Negro|ReferenceIvoryEnamel|RoofIvory/i.test(materialName))return 'paint';
  if(/Underbody|Underframe|Chassis|Chasis|Bastidor|Inner_fender|Panel_gap|Grille|Bumper|Paragolpe|BodyTrim/i.test(materialName+' '+objectName))return 'structure';
  if(/_static_(?:Vehicle|BA57|C3100)_Chrome|^0[12]_(?:Carroceria|Opticas).*_Cromo/i.test(objectName))return 'structure';
  return null;
+}
+
+// These GLB owners supply the opaque layers behind the sheet metal. Backing
+// does not change the original material or participate in the paint shader.
+const BACKING_NODES=[
+ /^chevy_(?:static|CabinSeats)_Vehicle_Interior/,
+ /^05_Habitaculo__(?:03_Cromo|04_Aluminio|05_Acero|08_Burletes|09_Vinilo|10_Pliegues|11_Costuras|12_Alfombra)/,
+ /^Interior__(?:11_Black_leather|13_Carpet)/,
+ /^SS250_(?:Driver|Passenger)(?:(?:Front|Rear)Door|SeatCushion|SeatBack|ToeBoardFloor)/,
+ /^SS250_(?:RearQuarterClosure|RearBench(?:Cushion|Back|Upholstery))/,
+ /^(?:belair_1957|pickup_3100)_static_(?:BA57|C3100)_(?:Upholstery|BedOak|Rubber|Grille_Dark)/,
+ /^(?:belair_1957|pickup_3100)_system_engineBay_/,
+ /^chevrolet_1969_EngineBay_Ancillary__07_Motor_250__/,
+ /^Inner_fender_Liners/,
+];
+export function vehicleConditionBacking(name){
+ return BACKING_NODES.some(pattern=>pattern.test(name));
 }
 
 export const VEHICLE_GLASS_FRACTURE_GLSL=`

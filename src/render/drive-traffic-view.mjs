@@ -5,6 +5,7 @@ import { vehicleAssetVersions } from '../runtime/vehicle-asset-versions.mjs?v=76
 import { createVehicleRefractionPolicy } from './vehicle-glass.mjs?v=d312f5431381b89c';
 import { createTrafficDriver, trafficOccupantSeat } from './traffic-driver.mjs?v=9229a704a8fd763a';
 import { createTrafficLamps } from './traffic-lamps.mjs?v=a2ab692c3e977c61';
+import { trafficVehicleSlot } from '../game/drive-traffic.mjs?v=72634b8baa1ea0df';
 
 function release(model) {
   const materials = new Set();
@@ -94,14 +95,14 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     return {center:bounds.getCenter(new T.Vector3()).toArray(),halfExtents:bounds.getSize(new T.Vector3()).multiplyScalar(.5).toArray()};
   }
 
-  function makeVehicle(model, id, canCarryPassenger) {
+  function makeVehicle(model, id, parked, canCarryPassenger) {
     const def = getVehicleDefinition(id), spec = def.calibration || VEHICLE_VISUAL_CALIBRATION[id];
     const scale = 1 / (def.sourceScale || .4), ground = spec.sourceWheelY * scale - spec.radiusM;
     const group = new T.Group(), wheelViews = [], steeringParts = [];
     const paint = new Set(), materials = new Set(), hidden = [];
     const replacedGlass = new Set();
     let cabinGlass = null, authoredSeats = false;
-    group.name = 'DriveTraffic_' + id;
+    group.name = 'DriveTraffic_' + id + (parked ? '_parked' : '');
     group.visible = false;
     group.userData.asfaltoPrewarm = true;
     model.scale.multiplyScalar(scale);
@@ -215,9 +216,14 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       wheelViews.push({spin, tire, lip, hub, spokes, caliper, radius});
     }
     root.add(group);
-    return {model, group, paint, lamps, driver, passenger, wheelViews, steeringPivot,
+    for (const occupant of [driver,passenger]) occupant?.root.traverse(node => {
+      for (const material of Array.isArray(node.material) ? node.material : [node.material]) {
+        if (material) material.userData.asfaltoPrepareFirstDraw = true;
+      }
+    });
+    return {model, modelId:id, group, paint, lamps, driver, passenger, wheelViews, steeringPivot,
       steeringAxis:steeringNormal, lastId:null, drawn:false, selected:false, occupantLod:'near',
-      pose:{id:null,car:null,position:[0,0,0],rotation:[0,0,0,1],hull,steering:0}};
+      pose:{id:null,car:null,position:[0,0,0],rotation:[0,0,0,1],velocity:[0,0,0],hull,steering:0}};
   }
 
   function applyVariant(entry, car) {
@@ -243,7 +249,13 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     if (signal?.aborted) abort();
     else signal?.addEventListener('abort', abort, {once:true});
     try {
-      for (const id of new Set(plan.map(car => car.model))) {
+      const slots=new Map();
+      for(const car of plan){
+        const key=trafficVehicleSlot(car),existing=slots.get(key);
+        if(existing)existing.passenger ||= car.passenger!=null;
+        else slots.set(key,{id:car.model,parked:car.kind==='parked',passenger:car.passenger!=null});
+      }
+      for (const [key,{id,parked,passenger}] of slots) {
         controller.signal.throwIfAborted();
         const name = id + '-lod2.glb', url = new URL('../../assets/vehicles/' + name, import.meta.url);
         url.searchParams.set('v', vehicleAssetVersions[name]);
@@ -251,7 +263,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
         try {
           model = await loadGlb(url.href, id + ' · tráfico', controller.signal);
           controller.signal.throwIfAborted();
-          entries.set(id, makeVehicle(model, id, plan.some(car=>car.model===id&&car.passenger!=null)));
+          entries.set(key, makeVehicle(model, id, parked, passenger));
         } catch (error) {
           if (model) release(model);
           controller.signal.throwIfAborted();
@@ -267,7 +279,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     poses.length=0;
     for (const entry of entries.values()) entry.selected=false;
     for (const car of cars) {
-      const entry = entries.get(car.model);
+      const entry = entries.get(trafficVehicleSlot(car));
       if (!entry || entry.selected) continue;
       const route=sample(car.progressM),pose=entry.pose;
       x.fromArray(route.frame.tangent).multiplyScalar(-car.direction);
@@ -278,9 +290,12 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
       const half = route.widthM / 2;
       // In the physical chart the stored lateral vector points to the
       // driver's right when facing increasing route progress.
-      const offset = car.kind === 'parked' ? half + (car.parking?.edgeOffsetM ?? .48) : car.side * Math.min(2.2, half * .52);
+      const laneOffset = Math.min(2.2, half * .52);
+      const offset = car.kind === 'parked' ? half + (car.parking?.edgeOffsetM ?? .48) : car.side * laneOffset;
       posePosition.fromArray(route.position).addScaledVector(left.fromArray(route.frame.left), offset);
       posePosition.addScaledVector(y,car.parking?.liftM ?? .03).toArray(pose.position);
+      const pace = car.kind === 'parked' ? 0 : car.currentSpeedMps ?? car.speedMps ?? 0;
+      x.multiplyScalar(-pace).addScaledVector(left, laneOffset * (car.laneChangeRate || 0)).toArray(pose.velocity);
       const curvature=car.kind==='parked'?0:(route.curvaturePerM??sampleCurvature(car.progressM))||0;
       pose.steering=car.kind==='parked' ? 0 : Math.max(-.63,Math.min(.63,-curvature*car.direction*45+(car.laneChangeRate||0)*.25));
       pose.id=car.id;pose.car=car;entry.selected=true;poses.push(pose);
@@ -293,12 +308,12 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
     for(const projector of projectors)projector.intensity=0;
     let beamIndex=0;
     for (const {car,position,rotation,steering} of trafficPoses) {
-      const entry=entries.get(car.model),{group,lamps,wheelViews}=entry;
+      const entry=entries.get(trafficVehicleSlot(car)),{group,lamps,wheelViews}=entry;
       group.position.fromArray(position);
       group.quaternion.fromArray(rotation);
       if (entry.lastId !== car.id) applyVariant(entry, car);
       const distance = Math.abs(car.progressM-playerProgress), parked = car.kind==='parked';
-      const lampMode = !parked && night>.10 ? 'low' : 'position';
+      const lampMode = parked ? 'position' : 'low';
       lamps.update(lampMode,!!car.hazards);
       if (entry.occupantLod==='near' && distance>41) entry.occupantLod='far';
       if (entry.occupantLod==='far' && distance<34) entry.occupantLod='near';
@@ -314,7 +329,7 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
         }
         entry.steeringPivot.quaternion.setFromAxisAngle(entry.steeringAxis,steering);
       }
-      if (lampMode==='low' && distance<105 && beamIndex===0) {
+      if (lampMode==='low' && night>.10 && distance<105 && beamIndex===0) {
         group.updateWorldMatrix(true,false);
         for (const mount of lamps.lowMounts) {
           const light=projectors[beamIndex++];
@@ -335,10 +350,12 @@ export function createDriveTrafficView(T, {scene, loadGlb, prepareTexture = () =
 
   return {
     prepare, stage, update,
-    diagnostics:() => ({models:[...entries.keys()], drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id),
+    diagnostics:() => ({models:[...new Set([...entries.values()].map(e=>e.modelId))],
+      drawn:[...entries].filter(([,e]) => e.drawn).map(([id]) => id),
       drivers:[...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id])=>id),
       passengers:[...entries].filter(([,e])=>e.drawn&&e.passenger?.root.visible).map(([id])=>id),
       runningLights:Object.fromEntries([...entries].filter(([,e])=>e.drawn).map(([id,e])=>[id,e.lamps.diagnostics()])),
+      runningLightsById:Object.fromEntries([...entries.values()].filter(e=>e.drawn).map(e=>[e.pose.id,e.lamps.diagnostics()])),
       occupants:Object.fromEntries([...entries].filter(([,e])=>e.drawn&&e.driver.root.visible).map(([id,e])=>[id,{
         driver:e.driver.diagnostics(),passenger:e.passenger?.root.visible?e.passenger.diagnostics():null,
       }])),

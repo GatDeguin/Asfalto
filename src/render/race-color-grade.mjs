@@ -1,4 +1,4 @@
-import {compileVisiblePass} from './pass-preparation.mjs?v=5e96c4931974c8ab';
+import {compileVisiblePass} from './pass-preparation.mjs?v=ae428e3c331b99ce';
 import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
 import {parseCubeLut,sampleCubeLut} from './cube-lut.mjs?v=e5e0d02b6152ffb9';

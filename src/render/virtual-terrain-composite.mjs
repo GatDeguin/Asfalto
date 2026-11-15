@@ -1,4 +1,4 @@
-import {terrainProjection} from '../tracks/visuals/reference-landscape.mjs?v=ada39f9cec1a7220';
+import {terrainProjection} from '../tracks/visuals/reference-landscape.mjs?v=3be0eeb74f885ef7';
 import {MAX_PAGE_TRIANGLES, TRIANGLE_BYTES, VISIBILITY_OBJECT_SHIFT, VISIBILITY_TRIANGLE_MASK,
   VISTA_OBJECT_SHIFT, VISTA_TRIANGLE_MASK}
   from './virtual-terrain-data.mjs?v=3cb3d32add0067b4';

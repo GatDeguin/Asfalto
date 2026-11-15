@@ -1,16 +1,16 @@
 import { createRoadWetnessField } from './weather-road-wetness.mjs?v=26b6280c060db38d';
 import { createRivalWeatherParticles } from './weather-rival-particles.mjs?v=793f598124d8e593';
 import { createWaterfallEffects } from './weather-waterfalls.mjs?v=e976f102a3dc98ca';
-import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs?v=b65e99f565d1554f';
+import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs?v=a9d9ae943f0dbc4b';
 import { weatherEffectsPolicy, createVehicleEmissionState } from './weather-effects-policy.mjs?v=46da8d8e8b960aa3';
 import { createWeatherLayers } from './weather-layers.mjs?v=3739704650e329ef';
-import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=a71155059f104803';
+import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=d105a6774e26cd4d';
 import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 import { createSkyMatchedFog } from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 import { createWeatherDynamics } from './weather-dynamics.mjs?v=97b633343145b353';
 import { createWeatherWind } from './weather-wind.mjs';
 import { createWeatherLightning } from './weather-lightning.mjs';
-import { createWeatherWindshield } from './weather-windshield.mjs?v=9dc1482154f3463e';
+import { createWeatherWindshield } from './weather-windshield.mjs?v=6e7278185b0b3269';
 import { createVehicleRainSurfaces } from './weather-vehicle-surface.mjs?v=04c089b22a01690a';
 
 /** Visual-only effects in the live renderer's metre-scale scene coordinates. */
@@ -21,6 +21,7 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
   const layers=createWeatherLayers(THREE,root,{renderer}),surfaces=createWeatherSurfaceController(THREE,{roadWetness}),particles=createVehicleWeatherParticles(THREE,root),emissions=createVehicleEmissionState();
   const particleFrame={dt:0,vehicle:null,emission:null,policy:null,velocity:null,wind:null};
   const velocity=new THREE.Vector3(),position=new THREE.Vector3(),fogAlignment=createSkyMatchedFog({THREE,scene,renderer});
+  const acousticPosition=new THREE.Vector3(),acousticRight=new THREE.Vector3();
   const acoustics=createRaceAcousticWorld(THREE),waterfalls=createWaterfallEffects(THREE,root);
   const dynamics=createWeatherDynamics(),wind=createWeatherWind(THREE),lightning=createWeatherLightning(THREE,root,event=>onThunder?.(event));
   let windshield=null,trackRoot=null,trackChildren=[];
@@ -53,7 +54,13 @@ export function createRaceWeatherEffects({THREE,scene,camera,renderer,qualityTie
     roadWetness.update({dt,vehicle,rivals,wetness:policy.wetness,qualityTier});
     if(vehicle.visualRoot&&!bodyRoots.includes(vehicle.visualRoot)){bodyRoots=[vehicle.visualRoot,...bodyRoots.filter(root=>root.userData?.asfaltoCockpitRain)];bodyRain.bind(bodyRoots);}
     bodyRain.update({time,rain:policy.rainy?policy.intensity:0,wetness:policy.wetness});
-    soundscape.rainIntensity=policy.rainy?policy.intensity:0;soundscape.wetness=policy.wetness;soundscape.water=surfaces.waterAudioAt(vehicle.position);soundscape.trackId=trackId;const acoustic=acoustics.sample(vehicle.position,vehicle.quaternion);soundscape.waterfall=acoustic.waterfall;soundscape.forest=acoustic.forest;soundscape.night=['night','moonrise'].includes(environment.skyId);
+    camera.getWorldPosition(acousticPosition);
+    acousticRight.setFromMatrixColumn(camera.matrixWorld,0).normalize();
+    soundscape.rainIntensity=policy.rainy?policy.intensity:0;soundscape.wetness=policy.wetness;
+    soundscape.water=surfaces.waterAudioAt(acousticPosition);soundscape.trackId=trackId;
+    const acoustic=acoustics.sample(acousticPosition,acousticRight);
+    soundscape.waterfall=acoustic.waterfall;soundscape.forest=acoustic.forest;
+    soundscape.nightAmount=environment.dayCycle?.nightFactor??Number(environment.skyId==='night'||environment.skyId==='moonrise');
     const speed=Number(vehicle.speedMps)||0;
     velocity.copy(vehicle.velocity||position.set(0,0,-speed));
     const windVector=wind.uniforms.uAnWindVector.value;

@@ -1,6 +1,6 @@
 import {createOpaqueTransmission} from './opaque-transmission.mjs?v=74188532df76e9a7';
 import {createScreenSpaceTarget, supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=6da4d0d78fe83c9e';
-import {compileVisiblePass} from './pass-preparation.mjs?v=5e96c4931974c8ab';
+import {compileVisiblePass} from './pass-preparation.mjs?v=ae428e3c331b99ce';
 
 // Keep the display target and its color space. The linear intermediate holds
 // the same view at the same resolution, including the opaque depth needed by

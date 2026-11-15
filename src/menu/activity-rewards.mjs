@@ -125,7 +125,9 @@ function applyResult(draft, receipt) {
     if (victory) draft.championship.wins++;
     points = { dominio: 4, competencia: victory ? 12 : 7, coleccion: victory ? 4 : 1 };
     tokens = victory ? RACE_WIN_TOKENS : receipt.mode === 'race' ? 0 : SOLO_COMPETITION_TOKENS;
-    title = receipt.title || 'Competencia'; copy = `${position ? `Puesto ${position}` : 'Actividad completada'} · ${receipt.seconds.toFixed(3)} s · ${receipt.class}.`; type = 'Competencia';
+    const mark = receipt.source === 'speed-trap' ? `${receipt.goalValue.toFixed(1)} km/h`
+      : `${(receipt.source === 'timed-sector' ? receipt.goalValue : receipt.seconds).toFixed(3)} s`;
+    title = receipt.title || 'Competencia'; copy = `${position ? `Puesto ${position}` : 'Actividad completada'} · ${mark} · ${receipt.class}.`; type = 'Competencia';
   }
   const date = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(receipt.finishedAt));
   draft.history = [{ date, title, copy, type }, ...(draft.history || [])].slice(0, 80);

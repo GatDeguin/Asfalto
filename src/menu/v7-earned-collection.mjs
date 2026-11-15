@@ -1,7 +1,7 @@
 import {getRoadTestDisplayItems} from './v7-roadtest-receipts.mjs?v=dcb56ddf32510097';
 import {AWARDS as AWARD_CATALOG} from './v7-championship-catalog.mjs?v=250778123f1c9e7f';
 import {resumeRun,earnedAwards} from './v7-championship-state.mjs?v=54514a098688545f';
-import {getActivityRouteAwards} from './activity-rewards.mjs?v=684503a891f85e8a';
+import {getActivityRouteAwards} from './activity-rewards.mjs?v=7736130247585143';
 export {AWARD_CATALOG};
 /** Read-only reconstruction. Legacy counters, sheets, photos and unvalidated medal IDs are ignored. */
 export function getEarnedDisplayItems(profile){

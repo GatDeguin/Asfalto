@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=04803f511e9003de';
+import { createDriveTrafficPlan, createDriveTraffic } from '../src/game/drive-traffic.mjs?v=72634b8baa1ea0df';
 import {CIRCUIT_IDS,readCircuitSource} from './fixtures/closed-circuit-source.mjs';
 import {createRouteQuery} from '../src/tracks/route-query.mjs';
 import {TRAFFIC_PARKING} from '../src/game/traffic-parking.mjs?v=3006726ba162354a';
@@ -73,4 +73,56 @@ test('the parked car stays on the shoulder and blinks only while the trip advanc
   assert.equal(parked.hazards, true);
   assert.equal(sample(.6).hazards, false);
   assert.equal(sample(0).hazards, false);
+});
+
+test('a car traveling ahead does not suppress independent oncoming traffic', () => {
+  const traffic=createDriveTraffic([
+    {id:0,kind:'regular',model:'chevy',atM:510,direction:1,speedMps:14},
+    {id:1,kind:'regular',model:'belair_1957',atM:1150,direction:-1,speedMps:14},
+  ],{lengthM:5000});
+  for(let s=300;s<935;s+=1.4)traffic.update({progressM:s,speedMps:14,lateralM:1,dt:.1});
+  const cars=traffic.update({progressM:960,speedMps:14,lateralM:1,dt:.1});
+  assert.deepEqual(cars.map(car=>car.direction),[1,-1]);
+  assert.equal(cars[1].side,-1);
+});
+
+test('an unsafe overtake remains pending without hiding a parked car', () => {
+  const traffic=createDriveTraffic([
+    {id:0,kind:'passing',model:'chevy',atM:1000,direction:1,speedMps:33},
+    {id:1,kind:'parked',model:'pickup_3100',atM:1180,direction:1,speedMps:0},
+  ],{lengthM:5000});
+  const sample=(progressM,passingAllowed)=>traffic.update({progressM,speedMps:14,lateralM:1,dt:1,passingAllowed});
+  assert.deepEqual(sample(1000,()=>false).map(car=>car.kind),['parked']);
+  assert.deepEqual(sample(1040,()=>true).map(car=>car.kind),['parked','passing']);
+});
+
+test('the one planned overtake can wait beyond its initial sector for a safe opening', () => {
+  const event={id:0,kind:'passing',model:'chevy',atM:1000,direction:1,speedMps:33};
+  const traffic=createDriveTraffic([event],{lengthM:5000});
+  const sample=(progressM,allowed)=>traffic.update({progressM,speedMps:14,lateralM:1,dt:1,passingAllowed:()=>allowed});
+  assert.equal(sample(1000,false).length,0);
+  assert.equal(sample(1750,true)[0]?.id,0);
+  assert.equal(sample(2500,true).length,0);
+});
+
+test('after overtaking the player, the fast car follows slower traffic in the right lane', () => {
+  const traffic=createDriveTraffic([
+    {id:0,kind:'regular',model:'chevy',atM:510,direction:1,speedMps:14},
+    {id:1,kind:'passing',model:'falcon',atM:1000,direction:1,speedMps:33},
+  ],{lengthM:5000});
+  let closest=Infinity;
+  for(let s=300;s<1750;s+=1.4){
+    const [regular,fast]=traffic.update({progressM:s,speedMps:14,lateralM:1,dt:.1});
+    if(regular&&fast?.side>.6&&fast.progressM>s)closest=Math.min(closest,regular.progressM-fast.progressM);
+  }
+  assert.ok(closest>10&&closest<25, String(closest));
+});
+
+test('a parked car has its own visual slot when a moving car shares its model', () => {
+  const traffic=createDriveTraffic([
+    {id:0,kind:'regular',model:'chevy',atM:510,direction:1,speedMps:14},
+    {id:1,kind:'parked',model:'chevy',atM:1150,direction:1,speedMps:0},
+  ],{lengthM:5000});
+  for(let s=300;s<950;s+=1.4)traffic.update({progressM:s,speedMps:14,lateralM:1,dt:.1});
+  assert.deepEqual(traffic.update({progressM:960,speedMps:14,lateralM:1,dt:.1}).map(car=>car.kind),['regular','parked']);
 });

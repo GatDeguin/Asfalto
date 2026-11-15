@@ -1,4 +1,4 @@
-import { terrainHeightSampler } from './reference-landscape.mjs?v=ada39f9cec1a7220';
+import { terrainHeightSampler } from './reference-landscape.mjs?v=3be0eeb74f885ef7';
 import { addRoadSigns, roadSignYaw } from './road-signs.mjs?v=6d823d9e48d15630';
 
 // Stations measured from the signed LOD0 exports. At 6209 m the original

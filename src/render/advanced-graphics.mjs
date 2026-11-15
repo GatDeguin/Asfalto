@@ -1,4 +1,4 @@
-import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=5e96c4931974c8ab';
+import {compileVisiblePass,registerRenderPreparation,disposeRenderPreparation,isRenderPreparationPending} from './pass-preparation.mjs?v=ae428e3c331b99ce';
 import {createWorkshopRenderBudget} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {createTextureFiltering} from './texture-filtering.mjs?v=dd00a75cbd9c1e71';
 import {createTrackPerformanceGovernor,maximumTierForGraphicsQuality} from '../performance/track-performance-governor.mjs?v=5c4adbaec0014be9';
@@ -7,10 +7,10 @@ import {createAdvancedMaterials}from'./advanced-materials.mjs?v=9c4d214f51c3abfd
 import {createPivotPainter}from'./pivot-painter.mjs?v=51fc8374f2d1160e';
 import {createDistanceFieldOcclusion}from'./distance-field-occlusion.mjs?v=cd25059b36d94dd7';
 import {createPhysicalAtmosphere}from'./physical-atmosphere.mjs?v=85d450c23e36764c';
-import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=719dd8a188fd7a98';
+import {createScreenSpaceLighting,screenLightingPolicy}from'./screen-space-lighting.mjs?v=e22f3f813a4b93b8';
 import {readAdvancedGraphics,normalizeAdvancedGraphics,effectiveGraphicsQuality}from'./advanced-graphics-settings.mjs?v=b9fb8b1ea3c247d8';
 import {setSurfaceReliefPDO,surfaceReliefDiagnostics}from'../tracks/visuals/surface-relief.mjs?v=affc021b947e883e';
-import {createSpatialAntialias} from './spatial-antialias.mjs?v=91c748367cbfcf06';
+import {createSpatialAntialias} from './spatial-antialias.mjs?v=6f165861b4d33144';
 import {createRenderCapabilities} from './render-capabilities.mjs?v=db7746f3deffab55';
 export function createAdvancedGraphics(T,{renderer,scene,camera,scope='world',getEnvironment=()=>({}),getQuality=null,getMaximumQuality=()=> 'auto',getQualityDiagnostics=()=>null,allowPivotPainter=true,phone=false,samples=2,onRenderStage=null}={}){
  registerRenderPreparation(renderer,T);

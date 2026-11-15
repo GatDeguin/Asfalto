@@ -46,7 +46,7 @@ export function createRacePauseMenu({
         <button type="button" class="an-pause-button an-pause-primary" data-pause-action="resume"><span class="an-pause-symbol" aria-hidden="true">▷</span><span>Continuar</span><kbd>ESC</kbd></button>
         <button type="button" class="an-pause-button" data-pause-action="restart"><span class="an-pause-symbol" aria-hidden="true">↻</span><span>Reiniciar carrera</span></button>
         <button type="button" class="an-pause-button" data-pause-action="settings"><span class="an-pause-symbol" aria-hidden="true">⚙</span><span>Ajustes</span></button>
-        <button type="button" class="an-pause-button" data-pause-action="workshop"><span class="an-pause-symbol" aria-hidden="true">↶</span><span>Volver al taller</span></button>
+        <button type="button" class="an-pause-button" data-pause-action="workshop"><span class="an-pause-symbol" aria-hidden="true">↶</span><span data-pause-exit-label>Volver al taller</span></button>
       </nav>
       <section class="an-pause-confirm" hidden>
         <h2 id="${id}-confirm-title">¿Reiniciar la carrera?</h2><p>Vas a comenzar esta sesión de nuevo desde la salida.</p>
@@ -103,7 +103,7 @@ export function createRacePauseMenu({
     else { view = next.view; renderView(); }
     if (next.action) callbacks[next.action]();
   }
-  function show({ title = 'Pausa', sessionLabel = 'Sesión en curso', detail: copy = '', returnFocus = null } = {}) {
+  function show({ title = 'Pausa', sessionLabel = 'Sesión en curso', detail: copy = '', exitLabel = 'Volver al taller', returnFocus = null } = {}) {
     if (disposed) return false;
     if (view === 'closed') {
       previousFocus = doc.activeElement;
@@ -117,6 +117,7 @@ export function createRacePauseMenu({
     heading.textContent = String(title || 'Pausa');
     session.textContent = String(sessionLabel || 'Sesión en curso');
     detail.textContent = String(copy || ''); detail.hidden = !copy;
+    button('workshop').querySelector('[data-pause-exit-label]').textContent = exitLabel;
     view = 'menu'; overlay.hidden = false; renderView();
     return true;
   }

@@ -1,5 +1,5 @@
 import {getVehicleDefinition} from './vehicle-catalog.mjs?v=d34c237e4bf2bab0';
-import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=ce951fdc15ca9bae';
+import {mirrorCameraPoses} from './cockpit-mirrors.mjs?v=72437f4635dc9ee1';
 
 function bind400DriverLens(T, vehicleRoot, anchor, feed) {
  const lens=vehicleRoot.getObjectByName('Details__26_Mirror_optical_silver')?.getObjectByProperty('isMesh',true);

@@ -52,8 +52,13 @@ function scheduleProgramPoll(renderer,state){
    const [program,entry]=state.pending.entries().next().value;
    state.pending.delete(program);
    try{
-    if(!program.program||program.isReady()){
-     state.ready.add(program);entry.resolve();
+    if(!program.program){entry.resolve();}
+    else if(state.ready.has(program)||program.isReady()){
+     state.ready.add(program);
+     // Three r180 defers diagnostics, uniforms and attributes until first use.
+     // Prepare opted-in materials within this same budget, before their draw.
+     if(entry.prepareFirstDraw){program.getUniforms();state.prepared.add(program);}
+     entry.resolve();
     }else state.pending.set(program,entry);
    }catch(error){entry.reject(error);}
    // A native query can itself block. Yield before querying the next program.
@@ -72,28 +77,31 @@ export function compileRendererPrograms(renderer,view,camera,scene){
  const programs=renderer.info.programs;
  let state=programPolls.get(renderer);
  if(state?.programs!==programs){
-  state={programs,gl,pending:new Map(),ready:new WeakSet(),timer:null};
+  state={programs,gl,pending:new Map(),ready:new WeakSet(),prepared:new WeakSet(),timer:null};
   programPolls.set(renderer,state);
  }
  // Three r180 caches each material's variants here, including both sides of
  // translucent meshes and variants reused by another pass. Capture the actual
  // programs synchronously, before another compile can change currentProgram.
- const dependencies=new Set();
+ const dependencies=new Map();
  for(const material of materials){
   const {programs:variants,currentProgram}=renderer.properties.get(material);
-  if(variants)for(const program of variants.values())dependencies.add(program);
-  else if(currentProgram)dependencies.add(currentProgram);
+  const prepareFirstDraw=material.userData?.asfaltoPrepareFirstDraw===true;
+  for(const program of variants?.values()||(currentProgram?[currentProgram]:[])){
+   dependencies.set(program,prepareFirstDraw||dependencies.get(program)===true);
+  }
  }
  const waits=[];
- for(const program of dependencies){
-  if(!program.program||state.ready.has(program))continue;
+ for(const [program,requested] of dependencies){
+  const prepareFirstDraw=requested&&!state.prepared.has(program);
+  if(!program.program||(!prepareFirstDraw&&state.ready.has(program)))continue;
   let entry=state.pending.get(program);
   if(!entry){
    let resolve,reject;
    const promise=new Promise((accept,fail)=>{resolve=accept;reject=fail;});
-   entry={promise,resolve,reject};
+   entry={promise,resolve,reject,prepareFirstDraw};
    state.pending.set(program,entry);
-  }
+  }else entry.prepareFirstDraw ||= prepareFirstDraw;
   waits.push(entry.promise);
  }
  scheduleProgramPoll(renderer,state);

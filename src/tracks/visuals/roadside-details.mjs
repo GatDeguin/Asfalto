@@ -1,5 +1,5 @@
 import {configureSurfaceRelief,prepareSurfaceReliefGeometry,installSurfaceRelief} from './surface-relief.mjs?v=affc021b947e883e';
-import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=24bdf88876427050';
+import {installSharedInstanceWindow} from '../seam-copy-factory.mjs?v=998dbd3ed43b3655';
 import { createRegionalTreeTemplates, createCrownTexture, applyCrownDistanceTransition, applyPhotographicLeafCutout } from './regional-forest.mjs?v=76e2be9ca5367f98';
 // Blender-authored meshes in local metres, with procedural tree stems at the roadside.
 const ASSETS = new URL('../../../assets/tracks/visual-correction/', import.meta.url);

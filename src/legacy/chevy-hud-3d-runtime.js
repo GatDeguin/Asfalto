@@ -345,7 +345,7 @@ async function boot(){
     await new Promise((resolve,reject)=>{let started=null;const poll=()=>{if(window.__cockpit?.ready){resolve();return}if(window.__cockpit?.error){reject(new Error(window.__cockpit.error));return}if(window.__asfaltoV7Startup?.diagnostics().phase==='prepared'){started??=performance.now();if(performance.now()-started>180000){reject(new Error('El cockpit no terminó de prepararse para el HUD.'));return}}setTimeout(poll,100);};poll();});
     const {detectDeviceProfile}=await import(new URL('src/performance/mobile-device-profile.mjs?v=f090574cb3e87b2d',document.baseURI));
     if(detectDeviceProfile().phone){
-      const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=b0f3ad3db634cf5d',document.baseURI));
+      const {createMobileHud}=await import(new URL('src/ui/mobile-hud.mjs?v=d6fc9f7622f1f52c',document.baseURI));
       renderer=createMobileHud({update:updateHudState});publicState.renderer.contextCount=0;publicState.renderer.backend='dom-mobile';publicState.renderer.ready=true;
     }else{
       const T=await waitForThree();renderer=new SharedHudRenderer(T);await renderer.initialize();updateHudState(performance.now());

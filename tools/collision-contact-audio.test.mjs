@@ -4,8 +4,8 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {THREE as T} from './cinematic-three.mjs';
 import {createRegionalTreeTemplates} from '../src/tracks/visuals/regional-forest.mjs?v=76e2be9ca5367f98';
-import {createIguazuInstanceBatches} from '../src/tracks/visuals/iguazu-landscape.mjs?v=b2a461c67d1aca74';
-import {installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=24bdf88876427050';
+import {createIguazuInstanceBatches} from '../src/tracks/visuals/iguazu-landscape.mjs?v=1a5ea620c59c272f';
+import {installSharedInstanceWindow} from '../src/tracks/seam-copy-factory.mjs?v=998dbd3ed43b3655';
 
 const context=vm.createContext({console,WebAssembly,TextDecoder,TextEncoder,atob,btoa,performance});
 for(const name of ['rapier','vehicle-model','physics-runtime','falcon-runtime','integration-runtime']) {

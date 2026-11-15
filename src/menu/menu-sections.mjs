@@ -1,6 +1,6 @@
 import { bindSelectedVehicleLabels } from './selected-vehicle-labels.mjs?v=0d60824a2ee0ea4d';
-import { summarizeRoadTestRecords } from './roadtest-records.mjs?v=680bf8ce08be7252';
-import { testPresentationState } from './menu-refinement-state.mjs?v=063b3cd332035f9f';
+import { formatRoadTestRecord, summarizeRoadTestRecords } from './roadtest-records.mjs?v=bc0cb24679839530';
+import { testPresentationState } from './menu-refinement-state.mjs?v=e963acb8e7d5b097';
 import { createMotionScope } from './semantic-motion.mjs?v=2250587a2275cf00';
 
 const scene = file => new URL(`../../assets/menu/game-captures/${file}`, import.meta.url).href;
@@ -23,14 +23,6 @@ const testImages={
 };
 const TEST_ORDER = ['accel100', 'm500', 'm1000', 'brake100', 'vmax', 'recovery', 'accel160', 'slalom', 'turn', 'wet', 'speedo', 'consumption'];
 const TEST_KIND = { accel100:'Aceleración', accel160:'Aceleración', m500:'Aceleración', m1000:'Aceleración', brake100:'Frenado', vmax:'Velocidad', recovery:'En cuarta', slalom:'Precisión', turn:'Maniobra', wet:'Adherencia', speedo:'Instrumental', consumption:'Consumo' };
-const recordLabel = result => {
-  if (!result) return 'Sin marca';
-  if (/^\d+:/.test(String(result.main))) {
-    const [minutes, seconds] = String(result.main).split(':').map(Number);
-    return `${(minutes * 60 + seconds).toFixed(2)} s`;
-  }
-  return `${result.main} ${result.testId === 'vmax' || result.testId === 'speedo' ? 'km/h' : result.testId === 'slalom' ? 'cambios' : result.testId === 'consumption' ? 'L/100 km' : 'm'}`;
-};
 
 // Reparent the original controls so their listeners and the V6 event contract survive.
 export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents = globalThis }) {
@@ -131,7 +123,7 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
       const result = testPresentationState({sheets:profile.sheets,testId:card.dataset.testId,vehicleClass:currentClass,locked:card.classList.contains('v6-locked'),selected:card.getAttribute('aria-selected')==='true'});
       card.dataset.testProgress=result.progress;card.dataset.testAvailable=String(result.available);
       card.querySelector('.an-test-status').textContent=result.label;
-      card.querySelector('.an-test-row-record b').textContent = recordLabel(result.best);
+      card.querySelector('.an-test-row-record b').textContent = formatRoadTestRecord(result.best);
       card.querySelector('.an-test-row-record').classList.toggle('an-no-record', !result.best);
       card.querySelector('.an-test-row-record small').textContent = card.classList.contains('v6-locked') ? card.querySelector('.v6-reward').textContent : 'Mejor marca';
       card.setAttribute('aria-pressed', String(card.getAttribute('aria-selected') === 'true'));
@@ -143,7 +135,7 @@ export function mountMenuSections({ root, game, svg, selectMode, vehicleEvents =
     const result = summarizeRoadTestRecords(profile.sheets, display.dataset.testId, currentClass);
     text('#an-test-title', display.querySelector('h3').textContent);
     text('#an-test-objective', display.querySelector('p').textContent);
-    text('#an-test-record', recordLabel(result.best));
+    text('#an-test-record', formatRoadTestRecord(result.best));
     text('#an-test-attempts', `${currentClass} · ${result.attempts ? `${result.validAttempts} válidas de ${result.attempts} intentos` : 'Todavía sin intentos'}`);
     const chips = [...display.querySelectorAll('.v6-chip')].map(chip => chip.textContent);
     const route = root.querySelector('#v6-drive-route').selectedOptions[0]?.textContent || 'Dos Lagos';
