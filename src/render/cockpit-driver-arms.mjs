@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=aa21829bf4f954da';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=c172d108037bb90d';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -8,6 +8,12 @@ const FULL_REGRIP = 106 * DEG;
 const UPPER_GRIP = 40 * DEG;
 const LOWER_GRIP = 146 * DEG;
 const RIM_CLOSURE = .17;
+// Segment lengths in the same reference scale as the authored hand.
+const UPPER_ARM = .320;
+const FOREARM = .260;
+const reachAtBend = degrees => Math.sqrt(UPPER_ARM ** 2 + FOREARM ** 2 + 2 * UPPER_ARM * FOREARM * Math.cos(degrees * DEG));
+const REACH_SHORT = reachAtBend(138);
+const REACH_LONG = reachAtBend(24);
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const wrap = (n, cycle) => ((n % cycle) + cycle) % cycle;
 const ease = t => t * t * (3 - 2 * t);
@@ -60,7 +66,7 @@ export function createCockpitDriverArms(T) {
   const center = new T.Vector3(), wheelHand = new T.Vector3(), wheelNormal = new T.Vector3(), radial = new T.Vector3();
   const tangent = new T.Vector3(), anchor = new T.Vector3(), gearAnchor = new T.Vector3(0, .075, -.028);
   const knobGrip = new T.Vector3(), aim = new T.Vector3(), shiftAim = new T.Vector3();
-  const direction = new T.Vector3(), pole = new T.Vector3();
+  const direction = new T.Vector3(), pole = new T.Vector3(), swivel = new T.Vector3(), forearm = new T.Vector3();
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
   const wristOffset = new T.Vector3(), wristDirection = new T.Vector3(), cuffAim = new T.Vector3();
   let mount = null, fit, model = null, disposed = false;
@@ -181,13 +187,24 @@ export function createCockpitDriverArms(T) {
       arm.shoulder.copy(center).addScaledVector(back, scale * (.49 + settings.shoulderReachCm / 100))
         .addScaledVector(up, scale * (.062 + settings.shoulderHeightCm / 100)).addScaledVector(right, scale * .151 * side);
       direction.subVectors(arm.wrist, arm.shoulder);
-      const distance = Math.max(.00001, direction.length());
+      const requestedDistance = direction.length();
       direction.normalize();
-      const armLength = Math.max(scale * .56, distance + scale * .012);
-      const upper = armLength * .52, lower = armLength * .48;
-      const along = clamp((upper * upper - lower * lower + distance * distance) / (2 * distance), -upper, upper);
-      pole.copy(up).negate().addScaledVector(right, side * .18).addScaledVector(direction, -pole.dot(direction)).normalize();
+      if (requestedDistance < 1e-5) direction.copy(back).negate();
+      const distance = clamp(requestedDistance, scale * REACH_SHORT, scale * REACH_LONG);
+      // Give extreme seat adjustments some shoulder travel. Bone lengths and
+      // the contact at the wheel or knob come from the same rig at every frame.
+      arm.shoulder.copy(arm.wrist).addScaledVector(direction, -distance);
+      const upper = scale * UPPER_ARM, lower = scale * FOREARM;
+      const along = (upper * upper - lower * lower + distance * distance) / (2 * distance);
+      pole.copy(up).negate().addScaledVector(right, side * .32).addScaledVector(direction, -pole.dot(direction)).normalize();
+      if (pole.lengthSq() < .5) pole.copy(right).multiplyScalar(side).addScaledVector(direction, -side * right.dot(direction)).normalize();
+      swivel.crossVectors(direction, pole);
+      forearm.copy(cuffAim).addScaledVector(palmBack, -.15).normalize();
+      // Swivel within the downward elbow cone toward the wrist, without a
+      // discontinuous flip when the steering changes direction.
+      pole.addScaledVector(swivel, clamp(-2.15 * forearm.dot(swivel), -1.1, 1.1)).normalize();
       arm.elbow.copy(arm.shoulder).addScaledVector(direction, along).addScaledVector(pole, Math.sqrt(Math.max(0, upper * upper - along * along)));
+      arm.wristAlignment = forearm.subVectors(arm.wrist, arm.elbow).normalize().dot(cuffAim);
       handMesh.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
       handMesh.scale.set(-side * scale, scale, scale);
       const targets = handMesh.morphTargetInfluences;
@@ -202,6 +219,8 @@ export function createCockpitDriverArms(T) {
       visible: model?.root.visible === true, fitted: !!fit, shiftBlend,
       hands: model?.arms.map(arm => arm.wrist.toArray()) ?? [],
       shoulders: model?.arms.map(arm => arm.shoulder.toArray()) ?? [],
+      elbows: model?.arms.map(arm => arm.elbow.toArray()) ?? [],
+      wristAngles: model?.arms.map(arm => Math.acos(clamp(arm.wristAlignment, -1, 1)) / DEG) ?? [],
       grips: model?.arms.map(arm => arm.grip.toArray()) ?? [],
       cuffs: model?.arms.map(arm => arm.sleeve.cuff.toArray()) ?? [],
       contacts: model?.arms.map(arm => arm.contact) ?? [],

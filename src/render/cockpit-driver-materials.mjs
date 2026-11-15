@@ -1,4 +1,4 @@
-import { COCKPIT_SKIN_MAP } from './cockpit-hand-surface.mjs?v=9c2f96e296aad10e';
+import { COCKPIT_SKIN_MAP } from './cockpit-hand-surface.mjs?v=d06635fc63b32480';
 
 const saturate = value => Math.max(0, Math.min(1, value));
 const lerp = (a, b, t) => a + (b - a) * t;

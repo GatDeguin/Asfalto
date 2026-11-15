@@ -5,6 +5,7 @@ const WIDTH = SIDES + 1;
 const bell = (distance, width) => Math.exp(-Math.pow(distance / width, 2));
 const lerp = (a, b, t) => a + (b - a) * t;
 const saturate = value => Math.max(0, Math.min(1, value));
+const elbowTaper = RINGS.map(t => .13 * bell(t - .49, .11));
 const around = Array.from({ length: WIDTH }, (_, i) => {
   const theta = (i % SIDES) / SIDES * Math.PI * 2;
   return { x: Math.cos(theta), y: Math.sin(theta), theta };
@@ -19,6 +20,7 @@ function buildSleeveGeometry(T, side) {
   geometry.setAttribute('normal', normals);
   for (const [i, t] of RINGS.entries()) {
     const radius = t < .52 ? lerp(.062, .043, t / .52) : lerp(.043, .029, (t - .52) / .48);
+    const forearmMass = bell(t - .642, .097), forearmTaper = bell(t - .712, .132);
     const hem = saturate((t - .908) / .018);
     const lip = .0016 * hem + .00145 * bell(t - .924, .011) + .00165 * bell(t - .979, .011)
       - .0011 * saturate((t - .988) / .012);
@@ -28,7 +30,8 @@ function buildSleeveGeometry(T, side) {
       const turn = Math.sin((t - .42) * 82 + 1.4 * Math.sin(theta)) * bell(t - .508, .115);
       const sleeveEnd = Math.cos((t - .76) * 74 - .9 * Math.cos(theta)) * bell(t - .840, .066);
       profiles.push({
-        x, y: y * lerp(.86, .79, hem), radius: radius + drape * (1 - hem) + lip,
+        x, y: y * lerp(.86, .79, hem),
+        radius: radius + drape * (1 - hem) + lip + .0048 * forearmMass + .0021 * forearmTaper * x ** 2,
         fold: .0054 * turn, wristFold: .0022 * sleeveEnd,
       });
       const shade = .93 + .055 * Math.cos(theta * 2 + t * 15) - hem * .044;
@@ -98,8 +101,8 @@ export function createCockpitDriverSleeve(T, material, side) {
       cuffAxis.copy(aim);
       const gathering = Math.sqrt(Math.max(0, .5 * (1 - cuffAxis.dot(lower))));
       cuff.copy(wrist).addScaledVector(cuffAxis, -.006 * scale);
-      bendIn.lerpVectors(shoulder, elbow, .76);
-      bendOut.lerpVectors(elbow, wrist, .24);
+      bendIn.lerpVectors(shoulder, elbow, .66);
+      bendOut.lerpVectors(elbow, wrist, .33);
       nearElbow.copy(bendOut).addScaledVector(lower, lowerLength * .232);
       nearWrist.copy(cuff).addScaledVector(cuffAxis, -.048 * scale);
 
@@ -116,7 +119,8 @@ export function createCockpitDriverSleeve(T, material, side) {
         for (let j = 0; j < WIDTH; j++) {
           const i = ring * WIDTH + j, { x, y, radius, fold, wristFold } = profiles[i];
           const pinch = saturate(.54 + .71 * (x * insideX + y * insideY));
-          const r = scale * (radius + fold * compression * (.15 + .85 * pinch ** 2) + wristFold * gathering);
+          const r = scale * (radius + fold * compression * (.15 + .85 * pinch ** 2) + wristFold * gathering)
+            * (1 - elbowTaper[ring] * compression * pinch);
           const rx = x * r, ry = y * r;
           positions.setXYZ(i, center.x + lateral.x * rx + normal.x * ry,
             center.y + lateral.y * rx + normal.y * ry, center.z + lateral.z * rx + normal.z * ry);

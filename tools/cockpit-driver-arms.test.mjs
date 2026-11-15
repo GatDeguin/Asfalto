@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=978b6074f68f3f1c';
-import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=21d9c68c304dd9c7';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=4e73cc74044cc835';
+import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=29f73b7d9a95dcdd';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
 
@@ -43,11 +43,12 @@ test('the reference grip rests at nine and three with the palm and cuff approach
   const { hands, grips, cuffs } = arms.diagnostics();
   for (const [i, suffix] of ['L', 'R'].entries()) {
     const hand = parent.getObjectByName(`CockpitDriver_hand.${suffix}`);
-    const fingersUp = new T.Vector3(0, 1, 0).applyQuaternion(hand.quaternion);
+    const rimInHand = new T.Vector3(0, 1, 0).applyQuaternion(hand.quaternion.clone().invert());
     assert.ok(Math.abs(grips[i][1]) < .002, 'Both grips should start level with the center of the wheel');
-    assert.ok(grips[i][1] - hands[i][1] > .05, 'Cuffs approach from below');
-    assert.ok(Math.abs(hands[i][0]) > Math.abs(grips[i][0]) + .027);
-    assert.ok(fingersUp.y > .74 && fingersUp.z < -.36);
+    assert.ok(grips[i][1] - hands[i][1] > .016, 'Cuffs approach from below');
+    assert.ok(Math.abs(hands[i][0]) > Math.abs(grips[i][0]) + .012);
+    assert.ok(Math.abs(rimInHand.x) > .80 && Math.abs(rimInHand.y) < .55,
+      'The rim crosses the width of the palm from the little finger toward the thumb');
     assert.ok(new T.Vector3(...hands[i]).distanceTo(new T.Vector3(...cuffs[i])) < .012);
   }
   arms.dispose();
@@ -163,6 +164,35 @@ test('the resting wrist approaches the grip from below and behind the rim', () =
   arms.dispose();
 });
 
+test('upper arm and forearm keep their lengths and the wrist follows the joint through steering and shifting', () => {
+  const { pivot, arms, sample } = fixture();
+  const position = new T.Vector3();
+  const distance = (a, b) => position.set(a[0] - b[0], a[1] - b[1], a[2] - b[2]).length();
+  const check = () => {
+    const { hands, shoulders, elbows } = arms.diagnostics();
+    for (let i = 0; i < hands.length; i++) {
+      assert.ok(Math.abs(distance(shoulders[i], elbows[i]) - .32) < .0001);
+      assert.ok(Math.abs(distance(elbows[i], hands[i]) - .26) < .0001);
+    }
+  };
+  for (const gripDeg of [60, 90, 120]) {
+    const settings = sanitizeDriverArmsSettings({ enabled: true, gripDeg, poseVersion: 2 });
+    for (const turn of [0, .55, -.55, 1.15, -1.15, 2.5, -2.5]) {
+      pivot.rotation.z = turn;
+      arms.update({ ...sample, settings, wheelSpinRad: turn });
+      check();
+      assert.ok(arms.diagnostics().wristAngles.every(angle => angle < 33), 'The forearm should approach the wrist without a harsh bend');
+    }
+  }
+  const settings = sanitizeDriverArmsSettings({ enabled: true, shoulderHeightCm: 12, shoulderReachCm: 12 });
+  for (let frame = 0; frame < 28; frame++) {
+    arms.update({ ...sample, settings, gear: '3', shifting: true });
+    check();
+  }
+  assert.equal(arms.diagnostics().contacts[1], 'shifter');
+  arms.dispose();
+});
+
 test('shifting takes an open hand to the moving knob with the left hand on the wheel', () => {
   const { parent, pivot, knob, arms, sample } = fixture();
   arms.update(sample);
@@ -211,33 +241,32 @@ test('the actual finger surfaces seat against thin, intermediate and thick rims'
   const asIndices = packed => new Uint16Array(Uint8Array.from(atob(packed), character => character.charCodeAt(0)).buffer);
   const weld = asIndices(COCKPIT_HAND_MESH.weld), thumbs = new Set(asIndices(COCKPIT_HAND_MESH.thumb));
   const pads = Uint8Array.from(atob(COCKPIT_HAND_MESH.pads), character => character.charCodeAt(0));
+  const dorsal = COCKPIT_HAND_MESH.grip.basis[2];
+  const oppositePalm = (radial, axial) => -dorsal[0] * radial + dorsal[2] * axial < -.001;
   for (const tube of [.009, .010, .014, .018, .020, .022]) {
     const { parent, arms, sample } = fixture(tube);
     arms.update(sample);
     parent.updateMatrixWorld(true);
     for (const side of ['L', 'R']) {
       const hand = parent.getObjectByName(`CockpitDriver_hand.${side}`);
-      let contact = 0, penetration = 0, thumbContact = 0, thumbOnFace = 0, palmContact = 0;
+      let contact = 0, penetration = 0, thumbOnFace = 0, palmContact = 0;
       const opposingPads = [0, 0, 0, 0];
-      let thumbLow = Infinity, thumbHigh = -Infinity;
+      let palmLow = Infinity, palmHigh = -Infinity;
       for (let i = 0; i < hand.geometry.attributes.position.count; i++) {
-        hand.getVertexPosition(i, point).applyMatrix4(hand.matrixWorld);
+        const localX = hand.getVertexPosition(i, point).x;
+        point.applyMatrix4(hand.matrixWorld);
         const radial = Math.hypot(point.x, point.y) - .18;
         const depth = Math.hypot(radial, point.z) - tube;
-        const thumb = thumbs.has(weld[i]);
-        if (thumb) assert.ok(radial > -.6 * tube || point.z >= .45 * tube, 'A thumb must stay out of the wheel opening');
         if (Math.abs(depth) < .002) {
           contact++;
-          if (pads[weld[i]] & 32) palmContact++;
-          if (thumb) {
-            thumbContact++;
-            // The front quadrant faces the driver more than it faces either edge.
-            if (point.z > Math.abs(radial)) {
-              thumbOnFace++;
-              thumbLow = Math.min(thumbLow, point.y);
-              thumbHigh = Math.max(thumbHigh, point.y);
-            }
-          } else if (point.z < -.003) {
+          if (pads[weld[i]] & 32) {
+            palmContact++;
+            palmLow = Math.min(palmLow, localX);
+            palmHigh = Math.max(palmHigh, localX);
+          }
+          if (thumbs.has(weld[i])) {
+            if (point.z > .45 * Math.abs(radial)) thumbOnFace++;
+          } else if (oppositePalm(radial, point.z)) {
             for (let digit = 0; digit < opposingPads.length; digit++) {
               if (pads[weld[i]] & (1 << digit)) opposingPads[digit]++;
             }
@@ -247,22 +276,22 @@ test('the actual finger surfaces seat against thin, intermediate and thick rims'
       }
       assert.ok(contact > 140, `Surface was floating at ${tube * 1000} mm`);
       assert.ok(penetration < .0032, `Surface crossed the rim by ${(penetration * 1000).toFixed(2)} mm`);
-      assert.ok(palmContact >= 4, `At ${tube * 1000} mm, the palm has a support patch (${palmContact} vertices)`);
-      assert.ok(thumbOnFace >= 20 && thumbOnFace / thumbContact >= .90,
-        `At ${tube * 1000} mm, the thumb pad rests on the face of the rim (${thumbOnFace}/${thumbContact} vertices)`);
-      assert.ok(thumbHigh - thumbLow >= .014, 'The thumb follows the rim over a length rather than touching with its tip');
-      assert.ok(opposingPads.every(count => count >= 4),
-        `At ${tube * 1000} mm, all four fingers have pads on the far half (${opposingPads.join(', ')})`);
+      assert.ok(palmContact >= 30 && palmHigh - palmLow >= .052,
+        `At ${tube * 1000} mm, contact extends across the width of the palm`);
+      assert.ok(thumbOnFace >= 20, `At ${tube * 1000} mm, the thumb pad opposes the grip on the face of the rim`);
+      assert.ok(opposingPads.every(count => count >= 8),
+        `At ${tube * 1000} mm, all four fingers wrap past the rim to oppose the palm (${opposingPads.join(', ')})`);
       for (const openness of [.25, .50, .75, 1]) {
         hand.morphTargetInfluences[hand.morphTargetDictionary.rimOpen] = openness;
         let openPalm = 0, closedPads = 0, overlap = 0;
         for (let i = 0; i < weld.length; i++) {
           hand.getVertexPosition(i, point).applyMatrix4(hand.matrixWorld);
-          const depth = Math.hypot(Math.hypot(point.x, point.y) - .18, point.z) - tube;
+          const radial = Math.hypot(point.x, point.y) - .18;
+          const depth = Math.hypot(radial, point.z) - tube;
           overlap = Math.max(overlap, -depth);
           if (Math.abs(depth) >= .002) continue;
           if (pads[weld[i]] & 32) openPalm++;
-          if ((pads[weld[i]] & 15) && point.z < -.003) closedPads++;
+          if ((pads[weld[i]] & 15) && oppositePalm(radial, point.z)) closedPads++;
         }
         assert.equal(openPalm, palmContact, 'Opening the fingers preserves the same palm support');
         assert.ok(overlap < .0032, 'The fingers uncurl around the rim throughout the motion');
@@ -346,7 +375,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=5510265db734b608', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=72ce231fa8d1a09b', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

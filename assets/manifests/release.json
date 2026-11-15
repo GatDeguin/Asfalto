@@ -2942,7 +2942,7 @@
     {
       "path": "index.html",
       "bytes": 84517,
-      "sha256": "F470E4BE95A3ED4FD201BF166CB65A2816CD601D9205DB3A5F54C42F6855626F"
+      "sha256": "87B5A490BD1A84E85B95B4FE0C18D09CAACB2E7333C638C8595D3228FEEABDF5"
     },
     {
       "path": "release-version.json",
@@ -3352,7 +3352,7 @@
     {
       "path": "src/legacy/module-02.mjs",
       "bytes": 596499,
-      "sha256": "5510265DB734B608E7E33FC0FBFC215039F9E9AE2901BF699D4EEA374F3C45A8"
+      "sha256": "72CE231FA8D1A09B15442D0ED2B06BD3E4065856C5A26C8EC8FD0E297F0B01F2"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3706,33 +3706,33 @@
     },
     {
       "path": "src/render/cockpit-driver-arms.mjs",
-      "bytes": 12673,
-      "sha256": "978B6074F68F3F1C75CB1F6CC2BB5F96EC6B9C9132D71EAFE995481160A1C5E7"
+      "bytes": 14080,
+      "sha256": "4E73CC74044CC8356C16A68E7663FDB712DA00A9FDF85DCECC3CE06BEFC9E346"
     },
     {
       "path": "src/render/cockpit-driver-avatar.mjs",
-      "bytes": 6446,
-      "sha256": "AA21829BF4F954DA8ADB36FBB4250CFCBAAD87BCD650D8D20E4A54CD348A99CB"
+      "bytes": 6566,
+      "sha256": "C172D108037BB90DE881647DACBC4C7788219A3D9B66D6CC753019FE4904707F"
     },
     {
       "path": "src/render/cockpit-driver-materials.mjs",
       "bytes": 4942,
-      "sha256": "711E1FFEF018F6811507439F48D84AB6DEC41C5A9E440ED153B1D9A7CAD0F4CF"
+      "sha256": "4AB97E6DED9F33F61D1B4ED66F02DB34DCD4EEB95CBF8FB70738F1B1C7C7C920"
     },
     {
       "path": "src/render/cockpit-driver-sleeve.mjs",
-      "bytes": 7386,
-      "sha256": "F317B0CA312CEFECED07C2FAD31EC5F78683A9EEBBF7FD0F818FDDF2BE37C34D"
+      "bytes": 7651,
+      "sha256": "F455F5F654775538777BC540FBE22F843F973CB9034C38496E7D97F12536F9A3"
     },
     {
       "path": "src/render/cockpit-hand-mesh.mjs",
-      "bytes": 209896,
-      "sha256": "21D9C68C304DD9C7D8288C2A7F5C4159E4DD9C1D466F55D3E785A4D1A594D9F6"
+      "bytes": 255156,
+      "sha256": "29F73B7D9A95DCDD7809ECB0DC1ED7E055B1D148700A0B5CE4CD72409F8C3C45"
     },
     {
       "path": "src/render/cockpit-hand-surface.mjs",
       "bytes": 437057,
-      "sha256": "9C2F96E296AAD10EC89E5258195A249AE71F8E6E05C78A6098BF53791BC648D0"
+      "sha256": "D06635FC63B3248051D0674E604895FB2C78DCC3C2E8DA510D290328A1CC3328"
     },
     {
       "path": "src/render/cockpit-ignition.mjs",
@@ -5032,7 +5032,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 8628,
-      "sha256": "E0FDB4FFBED2F17B011FF260612A58D7841410BE9042438D928A32BA8A281F2A"
+      "sha256": "796B5791E8482B9B764F029D90F79FA0AF7728C9E065501D487CDB7BB4AE54B8"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -5057,17 +5057,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 4171,
-      "sha256": "A48EDC4D9CDC7BF63331381F4AFE5B9415980DC5884220EFC66887B46F8E0904"
+      "sha256": "F870A1B83CD95B5DB753EDB1B1AA482E4248A96CB1232E0A4351E53F6D5056A5"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "F0C2629237C3A39AC13DED834D7EA5F242642AEF68FBA25083D344EC9D2A6EBD"
+      "sha256": "48AB71E291F670301C85197838E81A842BF943749FE2967FEC8858DB974182C6"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "7C400F6407BDBC8BDB5C2E56118057D4E16E5143B2C8BF9B419E3A821471AFEB"
+      "sha256": "400C42E1D8BD5C421439272B99A1B50679D79FB631B1FF099B80E87EAF1F6F47"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -5082,7 +5082,7 @@
     {
       "path": "tools/automatic-reverse.test.mjs",
       "bytes": 4285,
-      "sha256": "4848E19000060B2FF629CBCD09C1ACAB5C41B67E90F02DE50938813136FC2232"
+      "sha256": "E7DE531DCCFD7DDD61D049775744FB52EB5CC85650C8F2D04B85AC0EE1A3CEAD"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
@@ -5176,8 +5176,8 @@
     },
     {
       "path": "tools/cockpit-driver-arms.test.mjs",
-      "bytes": 18630,
-      "sha256": "363A59F67AF46B56702166883F247E10927770E5BA6CC71FE801855AE4DA336A"
+      "bytes": 19897,
+      "sha256": "DC085ED96C82FC57B9BBC924D3A5A99A2EFBCBD1EF68A5832DF79E30841D4146"
     },
     {
       "path": "tools/cockpit-editor-activation.test.mjs",
@@ -5362,7 +5362,7 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "E0C284391FA013641E929F5430C2FF4CF3D8C40ADF45357C0101177859E274C0"
+      "sha256": "DE4666F4FD262693FDF5634CE5E3F3CEAA66DC77ED74C2A2B909EBA869AEFED5"
     },
     {
       "path": "tools/lipan-authored-signs.test.mjs",
@@ -5382,7 +5382,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 17847,
-      "sha256": "B91029896566586F6D4EF3334A648D5441EFE283394B7B04ECB6F01A317972F7"
+      "sha256": "86BA37AE77E66B918DDFE708D3B1FC381ED3CECEEADDAE800D2DD028A2E3D07B"
     },
     {
       "path": "tools/minimap-clock.test.mjs",
@@ -5407,7 +5407,7 @@
     {
       "path": "tools/original-track-layouts.test.mjs",
       "bytes": 1382,
-      "sha256": "13436E9EFBBD97BD5BF82F9175C817835771C9BB39B3978C4EA4C84B57A5E4C1"
+      "sha256": "694F9EDA0D7DE36946D67EB992AB52EA38F9E1A8E92FB015208EE6F851916B12"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5777,7 +5777,7 @@
     {
       "path": "tools/vehicle-refraction.test.mjs",
       "bytes": 3676,
-      "sha256": "7CDB062ADF4E9DD774ADB73D80378328B8461C1CE3A1F544B322D5E09716A5E9"
+      "sha256": "51FD47596C9A3449B94A3D84DEBF9FA310AAF4E878764A5205515CECA056420C"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5827,7 +5827,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "D24B5EBB5F3B7A72F70696736992F81F6FB5438512C0AA9EB5A50EB0EA810FCF"
+      "sha256": "3E97C4593AE1ABAF181A4C7475A64B81EAD5FFE0BC5C375D61BFDA2D59D3E5C1"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -6141,6 +6141,6 @@
     }
   ],
   "fileCount": 1213,
-  "totalBytes": 945488853,
-  "inventorySha256": "5E4868B74B0CD919811D877916B5E186AFF387109CE74ADDA87BFB9A66AA5938"
+  "totalBytes": 945537172,
+  "inventorySha256": "01141A1202FC6BB87EB355F431E18093ED664B394E4AB6D51D11E927A8BB1BFA"
 }

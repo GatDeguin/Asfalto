@@ -1,6 +1,6 @@
-import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=21d9c68c304dd9c7';
-import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=711e1ffef018f681';
-import { createCockpitDriverSleeve } from './cockpit-driver-sleeve.mjs?v=f317b0ca312cefec';
+import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=29f73b7d9a95dcdd';
+import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=4ab97e6ded9f33f6';
+import { createCockpitDriverSleeve } from './cockpit-driver-sleeve.mjs?v=f455f5f654775538';
 
 const ignoreRay = () => {};
 const decode = source => Uint8Array.from(atob(source), character => character.charCodeAt(0)).buffer;
@@ -41,7 +41,7 @@ function gripColors(T, points, normals, wheel) {
 }
 
 function handGeometry(T, tube) {
-  const { units, index, weld, uv, poses, grip: { basis, thin, thick } } = COCKPIT_HAND_MESH;
+  const { units, index, weld, uv, poses, grip } = COCKPIT_HAND_MESH;
   const geometry = new T.BufferGeometry(), welded = new T.BufferGeometry();
   const indices = new Uint16Array(decode(index)), sourceVertices = new Uint16Array(decode(weld));
   geometry.setIndex(new T.BufferAttribute(indices, 1));
@@ -60,10 +60,12 @@ function handGeometry(T, tube) {
     attribute.name = name;
     return attribute;
   }
-  const fit = Math.min(1, Math.max(0, (tube - thin.tube) / (thick.tube - thin.tube)));
-  const [thumbward, forward, back] = basis.map(axis => new T.Vector3(...axis));
+  const [narrow, wide] = tube <= grip.medium.tube ? ['thin', 'medium'] : ['medium', 'thick'];
+  const first = grip[narrow], second = grip[wide];
+  const fit = Math.min(1, Math.max(0, (tube - first.tube) / (second.tube - first.tube)));
+  const [thumbward, forward, back] = grip.basis.map(axis => new T.Vector3(...axis));
   const toHand = vector => new T.Vector3(vector.dot(thumbward), vector.dot(forward), vector.dot(back));
-  const origin = new T.Vector3(...thin.origin).lerp(new T.Vector3(...thick.origin), fit);
+  const origin = new T.Vector3(...first.origin).lerp(new T.Vector3(...second.origin), fit);
   const wheel = {
     tube, forward, back,
     anchor: toHand(origin.clone().negate()),
@@ -72,8 +74,8 @@ function handGeometry(T, tube) {
   };
   const coordinates = name => new Int16Array(decode(poses[name]));
   const rimPose = suffix => {
-    const narrow = coordinates(`thin${suffix}`), wide = coordinates(`thick${suffix}`);
-    const pose = Float32Array.from(narrow, (value, i) => lerp(value, wide[i], fit) / units);
+    const from = coordinates(narrow + suffix), to = coordinates(wide + suffix);
+    const pose = Float32Array.from(from, (value, i) => lerp(value, to[i], fit) / units);
     fitRim(T, pose, wheel);
     return pose;
   };
