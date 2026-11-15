@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=f9a1f6f8e1f7dda2';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=9382b60c92c41ea6';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=8e4913a8b8088612';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
 
@@ -100,7 +100,7 @@ test('palms, fingers and cuffs fit the rim continuously through regrips', () => 
       const hand = rig.getObjectByName(`CockpitDriver_hand.${side}`);
       assert.ok(hand.geometry.attributes.position.count > 2500);
       assert.equal(hand.geometry.morphAttributes.position.length, 2);
-      const wrist = hand.position;
+      const wrist = new T.Vector3(...pose.hands[index]);
       const grip = new T.Vector3(...pose.grips[index]);
       assert.ok(wrist.distanceTo(grip) > .06 && wrist.distanceTo(grip) < .11);
       if (pose.contacts[index] === 'wheel') {
@@ -112,6 +112,18 @@ test('palms, fingers and cuffs fit the rim continuously through regrips', () => 
       const cuff = new T.Vector3(...pose.cuffs[index]);
       assert.ok(cuff.distanceTo(wrist) < .022);
     }
+  }
+  arms.dispose();
+});
+
+test('the resting wrist approaches the grip from below and behind the rim', () => {
+  const { arms, sample } = fixture();
+  arms.update(sample);
+  const { hands, grips, cuffs } = arms.diagnostics();
+  for (const [i, [x, y, z]] of hands.entries()) {
+    assert.ok(y < grips[i][1] + .003, 'A high wrist forces the hand to fold inward toward the hub');
+    assert.ok(z - grips[i][2] > .047, 'The palm should reach forward from the wrist');
+    assert.ok(Math.hypot(x - cuffs[i][0], y - cuffs[i][1], z - cuffs[i][2]) < .012);
   }
   arms.dispose();
 });
@@ -162,14 +174,61 @@ test('a stationary sleeve stays idle and 20 toggles dispose all of the avatar re
   for (let retry = 0; retry < 20; retry++) {
     arms.update(sample);
     const rig = parent.getObjectByName('CockpitDriverArms');
-    const resources = new Set(rig.children.flatMap(mesh => [mesh.geometry, mesh.material, mesh.material.map].filter(Boolean)));
-    const disposed = new Set();
-    for (const resource of resources) resource.addEventListener('dispose', () => disposed.add(resource));
+    const resources = new Set(rig.children.flatMap(({ geometry, material }) =>
+      [geometry, material, material.map, material.bumpMap, material.roughnessMap].filter(Boolean)));
+    const disposed = new Map();
+    for (const resource of resources) resource.addEventListener('dispose', () => disposed.set(resource, (disposed.get(resource) ?? 0) + 1));
     for (let frame = 0; frame < 30; frame++) arms.update(sample);
     assert.equal(arms.diagnostics().sleeveUpdates, 2);
     arms.update({ ...sample, settings: sanitizeDriverArmsSettings() });
     assert.equal(parent.getObjectByName('CockpitDriverArms'), undefined);
-    assert.deepEqual(disposed, resources);
+    assert.deepEqual(disposed, new Map([...resources].map(resource => [resource, 1])));
+  }
+  arms.dispose();
+});
+
+test('the skin and cloth share UV-mapped pigment, relief and roughness between both arms', () => {
+  const { parent, arms, sample } = fixture();
+  arms.update(sample);
+  const rig = parent.getObjectByName('CockpitDriverArms');
+  for (const part of ['hand', 'sleeve']) {
+    const left = rig.getObjectByName(`CockpitDriver_${part}.L`), right = rig.getObjectByName(`CockpitDriver_${part}.R`);
+    assert.equal(left.material, right.material);
+    const { map, bumpMap, roughnessMap } = left.material;
+    assert.equal(left.geometry.getAttribute('uv')?.count, left.geometry.getAttribute('position').count);
+    assert.equal(map.colorSpace, T.SRGBColorSpace);
+    assert.ok(map.generateMipmaps);
+    assert.ok(bumpMap?.generateMipmaps);
+    assert.equal(bumpMap, roughnessMap);
+    assert.equal(bumpMap.colorSpace, T.NoColorSpace);
+    const values = bumpMap.image.data;
+    let low = 255, high = 0;
+    for (let i = 1; i < values.length; i += 4) {
+      low = Math.min(low, values[i]);
+      high = Math.max(high, values[i]);
+    }
+    assert.ok(high - low > 28, 'Different surfaces need distinct roughness');
+  }
+  arms.dispose();
+});
+
+test('the longitudinal sleeve seam preserves the surface normal as the arm moves', () => {
+  const { parent, pivot, arms, sample } = fixture();
+  const point = new T.Vector3(), opposite = new T.Vector3();
+  for (const turn of [0, .8, -1.4, 2.2]) {
+    pivot.rotation.z = turn;
+    arms.update({ ...sample, wheelSpinRad: turn });
+    for (const suffix of ['L', 'R']) {
+      const sleeve = parent.getObjectByName(`CockpitDriver_sleeve.${suffix}`);
+      const { uv, position, normal } = sleeve.geometry.attributes;
+      const width = Array.from({ length: uv.count }, (_, i) => i).find(i => i > 0 && uv.getX(i) === uv.getX(0));
+      assert.ok(width > 10);
+      for (let ring = 0; ring < uv.count; ring += width) {
+        const otherEdge = ring + width - 1;
+        assert.ok(point.fromBufferAttribute(position, ring).distanceTo(opposite.fromBufferAttribute(position, otherEdge)) < .000001);
+        assert.ok(point.fromBufferAttribute(normal, ring).dot(opposite.fromBufferAttribute(normal, otherEdge)) > .999);
+      }
+    }
   }
   arms.dispose();
 });
@@ -177,7 +236,7 @@ test('a stationary sleeve stays idle and 20 toggles dispose all of the avatar re
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=134e5b841811b93e', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=b398773f8cb0185a', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

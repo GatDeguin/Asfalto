@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=3757b6cb8ba6727a';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=3bc88207a41a0a9c';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -57,6 +57,7 @@ export function createCockpitDriverArms(T) {
   const knobGrip = new T.Vector3(), aim = new T.Vector3(), shiftAim = new T.Vector3();
   const direction = new T.Vector3(), pole = new T.Vector3();
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
+  const wristOffset = new T.Vector3(), wristDirection = new T.Vector3(), cuffAim = new T.Vector3();
   let mount = null, fit, model = null, disposed = false;
   let previousGear = null, progress = 0, linger = 0, shiftBlend = 0, sleeveUpdates = 0;
 
@@ -117,7 +118,7 @@ export function createCockpitDriverArms(T) {
     shiftBlend = ease(progress);
 
     for (let index = 0; index < model.arms.length; index++) {
-      const arm = model.arms[index];
+      const arm = model.arms[index], { handMesh, sleeve } = arm;
       const side = index === 0 ? -1 : 1;
       // Stagger the regrip windows so one hand always has the rim.
       const phaseAtRest = index === 0 ? .19 : .22;
@@ -146,7 +147,16 @@ export function createCockpitDriverArms(T) {
       palmBack.crossVectors(palmRight, aim);
       const anchorY = lerp(model.wheel.y, .075, shift);
       const anchorDepth = lerp(model.wheel.depth, .028, shift);
-      arm.wrist.copy(arm.grip).addScaledVector(aim, -scale * anchorY).addScaledVector(palmBack, scale * anchorDepth);
+      handMesh.position.copy(arm.grip).addScaledVector(aim, -scale * anchorY).addScaledVector(palmBack, scale * anchorDepth);
+      // The grip frame follows the rim. The cuffs follow the authored wrist in
+      // that frame, using the same weights as the surface morphs.
+      const { wheel, reach, shifter } = model.wrists, planted = 1 - open - grasp;
+      wristOffset.copy(wheel.offset).multiplyScalar(planted).addScaledVector(reach.offset, open).addScaledVector(shifter.offset, grasp);
+      wristDirection.copy(wheel.direction).multiplyScalar(planted).addScaledVector(reach.direction, open).addScaledVector(shifter.direction, grasp);
+      arm.wrist.copy(handMesh.position).addScaledVector(palmRight, -side * wristOffset.x * scale)
+        .addScaledVector(aim, wristOffset.y * scale).addScaledVector(palmBack, wristOffset.z * scale);
+      cuffAim.copy(palmRight).multiplyScalar(-side * wristDirection.x).addScaledVector(aim, wristDirection.y)
+        .addScaledVector(palmBack, wristDirection.z).normalize();
       arm.contact = shift > .99 ? 'shifter' : shift > 0 || loosen > .02 ? 'reach' : 'wheel';
       arm.shoulder.copy(center).addScaledVector(back, scale * (.49 + settings.shoulderReachCm / 100))
         .addScaledVector(up, scale * (.062 + settings.shoulderHeightCm / 100)).addScaledVector(right, scale * .151 * side);
@@ -158,13 +168,11 @@ export function createCockpitDriverArms(T) {
       const along = clamp((upper * upper - lower * lower + distance * distance) / (2 * distance), -upper, upper);
       pole.copy(up).negate().addScaledVector(right, side * .18).addScaledVector(direction, -pole.dot(direction)).normalize();
       arm.elbow.copy(arm.shoulder).addScaledVector(direction, along).addScaledVector(pole, Math.sqrt(Math.max(0, upper * upper - along * along)));
-      const { handMesh, sleeve } = arm;
-      handMesh.position.copy(arm.wrist);
       handMesh.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
       handMesh.scale.set(-side * scale, scale, scale);
       const targets = handMesh.morphTargetInfluences;
       targets[0] = open; targets[1] = grasp;
-      if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, aim, palmRight, scale)) sleeveUpdates++;
+      if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, cuffAim, palmRight, scale)) sleeveUpdates++;
     }
   }
 

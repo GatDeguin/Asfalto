@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {installRaceAudioActivation} from '../src/audio/race-audio-activation.mjs?v=49337ce0c32b0a31';
-const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=134e5b841811b93e',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=b398773f8cb0185a',import.meta.url),'utf8');
 const body=source.slice(source.indexOf('  function createRaceAudio() {'),source.indexOf('  const raceAudio = createRaceAudio();'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((r,j)=>{resolve=r;reject=j});return{promise,resolve,reject}};
 function setup({shared=Promise.resolve(true),prepared=Promise.resolve({drivingBuffers:[]})}={}){
