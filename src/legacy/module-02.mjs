@@ -97,6 +97,8 @@ import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=1bbc92775a4
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=5ed1d32c8cc8fcf7';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aee43660313b9773';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18ec';
+import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=e2b1cf3b3f9c446c';
+import { installDriverArmsSettings, sanitizeDriverArmsSettings } from '../game/cockpit-driver-arms-settings.mjs?v=8e4913a8b8088612';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=cd6a96359a0b579c';
 import { drivingAudioState, sampleTrafficAudio } from '../audio/race-driving-state.mjs?v=51a660aeafa28587';
 import { weatherEffectsPolicy } from '../render/weather-effects-policy.mjs?v=c31501e9c1c5d1bb';
@@ -4528,6 +4530,7 @@ function normalizeGameSettings(raw = {}) {
   settings.pedalResponse = finite(settings.pedalResponse, DEFAULT_GAME_SETTINGS.pedalResponse, 0.65, 1.45);
   settings.brakeStrength = finite(settings.brakeStrength, DEFAULT_GAME_SETTINGS.brakeStrength, 0.55, 1.55);
   settings.shiftSpeed = finite(settings.shiftSpeed, DEFAULT_GAME_SETTINGS.shiftSpeed, 0.65, 1.45);
+  settings.driverArms = sanitizeDriverArmsSettings(settings.driverArms);
   settings.graphicsQuality = ['auto', 'high', 'balanced', 'eco'].includes(settings.graphicsQuality) ? settings.graphicsQuality : 'auto';
   return settings;
 }
@@ -4577,6 +4580,9 @@ try {
   setLoading('Creando cockpit…');
   let gameSettingsVehicle = initialVehicle();
   let gameSettings = loadGameSettings(gameSettingsVehicle);
+  const driverArms = createCockpitDriverArms(THREE);
+  const driverArmsFrame = { active:false, settings:null, gear:null, shifting:false, grabbing:false, wheelSpinRad:undefined, dt:0, paused:false, reducedMotion:false };
+  let driverArmsControls = null;
   mobileTextureQuality=gameSettings.graphicsQuality;
   const bootRenderGate=createBootRenderGate(runtimeDeviceProfile.phone);
   let firstPhoneFrame=runtimeDeviceProfile.phone;
@@ -8468,7 +8474,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       rivalAssetPipeline.dispose();
       advancedGraphics?.dispose();advancedGraphics=null;graphicsSettings?.dispose();graphicsSettings=null;
       try { await modularRaceWorld?.dispose?.(); } finally {
-        cameraOpening.cancel();cameraOpeningOverlay.dispose();headMotionControls?.dispose();headMotion.dispose();lightingEditor?.dispose();colorGrading?.dispose();rayTracingSettings?.dispose();rayTracing?.dispose();
+        cameraOpening.cancel();cameraOpeningOverlay.dispose();headMotionControls?.dispose();headMotion.dispose();driverArmsControls?.dispose();driverArms.dispose();lightingEditor?.dispose();colorGrading?.dispose();rayTracingSettings?.dispose();rayTracing?.dispose();
         virtualTerrainSettings?.dispose();virtualTerrain.dispose();
         gpuFrameTimer?.dispose();raceAudioActivation?.dispose();opaqueTransmissionReuse.dispose();terrainMeshletRanges?.dispose();emptyInstanceDrawGuard?.dispose();
         vehicleCockpitWheel?.dispose();lazyCockpitOriginals?.dispose();cockpitDisplayLods?.dispose();framePacingSettings?.dispose();cockpitViewPreset?.dispose();
@@ -8996,7 +9002,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     globalThis.__asfaltoNacionalV41?.radio?.releaseFocus?.();
     updateKeyUi();
   }
-  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();cockpitMirrors?.suspend();raceWorld.suspendWaterReflections();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
+  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();cockpitMirrors?.suspend();driverArms.suspend();raceWorld.suspendWaterReflections();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
   let hoverControl = null;
   let pointerVisualX = 0;
   let pointerVisualY = 0;
@@ -9124,6 +9130,14 @@ listen(window,'chevy:vehicle-config',(event)=>{
   });
   headMotion.setCalibration(compositionState.getState().camera.cockpit.headMotion);
   headMotionControls=installHeadMotionControls({getValue:()=>compositionState.getState().camera.cockpit.headMotion,onChange:headMotion=>compositionEditor.setCockpitCameraCalibration({...compositionState.getState().camera.cockpit,headMotion})});
+  driverArmsControls = installDriverArmsSettings(document.getElementById('cockpit-driver-arms'), {
+    getSettings: () => gameSettings.driverArms,
+    onChange(value) {
+      gameSettings.driverArms = value;
+      saveGameSettings(gameSettings, gameSettingsVehicle);
+      if (!value.enabled) driverArms.suspend();
+    },
+  });
   editorResetElementEl.addEventListener('click', () => {
     if (editorElementSelectEl.value === 'front') frontCutController.reset();
   });
@@ -9170,12 +9184,14 @@ listen(window,'chevy:vehicle-config',(event)=>{
     gearHintEl.textContent = automatic ? 'cambios automáticos' : 'caja H manual';
     autoAggressionRowEl.classList.toggle('disabled', !automatic);
     settingsInputs.autoAggression.disabled = !automatic;
+    driverArmsControls?.refresh();
     updateAudioStatus();
   }
 
   function applySettings({ persist = true } = {}) {
     mobileTextureQuality=gameSettings.graphicsQuality;
     gameSettings = normalizeGameSettings(gameSettings);
+    if (!gameSettings.driverArms.enabled) driverArms.suspend();
     if (persist) saveGameSettings(gameSettings, gameSettingsVehicle);
     engineSound.applySettings();
     window.dispatchEvent(new CustomEvent('asfalto:audio-settings'));
@@ -9978,6 +9994,19 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }
     authoredMirrors?.setVisible(inAuthoredCabin&&!opening.shot);
     playerDriver?.update(mode,steerToWheelRotation(steering.steer,maxWheelAngle),{opening:!!opening.shot,exterior:raceChevyV3.visible});
+    if (gameSettings.driverArms.enabled) {
+      const manual = gameSettings.transmissionMode === 'manual';
+      driverArmsFrame.settings = gameSettings.driverArms;
+      driverArmsFrame.active = inAuthoredCabin && !opening.shot && !opening.blocking && !entry.active && !documentFlags.menuOpen && !documentFlags.introOpen;
+      driverArmsFrame.gear = manual ? gearState.requested : gearState.requested === 'R' ? 'R' : 'D';
+      driverArmsFrame.shifting = !!gearState.path && (manual || gearState.requested === 'R' || gearState.previousGear === 'R');
+      driverArmsFrame.grabbing = manual && hasCockpitPointerMode('shifter');
+      driverArmsFrame.wheelSpinRad = authoredAnchors ? undefined : steerToWheelRotation(steering.steer, maxWheelAngle);
+      driverArmsFrame.paused = raceWorld.isPaused;
+      driverArmsFrame.reducedMotion = reducedMotion;
+      driverArmsFrame.dt = frameDt;
+      driverArms.update(driverArmsFrame);
+    }
     // Portrait phones keep a usable road view instead of expanding to a fisheye cabin lens.
     if(runtimeDeviceProfile.phone&&isCockpit&&!opening.shot)applyPhoneCockpitProjection(camera,{fitLens:!customCockpitLens});
   }
@@ -10048,6 +10077,12 @@ listen(window,'chevy:vehicle-config',(event)=>{
         window.__asfaltoSelectedPlayerVehicle=vehicle;
         authoredControlMounts.attach(presentation.root,vehicle);
         authoredMirrors=attachAuthoredMirrors(THREE,presentation,vehicle,cockpitMirrors.feeds);
+        const knob = shifterMechanism.knob;
+        if (authoredCockpitAnchors(vehicle)) {
+          const ss400 = vehicle === 'chevy_400_1957';
+          const pivot = presentation.root.getObjectByName(ss400 ? 'SS250_WheelAssembly' : `${vehicle}_CockpitSteeringPivot`);
+          driverArms.bind({ parent:raceChevyPhysicalRoot, pivot, knob, back:[-1, 0, 0], axis:ss400 ? [0, 1, 0] : getVehicleDefinition(vehicle).steeringAxis });
+        } else driverArms.bind({ parent:cockpit, pivot:wheelPivot, knob, rest:steeringBase });
         compositionEditor.useProfile(cockpitProfile,cockpitProfile.authored ? authoredEditorTargets(presentation.root,vehicle) : compositionTargets);
         authoredControlMounts.refreshPlacement();
         backgroundEditor.setVehicle(vehicle);
@@ -10382,6 +10417,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
           throttleBlip: gearState.throttleBlip,
         },
         settings: { ...gameSettings },
+        driverArms: driverArms.diagnostics(),
         audio: engineSound.getState(),
         editor: compositionEditor?.getState() || null,
         background: backgroundEditor.getState(),

@@ -2021,8 +2021,8 @@
     },
     {
       "path": "assets/styles/inline-01.css",
-      "bytes": 43885,
-      "sha256": "927AACBA0B18FEA74D52FE063563F0AC6A9E5C2A7CFF185B020493871B485395"
+      "bytes": 43939,
+      "sha256": "364575F474B0596863FB1BCAD7AC1AD0FAC5606171251EE159660FD49645BE2B"
     },
     {
       "path": "assets/styles/lighting-editor.css",
@@ -2941,8 +2941,8 @@
     },
     {
       "path": "index.html",
-      "bytes": 82701,
-      "sha256": "C2FC8EEB3681F50C64ADF4BFF9144C50AF94FF38806187B710A63D4BD0A8D956"
+      "bytes": 84516,
+      "sha256": "28892F18A2F340EC603C59BEF95C23AADE3D2E198AEACC5D3926B75D2F7791E8"
     },
     {
       "path": "release-version.json",
@@ -3098,6 +3098,11 @@
       "path": "src/game/chevy-wheel-visual-rig.mjs",
       "bytes": 7210,
       "sha256": "1735126255DFE6223A09D9EA7877818AE5420D7F861A8E2EF4F0EEA42B546955"
+    },
+    {
+      "path": "src/game/cockpit-driver-arms-settings.mjs",
+      "bytes": 2582,
+      "sha256": "8E4913A8B808861231633B6049E645E79921560889D1741AA9A21303DE9EDDCA"
     },
     {
       "path": "src/game/cockpit-head-motion-controls.mjs",
@@ -3346,8 +3351,8 @@
     },
     {
       "path": "src/legacy/module-02.mjs",
-      "bytes": 593796,
-      "sha256": "3117F8225A6EFD7701838709BDF9393DC3F084BC47FA07D3192A428214380983"
+      "bytes": 596360,
+      "sha256": "C2B46C35B052A92AAB712695889FB2B0C9F211B530AA5952E3A37822FE4D6683"
     },
     {
       "path": "src/legacy/v6-complete-runtime.js",
@@ -3698,6 +3703,11 @@
       "path": "src/render/cockpit-display-lod.mjs",
       "bytes": 6038,
       "sha256": "5A4F657D52211B7942248178E0329E3EDE013E24B17EBCDD56231AFE3FE788F4"
+    },
+    {
+      "path": "src/render/cockpit-driver-arms.mjs",
+      "bytes": 13589,
+      "sha256": "E2B1CF3B3F9C446C6FC9469B06AF10B0E82951EEBE2ADA98C4BE9396BC901FBD"
     },
     {
       "path": "src/render/cockpit-ignition.mjs",
@@ -4997,7 +5007,7 @@
     {
       "path": "tools/activity-rewards.test.mjs",
       "bytes": 8628,
-      "sha256": "3AC25172532A0F6B44347FCEED1521B8338AFD83F8EADEC7536EE055E9995BE8"
+      "sha256": "84F166DAA6FD862ED6C9F23713F04D302D3FFF75D684C82796A21ACC4331A1B2"
     },
     {
       "path": "tools/asset-byte-cache.test.mjs",
@@ -5022,17 +5032,17 @@
     {
       "path": "tools/audio-startup-lifecycle.test.mjs",
       "bytes": 4171,
-      "sha256": "653E3ECFF6DFFA191A9E7C90AAE2905A5E83CDF4240DCE923911C56254F5D0DD"
+      "sha256": "2AD06CFCF7F931093907B114B8E6B348DB1820DC31B748279A0C61CAAFA942B2"
     },
     {
       "path": "tools/audit-camera-transfer.test.mjs",
       "bytes": 1636,
-      "sha256": "C114DC1B9D2574ECD6EE9631A2B635A038F290F31E6C3CEDEB82B076422EB9CC"
+      "sha256": "F003FA3D6CB05708D122F23F12CCD01B91B386DFD120681408C1F8C7AEF0AABF"
     },
     {
       "path": "tools/audit-cancellation.test.mjs",
       "bytes": 6505,
-      "sha256": "DE8B45707C32A1E9AD28E569DFF1D791C14FDC28890B15AF241DF553562C7881"
+      "sha256": "89506A9E6FFCABD138BC3C9FBFAF59712F23E28D792AB4DADE4817FBAB331312"
     },
     {
       "path": "tools/audit-capture-fairness.test.mjs",
@@ -5047,7 +5057,7 @@
     {
       "path": "tools/automatic-reverse.test.mjs",
       "bytes": 4285,
-      "sha256": "812FA817489272FC2C3BBBE31D53A390DD5F2DA1C5F756272E4DC920F2963CF0"
+      "sha256": "74C8D991BC5796C46F39F2DD3CABF2831018D287FAB6C883E2D581361717EEA9"
     },
     {
       "path": "tools/auxiliary-render-preparation.test.mjs",
@@ -5138,6 +5148,11 @@
       "path": "tools/closed-circuit-return.test.mjs",
       "bytes": 4465,
       "sha256": "F8069A0B248E2BF261E457176C05F631845F3DF1008A516FA832DE24E4CDA741"
+    },
+    {
+      "path": "tools/cockpit-driver-arms.test.mjs",
+      "bytes": 4457,
+      "sha256": "67368621B7DF4F44307A4AB6466D92CC69E69E1E3E9A166DF28A8326D93EE736"
     },
     {
       "path": "tools/cockpit-editor-activation.test.mjs",
@@ -5322,7 +5337,7 @@
     {
       "path": "tools/lazy-rival.test.mjs",
       "bytes": 5842,
-      "sha256": "ABBB9B6B3C9717A0A1A146B7BE9E31C5354FA884EA35593A82E6C003E4735732"
+      "sha256": "524DD4724F8BEE3BADD88E0C29B79D876397BB0A2D8DB24213B1D6EE8FA89F61"
     },
     {
       "path": "tools/lipan-authored-signs.test.mjs",
@@ -5342,7 +5357,7 @@
     {
       "path": "tools/menu-render-preparation.test.mjs",
       "bytes": 17847,
-      "sha256": "2C09429EF96C51B3A5B32AF2184BEFA19C4909D00F6BAB5F94F25906A74EA4AD"
+      "sha256": "1686D35296E7281C8DF8FB36F1068C70264638D1C085A0C7B08DF45B11B13933"
     },
     {
       "path": "tools/minimap-clock.test.mjs",
@@ -5367,7 +5382,7 @@
     {
       "path": "tools/original-track-layouts.test.mjs",
       "bytes": 1382,
-      "sha256": "2D89688A7B3CCFBE1F8EDD260F4BEDAE62A9F1C73C8229D512CB630CB7A028B0"
+      "sha256": "437A14B5E3D7C9BF549652A5248AB213ECD45262FA11F58ED4575A1F4FE14886"
     },
     {
       "path": "tools/performance-matrix-core.mjs",
@@ -5736,8 +5751,8 @@
     },
     {
       "path": "tools/vehicle-refraction.test.mjs",
-      "bytes": 3502,
-      "sha256": "A11BBDE08F96A4A6DE16880EB963C76A16DE6A195F8A55D9FAB563D865E1CD5C"
+      "bytes": 3676,
+      "sha256": "5608A38E5024EF4276A78D029037BA915A18115DA358EC35B389830566F0E634"
     },
     {
       "path": "tools/vehicle-resource-pool.test.mjs",
@@ -5787,7 +5802,7 @@
     {
       "path": "tools/weather-quality-preparation.test.mjs",
       "bytes": 2636,
-      "sha256": "4B900BBF3901212A3250F069A185871F832597A8C1CDFF27E9FA866FFA580052"
+      "sha256": "15F6C5D6B023ADCE47BC3F0ED3050F6640C46D288C6254848AD0246D0F6FDB93"
     },
     {
       "path": "tools/workshop-departure.test.mjs",
@@ -6100,7 +6115,7 @@
       "sha256": "1086156075A1A6D4768F78BC3F0973BE664E2BB6688C5034BF7388E00BC4FC77"
     }
   ],
-  "fileCount": 1205,
-  "totalBytes": 944781302,
-  "inventorySha256": "E61DA01984203100294C6D9F40330F0FA71F2261BD2759510C723644CA0268AF"
+  "fileCount": 1208,
+  "totalBytes": 944806537,
+  "inventorySha256": "0BEA5D08F302265EF67284EDB2C693D35D68C03096156486CEC07215A400CCCD"
 }

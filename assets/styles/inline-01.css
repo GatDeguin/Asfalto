@@ -153,7 +153,7 @@ body.race-menu-open #viewport canvas,body.race-results-open #viewport canvas{poi
 .settings-panel .settings-scroll { flex: 1 1 auto; min-height: 0; overscroll-behavior: contain; }
 .settings-panel #settings-active-vehicle { color: #ffe0ac; font-size: 12px; font-weight: 700; }
 #editor-controls .switch-row { position: relative; }
-#editor-controls .switch-row input { inset-inline-end: 0; top: 50%; width: 36px; height: 20px; margin: 0; transform: translateY(-50%); }
-#editor-controls .switch-row input:focus-visible + i { outline: 2px solid #ffe0ac; outline-offset: 2px; }
+:is(#editor-controls, #cockpit-driver-arms) .switch-row input { inset-inline-end: 0; top: 50%; width: 36px; height: 20px; margin: 0; transform: translateY(-50%); }
+:is(#editor-controls, #cockpit-driver-arms) .switch-row input:focus-visible + i { outline: 2px solid #ffe0ac; outline-offset: 2px; }
 .editor-background-card > summary { color: #dfc7a4; cursor: pointer; font-size: 12px; font-weight: 700; }
 .editor-background-card[open] > summary { margin-bottom: 8px; }

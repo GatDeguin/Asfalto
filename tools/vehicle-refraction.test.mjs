@@ -26,7 +26,7 @@ test('low race glass drops the transmission prepass and restores the authored ma
 });
 
 test('a vehicle staged before a tier change uses the live tier when committed',async()=>{
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=3117f8225a6efd77',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=c2b46c35b052a92a',import.meta.url),'utf8');
  const start=source.indexOf('  async function preparePlayerVehicle(');
  const end=source.indexOf("  setLoading('Preparando vegetación",start);
  let tier='balanced';
@@ -42,6 +42,7 @@ test('a vehicle staged before a tier change uses the live tier when committed',a
   compositionEditor:{flush(){},useProfile(profile){profiles.push(profile.vehicle);}},
   backgroundEditor:{setVehicle(){}},frontCutController:{setVehicle(){}},gameSettingsVehicle:'chevrolet_1969',
   cockpitMirrors:{feeds:{}},attachAuthoredMirrors:()=>null,authoredWindshieldMount:()=>null,cabinMount:{},
+  authoredCockpitAnchors:()=>null,driverArms:{bind(){}},cockpit:new T.Group(),wheelPivot:new T.Group(),steeringBase:new T.Quaternion(),shifterMechanism:{knob:new T.Group()},
   raceCameraInitialized:true,lightingEditor:null,rayTracing:null,rayTracingSettings:null,
   raceWorld:{getPerformanceTier:()=>tier,attachWeatherWindshield(){},invalidateVehiclePhysics(){},getDrivingLights:()=>({mode:'off'})}
  };
