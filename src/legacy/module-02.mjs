@@ -97,7 +97,8 @@ import { createRaceSoundscape } from '../audio/race-soundscape.mjs?v=1bbc92775a4
 import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=5ed1d32c8cc8fcf7';
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aee43660313b9773';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18ec';
-import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=4e73cc74044cc835';
+import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=3625a40f47945360';
+import { createCockpitShiftMotion } from '../render/cockpit-shift-motion.mjs?v=1b751f5432ed5420';
 import { installDriverArmsSettings, sanitizeDriverArmsSettings } from '../game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=cd6a96359a0b579c';
 import { drivingAudioState, sampleTrafficAudio } from '../audio/race-driving-state.mjs?v=51a660aeafa28587';
@@ -236,6 +237,9 @@ function buildShiftPathFrom(current, targetGear) {
   if (Math.abs(target.x - points[points.length - 1].x) > 0.04) pushDistinct({ x: target.x, y: 0 });
   pushDistinct({ x: target.x, y: target.y });
   return points;
+}
+function shiftSegmentSeconds(start, end, speed) {
+  return (0.105 + Math.hypot(end.x - start.x, end.y - start.y) * 0.108) / speed;
 }
 function wheelRpmForSpeed(speedMps) {
   return Math.abs(speedMps) / (Math.PI * 2 * ENGINE_SPEC.wheelRadiusM) * 60;
@@ -4581,7 +4585,8 @@ try {
   let gameSettingsVehicle = initialVehicle();
   let gameSettings = loadGameSettings(gameSettingsVehicle);
   const driverArms = createCockpitDriverArms(THREE);
-  const driverArmsFrame = { active:false, settings:null, gear:null, shifting:false, grabbing:false, wheelSpinRad:undefined, dt:0, paused:false, reducedMotion:false };
+  const driverShift = createCockpitShiftMotion(buildShiftPathFrom, shiftSegmentSeconds);
+  const driverArmsFrame = { active:false, settings:null, shiftProgress:0, steeringRateRadS:0, wheelSpinRad:undefined, dt:0, paused:false, reducedMotion:false };
   let driverArmsControls = null;
   mobileTextureQuality=gameSettings.graphicsQuality;
   const bootRenderGate=createBootRenderGate(runtimeDeviceProfile.phone);
@@ -8620,6 +8625,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
         gearState.clutch = target === 'N' ? 0 : 1;
         gearState.torqueCut = 0;
         gearState.throttleBlip = 0;
+        driverShift.reset(gearState);
         setGearUi();
       }
       updateKeyUi();
@@ -8630,6 +8636,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     onRecoveryReset() {
       keys.clear();
       releaseCockpitInputCaptures();
+      driverShift.reset(gearState);
       raceCameraInitialized = false;
       lastPhysicalCameraPose = null;
       vehicleCameraRig?.reset(raceWorld.getRenderFrame());
@@ -9009,7 +9016,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     globalThis.__asfaltoNacionalV41?.radio?.releaseFocus?.();
     updateKeyUi();
   }
-  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();cockpitMirrors?.suspend();driverArms.suspend();raceWorld.suspendWaterReflections();releaseCockpitInputCaptures();raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
+  suspendRaceRender=()=>{rayTracing?.suspend();virtualTerrain.suspend();advancedGraphics?.suspendRefraction();cockpitMirrors?.suspend();driverArms.suspend();raceWorld.suspendWaterReflections();releaseCockpitInputCaptures();driverShift.reset(gearState);raceWorld.clearInputs();raceWorld.releaseTouchCaptures();};
   let hoverControl = null;
   let pointerVisualX = 0;
   let pointerVisualY = 0;
@@ -9143,6 +9150,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       gameSettings.driverArms = value;
       saveGameSettings(gameSettings, gameSettingsVehicle);
       if (!value.enabled) driverArms.suspend();
+      if (!value.enabled || !value.shiftEnabled) driverShift.reset(gearState);
     },
   });
   editorResetElementEl.addEventListener('click', () => {
@@ -9244,6 +9252,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       }
       if (gearState.gear === 'R') requestGear('N', 'automatic');
     }
+    driverShift.reset(gearState);
     applySettings();
   }
 
@@ -9263,7 +9272,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if (Number(target) > (Number(raceWorld.getV6Diagnostics?.().forwardGears) || 4)) {
       gearState.blockedReverseUntil = performance.now() + 1150;
       gearState.blockedReason = 'Quinta disponible sólo en Restomod';
-      gearState.requested = gearState.gear;
+      if (!gearState.path) gearState.requested = gearState.gear;
       setGearUi();
       return false;
     }
@@ -9280,7 +9289,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     if (!validation.allowed) {
       gearState.blockedReverseUntil = performance.now() + 1150;
       gearState.blockedReason = validation.reason;
-      gearState.requested = gearState.gear;
+      if (!gearState.path) gearState.requested = gearState.gear;
       setGearUi();
       return false;
     }
@@ -9344,8 +9353,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
           finishShift();
           break;
         }
-        const distance = Math.hypot(end.x - start.x, end.y - start.y);
-        const duration = (0.105 + distance * 0.108) / gameSettings.shiftSpeed;
+        const duration = shiftSegmentSeconds(start, end, gameSettings.shiftSpeed);
         const segmentRemaining = Math.max(0, duration - gearState.segmentTime);
         const consumed = Math.min(remaining, segmentRemaining);
         gearState.segmentTime += consumed;
@@ -9610,14 +9618,16 @@ listen(window,'chevy:vehicle-config',(event)=>{
       renderer.domElement.classList.add('dragging');
     } else if (hit === 'shifter') {
       shifterDragOrigin = {
-        x: gearState.x,
-        y: gearState.y,
+        x: driverShift.pose.x,
+        y: driverShift.pose.y,
         gear: gearState.gear,
         requested: gearState.requested,
         clientX: event.clientX,
         clientY: event.clientY,
       };
       gearState.path = null;
+      gearState.x = shifterDragOrigin.x;
+      gearState.y = shifterDragOrigin.y;
       gearState.gear = 'N';
       gearState.requested = 'N';
       gearState.clutch = 0;
@@ -9711,6 +9721,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const lever = GEAR_POSITIONS[gearState.gear] || GEAR_POSITIONS.N;
     gearState.x = lever.x;
     gearState.y = lever.y;
+    driverShift.reset(gearState);
     vehicleCameraRig?.setMode(mode);
     vehicleCameraRig?.reset(raceWorld.getRenderFrame());
     compositionEditor?.refreshAvailability();
@@ -9904,6 +9915,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
       simulationStep(dt);
       remaining -= dt;
     }
+    applyMechanicalVisuals();
     updateRaceCamera(0);
   }
 
@@ -9925,7 +9937,6 @@ listen(window,'chevy:vehicle-config',(event)=>{
     brakePivot.rotation.x = brake.value * 0.24;
     steeringRotation.setFromAxisAngle(steeringAxis,steerToWheelRotation(steering.steer,maxWheelAngle));
     wheelPivot.quaternion.copy(steeringBase).multiply(steeringRotation);
-    shifterMechanism.update(gearState.x, gearState.y);
   }
 
   let raceCameraInitialized = false;
@@ -10001,15 +10012,28 @@ listen(window,'chevy:vehicle-config',(event)=>{
     }
     authoredMirrors?.setVisible(inAuthoredCabin&&!opening.shot);
     playerDriver?.update(mode,steerToWheelRotation(steering.steer,maxWheelAngle),{opening:!!opening.shot,exterior:raceChevyV3.visible});
-    if (gameSettings.driverArms.enabled) {
-      const manual = gameSettings.transmissionMode === 'manual';
-      driverArmsFrame.settings = gameSettings.driverArms;
-      driverArmsFrame.active = inAuthoredCabin && !opening.shot && !opening.blocking && !entry.active && !documentFlags.menuOpen && !documentFlags.introOpen;
-      driverArmsFrame.gear = manual ? gearState.requested : gearState.requested === 'R' ? 'R' : 'D';
-      driverArmsFrame.shifting = !!gearState.path && (manual || gearState.requested === 'R' || gearState.previousGear === 'R');
-      driverArmsFrame.grabbing = manual && hasCockpitPointerMode('shifter');
+    const arms = gameSettings.driverArms;
+    const armsActive = inAuthoredCabin && !opening.shot && !opening.blocking && !entry.active &&
+      !documentFlags.menuOpen && !documentFlags.introOpen && !documentFlags.hidden;
+    const manual = gameSettings.transmissionMode === 'manual';
+    const canAnimateShift = arms.enabled && arms.shiftEnabled && armsActive && !reducedMotion;
+    const lever = canAnimateShift ? driverShift.update(gearState, {
+      enabled: true,
+      selectorMove: manual || gearState.requested === 'R' || gearState.previousGear === 'R',
+      grabbing: manual && hasCockpitPointerMode('shifter'),
+      paused: openingPaused,
+      dt: frameDt,
+      reachSeconds: arms.shiftSeconds,
+      shiftSpeed: gameSettings.shiftSpeed,
+    }) : driverShift.reset(gearState);
+    shifterMechanism.update(lever.x, lever.y);
+    if (arms.enabled) {
+      driverArmsFrame.settings = arms;
+      driverArmsFrame.active = armsActive;
+      driverArmsFrame.shiftProgress = lever.reach;
+      driverArmsFrame.steeringRateRadS = steering.velocity * Math.PI * 5.5;
       driverArmsFrame.wheelSpinRad = authoredAnchors ? undefined : steerToWheelRotation(steering.steer, maxWheelAngle);
-      driverArmsFrame.paused = raceWorld.isPaused;
+      driverArmsFrame.paused = openingPaused;
       driverArmsFrame.reducedMotion = reducedMotion;
       driverArmsFrame.dt = frameDt;
       driverArms.update(driverArmsFrame);
@@ -10090,6 +10114,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
           const pivot = presentation.root.getObjectByName(ss400 ? 'SS250_WheelAssembly' : `${vehicle}_CockpitSteeringPivot`);
           driverArms.bind({ parent:raceChevyPhysicalRoot, pivot, knob, back:[-1, 0, 0], axis:ss400 ? [0, 1, 0] : getVehicleDefinition(vehicle).steeringAxis });
         } else driverArms.bind({ parent:cockpit, pivot:wheelPivot, knob, rest:steeringBase });
+        driverShift.reset(gearState);
         compositionEditor.useProfile(cockpitProfile,cockpitProfile.authored ? authoredEditorTargets(presentation.root,vehicle) : compositionTargets);
         authoredControlMounts.refreshPlacement();
         backgroundEditor.setVehicle(vehicle);
@@ -10303,6 +10328,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
   window.addEventListener('resize', resize);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
+      driverShift.reset(gearState);
       rayTracing?.suspend();
       virtualTerrain.suspend();
       void engineSound.suspend().finally(updateAudioStatus);
@@ -10332,7 +10358,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
     window.dispatchEvent(new CustomEvent('asfalto:runtime-fault',{detail:{message:String(error?.message||error)}}));
   }});
   function recoverDrivingFrame(){
-    if(!frameFailureBoundary.recover(()=>{if(renderer.getContext().isContextLost())throw Error('El contexto gráfico todavía no está disponible.');applyMechanicalVisuals();renderFrame();}))throw Error('No se pudo recuperar la vista. Volvé al taller o recargá la página.');
+    if(!frameFailureBoundary.recover(()=>{if(renderer.getContext().isContextLost())throw Error('El contexto gráfico todavía no está disponible.');applyMechanicalVisuals();updateRaceCamera(0);renderFrame();}))throw Error('No se pudo recuperar la vista. Volvé al taller o recargá la página.');
     raceRenderView.activate();renderingEnabled=true;clock.getDelta();accumulator=0;framePacer.reset();
   }
   function animate(timestamp=performance.now()) {
@@ -10424,7 +10450,7 @@ listen(window,'chevy:vehicle-config',(event)=>{
           throttleBlip: gearState.throttleBlip,
         },
         settings: { ...gameSettings },
-        driverArms: driverArms.diagnostics(),
+        driverArms: { ...driverArms.diagnostics(), shift: { ...driverShift.pose } },
         audio: engineSound.getState(),
         editor: compositionEditor?.getState() || null,
         background: backgroundEditor.getState(),
@@ -10554,7 +10580,6 @@ listen(window,'chevy:vehicle-config',(event)=>{
     },
     advance(seconds) {
       advanceSimulation(seconds);
-      applyMechanicalVisuals();
       renderFrame();
       return this.getState();
     },
@@ -10569,10 +10594,11 @@ listen(window,'chevy:vehicle-config',(event)=>{
     },
     render() {
       applyMechanicalVisuals();
+      updateRaceCamera(0);
       renderFrame();
     },
     prepareRacePresentation() {
-      raceWorld.update(0,{throttle:0,brake:0,steer:0});updateRaceCamera(1);applyMechanicalVisuals();renderFrame();
+      raceWorld.update(0,{throttle:0,brake:0,steer:0});applyMechanicalVisuals();updateRaceCamera(1);renderFrame();
       return {status:raceWorld.getState().status,trackId:raceWorld.track.id,physicalTime:raceWorld.getRenderFrame().currentSnapshot?.timeSeconds};
     },
     runtimeFailureDiagnostics:()=>frameFailureBoundary.diagnostics(),

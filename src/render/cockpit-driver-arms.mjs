@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=c172d108037bb90d';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=1046ad36b705409b';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -8,6 +8,8 @@ const FULL_REGRIP = 106 * DEG;
 const UPPER_GRIP = 40 * DEG;
 const LOWER_GRIP = 146 * DEG;
 const RIM_CLOSURE = .17;
+const KNOB_CONTACT = .81;
+const RIM_ADJUSTMENT = .006;
 // Segment lengths in the same reference scale as the authored hand.
 const UPPER_ARM = .320;
 const FOREARM = .260;
@@ -17,6 +19,11 @@ const REACH_LONG = reachAtBend(24);
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const wrap = (n, cycle) => ((n % cycle) + cycle) % cycle;
 const ease = t => t * t * (3 - 2 * t);
+const unit = value => clamp(value, 0, 1);
+function settle(value, target, rate, dt) {
+  const next = target + (value - target) * Math.exp(-rate * dt);
+  return Math.abs(next - target) < .0004 ? target : next;
+}
 
 function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
   parent.updateWorldMatrix(true, false);
@@ -70,12 +77,16 @@ export function createCockpitDriverArms(T) {
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
   const wristOffset = new T.Vector3(), wristDirection = new T.Vector3(), cuffAim = new T.Vector3();
   let mount = null, fit, model = null, disposed = false;
-  let previousGear = null, progress = 0, linger = 0, shiftBlend = 0, sleeveUpdates = 0;
+  let shiftBlend = 0, sleeveUpdates = 0;
 
   function hide() {
-    if (model) model.root.visible = false;
-    previousGear = null;
-    progress = linger = shiftBlend = 0;
+    shiftBlend = 0;
+    if (!model) return;
+    model.root.visible = false;
+    for (const arm of model.arms) {
+      arm.gripAdjustment = 0;
+      arm.fingerFlex.fill(0);
+    }
   }
   function suspend() {
     hide();
@@ -92,7 +103,7 @@ export function createCockpitDriverArms(T) {
       right.crossVectors(up, mount.back).normalize();
     }
   }
-  function update({ settings, active, gear, shifting, grabbing, wheelSpinRad, dt, paused, reducedMotion } = {}) {
+  function update({ settings, active, shiftProgress = 0, wheelSpinRad, steeringRateRadS = 0, dt, paused, reducedMotion } = {}) {
     if (disposed) return;
     if (!settings?.enabled) { if (model) suspend(); return; }
     if (!active || !mount) { if (model?.root.visible) hide(); return; }
@@ -115,25 +126,32 @@ export function createCockpitDriverArms(T) {
     const sweep = Number.isFinite(wheelSpinRad) ? wheelSpinRad * axis.z : twist;
     const regrip = reducedMotion ? 0 : ease(clamp((Math.abs(sweep) - FOLLOW_THROUGH) / (FULL_REGRIP - FOLLOW_THROUGH), 0, 1));
     const baseGrip = settings.gripDeg * DEG;
-
-    if (knob && settings.shiftEnabled && !reducedMotion) {
+    let progress = 0;
+    if (knob && shiftProgress > 0 && settings.shiftEnabled && !reducedMotion) {
       knob.getWorldPosition(knobGrip).applyMatrix4(inverse);
-      const reachable = knobGrip.distanceTo(center) < scale * .92;
-      if (!paused && reachable) {
-        const elapsed = clamp(dt || 0, 0, .05);
-        if (shifting || grabbing || (previousGear !== null && gear !== previousGear)) linger = settings.shiftSeconds + .13;
-        else linger = Math.max(0, linger - elapsed);
-        progress = clamp(progress + (linger > 0 ? 1 : -.82) * elapsed / settings.shiftSeconds, 0, 1);
-      }
-      if (!reachable) progress = linger = 0;
-    } else progress = linger = 0;
-    if (!paused || previousGear === null) previousGear = gear ?? null;
-    // Reserve the wheel end of the shift for opening and closing on the rim.
-    shiftBlend = ease(clamp((progress - RIM_CLOSURE) / (1 - RIM_CLOSURE), 0, 1));
+      if (knobGrip.distanceTo(center) < scale * .92) progress = unit(shiftProgress);
+    }
+    // Both ends of the reach reserve time for fingers to move at fixed contact.
+    shiftBlend = ease(unit((progress - RIM_CLOSURE) / (KNOB_CONTACT - RIM_CLOSURE)));
+    const steeringEffort = Number.isFinite(steeringRateRadS) ? clamp(steeringRateRadS / 4, -1, 1) : 0;
+    const elapsed = clamp(dt || 0, 0, .05);
 
     for (let index = 0; index < model.arms.length; index++) {
       const arm = model.arms[index], { handMesh, sleeve } = arm;
       const side = index === 0 ? -1 : 1;
+      const handProgress = side === 1 ? progress : 0;
+      const rimRelease = ease(unit(handProgress / RIM_CLOSURE));
+      if (reducedMotion) {
+        arm.gripAdjustment = 0;
+        arm.fingerFlex.fill(0);
+      } else if (!paused && elapsed > 0) {
+        // The adjusting hand yields more than the hand bracing the wheel.
+        const yieldOnRim = .28 * Math.abs(steeringEffort) + .72 * Math.max(0, side * steeringEffort);
+        arm.gripAdjustment = settle(arm.gripAdjustment, -side * yieldOnRim, 11, elapsed);
+        arm.fingerFlex[0] = settle(arm.fingerFlex[0], yieldOnRim * .20, 15, elapsed);
+        arm.fingerFlex[1] = settle(arm.fingerFlex[1], yieldOnRim * .30, 8, elapsed);
+        arm.fingerFlex[2] = settle(arm.fingerFlex[2], yieldOnRim * .13, 19, elapsed);
+      }
       // Stagger the regrip windows so one hand always has the rim.
       const phaseAtRest = index === 0 ? .19 : .22;
       const phase = wrap(phaseAtRest - side * sweep, GRIP_CYCLE);
@@ -144,7 +162,8 @@ export function createCockpitDriverArms(T) {
       const follow = clamp(baseGrip - side * sweep, UPPER_GRIP, LOWER_GRIP);
       const recover = clamp(baseGrip + arc - phaseAtRest, UPPER_GRIP, LOWER_GRIP);
       const sector = follow + (recover - follow) * regrip;
-      const angle = side * sector + twist;
+      const arcAdjustment = arm.gripAdjustment * RIM_ADJUSTMENT * (1 - regrip) * (1 - rimRelease);
+      const angle = side * sector + twist + arcAdjustment;
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
       const shift = side === 1 ? shiftBlend : 0;
@@ -152,11 +171,10 @@ export function createCockpitDriverArms(T) {
       const reposition = onlyWheelHand ? 0 : regrip;
       const loosen = ease(clamp((release - .12) / .18, 0, 1)) * ease(clamp((.80 - release) / .18, 0, 1)) * reposition;
       const releaseFingers = ease(clamp(release / .18, 0, 1)) * ease(clamp((1 - release) / .16, 0, 1)) * reposition;
-      const shiftFingers = side === 1 ? ease(clamp(progress / RIM_CLOSURE, 0, 1)) * (1 - ease(clamp(shift / .26, 0, 1))) : 0;
-      const transit = Math.sin(Math.PI * shift);
-      const grasp = ease(clamp((shift - .53) / .47, 0, 1));
-      const open = transit * (1 - grasp);
-      const rimOpen = Math.min(1 - open - grasp, Math.max(releaseFingers * (1 - shift), shiftFingers));
+      const transit = 4 * shift * (1 - shift);
+      const grasp = ease(unit((handProgress - KNOB_CONTACT) / (1 - KNOB_CONTACT)));
+      const open = ease(unit((handProgress - RIM_CLOSURE) / .24)) * (1 - grasp);
+      const rimOpen = (1 - open - grasp) * Math.max(releaseFingers * (1 - shift), rimRelease);
       radial.subVectors(wheelHand, center).normalize();
       tangent.crossVectors(wheelNormal, radial).multiplyScalar(side);
       arm.grip.copy(wheelHand).addScaledVector(wheelNormal, loosen * scale * .017);
@@ -183,7 +201,7 @@ export function createCockpitDriverArms(T) {
         .addScaledVector(aim, wristOffset.y * scale).addScaledVector(palmBack, wristOffset.z * scale);
       cuffAim.copy(palmRight).multiplyScalar(-side * wristDirection.x).addScaledVector(aim, wristDirection.y)
         .addScaledVector(palmBack, wristDirection.z).normalize();
-      arm.contact = shift > .99 ? 'shifter' : shift > 0 || loosen > .02 ? 'reach' : 'wheel';
+      arm.contact = grasp === 1 ? 'shifter' : shift > 0 || loosen > .02 ? 'reach' : 'wheel';
       arm.shoulder.copy(center).addScaledVector(back, scale * (.49 + settings.shoulderReachCm / 100))
         .addScaledVector(up, scale * (.062 + settings.shoulderHeightCm / 100)).addScaledVector(right, scale * .151 * side);
       direction.subVectors(arm.wrist, arm.shoulder);
@@ -209,6 +227,10 @@ export function createCockpitDriverArms(T) {
       handMesh.scale.set(-side * scale, scale, scale);
       const targets = handMesh.morphTargetInfluences;
       targets[0] = open; targets[1] = grasp; targets[2] = rimOpen;
+      const gripFlex = Math.max(0, 1 - open - grasp - rimOpen);
+      for (let channel = 0; channel < arm.fingerFlex.length; channel++) {
+        targets[3 + channel] = arm.fingerFlex[channel] * gripFlex;
+      }
       if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, cuffAim, palmRight, scale)) sleeveUpdates++;
     }
   }
@@ -222,6 +244,8 @@ export function createCockpitDriverArms(T) {
       elbows: model?.arms.map(arm => arm.elbow.toArray()) ?? [],
       wristAngles: model?.arms.map(arm => Math.acos(clamp(arm.wristAlignment, -1, 1)) / DEG) ?? [],
       grips: model?.arms.map(arm => arm.grip.toArray()) ?? [],
+      knob: shiftBlend > 0 ? knobGrip.toArray() : null,
+      fingerFlex: model?.arms.map(arm => arm.handMesh.morphTargetInfluences.slice(3)) ?? [],
       cuffs: model?.arms.map(arm => arm.sleeve.cuff.toArray()) ?? [],
       contacts: model?.arms.map(arm => arm.contact) ?? [],
       triangles: model?.triangles ?? 0, sleeveUpdates,

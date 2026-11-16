@@ -26,12 +26,13 @@ test('low race glass drops the transmission prepass and restores the authored ma
 });
 
 test('a vehicle staged before a tier change uses the live tier when committed',async()=>{
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=72ce231fa8d1a09b',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=cf734db7fdb7481b',import.meta.url),'utf8');
  const start=source.indexOf('  async function preparePlayerVehicle(');
  const end=source.indexOf("  setLoading('Preparando vegetación",start);
  let tier='balanced';
  const refraction=[],mount=new T.Group();
- const profiles=[];
+ const profiles=[],shiftResets=[];
+ const gearState={x:0,y:0,path:null};
  const presentation={root:new T.Group(),setReducedRefraction:value=>refraction.push(value),setChassisConfig(){},setLightMode(){}};
  const scope={
   THREE:T,raceChevyV3Model:mount,raceChevyPhysicalRoot:new T.Group(),runtimeDeviceProfile:{phone:false},scene:{},
@@ -43,6 +44,7 @@ test('a vehicle staged before a tier change uses the live tier when committed',a
   backgroundEditor:{setVehicle(){}},frontCutController:{setVehicle(){}},gameSettingsVehicle:'chevrolet_1969',
   cockpitMirrors:{feeds:{}},attachAuthoredMirrors:()=>null,authoredWindshieldMount:()=>null,cabinMount:{},
   authoredCockpitAnchors:()=>null,driverArms:{bind(){}},cockpit:new T.Group(),wheelPivot:new T.Group(),steeringBase:new T.Quaternion(),shifterMechanism:{knob:new T.Group()},
+  driverShift:{reset(gear){shiftResets.push(gear);}},gearState,
   raceCameraInitialized:true,lightingEditor:null,rayTracing:null,rayTracingSettings:null,
   raceWorld:{getPerformanceTier:()=>tier,attachWeatherWindshield(){},invalidateVehiclePhysics(){},getDrivingLights:()=>({mode:'off'})}
  };
@@ -55,4 +57,5 @@ test('a vehicle staged before a tier change uses the live tier when committed',a
  assert.equal(mount.children[0].visible,true);
  assert.equal(refraction.at(-1),true);
  assert.deepEqual(profiles,['chevrolet_1969']);
+ assert.deepEqual(shiftResets,[gearState]);
 });

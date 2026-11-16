@@ -1,4 +1,4 @@
-import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=29f73b7d9a95dcdd';
+import { COCKPIT_HAND_MESH } from './cockpit-hand-mesh.mjs?v=ecf8eef834b29fbf';
 import { createCockpitDriverMaterials } from './cockpit-driver-materials.mjs?v=4ab97e6ded9f33f6';
 import { createCockpitDriverSleeve } from './cockpit-driver-sleeve.mjs?v=f455f5f654775538';
 
@@ -41,7 +41,7 @@ function gripColors(T, points, normals, wheel) {
 }
 
 function handGeometry(T, tube) {
-  const { units, index, weld, uv, poses, grip } = COCKPIT_HAND_MESH;
+  const { units, index, weld, uv, poses, grip, digits } = COCKPIT_HAND_MESH;
   const geometry = new T.BufferGeometry(), welded = new T.BufferGeometry();
   const indices = new Uint16Array(decode(index)), sourceVertices = new Uint16Array(decode(weld));
   geometry.setIndex(new T.BufferAttribute(indices, 1));
@@ -81,11 +81,21 @@ function handGeometry(T, tube) {
   };
   const base = rimPose(''), rimOpen = rimPose('Open');
   const loadPose = name => Float32Array.from(coordinates(name), value => value / units);
+  const digit = new Uint8Array(decode(digits));
+  // Split the rig's fitted release along the authored finger groups. Shared
+  // palm vertices stay planted and all UV copies use the same deformation.
+  const fingerPose = (first, last) => Float32Array.from(base, (value, i) => {
+    const owner = digit[Math.floor(i / 3)];
+    return owner >= first && owner <= last ? rimOpen[i] : value;
+  });
   const poseVertices = [
     ['wheel', base],
     ['reach', loadPose('reach')],
     ['shifter', loadPose('shifter')],
     ['rimOpen', rimOpen],
+    ['indexFlex', fingerPose(1, 2)],
+    ['outerFlex', fingerPose(3, 4)],
+    ['thumbFlex', fingerPose(5, 5)],
   ];
   const positions = [], normals = [], colors = [];
   const noContact = new Float32Array(base.length).fill(1);
@@ -96,7 +106,7 @@ function handGeometry(T, tube) {
     const normal = welded.getAttribute('normal').array;
     normals.push(withUvSeams(normal, name));
     // As a hand releases, only the localized rim contact shading fades away.
-    colors.push(withUvSeams(name === 'wheel' || name === 'rimOpen' ? gripColors(T, pose, normal, wheel) : noContact, name));
+    colors.push(withUvSeams(name === 'reach' || name === 'shifter' ? noContact : gripColors(T, pose, normal, wheel), name));
   }
   geometry.setAttribute('position', positions[0]);
   geometry.setAttribute('normal', normals[0]);
@@ -122,7 +132,8 @@ export function createCockpitDriverAvatar(T, tube) {
     handMesh.raycast = ignoreRay;
     const sleeve = createCockpitDriverSleeve(T, materials.fabric, side);
     root.add(sleeve.mesh, handMesh);
-    return { sleeve, handMesh, shoulder: new T.Vector3(), elbow: new T.Vector3(), wrist: new T.Vector3(), grip: new T.Vector3(), contact: 'wheel' };
+    return { sleeve, handMesh, shoulder: new T.Vector3(), elbow: new T.Vector3(), wrist: new T.Vector3(), grip: new T.Vector3(),
+      contact: 'wheel', gripAdjustment: 0, fingerFlex: [0, 0, 0] };
   });
   return {
     root, arms, wheel, wrists,

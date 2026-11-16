@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
-const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=72ce231fa8d1a09b', import.meta.url), 'utf8');
+const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=cf734db7fdb7481b', import.meta.url), 'utf8');
 function section(start, end, offset = 0) {
   const from = host.indexOf(start, offset);
   const to = host.indexOf(end, from);
@@ -49,7 +49,7 @@ function fixture({gear = '1', velocity = [0, 0, 0], mode = 'automatic', status =
     handler(event);
     return event;
   }
-  return {gearState, events, press, keyActions, raceKeyDown: context.onKeyDown};
+  return {gearState, events, press, keyActions, raceKeyDown: context.onKeyDown, requestGear: context.requestGear};
 }
 
 test('R alternates between automatic reverse and first gear at rest', () => {
@@ -91,4 +91,13 @@ test('manual R still selects reverse instead of toggling into first', () => {
   const f = fixture({mode: 'manual', gear: 'R'});
   f.press();
   assert.equal(f.gearState.requested, 'R');
+});
+
+test('a rejected reverse does not overwrite a valid manual shift in progress', () => {
+  const f = fixture({ gear: 'N', mode: 'manual' });
+  assert.equal(f.requestGear('1', 'manual', 0), true);
+  const path = f.gearState.path;
+  assert.equal(f.requestGear('R', 'manual', 4), false);
+  assert.equal(f.gearState.requested, '1');
+  assert.equal(f.gearState.path, path);
 });

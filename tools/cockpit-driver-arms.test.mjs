@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=4e73cc74044cc835';
-import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=29f73b7d9a95dcdd';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=3625a40f47945360';
+import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=ecf8eef834b29fbf';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
 
@@ -16,7 +16,7 @@ function fixture(tube = .014) {
   const arms = createCockpitDriverArms(T);
   arms.bind({ parent, pivot, wheel: rim, knob });
   const settings = sanitizeDriverArmsSettings({ enabled: true });
-  const sample = { settings, active: true, gear: '2', shifting: false, grabbing: false, dt: 1 / 60 };
+  const sample = { settings, active: true, shiftProgress: 0, dt: 1 / 60 };
   return { parent, pivot, knob, arms, sample };
 }
 
@@ -101,8 +101,8 @@ test('the shift hand tracks the actual moving knob, then returns without reactin
   const { arms, knob, sample } = fixture();
   arms.update(sample);
   const steady = arms.diagnostics();
-  const shift = { ...sample, gear: '3', shifting: true };
-  for (let frame = 0; frame < 24; frame++) arms.update(shift);
+  const shift = { ...sample, shiftProgress: 1 };
+  arms.update(shift);
   const grasped = arms.diagnostics();
   assert.equal(grasped.shiftBlend, 1);
   assert.deepEqual(grasped.hands[0], steady.hands[0]);
@@ -110,14 +110,38 @@ test('the shift hand tracks the actual moving knob, then returns without reactin
   knob.position.x += .024;
   arms.update(shift);
   assert.ok(Math.abs(arms.diagnostics().hands[1][0] - grasped.hands[1][0] - .024) < 1e-6);
-  arms.update({ ...shift, paused: true, shifting: false });
+  arms.update({ ...shift, paused: true });
   assert.equal(arms.diagnostics().shiftBlend, 1);
   arms.update({ ...shift, reducedMotion: true });
   assert.equal(arms.diagnostics().shiftBlend, 0);
   arms.update({ ...shift, active: false });
   assert.equal(arms.diagnostics().visible, false);
-  for (let frame = 0; frame < 50; frame++) arms.update({ ...shift, shifting: false });
+  arms.update(sample);
   assert.equal(arms.diagnostics().shiftBlend, 0);
+  arms.dispose();
+});
+
+test('a steering correction flexes the fingers on different timings and settles back on the same palm support', () => {
+  const { parent, arms, sample } = fixture(.0155);
+  arms.update(sample);
+  const hand = parent.getObjectByName('CockpitDriver_hand.R');
+  const names = ['indexFlex', 'outerFlex', 'thumbFlex'];
+  const readFlexion = () => names.map(name => hand.morphTargetInfluences[hand.morphTargetDictionary[name]]);
+  const rest = arms.diagnostics();
+  assert.deepEqual(readFlexion(), [0, 0, 0]);
+  for (let frame = 0; frame < 16; frame++) arms.update({ ...sample, steeringRateRadS: 3 });
+  const flexed = readFlexion();
+  assert.ok(flexed.every(weight => weight > 0 && weight < .32));
+  assert.ok(new Set(flexed).size === names.length);
+  assert.ok(new T.Vector3(...arms.diagnostics().grips[1]).distanceTo(new T.Vector3(...rest.grips[1])) > .0002);
+  assert.deepEqual(arms.diagnostics().contacts, ['wheel', 'wheel']);
+  arms.update({ ...sample, steeringRateRadS: -3, paused: true });
+  assert.deepEqual(readFlexion(), flexed);
+  for (let frame = 0; frame < 100; frame++) arms.update(sample);
+  assert.deepEqual(readFlexion(), [0, 0, 0]);
+  assert.deepEqual(arms.diagnostics().grips, rest.grips);
+  arms.update({ ...sample, steeringRateRadS: 3, reducedMotion: true });
+  assert.deepEqual(readFlexion(), [0, 0, 0]);
   arms.dispose();
 });
 
@@ -135,7 +159,7 @@ test('palms, fingers and cuffs fit the rim continuously through regrips', () => 
     for (const [index, side] of ['L', 'R'].entries()) {
       const hand = rig.getObjectByName(`CockpitDriver_hand.${side}`);
       assert.ok(hand.geometry.attributes.position.count > 2500);
-      assert.equal(hand.geometry.morphAttributes.position.length, 3);
+      assert.equal(hand.geometry.morphAttributes.position.length, 6);
       const wrist = new T.Vector3(...pose.hands[index]);
       const grip = new T.Vector3(...pose.grips[index]);
       assert.ok(wrist.distanceTo(grip) > .06 && wrist.distanceTo(grip) < .11);
@@ -186,7 +210,7 @@ test('upper arm and forearm keep their lengths and the wrist follows the joint t
   }
   const settings = sanitizeDriverArmsSettings({ enabled: true, shoulderHeightCm: 12, shoulderReachCm: 12 });
   for (let frame = 0; frame < 28; frame++) {
-    arms.update({ ...sample, settings, gear: '3', shifting: true });
+    arms.update({ ...sample, settings, shiftProgress: Math.min(1, (frame + 1) / 18) });
     check();
   }
   assert.equal(arms.diagnostics().contacts[1], 'shifter');
@@ -198,7 +222,7 @@ test('shifting takes an open hand to the moving knob with the left hand on the w
   arms.update(sample);
   for (let frame = 0; frame < 40; frame++) {
     pivot.rotation.z = (frame + 20) * .08;
-    arms.update({ ...sample, shifting: true, wheelSpinRad: pivot.rotation.z });
+    arms.update({ ...sample, shiftProgress: Math.min(1, (frame + 1) / 18), wheelSpinRad: pivot.rotation.z });
     const pose = arms.diagnostics();
     assert.equal(pose.contacts[0], 'wheel');
     if (pose.shiftBlend > .15 && pose.shiftBlend < .7) {
@@ -219,12 +243,11 @@ test('the returning hand seats the palm on the rim before it closes the fingers'
   const hand = parent.getObjectByName('CockpitDriver_hand.R');
   const rimOpen = hand.morphTargetDictionary.rimOpen;
   assert.equal(typeof rimOpen, 'number');
-  const shift = { ...sample, gear: '3', shifting: true, dt: 1 / 240 };
-  for (let frame = 0; frame < 70; frame++) arms.update(shift);
+  arms.update({ ...sample, shiftProgress: 1 });
   assert.equal(arms.diagnostics().contacts[1], 'shifter');
   let palmLanded = false;
-  for (let frame = 0; frame < 180; frame++) {
-    arms.update({ ...shift, shifting: false });
+  for (let frame = 59; frame >= 0; frame--) {
+    arms.update({ ...sample, shiftProgress: frame / 60 });
     const pose = arms.diagnostics();
     if (pose.shiftBlend === 0 && hand.morphTargetInfluences[rimOpen] > .2) {
       palmLanded = true;
@@ -297,6 +320,23 @@ test('the actual finger surfaces seat against thin, intermediate and thick rims'
         assert.ok(overlap < .0032, 'The fingers uncurl around the rim throughout the motion');
         if (openness === 1) assert.ok(closedPads < opposingPads.reduce((sum, count) => sum + count, 0) / 2);
       }
+      hand.morphTargetInfluences[hand.morphTargetDictionary.rimOpen] = 0;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.indexFlex] = .20;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.outerFlex] = .30;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.thumbFlex] = .13;
+      let planted = 0, thumbStillOnFace = 0, flexPenetration = 0;
+      for (let i = 0; i < weld.length; i++) {
+        hand.getVertexPosition(i, point).applyMatrix4(hand.matrixWorld);
+        const radial = Math.hypot(point.x, point.y) - .18;
+        const depth = Math.hypot(radial, point.z) - tube;
+        flexPenetration = Math.max(flexPenetration, -depth);
+        if (Math.abs(depth) >= .002) continue;
+        if (pads[weld[i]] & 32) planted++;
+        if (thumbs.has(weld[i]) && point.z > .45 * Math.abs(radial)) thumbStillOnFace++;
+      }
+      assert.equal(planted, palmContact, 'Micro-adjustments preserve palmar support');
+      assert.ok(thumbStillOnFace >= 15, 'The thumb continues to oppose the fingers as they adjust');
+      assert.ok(flexPenetration < .0032, 'Micro-adjustments do not pass through the rim');
     }
     arms.dispose();
   }
@@ -375,7 +415,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=72ce231fa8d1a09b', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=cf734db7fdb7481b', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);
