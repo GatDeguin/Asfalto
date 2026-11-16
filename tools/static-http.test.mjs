@@ -5,7 +5,7 @@ import os from 'node:os';
 import http from 'node:http';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
-import {startServer} from '../server.mjs?v=9eba410657deb1ea';
+import {startServer} from '../server.mjs?v=d5132a06b199d493';
 
 test('static HTTP revalidates mutable files, streams ranges and respects HEAD', async()=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'asfalto-http-'));
@@ -37,4 +37,32 @@ test('static HTTP revalidates mutable files, streams ranges and respects HEAD', 
    const status=await new Promise((resolve,reject)=>{const req=http.get({hostname:'127.0.0.1',port:new URL(server.url).port,path:rawPath},res=>{res.resume();resolve(res.statusCode);});req.on('error',reject);});assert.equal(status,403);
   }
  }finally{await server.close();await rm(root,{recursive:true,force:true});}
+});
+
+test('the game serves its iOS Home Screen icon as a 180 × 180 PNG', async () => {
+  const root = path.resolve(import.meta.dirname, '..');
+  const server = await startServer({root});
+  try {
+    const page = await fetch(server.url);
+    assert.equal(page.status, 200);
+    const html = await page.text();
+    const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i)?.[1];
+    const touchIcon = head?.match(/<link\b[^>]*\brel="apple-touch-icon"[^>]*>/i)?.[0];
+    assert.ok(touchIcon, 'The HTML head needs an apple-touch-icon link');
+    assert.equal(touchIcon.match(/\bsizes="([^"]+)"/)?.[1], '180x180');
+
+    const href = touchIcon.match(/\bhref="([^"]+)"/)?.[1];
+    assert.equal(href, './apple-touch-icon.png', 'The icon URL must be relative to the game directory');
+    const response = await fetch(new URL(href, server.url));
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'image/png');
+
+    const png = Buffer.from(await response.arrayBuffer());
+    assert.equal(png.toString('hex', 0, 8), '89504e470d0a1a0a');
+    assert.equal(png.toString('ascii', 12, 16), 'IHDR');
+    assert.equal(png.readUInt32BE(16), 180);
+    assert.equal(png.readUInt32BE(20), 180);
+  } finally {
+    await server.close();
+  }
 });
