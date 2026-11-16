@@ -10,6 +10,19 @@ const LOWER_GRIP = 146 * DEG;
 const RIM_CLOSURE = .17;
 const KNOB_CONTACT = .81;
 const RIM_ADJUSTMENT = .006;
+const STILL_WHEEL_RATE = .14;
+const FIRST_GRIP_PAUSE = .64;
+// Each finger group has its own opening and closing window within the gesture.
+// Entries are [start, end, flexion] for index/middle, ring/little and thumb.
+const RESTING_GRIP_GESTURES = [
+  { hand: 1, pause: 1.25, duration: 1.14, wrist: .88, fingers: [[.10, .81, .16], [.02, .86, .30], [.22, .93, .13]] },
+  { hand: 0, pause: .90, duration: 1.31, wrist: -.82, fingers: [[.11, .79, .20], [.24, .93, .17], [.02, .87, .12]] },
+  { hand: 1, pause: 1.34, duration: .97, wrist: -.62, fingers: [[.01, .76, .20], [.19, .91, .11], [.16, .98, .10]] },
+  { hand: 0, pause: .76, duration: 1.20, wrist: .76, fingers: [[.21, .88, .15], [.03, .77, .28], [.24, .99, .09]] },
+  { hand: 1, pause: 1.08, duration: 1.28, wrist: .57, fingers: [[.18, .95, .12], [.18, .84, .20], [.04, .74, .12]] },
+  { hand: 0, pause: 1.52, duration: 1.13, wrist: -.64, fingers: [[.04, .82, .17], [.13, .86, .23], [.21, .96, .10]] },
+];
+const GRIP_PAUSE_VARIATIONS = [0, .31, .09, .43, .17];
 // Segment lengths in the same reference scale as the authored hand.
 const UPPER_ARM = .320;
 const FOREARM = .260;
@@ -23,6 +36,51 @@ const unit = value => clamp(value, 0, 1);
 function settle(value, target, rate, dt) {
   const next = target + (value - target) * Math.exp(-rate * dt);
   return Math.abs(next - target) < .0004 ? target : next;
+}
+
+function gripPulse(time, start, end) {
+  const phase = (time - start) / (end - start);
+  return ease(unit(phase / .37)) * ease(unit((1 - phase) / .58));
+}
+
+function createRestingGrip() {
+  const pose = { hand: 1, wrist: 0, fingers: [0, 0, 0] };
+  let index = 0, pauseVariation = 0, time = -FIRST_GRIP_PAUSE, blend = 0;
+
+  function clearPose() {
+    pose.wrist = 0;
+    pose.fingers.fill(0);
+  }
+  function reset() {
+    index = pauseVariation = blend = 0;
+    time = -FIRST_GRIP_PAUSE;
+    clearPose();
+  }
+  function update(dt, steady) {
+    let gesture = RESTING_GRIP_GESTURES[index];
+    blend = unit(blend + dt / (steady ? .24 : -.18));
+    if (steady) time += dt;
+    if (time >= gesture.duration || (!steady && blend === 0 && time >= 0)) {
+      const remainder = Math.max(0, time - gesture.duration);
+      index = (index + 1) % RESTING_GRIP_GESTURES.length;
+      gesture = RESTING_GRIP_GESTURES[index];
+      time = remainder - gesture.pause - GRIP_PAUSE_VARIATIONS[pauseVariation];
+      pauseVariation = (pauseVariation + 1) % GRIP_PAUSE_VARIATIONS.length;
+    }
+    pose.hand = gesture.hand;
+    if (time < 0 || blend === 0) {
+      clearPose();
+      return;
+    }
+    const phase = time / gesture.duration;
+    const strength = ease(blend);
+    pose.wrist = gesture.wrist * gripPulse(phase, 0, .96) * strength;
+    for (let channel = 0; channel < pose.fingers.length; channel++) {
+      const [start, end, amount] = gesture.fingers[channel];
+      pose.fingers[channel] = amount * gripPulse(phase, start, end) * strength;
+    }
+  }
+  return { pose, update, reset };
 }
 
 function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
@@ -76,11 +134,15 @@ export function createCockpitDriverArms(T) {
   const direction = new T.Vector3(), pole = new T.Vector3(), swivel = new T.Vector3(), forearm = new T.Vector3();
   const palmRight = new T.Vector3(), palmBack = new T.Vector3(), palmBasis = new T.Matrix4();
   const wristOffset = new T.Vector3(), wristDirection = new T.Vector3(), cuffAim = new T.Vector3();
+  const restingGrip = createRestingGrip();
   let mount = null, fit, model = null, disposed = false;
   let shiftBlend = 0, sleeveUpdates = 0;
+  let previousSweep;
 
   function hide() {
     shiftBlend = 0;
+    restingGrip.reset();
+    previousSweep = undefined;
     if (!model) return;
     model.root.visible = false;
     for (const arm of model.arms) {
@@ -133,12 +195,21 @@ export function createCockpitDriverArms(T) {
     }
     // Both ends of the reach reserve time for fingers to move at fixed contact.
     shiftBlend = ease(unit((progress - RIM_CLOSURE) / (KNOB_CONTACT - RIM_CLOSURE)));
-    const steeringEffort = Number.isFinite(steeringRateRadS) ? clamp(steeringRateRadS / 4, -1, 1) : 0;
+    const steeringRate = Number.isFinite(steeringRateRadS) ? steeringRateRadS : 0;
+    const steeringEffort = clamp(steeringRate / 4, -1, 1);
     const elapsed = clamp(dt || 0, 0, .05);
+    if (reducedMotion) restingGrip.reset();
+    else if (!paused && elapsed > 0) {
+      const rimIsStable = previousSweep === undefined || Math.abs(sweep - previousSweep) <= STILL_WHEEL_RATE * elapsed;
+      restingGrip.update(elapsed, rimIsStable && Math.abs(steeringRate) <= STILL_WHEEL_RATE && regrip < .1 && progress === 0);
+    }
+    previousSweep = sweep;
+    const idle = restingGrip.pose;
 
     for (let index = 0; index < model.arms.length; index++) {
       const arm = model.arms[index], { handMesh, sleeve } = arm;
       const side = index === 0 ? -1 : 1;
+      const adjustsAtRest = idle.hand === index;
       const handProgress = side === 1 ? progress : 0;
       const rimRelease = ease(unit(handProgress / RIM_CLOSURE));
       if (reducedMotion) {
@@ -162,7 +233,9 @@ export function createCockpitDriverArms(T) {
       const follow = clamp(baseGrip - side * sweep, UPPER_GRIP, LOWER_GRIP);
       const recover = clamp(baseGrip + arc - phaseAtRest, UPPER_GRIP, LOWER_GRIP);
       const sector = follow + (recover - follow) * regrip;
-      const arcAdjustment = arm.gripAdjustment * RIM_ADJUSTMENT * (1 - regrip) * (1 - rimRelease);
+      // Move the contact frame along the measured rim, preserving radial support.
+      const wristAdjustment = clamp(arm.gripAdjustment + (adjustsAtRest ? side * idle.wrist : 0), -1, 1);
+      const arcAdjustment = wristAdjustment * RIM_ADJUSTMENT * (1 - regrip) * (1 - rimRelease);
       const angle = side * sector + twist + arcAdjustment;
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
@@ -229,7 +302,8 @@ export function createCockpitDriverArms(T) {
       targets[0] = open; targets[1] = grasp; targets[2] = rimOpen;
       const gripFlex = Math.max(0, 1 - open - grasp - rimOpen);
       for (let channel = 0; channel < arm.fingerFlex.length; channel++) {
-        targets[3 + channel] = arm.fingerFlex[channel] * gripFlex;
+        const pressure = Math.max(arm.fingerFlex[channel], adjustsAtRest ? idle.fingers[channel] : 0);
+        targets[3 + channel] = pressure * gripFlex;
       }
       if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, cuffAim, palmRight, scale)) sleeveUpdates++;
     }

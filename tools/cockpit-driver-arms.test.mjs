@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=3625a40f47945360';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=b9681ee5ba6dff67';
 import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=ecf8eef834b29fbf';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
@@ -137,11 +137,72 @@ test('a steering correction flexes the fingers on different timings and settles 
   assert.deepEqual(arms.diagnostics().contacts, ['wheel', 'wheel']);
   arms.update({ ...sample, steeringRateRadS: -3, paused: true });
   assert.deepEqual(readFlexion(), flexed);
-  for (let frame = 0; frame < 100; frame++) arms.update(sample);
+  for (let frame = 0; frame < 150; frame++) {
+    arms.update(sample);
+    if (readFlexion().every(weight => weight === 0) &&
+        arms.diagnostics().grips[1].every((value, i) => value === rest.grips[1][i])) break;
+  }
   assert.deepEqual(readFlexion(), [0, 0, 0]);
   assert.deepEqual(arms.diagnostics().grips, rest.grips);
   arms.update({ ...sample, steeringRateRadS: 3, reducedMotion: true });
   assert.deepEqual(readFlexion(), [0, 0, 0]);
+  arms.dispose();
+});
+
+test('with a steady wheel, each hand makes its own small adjustment and keeps the palm on the rim', () => {
+  const { arms, sample } = fixture(.0155);
+  arms.update(sample);
+  const rest = arms.diagnostics();
+  let previous = rest;
+  const wristTravel = [0, 0];
+  const flexPeaks = [[0, 0, 0], [0, 0, 0]];
+  let restedBetweenGestures = false, sawAdjustment = false;
+  const distance = (a, b) => Math.hypot(...a.map((value, i) => value - b[i]));
+  for (let frame = 0; frame < 600; frame++) {
+    arms.update(sample);
+    const current = arms.diagnostics();
+    const moving = current.fingerFlex.map(hand => hand.some(weight => weight > .003));
+    assert.ok(moving.filter(Boolean).length <= 1, 'The hands adjust independently');
+    if (sawAdjustment && !moving.some(Boolean)) restedBetweenGestures = true;
+    sawAdjustment ||= moving.some(Boolean);
+    assert.deepEqual(current.contacts, ['wheel', 'wheel']);
+    for (let side = 0; side < 2; side++) {
+      const [x, y, z] = current.grips[side];
+      assert.ok(Math.abs(Math.hypot(x, y) - .18) < .001 && Math.abs(z) < .001);
+      assert.ok(distance(current.hands[side], previous.hands[side]) < .00025, 'The wrist stays continuous between frames');
+      assert.ok(distance(current.hands[side], current.cuffs[side]) < .012);
+      wristTravel[side] = Math.max(wristTravel[side], distance(current.hands[side], rest.hands[side]));
+      for (let channel = 0; channel < 3; channel++) {
+        flexPeaks[side][channel] = Math.max(flexPeaks[side][channel], current.fingerFlex[side][channel]);
+      }
+    }
+    previous = current;
+  }
+  assert.ok(wristTravel.every(distance => distance > .00035 && distance < .0020), 'Both wrists settle by millimeters');
+  assert.ok(flexPeaks.flat().every(weight => weight > .055 && weight <= .30), 'Each set of fingers changes pressure');
+  assert.ok(restedBetweenGestures, 'Pressure returns to the original contact between gestures');
+  arms.dispose();
+});
+
+test('a resting grip freezes on pause and starts cleanly after reduced motion or leaving the view', () => {
+  const { arms, sample } = fixture();
+  let active;
+  for (let frame = 0; frame < 180; frame++) {
+    arms.update(sample);
+    const pose = arms.diagnostics();
+    if (pose.fingerFlex.flat().some(weight => weight > .10)) { active = pose; break; }
+  }
+  assert.ok(active, 'An idle grip should animate with a steady wheel');
+  for (let frame = 0; frame < 90; frame++) arms.update({ ...sample, paused: true });
+  assert.deepEqual(arms.diagnostics().fingerFlex, active.fingerFlex);
+  assert.deepEqual(arms.diagnostics().hands, active.hands);
+  arms.update({ ...sample, reducedMotion: true });
+  assert.ok(arms.diagnostics().fingerFlex.flat().every(weight => weight === 0));
+  for (let frame = 0; frame < 90; frame++) arms.update(sample);
+  assert.ok(arms.diagnostics().fingerFlex.flat().some(weight => weight > .02));
+  arms.update({ ...sample, active: false });
+  arms.update(sample);
+  assert.ok(arms.diagnostics().fingerFlex.flat().every(weight => weight === 0));
   arms.dispose();
 });
 
@@ -415,7 +476,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=71fd8df912e439ab', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=e807578253162ca5', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);
