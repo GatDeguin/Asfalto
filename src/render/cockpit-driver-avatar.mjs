@@ -40,7 +40,25 @@ function gripColors(T, points, normals, wheel) {
   return colors;
 }
 
-function handGeometry(T, tube) {
+function wristPose(T, base, digits, { offset, direction }) {
+  const pose = base.slice();
+  const axis = new T.Vector3(0, 1, 0);
+  const rotation = new T.Quaternion().setFromUnitVectors(axis, direction);
+  const point = new T.Vector3(), moved = new T.Vector3();
+  // Leave the support pads (above .036 in the authored hand) and fingers fixed.
+  for (let vertex = 0; vertex < digits.length; vertex++) {
+    const i = vertex * 3;
+    if (digits[vertex] || base[i + 1] >= .034) continue;
+    const t = Math.min(1, Math.max(0, (.034 - base[i + 1]) / .026));
+    const influence = t * t * (3 - 2 * t);
+    point.fromArray(base, i);
+    moved.copy(point).applyQuaternion(rotation).add(offset);
+    point.lerp(moved, influence).toArray(pose, i);
+  }
+  return pose;
+}
+
+function handGeometry(T, tube, restingWrist) {
   const { units, index, weld, uv, poses, grip, digits } = COCKPIT_HAND_MESH;
   const geometry = new T.BufferGeometry(), welded = new T.BufferGeometry();
   const indices = new Uint16Array(decode(index)), sourceVertices = new Uint16Array(decode(weld));
@@ -82,8 +100,8 @@ function handGeometry(T, tube) {
   const base = rimPose(''), rimOpen = rimPose('Open');
   const loadPose = name => Float32Array.from(coordinates(name), value => value / units);
   const digit = new Uint8Array(decode(digits));
-  // Split the rig's fitted release along the authored finger groups. Shared
-  // palm vertices stay planted and all UV copies use the same deformation.
+  // Keep the paired steering poses and add corrections for each trailing
+  // finger so resting poses can vary its timing. The palm is outside both.
   const fingerPose = (first, last) => Float32Array.from(base, (value, i) => {
     const owner = digit[Math.floor(i / 3)];
     return owner >= first && owner <= last ? rimOpen[i] : value;
@@ -96,6 +114,9 @@ function handGeometry(T, tube) {
     ['indexFlex', fingerPose(1, 2)],
     ['outerFlex', fingerPose(3, 4)],
     ['thumbFlex', fingerPose(5, 5)],
+    ['middleFlex', fingerPose(2, 2)],
+    ['littleFlex', fingerPose(4, 4)],
+    ['wristSettle', wristPose(T, base, digit, restingWrist)],
   ];
   const positions = [], normals = [], colors = [];
   const noContact = new Float32Array(base.length).fill(1);
@@ -121,11 +142,12 @@ function handGeometry(T, tube) {
 export function createCockpitDriverAvatar(T, tube) {
   const root = new T.Group();
   root.name = 'CockpitDriverArms';
-  const { surface, wheel } = handGeometry(T, tube);
-  const materials = createCockpitDriverMaterials(T);
   const wrists = Object.fromEntries(Object.entries(COCKPIT_HAND_MESH.wrists).map(([name, { offset, direction }]) => [
     name, { offset: new T.Vector3(...offset), direction: new T.Vector3(...direction) },
   ]));
+  wrists.settle = { offset: new T.Vector3(.0034, -.0013, .0042), direction: new T.Vector3(-.12, .984, -.132).normalize() };
+  const { surface, wheel } = handGeometry(T, tube, wrists.settle);
+  const materials = createCockpitDriverMaterials(T);
   const arms = ['L', 'R'].map(side => {
     const handMesh = new T.Mesh(surface, materials.skin);
     handMesh.name = `CockpitDriver_hand.${side}`;

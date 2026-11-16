@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=b9681ee5ba6dff67';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=81b72bd2c24d6383';
 import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=ecf8eef834b29fbf';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
@@ -166,6 +166,7 @@ test('with a steady wheel, each hand makes its own small adjustment and keeps th
     if (sawAdjustment && !moving.some(Boolean)) restedBetweenGestures = true;
     sawAdjustment ||= moving.some(Boolean);
     assert.deepEqual(current.contacts, ['wheel', 'wheel']);
+    assert.deepEqual(current.grips, rest.grips, 'The wrist adjusts without sliding the palm along the rim');
     for (let side = 0; side < 2; side++) {
       const [x, y, z] = current.grips[side];
       assert.ok(Math.abs(Math.hypot(x, y) - .18) < .001 && Math.abs(z) < .001);
@@ -181,6 +182,58 @@ test('with a steady wheel, each hand makes its own small adjustment and keeps th
   assert.ok(wristTravel.every(distance => distance > .00035 && distance < .0020), 'Both wrists settle by millimeters');
   assert.ok(flexPeaks.flat().every(weight => weight > .055 && weight <= .30), 'Each set of fingers changes pressure');
   assert.ok(restedBetweenGestures, 'Pressure returns to the original contact between gestures');
+  arms.dispose();
+});
+
+test('the little and middle fingers can lead or follow the other fingers in a resting grip', () => {
+  const { arms, sample } = fixture();
+  const poses = [];
+  for (let frame = 0; frame < 160; frame++) {
+    arms.update(sample);
+    const fingers = arms.diagnostics().digitFlex?.[1];
+    assert.equal(fingers?.length, 5);
+    poses.push(fingers);
+  }
+  const peakAt = digit => poses.reduce((peak, sample, frame) =>
+    sample[digit] > poses[peak][digit] ? frame : peak, 0);
+  assert.ok(poses.some(([index, middle]) => middle - index > .05));
+  assert.ok(poses.some(([, , ring, little]) => little - ring > .075));
+  assert.ok(Math.abs(peakAt(1) - peakAt(0)) >= 4);
+  assert.ok(Math.abs(peakAt(3) - peakAt(2)) >= 4);
+  assert.ok(peakAt(4) > peakAt(3), 'The thumb relieves pressure after the little finger settles');
+  arms.dispose();
+});
+
+test('isolated finger and wrist shapes move the selected skin through its UV seams', () => {
+  const { parent, arms, sample } = fixture(.0155);
+  arms.update(sample);
+  const hand = parent.getObjectByName('CockpitDriver_hand.R');
+  const base = hand.geometry.getAttribute('position');
+  const weld = new Uint16Array(Uint8Array.from(atob(COCKPIT_HAND_MESH.weld), c => c.charCodeAt(0)).buffer);
+  const digits = Uint8Array.from(atob(COCKPIT_HAND_MESH.digits), c => c.charCodeAt(0));
+  const point = new T.Vector3(), initial = new T.Vector3();
+  for (const [name, canMove] of [
+    ['middleFlex', (digit) => digit === 2],
+    ['littleFlex', (digit) => digit === 4],
+    ['wristSettle', (digit, y) => digit === 0 && y < .034],
+  ]) {
+    const target = hand.morphTargetDictionary[name];
+    hand.morphTargetInfluences[target] = .25;
+    let moved = 0;
+    const displacement = new Map();
+    for (let vertex = 0; vertex < weld.length; vertex++) {
+      const size = hand.getVertexPosition(vertex, point).distanceTo(initial.fromBufferAttribute(base, vertex));
+      if (size > .0001) {
+        moved++;
+        assert.ok(canMove(digits[weld[vertex]], initial.y));
+      }
+      const prior = displacement.get(weld[vertex]);
+      if (prior !== undefined) assert.equal(size, prior, 'Both sides of the UV seam follow the same deformation');
+      displacement.set(weld[vertex], size);
+    }
+    assert.ok(moved > 100);
+    hand.morphTargetInfluences[target] = 0;
+  }
   arms.dispose();
 });
 
@@ -220,7 +273,7 @@ test('palms, fingers and cuffs fit the rim continuously through regrips', () => 
     for (const [index, side] of ['L', 'R'].entries()) {
       const hand = rig.getObjectByName(`CockpitDriver_hand.${side}`);
       assert.ok(hand.geometry.attributes.position.count > 2500);
-      assert.equal(hand.geometry.morphAttributes.position.length, 6);
+      assert.equal(hand.geometry.morphAttributes.position.length, 9);
       const wrist = new T.Vector3(...pose.hands[index]);
       const grip = new T.Vector3(...pose.grips[index]);
       assert.ok(wrist.distanceTo(grip) > .06 && wrist.distanceTo(grip) < .11);
@@ -383,8 +436,11 @@ test('the actual finger surfaces seat against thin, intermediate and thick rims'
       }
       hand.morphTargetInfluences[hand.morphTargetDictionary.rimOpen] = 0;
       hand.morphTargetInfluences[hand.morphTargetDictionary.indexFlex] = .20;
-      hand.morphTargetInfluences[hand.morphTargetDictionary.outerFlex] = .30;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.outerFlex] = .18;
       hand.morphTargetInfluences[hand.morphTargetDictionary.thumbFlex] = .13;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.middleFlex] = -.11;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.littleFlex] = .12;
+      hand.morphTargetInfluences[hand.morphTargetDictionary.wristSettle] = .28;
       let planted = 0, thumbStillOnFace = 0, flexPenetration = 0;
       for (let i = 0; i < weld.length; i++) {
         hand.getVertexPosition(i, point).applyMatrix4(hand.matrixWorld);
@@ -476,7 +532,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=e807578253162ca5', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=b25d3d9c4a85578b', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

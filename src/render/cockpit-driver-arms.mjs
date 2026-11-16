@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=1046ad36b705409b';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=8bceb02abbc8dba1';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -12,15 +12,22 @@ const KNOB_CONTACT = .81;
 const RIM_ADJUSTMENT = .006;
 const STILL_WHEEL_RATE = .14;
 const FIRST_GRIP_PAUSE = .64;
-// Each finger group has its own opening and closing window within the gesture.
-// Entries are [start, end, flexion] for index/middle, ring/little and thumb.
+const CLOSED_DIGITS = [0, 0, 0, 0, 0];
+// These windows overlap to transfer pressure across the grip. Each entry is
+// [start, end, strength], ordered index, middle, ring, little and thumb.
 const RESTING_GRIP_GESTURES = [
-  { hand: 1, pause: 1.25, duration: 1.14, wrist: .88, fingers: [[.10, .81, .16], [.02, .86, .30], [.22, .93, .13]] },
-  { hand: 0, pause: .90, duration: 1.31, wrist: -.82, fingers: [[.11, .79, .20], [.24, .93, .17], [.02, .87, .12]] },
-  { hand: 1, pause: 1.34, duration: .97, wrist: -.62, fingers: [[.01, .76, .20], [.19, .91, .11], [.16, .98, .10]] },
-  { hand: 0, pause: .76, duration: 1.20, wrist: .76, fingers: [[.21, .88, .15], [.03, .77, .28], [.24, .99, .09]] },
-  { hand: 1, pause: 1.08, duration: 1.28, wrist: .57, fingers: [[.18, .95, .12], [.18, .84, .20], [.04, .74, .12]] },
-  { hand: 0, pause: 1.52, duration: 1.13, wrist: -.64, fingers: [[.04, .82, .17], [.13, .86, .23], [.21, .96, .10]] },
+  { hand: 1, pause: 1.26, duration: 1.28, wrist: [.16, .97, .26],
+    fingers: [[.27, .83, .17], [.16, .74, .23], [.10, .75, .24], [.02, .62, .30], [.48, .96, .13]] },
+  { hand: 0, pause: .82, duration: 1.34, wrist: [.12, .99, .24],
+    fingers: [[.09, .66, .20], [.23, .79, .24], [.29, .86, .19], [.36, .96, .22], [.02, .62, .12]] },
+  { hand: 0, pause: 1.06, duration: 1.08, wrist: [.24, .98, .15],
+    fingers: [[.12, .68, .12], [.26, .74, .14], [.35, .89, .20], [.17, .74, .24], [.51, .98, .09]] },
+  { hand: 1, pause: .76, duration: 1.22, wrist: [.04, .89, .22],
+    fingers: [[.08, .71, .23], [.21, .84, .20], [.23, .86, .14], [.37, .98, .19], [.04, .69, .12]] },
+  { hand: 0, pause: 1.41, duration: 1.37, wrist: [.11, .96, .28],
+    fingers: [[.29, .84, .16], [.21, .71, .19], [.11, .65, .23], [.03, .76, .28], [.43, .97, .11]] },
+  { hand: 1, pause: .98, duration: 1.16, wrist: [.28, .99, .18],
+    fingers: [[.21, .79, .17], [.09, .76, .23], [.30, .92, .18], [.45, .98, .20], [.03, .74, .11]] },
 ];
 const GRIP_PAUSE_VARIATIONS = [0, .31, .09, .43, .17];
 // Segment lengths in the same reference scale as the authored hand.
@@ -44,7 +51,7 @@ function gripPulse(time, start, end) {
 }
 
 function createRestingGrip() {
-  const pose = { hand: 1, wrist: 0, fingers: [0, 0, 0] };
+  const pose = { hand: 1, wrist: 0, fingers: [...CLOSED_DIGITS] };
   let index = 0, pauseVariation = 0, time = -FIRST_GRIP_PAUSE, blend = 0;
 
   function clearPose() {
@@ -74,13 +81,19 @@ function createRestingGrip() {
     }
     const phase = time / gesture.duration;
     const strength = ease(blend);
-    pose.wrist = gesture.wrist * gripPulse(phase, 0, .96) * strength;
+    const [wristStart, wristEnd, wristAmount] = gesture.wrist;
+    pose.wrist = wristAmount * gripPulse(phase, wristStart, wristEnd) * strength;
     for (let channel = 0; channel < pose.fingers.length; channel++) {
       const [start, end, amount] = gesture.fingers[channel];
       pose.fingers[channel] = amount * gripPulse(phase, start, end) * strength;
     }
   }
   return { pose, update, reset };
+}
+
+function digitWeights({ morphTargetDictionary: names, morphTargetInfluences: weights }) {
+  const index = weights[names.indexFlex], ring = weights[names.outerFlex];
+  return [index, index + weights[names.middleFlex], ring, ring + weights[names.littleFlex], weights[names.thumbFlex]];
 }
 
 function measureWheel(T, { parent, pivot, wheel, rest, axis, back }) {
@@ -233,9 +246,7 @@ export function createCockpitDriverArms(T) {
       const follow = clamp(baseGrip - side * sweep, UPPER_GRIP, LOWER_GRIP);
       const recover = clamp(baseGrip + arc - phaseAtRest, UPPER_GRIP, LOWER_GRIP);
       const sector = follow + (recover - follow) * regrip;
-      // Move the contact frame along the measured rim, preserving radial support.
-      const wristAdjustment = clamp(arm.gripAdjustment + (adjustsAtRest ? side * idle.wrist : 0), -1, 1);
-      const arcAdjustment = wristAdjustment * RIM_ADJUSTMENT * (1 - regrip) * (1 - rimRelease);
+      const arcAdjustment = arm.gripAdjustment * RIM_ADJUSTMENT * (1 - regrip) * (1 - rimRelease);
       const angle = side * sector + twist + arcAdjustment;
       wheelHand.copy(fit.center).addScaledVector(fit.up, Math.cos(angle) * fit.radius)
         .addScaledVector(fit.right, Math.sin(angle) * fit.radius).applyMatrix4(wheelFrame);
@@ -248,6 +259,8 @@ export function createCockpitDriverArms(T) {
       const grasp = ease(unit((handProgress - KNOB_CONTACT) / (1 - KNOB_CONTACT)));
       const open = ease(unit((handProgress - RIM_CLOSURE) / .24)) * (1 - grasp);
       const rimOpen = (1 - open - grasp) * Math.max(releaseFingers * (1 - shift), rimRelease);
+      const gripFlex = Math.max(0, 1 - open - grasp - rimOpen);
+      const wristSettle = adjustsAtRest ? idle.wrist * gripFlex : 0;
       radial.subVectors(wheelHand, center).normalize();
       tangent.crossVectors(wheelNormal, radial).multiplyScalar(side);
       arm.grip.copy(wheelHand).addScaledVector(wheelNormal, loosen * scale * .017);
@@ -267,9 +280,12 @@ export function createCockpitDriverArms(T) {
         .addScaledVector(aim, -anchor.y * scale).addScaledVector(palmBack, -anchor.z * scale);
       // The grip frame follows the rim. The cuffs follow the authored wrist in
       // that frame, using the same weights as the surface morphs.
-      const { wheel, reach, shifter } = model.wrists, planted = 1 - open - grasp;
-      wristOffset.copy(wheel.offset).multiplyScalar(planted).addScaledVector(reach.offset, open).addScaledVector(shifter.offset, grasp);
-      wristDirection.copy(wheel.direction).multiplyScalar(planted).addScaledVector(reach.direction, open).addScaledVector(shifter.direction, grasp);
+      const { wheel, reach, shifter, settle: restingWrist } = model.wrists;
+      const planted = 1 - open - grasp - wristSettle;
+      wristOffset.copy(wheel.offset).multiplyScalar(planted).addScaledVector(reach.offset, open).addScaledVector(shifter.offset, grasp)
+        .addScaledVector(restingWrist.offset, wristSettle);
+      wristDirection.copy(wheel.direction).multiplyScalar(planted).addScaledVector(reach.direction, open).addScaledVector(shifter.direction, grasp)
+        .addScaledVector(restingWrist.direction, wristSettle);
       arm.wrist.copy(handMesh.position).addScaledVector(palmRight, -side * wristOffset.x * scale)
         .addScaledVector(aim, wristOffset.y * scale).addScaledVector(palmBack, wristOffset.z * scale);
       cuffAim.copy(palmRight).multiplyScalar(-side * wristDirection.x).addScaledVector(aim, wristDirection.y)
@@ -299,31 +315,42 @@ export function createCockpitDriverArms(T) {
       handMesh.quaternion.setFromRotationMatrix(palmBasis.makeBasis(palmRight, aim, palmBack));
       handMesh.scale.set(-side * scale, scale, scale);
       const targets = handMesh.morphTargetInfluences;
+      const names = handMesh.morphTargetDictionary;
       targets[0] = open; targets[1] = grasp; targets[2] = rimOpen;
-      const gripFlex = Math.max(0, 1 - open - grasp - rimOpen);
-      for (let channel = 0; channel < arm.fingerFlex.length; channel++) {
-        const pressure = Math.max(arm.fingerFlex[channel], adjustsAtRest ? idle.fingers[channel] : 0);
-        targets[3 + channel] = pressure * gripFlex;
-      }
+      const digits = adjustsAtRest ? idle.fingers : CLOSED_DIGITS;
+      const [inner, outer, thumb] = arm.fingerFlex;
+      const indexFlex = Math.max(inner, digits[0]), ringFlex = Math.max(outer, digits[2]);
+      targets[names.indexFlex] = indexFlex * gripFlex;
+      targets[names.outerFlex] = ringFlex * gripFlex;
+      targets[names.thumbFlex] = Math.max(thumb, digits[4]) * gripFlex;
+      // The paired targets already move the middle and little fingers. Apply
+      // the difference so they can lead or lag their neighbors in isolation.
+      targets[names.middleFlex] = (Math.max(inner, digits[1]) - indexFlex) * gripFlex;
+      targets[names.littleFlex] = (Math.max(outer, digits[3]) - ringFlex) * gripFlex;
+      targets[names.wristSettle] = wristSettle;
       if (sleeve.update(arm.shoulder, arm.elbow, arm.wrist, cuffAim, palmRight, scale)) sleeveUpdates++;
     }
   }
 
   return {
     bind, update, suspend,
-    diagnostics: () => ({
-      visible: model?.root.visible === true, fitted: !!fit, shiftBlend,
-      hands: model?.arms.map(arm => arm.wrist.toArray()) ?? [],
-      shoulders: model?.arms.map(arm => arm.shoulder.toArray()) ?? [],
-      elbows: model?.arms.map(arm => arm.elbow.toArray()) ?? [],
-      wristAngles: model?.arms.map(arm => Math.acos(clamp(arm.wristAlignment, -1, 1)) / DEG) ?? [],
-      grips: model?.arms.map(arm => arm.grip.toArray()) ?? [],
-      knob: shiftBlend > 0 ? knobGrip.toArray() : null,
-      fingerFlex: model?.arms.map(arm => arm.handMesh.morphTargetInfluences.slice(3)) ?? [],
-      cuffs: model?.arms.map(arm => arm.sleeve.cuff.toArray()) ?? [],
-      contacts: model?.arms.map(arm => arm.contact) ?? [],
-      triangles: model?.triangles ?? 0, sleeveUpdates,
-    }),
+    diagnostics() {
+      const digitFlex = model?.arms.map(arm => digitWeights(arm.handMesh)) ?? [];
+      return {
+        visible: model?.root.visible === true, fitted: !!fit, shiftBlend,
+        hands: model?.arms.map(arm => arm.wrist.toArray()) ?? [],
+        shoulders: model?.arms.map(arm => arm.shoulder.toArray()) ?? [],
+        elbows: model?.arms.map(arm => arm.elbow.toArray()) ?? [],
+        wristAngles: model?.arms.map(arm => Math.acos(clamp(arm.wristAlignment, -1, 1)) / DEG) ?? [],
+        grips: model?.arms.map(arm => arm.grip.toArray()) ?? [],
+        knob: shiftBlend > 0 ? knobGrip.toArray() : null,
+        fingerFlex: digitFlex.map(([index, middle, ring, little, thumb]) => [Math.max(index, middle), Math.max(ring, little), thumb]),
+        digitFlex,
+        cuffs: model?.arms.map(arm => arm.sleeve.cuff.toArray()) ?? [],
+        contacts: model?.arms.map(arm => arm.contact) ?? [],
+        triangles: model?.triangles ?? 0, sleeveUpdates,
+      };
+    },
     dispose() { suspend(); mount = null; fit = undefined; disposed = true; },
   };
 }
