@@ -1,4 +1,4 @@
-import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=8bceb02abbc8dba1';
+import { createCockpitDriverAvatar } from './cockpit-driver-avatar.mjs?v=61ef08c8136a4a32';
 
 const DEG = Math.PI / 180;
 const GRIP_CYCLE = 1.8;
@@ -17,13 +17,14 @@ const CLOSED_DIGITS = [0, 0, 0, 0, 0];
 // [start, end, strength], ordered index, middle, ring, little and thumb.
 const RESTING_GRIP_GESTURES = [
   { hand: 1, pause: 1.26, duration: 1.28, wrist: [.16, .97, .26],
-    fingers: [[.27, .83, .17], [.16, .74, .23], [.10, .75, .24], [.02, .62, .30], [.48, .96, .13]] },
+    fingers: [[.27, .83, .17], [.16, .74, .23], [.10, .75, .24], [.02, .62, .30], [.52, .98, .16]] },
   { hand: 0, pause: .82, duration: 1.34, wrist: [.12, .99, .24],
-    fingers: [[.09, .66, .20], [.23, .79, .24], [.29, .86, .19], [.36, .96, .22], [.02, .62, .12]] },
-  { hand: 0, pause: 1.06, duration: 1.08, wrist: [.24, .98, .15],
-    fingers: [[.12, .68, .12], [.26, .74, .14], [.35, .89, .20], [.17, .74, .24], [.51, .98, .09]] },
+    fingers: [[.09, .66, .20], [.23, .79, .24], [.29, .86, .19], [.36, .96, .22], [.02, .62, .16]] },
+  // A small thumb-led reseat occasionally follows a broader grip adjustment.
+  { hand: 0, pause: 1.06, duration: 1.08, wrist: [.38, .99, .10],
+    fingers: [[.35, .78, .08], [.48, .89, .06], [.60, .91, .03], [.63, .97, .02], [.04, .92, .18]] },
   { hand: 1, pause: .76, duration: 1.22, wrist: [.04, .89, .22],
-    fingers: [[.08, .71, .23], [.21, .84, .20], [.23, .86, .14], [.37, .98, .19], [.04, .69, .12]] },
+    fingers: [[.08, .71, .23], [.21, .84, .20], [.23, .86, .14], [.37, .98, .19], [.04, .69, .15]] },
   { hand: 0, pause: 1.41, duration: 1.37, wrist: [.11, .96, .28],
     fingers: [[.29, .84, .16], [.21, .71, .19], [.11, .65, .23], [.03, .76, .28], [.43, .97, .11]] },
   { hand: 1, pause: .98, duration: 1.16, wrist: [.28, .99, .18],

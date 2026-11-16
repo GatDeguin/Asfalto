@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { THREE as T } from './cinematic-three.mjs';
-import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=81b72bd2c24d6383';
+import { createCockpitDriverArms } from '../src/render/cockpit-driver-arms.mjs?v=ad72f30c7851f5ff';
 import { COCKPIT_HAND_MESH } from '../src/render/cockpit-hand-mesh.mjs?v=ecf8eef834b29fbf';
 import { sanitizeDriverArmsSettings } from '../src/game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import { readVehiclePreference, vehiclePreferenceKey } from '../src/game/cockpit-layout-file.mjs';
@@ -156,7 +156,7 @@ test('with a steady wheel, each hand makes its own small adjustment and keeps th
   let previous = rest;
   const wristTravel = [0, 0];
   const flexPeaks = [[0, 0, 0], [0, 0, 0]];
-  let restedBetweenGestures = false, sawAdjustment = false;
+  let restedBetweenGestures = false, sawAdjustment = false, sawThumbLead = false;
   const distance = (a, b) => Math.hypot(...a.map((value, i) => value - b[i]));
   for (let frame = 0; frame < 600; frame++) {
     arms.update(sample);
@@ -169,6 +169,8 @@ test('with a steady wheel, each hand makes its own small adjustment and keeps th
     assert.deepEqual(current.grips, rest.grips, 'The wrist adjusts without sliding the palm along the rim');
     for (let side = 0; side < 2; side++) {
       const [x, y, z] = current.grips[side];
+      const [index, middle, ring, little, thumb] = current.digitFlex[side];
+      sawThumbLead ||= thumb > .13 && Math.max(index, middle, ring, little) < .025;
       assert.ok(Math.abs(Math.hypot(x, y) - .18) < .001 && Math.abs(z) < .001);
       assert.ok(distance(current.hands[side], previous.hands[side]) < .00025, 'The wrist stays continuous between frames');
       assert.ok(distance(current.hands[side], current.cuffs[side]) < .012);
@@ -182,6 +184,7 @@ test('with a steady wheel, each hand makes its own small adjustment and keeps th
   assert.ok(wristTravel.every(distance => distance > .00035 && distance < .0020), 'Both wrists settle by millimeters');
   assert.ok(flexPeaks.flat().every(weight => weight > .055 && weight <= .30), 'Each set of fingers changes pressure');
   assert.ok(restedBetweenGestures, 'Pressure returns to the original contact between gestures');
+  assert.ok(sawThumbLead, 'The thumb can settle while the other digits keep their grip');
   arms.dispose();
 });
 
@@ -235,6 +238,43 @@ test('isolated finger and wrist shapes move the selected skin through its UV sea
     hand.morphTargetInfluences[target] = 0;
   }
   arms.dispose();
+});
+
+test('the resting thumb glides along the rim and keeps its pad supported across wheel profiles', () => {
+  const decode16 = packed => new Uint16Array(Uint8Array.from(atob(packed), c => c.charCodeAt(0)).buffer);
+  const weld = decode16(COCKPIT_HAND_MESH.weld);
+  const distalThumb = new Set(decode16(COCKPIT_HAND_MESH.thumb));
+  const pads = Uint8Array.from(atob(COCKPIT_HAND_MESH.pads), c => c.charCodeAt(0));
+  const start = new T.Vector3(), finish = new T.Vector3();
+  for (const tube of [.009, .010, .014, .0155, .018, .020, .021, .022]) {
+    const { parent, arms, sample } = fixture(tube);
+    arms.update(sample);
+    parent.updateMatrixWorld(true);
+    const depth = point => Math.hypot(Math.hypot(point.x, point.y) - .18, point.z) - tube;
+    for (const side of ['L', 'R']) {
+      const hand = parent.getObjectByName(`CockpitDriver_hand.${side}`);
+      const thumb = hand.morphTargetDictionary.thumbFlex;
+      let contacts = 0, travel = 0;
+      for (let vertex = 0; vertex < weld.length; vertex++) {
+        if (!(pads[weld[vertex]] & 16) || !distalThumb.has(weld[vertex])) continue;
+        hand.morphTargetInfluences[thumb] = 0;
+        hand.getVertexPosition(vertex, start).applyMatrix4(hand.matrixWorld);
+        if (start.z <= 0 || Math.abs(depth(start)) > .0018) continue;
+        contacts++;
+        for (const weight of [.06, .12, .18]) {
+          hand.morphTargetInfluences[thumb] = weight;
+          hand.getVertexPosition(vertex, finish).applyMatrix4(hand.matrixWorld);
+          assert.ok(Math.abs(depth(finish)) < .0022 && finish.z > 0, 'The thumb pad stays supported through the reposition');
+        }
+        const cross = start.x * finish.y - start.y * finish.x;
+        const dot = start.x * finish.x + start.y * finish.y;
+        travel += Math.abs(Math.atan2(cross, dot)) * .18;
+      }
+      assert.ok(contacts >= 6, 'The relaxed thumb starts on the front of the rim');
+      assert.ok(travel / contacts >= .0011, 'The thumb tip repositions along the curve');
+    }
+    arms.dispose();
+  }
 });
 
 test('a resting grip freezes on pause and starts cleanly after reduced motion or leaving the view', () => {
@@ -532,7 +572,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=b25d3d9c4a85578b', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=8531cf1541f10b97', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

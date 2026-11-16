@@ -6,6 +6,8 @@ const ignoreRay = () => {};
 const decode = source => Uint8Array.from(atob(source), character => character.charCodeAt(0)).buffer;
 const lerp = (a, b, t) => a + (b - a) * t;
 const REFERENCE_RADIUS = .18;
+const THUMB_RIM_TRAVEL = .066;
+const THUMB_PAD_ROLL = .53;
 
 // Offset from the nearest point on the rim's centerline, in hand coordinates.
 function rimOffset(delta, planar, { center, normal }) {
@@ -58,8 +60,38 @@ function wristPose(T, base, digits, { offset, direction }) {
   return pose;
 }
 
+function thumbContactPose(T, base, digits, tipVertices, wheel) {
+  const pose = base.slice();
+  let rootY = Infinity, tipY = 0;
+  for (let vertex = 0; vertex < digits.length; vertex++) {
+    if (digits[vertex] === 5) rootY = Math.min(rootY, base[vertex * 3 + 1]);
+  }
+  for (const vertex of tipVertices) tipY += base[vertex * 3 + 1];
+  tipY /= tipVertices.length;
+  const span = tipY - rootY;
+  const relative = new T.Vector3(), planar = new T.Vector3();
+  for (let vertex = 0; vertex < digits.length; vertex++) {
+    if (digits[vertex] !== 5) continue;
+    const i = vertex * 3;
+    const t = Math.min(1, Math.max(0, (base[i + 1] - rootY - .16 * span) / (.69 * span)));
+    const bend = t * t * (3 - 2 * t);
+    relative.fromArray(base, i).sub(wheel.center);
+    const face = relative.dot(wheel.normal);
+    planar.copy(relative).addScaledVector(wheel.normal, -face);
+    const radius = planar.length(), offset = radius - REFERENCE_RADIUS;
+    // Turn the pad around the rim's cross-section and slide it along the ring.
+    // Both transformations preserve its distance from the measured centerline.
+    const roll = THUMB_PAD_ROLL * bend, sin = Math.sin(roll), cos = Math.cos(roll);
+    const rolledRadius = REFERENCE_RADIUS + offset * cos - face * sin;
+    const rolledDepth = offset * sin + face * cos;
+    planar.multiplyScalar(rolledRadius / radius).applyAxisAngle(wheel.normal, THUMB_RIM_TRAVEL * bend)
+      .addScaledVector(wheel.normal, rolledDepth).add(wheel.center).toArray(pose, i);
+  }
+  return pose;
+}
+
 function handGeometry(T, tube, restingWrist) {
-  const { units, index, weld, uv, poses, grip, digits } = COCKPIT_HAND_MESH;
+  const { units, index, weld, uv, poses, grip, digits, thumb } = COCKPIT_HAND_MESH;
   const geometry = new T.BufferGeometry(), welded = new T.BufferGeometry();
   const indices = new Uint16Array(decode(index)), sourceVertices = new Uint16Array(decode(weld));
   geometry.setIndex(new T.BufferAttribute(indices, 1));
@@ -113,7 +145,7 @@ function handGeometry(T, tube, restingWrist) {
     ['rimOpen', rimOpen],
     ['indexFlex', fingerPose(1, 2)],
     ['outerFlex', fingerPose(3, 4)],
-    ['thumbFlex', fingerPose(5, 5)],
+    ['thumbFlex', thumbContactPose(T, base, digit, new Uint16Array(decode(thumb)), wheel)],
     ['middleFlex', fingerPose(2, 2)],
     ['littleFlex', fingerPose(4, 4)],
     ['wristSettle', wristPose(T, base, digit, restingWrist)],
