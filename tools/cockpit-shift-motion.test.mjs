@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createCockpitShiftMotion } from '../src/render/cockpit-shift-motion.mjs?v=1b751f5432ed5420';
+import { createCockpitShiftMotion } from '../src/render/cockpit-shift-motion.mjs?v=353cce587fabd3b7';
 
 const positions = {
   N: { x: 0, y: 0 }, 1: { x: -1, y: 1 }, 2: { x: -1, y: -1 },
@@ -14,7 +14,7 @@ const hPattern = ({ x, y }, target) => {
 function fixture(from = '1') {
   const motion = createCockpitShiftMotion(hPattern, () => .10);
   const lever = { ...positions[from], requested: from, path: null };
-  const options = { enabled: true, selectorMove: true, grabbing: false, paused: false, reachSeconds: .18, shiftSpeed: 1, dt: .01 };
+  const options = { enabled: true, grabbing: false, paused: false, reachSeconds: .18, shiftSpeed: 1, dt: .01 };
   const step = (overrides = {}) => ({ ...motion.update(lever, { ...options, ...overrides }) });
   const request = target => Object.assign(lever, { requested: target, path: hPattern(lever, target) });
   step();
@@ -70,11 +70,19 @@ test('paused motion freezes, and bypassing or resetting drops any old intention'
   assert.equal(step().reach, 0);
 });
 
-test('an internal automatic ratio skips the hand, while direct drag follows the real knob', () => {
+test('an accepted forward ratio starts reaching before the visible knob moves', () => {
   const { lever, step, request } = fixture();
   request('2');
+  Object.assign(lever, { x: -1, y: .4 });
+  const reaching = step();
+  assert.equal(reaching.phase, 'reach');
+  assert.ok(reaching.reach > 0);
+  assert.equal(reaching.y, positions['1'].y);
+});
+
+test('direct drag follows the real knob and releases it when the drag ends', () => {
+  const { lever, step } = fixture();
   Object.assign(lever, { x: -.9, y: .4 });
-  assert.deepEqual(step({ selectorMove: false }), { x: -.9, y: .4, reach: 0, phase: 'wheel' });
   const drag = step({ grabbing: true });
   assert.equal(drag.x, lever.x);
   assert.equal(drag.y, lever.y);

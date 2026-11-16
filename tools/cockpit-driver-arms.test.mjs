@@ -415,7 +415,7 @@ test('the longitudinal sleeve seam preserves the surface normal as the arm moves
 test('opening the workshop frees the cockpit rig before the shared renderer changes views', () => {
   const { parent, arms, sample } = fixture();
   arms.update(sample);
-  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=cf734db7fdb7481b', import.meta.url), 'utf8');
+  const host = readFileSync(new URL('../src/legacy/module-02.mjs?v=71fd8df912e439ab', import.meta.url), 'utf8');
   const start = host.indexOf('  function syncDocumentFlags(){');
   const end = host.indexOf('\n  syncDocumentFlags();', start);
   assert.ok(start >= 0 && end > start);

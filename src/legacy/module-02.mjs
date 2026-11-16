@@ -98,7 +98,7 @@ import { createRaceDrivingAudio } from '../audio/race-driving-audio.mjs?v=5ed1d3
 import { createVehiclePresentation } from '../render/vehicle-presentation.mjs?v=aee43660313b9773';
 import { createPlayerDriver } from '../render/player-driver.mjs?v=adcc8b7a60cc18ec';
 import { createCockpitDriverArms } from '../render/cockpit-driver-arms.mjs?v=3625a40f47945360';
-import { createCockpitShiftMotion } from '../render/cockpit-shift-motion.mjs?v=1b751f5432ed5420';
+import { createCockpitShiftMotion } from '../render/cockpit-shift-motion.mjs?v=353cce587fabd3b7';
 import { installDriverArmsSettings, sanitizeDriverArmsSettings } from '../game/cockpit-driver-arms-settings.mjs?v=b0a5c2457804d040';
 import {engineMix} from '../audio/v7-audio-state.mjs?v=cd6a96359a0b579c';
 import { drivingAudioState, sampleTrafficAudio } from '../audio/race-driving-state.mjs?v=51a660aeafa28587';
@@ -10019,7 +10019,6 @@ listen(window,'chevy:vehicle-config',(event)=>{
     const canAnimateShift = arms.enabled && arms.shiftEnabled && armsActive && !reducedMotion;
     const lever = canAnimateShift ? driverShift.update(gearState, {
       enabled: true,
-      selectorMove: manual || gearState.requested === 'R' || gearState.previousGear === 'R',
       grabbing: manual && hasCockpitPointerMode('shifter'),
       paused: openingPaused,
       dt: frameDt,

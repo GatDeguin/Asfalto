@@ -25,7 +25,7 @@ export function createCockpitShiftMotion(buildPath, segmentSeconds) {
     return pose;
   }
 
-  function update(gear, { enabled, selectorMove, grabbing, paused, dt, reachSeconds, shiftSpeed }) {
+  function update(gear, { enabled, grabbing, paused, dt, reachSeconds, shiftSpeed }) {
     if (!enabled) return reset(gear);
     if (observedPath === undefined) copyPosition(gear.path?.[0] ?? gear);
     if (paused) return pose;
@@ -45,7 +45,6 @@ export function createCockpitShiftMotion(buildPath, segmentSeconds) {
     }
 
     if (newPath) {
-      if (!selectorMove) return reset(gear);
       const path = buildPath(pose, gear.requested);
       segments = path.slice(1).map((end, index) => {
         const start = path[index];
