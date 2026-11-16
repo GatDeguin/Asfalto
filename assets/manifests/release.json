@@ -2056,8 +2056,8 @@
     },
     {
       "path": "assets/styles/mobile-hud.css",
-      "bytes": 5455,
-      "sha256": "D3B0D8DEAD1A0570886B4A06E562E835DABCBA4E2EBC09AD3D7513025F45ACA5"
+      "bytes": 5562,
+      "sha256": "9F962789E61108931C8D7E09DE5B97C58C9B4C4156F7D7AA732C44E13051E876"
     },
     {
       "path": "assets/styles/mobile-menu.css",
@@ -2942,7 +2942,7 @@
     {
       "path": "index.html",
       "bytes": 84524,
-      "sha256": "DA4AFDFE8769A2BB27DFDD1C17729979098CEC12360949A11D96B69456200537"
+      "sha256": "EB70F96B2FCA34B2869E76FE8D1B9FD798ECF8CE2DF71969BD900DDCD76A2F1B"
     },
     {
       "path": "release-version.json",
@@ -3332,7 +3332,7 @@
     {
       "path": "src/legacy/chevy-hud-3d-runtime.js",
       "bytes": 27904,
-      "sha256": "055B32F8671A7F81E87A605F3A163DD2B92713057BF33A22A096159B7D3DBC60"
+      "sha256": "B07BF55274F195290A45084470162C2CD49188BDCDC9120FE29078D6C3F20D19"
     },
     {
       "path": "src/legacy/cockpit-v5-browser.js",
@@ -5007,7 +5007,7 @@
     {
       "path": "src/ui/mobile-hud.mjs",
       "bytes": 2619,
-      "sha256": "B0F3AD3DB634CF5D5B2F36817BF6047D8641A780B5E1A20F37BBE33244CD84A9"
+      "sha256": "51DA358428FB55CF66566E09DF79986DAE29E5695F5A5B2693861A1C3F52208C"
     },
     {
       "path": "src/ui/mobile-wheel-drag.mjs",
@@ -6151,6 +6151,6 @@
     }
   ],
   "fileCount": 1215,
-  "totalBytes": 945569935,
-  "inventorySha256": "8A0123DB80EFD73B5219B181BF5C2D0FC53CB68A511180035FCEF5D52A0366D7"
+  "totalBytes": 945570042,
+  "inventorySha256": "C709BC67FFD5329A96B38FC08745F9B440DA970EDF792CE3BB7CAA5F4156FB6E"
 }
