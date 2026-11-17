@@ -284,7 +284,7 @@ function syncActivityLocks(){
  }
 }
 function renderAppearance(){
- const wrap=q('#v6-body-swatches');wrap.innerHTML='';for(const [id,c] of Object.entries(BODY_COLORS)){const b=document.createElement('button');b.type='button';b.className='v6-swatch';b.style.setProperty('--swatch',c.hex);b.title=c.label;b.dataset.body=id;b.setAttribute('aria-label',c.label);b.setAttribute('aria-pressed',String(profile.appearance.body===id));b.addEventListener('click',()=>{profile.appearance.body=id;qa('.v6-swatch').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));workshop.setCarColor(c.hex);saveProfile()});wrap.append(b)}const paintVehicle=workshop.vehicleId||globalThis.__asfaltoV7Storage.getItem('asfalto:nacional:v6:selected-vehicle')||'chevy';workshop.setCarColor(profile.vehiclePaintV7?.[paintVehicle]||BODY_COLORS[profile.appearance.body]?.hex||'#d66a24');
+ const wrap=q('#v6-body-swatches');wrap.innerHTML='';for(const [id,c] of Object.entries(BODY_COLORS)){const b=document.createElement('button');b.type='button';b.className='v6-swatch';b.style.setProperty('--swatch',c.hex);b.title=c.label;b.dataset.body=id;b.setAttribute('aria-label',c.label);b.setAttribute('aria-pressed',String(profile.appearance.body===id));b.addEventListener('click',()=>{profile.appearance.body=id;qa('.v6-swatch').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));workshop.setCarColor(c.hex);saveProfile()});wrap.append(b)}const paintVehicle=workshop.vehicleId||globalThis.__asfaltoV7Storage.getItem('asfalto:nacional:v6:selected-vehicle')||globalThis.__asfaltoVehicleMaintenance?.getState().vehicleId||'chevy';workshop.setCarColor(profile.vehiclePaintV7?.[paintVehicle]||BODY_COLORS[profile.appearance.body]?.hex||'#d66a24');
  q('#v6-stripe-select').value=profile.appearance.stripe;q('#v6-height-range').value=profile.appearance.height;q('#v6-height-output').textContent=`${profile.appearance.height} mm`;q('#v6-plate-input').value=profile.appearance.plate;
 }
 function renderParts(){const list=q('#v6-parts-list');list.innerHTML='';for(const part of WORKSHOP_PARTS){const state=profile.parts[part.id];const el=document.createElement('article');el.className=`v6-part ${state==='restomod'?'v6-restomod':'v6-original'}`;el.innerHTML=`<div class="v6-part-col"><b>${part.name} · Original</b><small>${part.original}</small></div><div class="v6-part-col"><b>Conversión</b><small>${part.modern}<br><strong>Efecto:</strong> ${part.benefit}<br><strong>Contrapartida:</strong> ${part.tradeoff}</small></div><div class="v6-part-state"><span>${state==='restomod'?'Restomod instalado':'Original conservado'}</span><button type="button" class="v6-btn v6-btn-small" data-part-toggle="${part.id}">${state==='restomod'?'Volver a original':'Instalar conversión'}</button></div>`;list.append(el)}qa('[data-part-toggle]').forEach(b=>b.addEventListener('click',()=>togglePart(b.dataset.partToggle)))}
@@ -842,9 +842,9 @@ function bindRoutePersistence(){
 }
 async function initV6(){
  if(window.__chevyV6Complete?.initialized)return;
- const {createVehicleMaintenance}=await import(new URL('src/game/vehicle-maintenance.mjs?v=e41d4bbdb923cfdf',document.baseURI));
+ const {createVehicleMaintenance,getProfileVehicleId}=await import(new URL('src/game/vehicle-maintenance.mjs?v=de3e5e0f060ab156',document.baseURI));
  const {mountVehicleAssistance}=await import(new URL('src/menu/v7-vehicle-assistance.mjs?v=2e101f79e2e8d1f3',document.baseURI));
- const selectedVehicle=()=>workshop.vehicleId||globalThis.__asfaltoV7Storage.getItem('asfalto:nacional:v6:selected-vehicle')||'chevy';
+ const selectedVehicle=()=>workshop.vehicleId||globalThis.__asfaltoV7Storage.getItem('asfalto:nacional:v6:selected-vehicle')||getProfileVehicleId(profile);
  globalThis.__asfaltoVehicleAssistance=mountVehicleAssistance({onRecover:()=>window.__cockpit?.raceWorld?.recover?.(),onWorkshop:()=>openMenu('workshop')});
  const showRaceCondition=(condition,id,spawnDebris=false)=>{
   if(globalThis.__asfaltoSelectedPlayerVehicle===id)globalThis.__asfaltoVehiclePresentations?.chevy?.setPersistentCondition?.(condition,{spawnDebris});

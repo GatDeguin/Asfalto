@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const runtime=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=4c89d18a6f7245e8',import.meta.url),'utf8');
+const runtime=readFileSync(new URL('../src/legacy/v6-complete-runtime.js?v=2eee8004211ab081',import.meta.url),'utf8');
 const start=runtime.indexOf('async function togglePart('),end=runtime.indexOf('function renderTuning(',start);
 assert.ok(start>0&&end>start);
 const body=runtime.slice(start,end);

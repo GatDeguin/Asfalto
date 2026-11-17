@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {damageDisplacement,createVehicleConditionAppearance} from '../src/render/vehicle-condition-appearance.mjs?v=ae1fb28a7e324226';
 import {installVehiclePresentation} from '../src/render/vehicle-presentation.mjs?v=290c23d70e1142a5';
-import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=e41d4bbdb923cfdf';
+import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=de3e5e0f060ab156';
 import {createVehicleConditionSession} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
 import {createWeatherWindshield} from '../src/render/weather-windshield.mjs?v=ab1ed098331deabc';
 import {installClassicCabinTrim} from '../src/render/classic-cabin-trim.mjs?v=ca49ae66900d0ed1';

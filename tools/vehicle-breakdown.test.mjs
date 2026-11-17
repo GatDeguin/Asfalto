@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {conditionFromSnapshot, normalizeVehicleCondition, serviceVehicleCondition, terminalVehicleFaults, toPhysicalDamage} from '../src/game/vehicle-condition.mjs?v=92fc1e81f7682f9f';
-import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=e41d4bbdb923cfdf';
+import {createVehicleMaintenance} from '../src/game/vehicle-maintenance.mjs?v=de3e5e0f060ab156';
 
 const impact = (localPointM, impulseNs) => ({localPointM, impulseNs, magnitude: Math.min(1, impulseNs / 20000)});
 

@@ -4,7 +4,7 @@
   "buildDate": "2026-11-17",
   "source": "Asfalto_Nacional_v8",
   "baselineCommit": "f5d3e4a81368120573a44a8d9e3e2630789f47df",
-  "validatedTests": 721,
+  "validatedTests": 735,
   "physicalIphoneVerified": false,
   "physicalAndroidVerified": false,
   "sustained60FpsVerified": false,

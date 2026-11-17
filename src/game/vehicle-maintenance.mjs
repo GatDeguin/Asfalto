@@ -1,4 +1,9 @@
-import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS} from './vehicle-condition.mjs?v=92fc1e81f7682f9f';
+import {ensureVehicleConditionProfile,selectVehicleCondition,normalizeVehicleCondition,createVehicleConditionSession,toPhysicalDamage,terminalVehicleFaults,serviceVehicleCondition,SERVICE_LABELS,VEHICLE_IDS} from './vehicle-condition.mjs?v=92fc1e81f7682f9f';
+/** A missing visual vehicle during boot is not a request to select another car. */
+export function getProfileVehicleId(profile){
+ const bank=profile?.vehicleConditionsV7,id=bank?.version===1?bank.selectedVehicleId:undefined;
+ return VEHICLE_IDS.includes(id)?id:'chevy';
+}
 const FIRE_PREVIEW_STEPS=300; // 2.5 seconds of the 120 Hz driving simulation.
 /** Persistent maintenance is fed by actual 120 Hz player steps, independent of test receipts. */
 export function createVehicleMaintenance({getProfile,getVehicleId,save=()=>{},onChanged=()=>{},onAppearance=()=>{},onFaultPreview=()=>{},onFault=()=>{}}){

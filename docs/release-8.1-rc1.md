@@ -44,6 +44,13 @@ cierre y las pruebas pendientes se conservan más abajo.
   auditoría. La prueba del ejecutable instalado detectó esa omisión al
   entrar al circuito; abrir solamente el taller no la revelaba. Un descriptor
   realmente ausente sigue produciendo un diagnóstico, sin ocultar el fallo.
+- Recuperación de carga: si falla un script inicial, la pantalla informa
+  el problema y ofrece Reintentar. El teclado permanece en ese aviso aunque
+  el menú termine de montar por detrás; al arrancar se retira el control y
+  sus listeners. La recarga conserva el progreso guardado y no es automática.
+  Si la introducción tiene el foco, el aviso espera a que ésta libere sus
+  controles. Una carga visual incompleta conserva el vehículo del perfil,
+  su estado mecánico y su pintura, sin sustituirlos por los del Chevy.
 - Windows: paquete x64 con Electron 45.3.3, perfil persistente y actualización
   manual. El juego se sirve localmente desde un origen fijo; la instalación
   no requiere Node.js. No se añadieron dependencias externas al runtime web.

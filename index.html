@@ -1,6 +1,90 @@
 <!doctype html>
 <html lang="es">
 <head>
+<meta charset="utf-8">
+<script id="asfalto-startup-recovery">
+// Independent of the module graph: a failed import must not leave the boot cover waiting forever.
+(() => {
+  let failed = false, finished = false, cover = null, status = null, retry = null;
+  let editorStyle = null;
+  let restoringFocus = false;
+  let originalText = '', originalWidth = '';
+  function reload() { window.location.reload(); }
+  function keepFocus() {
+    if (finished || !retry || retry.closest('[inert]') || restoringFocus || document.activeElement === retry) return;
+    restoringFocus = true;
+    try { retry.focus({preventScroll:true}); } finally { restoringFocus = false; }
+  }
+  function onKey(event) {
+    // An intro/loading modal can temporarily own the cover's inert state and its keyboard.
+    if (finished || !retry || retry.closest('[inert]') || event.key !== 'Tab') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    keepFocus();
+  }
+  function showFailure() {
+    if (finished || !failed || retry) return;
+    cover = document.getElementById('loading');
+    status = document.getElementById('loading-text');
+    if (!cover || !status) return;
+    originalText = status.textContent;
+    originalWidth = status.style.maxWidth;
+    const message = document.createElement('span');
+    message.id = 'an-startup-message';
+    message.textContent = 'Hubo un problema al iniciar el juego. Podés reintentar sin perder tu progreso guardado.';
+    status.textContent = '';
+    status.style.maxWidth = 'min(32rem, calc(100% - var(--an-cinema-margin, 24px) - var(--an-cinema-margin, 24px)))';
+    retry = document.createElement('button');
+    retry.id = 'an-startup-retry';
+    retry.type = 'button';
+    retry.textContent = 'Reintentar';
+    retry.setAttribute('aria-describedby', message.id);
+    retry.style.cssText = 'display:block;min-height:44px;margin-top:12px;padding:8px 20px;border:1px solid var(--an-load-orange,#f1783d);border-radius:4px;background:#090b0e;color:inherit;font:inherit;cursor:pointer;outline-offset:3px';
+    retry.addEventListener('click', reload);
+    status.append(message, retry);
+    editorStyle = document.createElement('style');
+    editorStyle.textContent = '#workshop-editor-toggle,#workshop-editor-panel{visibility:hidden!important}';
+    cover.append(editorStyle);
+    cover.hidden = false;
+    cover.classList.remove('hidden');
+    cover.setAttribute('aria-busy', 'false');
+    // Other startup modules can mount their menu after the failure and try to take focus.
+    window.addEventListener('focusin', keepFocus, {capture:true});
+    window.addEventListener('keydown', onKey, {capture:true});
+    keepFocus();
+  }
+  function fail() { failed = true; showFailure(); }
+  function onError(event) {
+    // Media/style errors have their own fallbacks; only script failures affect this guard.
+    if (event.target === window || event.target?.tagName === 'SCRIPT') fail();
+  }
+  function finish() {
+    finished = true;
+    window.removeEventListener('error', onError, {capture:true});
+    window.removeEventListener('unhandledrejection', fail);
+    window.removeEventListener('asfalto-home-ready', finish);
+    window.removeEventListener('focusin', keepFocus, {capture:true});
+    window.removeEventListener('keydown', onKey, {capture:true});
+    document.removeEventListener('readystatechange', showFailure);
+    if (retry) {
+      retry.removeEventListener('click', reload);
+      retry.remove();
+      editorStyle.remove();
+      editorStyle = null;
+      status.textContent = originalText;
+      status.style.maxWidth = originalWidth;
+      cover.hidden = true;
+      cover.classList.add('hidden');
+      retry = null;
+    }
+  }
+  window.addEventListener('error', onError, {capture:true});
+  window.addEventListener('unhandledrejection', fail);
+  window.addEventListener('asfalto-home-ready', finish);
+  // "interactive" precedes deferred module execution; DOMContentLoaded can still be waiting for the network.
+  document.addEventListener('readystatechange', showFailure);
+})();
+</script>
 <script src="./src/runtime/phone-load-diagnostics.js?v=fcc66d4b13d1fffc"></script>
 <meta name="asfalto-persistence" content="browser">
 <script src="./src/runtime/versioned-storage.js?v=51824c85cd5afb1d"></script>
@@ -11,7 +95,6 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'/%3E">
 <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
 <link rel="manifest" href="./manifest.webmanifest">
-<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#090b0e">
 <title>Asfalto Nacional v8</title>
@@ -577,7 +660,7 @@
 </div>
 
 
-<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=4c89d18a6f7245e8"></script>
+<script id="v6-complete-runtime" src="./src/legacy/v6-complete-runtime.js?v=2eee8004211ab081"></script>
 
 
 <canvas id="chevy-hud-webgl-canvas" aria-hidden="true"></canvas>

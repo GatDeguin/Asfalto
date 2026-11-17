@@ -1,6 +1,6 @@
 {
   "schema": "asfalto-release-qa/v1",
-  "recordedAt": "2026-11-17T05:12:40.165Z",
+  "recordedAt": "2026-11-17T06:20:02.418Z",
   "version": "8.1.0-rc1",
   "status": "candidate-not-final",
   "environment": {
@@ -18,10 +18,70 @@
     "cache": "Fresh browser context; OS and driver caches not cleared"
   },
   "node": {
-    "tests": 721,
-    "passed": 721,
+    "tests": 735,
+    "passed": 735,
     "failed": 0,
     "command": "node --test tools/*.test.mjs"
+  },
+  "startupRecovery": {
+    "method": "Real UI appearance lesson and blue paint, HTTP503 injected for an initial module, focus call stacks and inert ancestry, Tab/Shift+Tab and Enter retry without programmatic focus, persisted game profile. Service workers blocked to model an uncached browser load.",
+    "cases": [
+      {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "pass": true,
+        "savedGameplayFieldsUnchanged": true,
+        "xpBefore": 3,
+        "xpAfter": 3,
+        "tokensBefore": 100,
+        "tokensAfter": 100,
+        "vehicleBefore": "chevrolet_1969",
+        "vehicleAfter": "chevrolet_1969",
+        "paintBefore": {
+          "chevy": "#d66a24",
+          "chevrolet_1969": "#31546b"
+        },
+        "paintAfter": {
+          "chevy": "#d66a24",
+          "chevrolet_1969": "#31546b"
+        },
+        "keyboardRetry": true,
+        "retryRemovedAfterSuccessfulBoot": true
+      },
+      {
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "pass": true,
+        "savedGameplayFieldsUnchanged": true,
+        "xpBefore": 3,
+        "xpAfter": 3,
+        "tokensBefore": 100,
+        "tokensAfter": 100,
+        "vehicleBefore": "chevrolet_1969",
+        "vehicleAfter": "chevrolet_1969",
+        "paintBefore": {
+          "chevy": "#d66a24",
+          "chevrolet_1969": "#31546b"
+        },
+        "paintAfter": {
+          "chevy": "#d66a24",
+          "chevrolet_1969": "#31546b"
+        },
+        "keyboardRetry": true,
+        "retryRemovedAfterSuccessfulBoot": true
+      }
+    ],
+    "firstVisits": {
+      "method": "Fresh isolated profile, first navigation returns HTTP503 for asset-byte-cache.mjs; real intro keyboard, recovery Tab/Shift+Tab/Enter, then normal home readiness. No QA query and no programmatic focus.",
+      "passed": 4,
+      "normalAndReducedMotion": true
+    },
+    "injectedStatus": 503,
+    "realIphone": false
   },
   "workshopLearning": {
     "method": "Fresh browser; visible workshop navigation, conversion confirmations, appearance/tuning controls, two photo downloads, reload and repeated lessons. No injected progression.",
@@ -317,7 +377,7 @@
     }
   },
   "distribution": {
-    "capturedAt": "2026-11-17T05:07:52.068Z",
+    "capturedAt": "2026-11-17T05:49:47.547Z",
     "publicationByThisAgent": false,
     "pwa": {
       "testScope": "Frozen official baseline plus the actual PWA implementation; update fixture B never published",
@@ -328,7 +388,7 @@
       "mobileViewport": 390,
       "offlineServerStopped": true,
       "offlineHttpCacheDisabled": true,
-      "offlineComplete": false,
+      "offlineComplete": true,
       "offlineConsoleErrors": 0,
       "offlineHttpErrors": 0,
       "offlineNetworkFailures": [
@@ -357,8 +417,19 @@
       "installabilityErrors": [],
       "standaloneInstallConfirmed": false,
       "offlineWorkshopComplete": true,
-      "offlineDrivingConfirmed": false,
-      "deliveryBlockingIssue": "The full download and offline workshop were tested, but the first installed drive exposed a release manifest dependency excluded from the PWA inventory. Offline driving needs the corrected runtime descriptor and a real circuit test."
+      "offlineDrivingConfirmed": true,
+      "deliveryBlockingIssue": null,
+      "finalTestedPwaVersion": "c7f28472d44dd642936c",
+      "finalTestedTotalBytes": 944315723,
+      "offlineDrivingReport": "D:/2026/Chevy/Reports/Asfalto_Nacional_v8/cierre-2026-11-16/distribucion/PWAQA/circuit-release-final/offline.json",
+      "offlineDrivingSameSessionHttpCacheDisabled": true,
+      "offlineDrivingNavigatorOnLine": [
+        false,
+        false,
+        false
+      ],
+      "offlineDrivingProgressM": 48.8298478359055,
+      "finalShellBytes": 10647248
     },
     "windows": {
       "version": "8.1.0 provisional",
@@ -376,14 +447,15 @@
       "finalArtBuildPending": true,
       "finalBuildRejected": true,
       "finalBuildRejection": "HTTP 404 for assets/manifests/release.json when entering the cockpit; preserved in WindowsQA/rejected-artifacts.json",
-      "correctedWrapperTests": 8
+      "correctedWrapperTests": 8,
+      "deliveryHold": "Parent is adding a startup retry UI for intermittent HTTP 503. This newer build is tested but must not be published before a final sealed rebuild."
     },
     "limitations": [
       "No physical iPhone test yet; user will test candidate URL",
       "PWA standalone installation could not be automated: Chrome returned -32601 even with official flag; no CUA retries after interrupted call",
       "IndexedDB JPEG is a technical retention sentinel, not an earned photo",
       "Functional concurrent QA; no isolated60FPS claim",
-      "Corrected final Windows build and PWA offline circuit entry await the replacement sealed web commit. Earlier offline success covers the workshop only."
+      "The offline runtime-manifest fix is confirmed in a circuit. Final artifacts await the startup-recovery web seal."
     ]
   },
   "gates": {
@@ -396,8 +468,16 @@
   },
   "evidence": [
     {
-      "file": "regresion-integrada-721.log",
-      "sha256": "561068b5ecfe2e6d373f38c061ed65d652f71500f948087bea2e323b83d67847"
+      "file": "regresion-integrada-final.log",
+      "sha256": "adaf208b3315d623964600ee7c157c5345db630c5553f017690f81ae378308e5"
+    },
+    {
+      "file": "recuperacion-arranque-cierre-final/resultado.json",
+      "sha256": "ebe0f0ed164473b4b39ad090cd98dbe8dce9eb4bbf341943c2c5a7f9a576ba2b"
+    },
+    {
+      "file": "recuperacion-arranque-primera-visita-final/resultado.json",
+      "sha256": "ff2c17656cb1bb4682256178f5b471f986f8e14189f8be0d56f8cb0647c76080"
     },
     {
       "file": "pruebas-integradas/resultados.json",
@@ -433,7 +513,7 @@
     },
     {
       "file": "distribucion/QA-CONSOLIDADO.json",
-      "sha256": "85444046a141749cb8eb04a79984682a4df963739e0fb4c0a8ae8ea6a68c1bb9"
+      "sha256": "fa24a5b505afe8c3945fce340103724888a1c3aafe9dfcfe2f10a94c0cff40f3"
     },
     {
       "file": "renderdoc-protocolo-corregido/renderdoc.json",
