@@ -1,5 +1,9 @@
 # Asfalto Nacional v8
 
+Estado actual: **8.1 candidata de prueba**. Cambios, instalación web/PWA y
+Windows, evidencia y condiciones de cierre en [notas de la candidata](docs/release-8.1-rc1.md).
+Todavía no se certifican 60 FPS sostenidos ni la progresión completa en dispositivos reales.
+
 Juego: https://gatdeguin.github.io/Asfalto/
 
 Recuperación funcional de v7 sobre v8: [alcance y validación](docs/v8-v7-recovery.md).

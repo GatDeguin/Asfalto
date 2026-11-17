@@ -9,6 +9,8 @@ import { collectMaterialBindings } from '../../environment/material-bindings.mjs
 import {prepareScenicSector,prepareTrackVisual} from '../visuals/reference-landscape.mjs?v=3be0eeb74f885ef7';
 import { loadLipanPilot } from '../visuals/lipan-piloto.mjs?v=e01b8f5308225a46';
 import { prepareLipanAuthoredSigns } from '../visuals/lipan-authored-signs.mjs?v=b16b48125c1c4d22';
+import { attachLipanAccess, lipanAccessAsset } from '../visuals/lipan-acceso.mjs?v=cea16d7de19e35fe';
+import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=942ba726ff042432';
 
 const MANIFEST_LOCK = Object.freeze({
   bytes: 21230,
@@ -334,6 +336,13 @@ export function createCuestaLipanAdapter(dependencies) {
       tx.collisionRoot = dependencies.createTrackRoot('Cuesta de Lipán · colisión completa');
       if (!validRoot(tx.visualRoot) || !validRoot(tx.collisionRoot)) throw new TypeError('track root factory returned an invalid root');
       await prepareTrackVisual(tx.visualRoot, { id: 'cuesta_lipan', query: sourceQuery, lengthM: sourceRoute.lengthM, signal: tx.controller.signal, sceneryOnly: true });
+      current(tx);
+      await loadRegionalBlenderArt({root:tx.visualRoot,releaseRoot,asset:lipanAccessAsset,
+        label:'Lipán S01 · Apoyo continuo de banquina',signal:tx.controller.signal}, {
+        fetchBytes:(...args)=>dependencies.fetchBytes(...args),
+        loadGlb:(...args)=>dependencies.completeGlbToObject(...args),
+        attach:attachLipanAccess,dispose:art=>disposeOnce(tx,art),
+      });
       current(tx);
 
       for (const sector of tx.sectors) {

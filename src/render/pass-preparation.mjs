@@ -5,6 +5,26 @@ export function registerRenderPreparation(renderer,T){
  return context;
 }
 export const isRenderPreparationPending=renderer=>(contexts.get(renderer)?.pending||0)>0;
+// The caller's key includes scene membership, shader configuration and context
+// epoch. Remember only completed primary passes, never an in-flight request.
+function preparedVariants(renderer){
+ const context=contexts.get(renderer);
+ if(!context||context.disposed)return null;
+ if(renderer.getContext().isContextLost()){context.readyVariants?.clear();return null;}
+ const programs=renderer.info.programs,live=new Set(programs);
+ // Three removes programs in place. Array identity/length alone cannot detect
+ // a disposal followed by a replacement; keep only live program references.
+ const removed=context.variantProgramSnapshot&&[...context.variantProgramSnapshot].some(program=>!live.has(program));
+ if(!context.readyVariants||context.variantPrograms!==programs||removed)context.readyVariants=new Set();
+ context.variantPrograms=programs;context.variantProgramSnapshot=live;
+ return context.readyVariants;
+}
+export const hasPreparedVariant=(renderer,key)=>preparedVariants(renderer)?.has(key)===true;
+export function rememberPreparedVariant(renderer,key){
+ const ready=preparedVariants(renderer);if(!ready)return;
+ ready.delete(key);ready.add(key);
+ if(ready.size>16)ready.delete(ready.values().next().value);
+}
 function releaseContext(renderer,context){if(!context?.disposed||context.pending)return;context.transmission?.dispose();context.transmission=null;if(contexts.get(renderer)===context)contexts.delete(renderer);}
 export function disposeRenderPreparation(renderer){const context=contexts.get(renderer);if(context){context.disposed=true;releaseContext(renderer,context);}}
 export const getRenderPreparationDiagnostics=renderer=>{const context=contexts.get(renderer);return context?.lastBatch?{...context.lastBatch,pending:context.pending}:null;};

@@ -14,16 +14,22 @@ for(const name of ['asfalto-v6-vehicle-model.js','asfalto-v6-physics-runtime.js'
 old.AsfaltoV6Chassis=chassis;
 const R=context.AsfaltoV6Rapier;await R.init();
 function session(ctx,height,configured,spec=ctx.AsfaltoV6VehicleCore.CHEVY_ORIGINAL_SPEC){const world=new R.World({x:0,y:-9.81,z:0});world.createCollider(R.ColliderDesc.cuboid(100,.1,100).setTranslation(0,-.1,0));world.step();const result=new ctx.AsfaltoV6Physics.VehiclePhysicsSession({RAPIER:R,world,core:ctx.AsfaltoV6VehicleCore,spec,spawn:{x:0,y:height,z:0},mutableSnapshots:true,chassisConfig:configured?{abs:true,tire:2,kit:1}:null});result.reset({spawn:{x:0,y:height,z:0},initialGear:1});return result;}
-function compare(a,b,path='snapshot'){if(typeof b==='number'){assert.ok(Number.isFinite(a),path+' finite');assert.ok(Math.abs(a-b)<1e-8*Math.max(1,Math.abs(b)),path+': '+a+' != '+b);return;}if(b&&typeof b==='object'){for(const k of Object.keys(b))compare(a?.[k],b[k],path+'.'+k);}else assert.equal(a,b,path);}
+function compare(a,b,path='snapshot',freeWheelRotation=false){if(freeWheelRotation&&/^snapshot\.wheels\.\d+\.rotationRad$/.test(path))return;if(typeof b==='number'){assert.ok(Number.isFinite(a),path+' finite');assert.ok(Math.abs(a-b)<1e-8*Math.max(1,Math.abs(b)),path+': '+a+' != '+b);return;}if(b&&typeof b==='object'){for(const k of Object.keys(b))compare(a?.[k],b[k],path+'.'+k,freeWheelRotation);}else assert.equal(a,b,path);}
 for(const height of [.56,3])for(const configured of [false,true]){
  const a=session(context,height,configured),b=session(old,height,configured);const ray=a.scratch.ray,contacts=a.scratch.contacts,wheels=a.wheels;
+ // The old runtime froze airborne wheel rotation despite drive/brake torque.
+ // Its chassis and impact calculation remain a useful allocation-refactor
+ // reference; free-wheel dynamics are covered by physics-driveline-overrun.
+ const compareState=height===.56?compare:(actual,expected)=>{
+  for(const key of ['chassis','damage','impact','impacts'])compare(actual[key],expected[key],key);
+ };
  let first,copy;
- for(let i=0;i<16;i++){const input={throttle:.6,brake:i>8?.7:0,steer:.06,requestedGear:1,clutchEngagement:1};const actual=a.stepFixed(input),expected=b.stepFixed(input);compare(actual,expected);if(i===0){first=actual;copy=a.getSnapshotCopy();}if(i===2)assert.equal(actual,first);}
+ for(let i=0;i<16;i++){const input={throttle:.6,brake:i>8?.7:0,steer:.06,requestedGear:1,clutchEngagement:1};const actual=a.stepFixed(input),expected=b.stepFixed(input);compareState(actual,expected);if(i===0){first=actual;copy=a.getSnapshotCopy();}if(i===2)assert.equal(actual,first);}
  assert.equal(a.scratch.ray,ray);assert.equal(a.scratch.contacts,contacts);assert.equal(a.wheels,wheels);assert.equal(copy.timeSeconds,1/120);assert.ok(Object.isFrozen(copy));
- a.applyImpact({impulseNs:52000,localPointM:[1,0,.2]});b.applyImpact({impulseNs:52000,localPointM:[1,0,.2]});compare(a.getSnapshot(),b.getSnapshot());
- compare(a.stepFixed({}),b.stepFixed({}));a.dispose();b.dispose();a.world.free();b.world.free();
+ a.applyImpact({impulseNs:52000,localPointM:[1,0,.2]});b.applyImpact({impulseNs:52000,localPointM:[1,0,.2]});compareState(a.getSnapshot(),b.getSnapshot());
+ compareState(a.stepFixed({}),b.stepFixed({}));a.dispose();b.dispose();a.world.free();b.world.free();
 }
-console.log('physics runtime: 64 real Rapier ticks matched baseline; grounded/airborne, ABS/chassis, impact, buffer reuse and historical copy passed');
+console.log('physics runtime: 32 grounded ticks and 32 airborne chassis/damage ticks matched baseline; ABS, impacts, buffer reuse and historical copy passed');
 
 vm.runInContext(fs.readFileSync(new URL('src/legacy/asfalto-v6-integration-runtime.js?v=20b4c62a387397e8',root),'utf8'),context);
 const proto=context.AsfaltoV6Integration.RaceSimulationV6.prototype;
@@ -96,9 +102,13 @@ test('lifecycle listeners rebase without copying the physics history each tick',
 });
 {
  const a=session(context,.56,false),b=session(old,.56,false);
- for(const s of [a,b]){s.world.createCollider(R.ColliderDesc.cuboid(.2,3,8).setTranslation(4,2,0));s.body.setLinvel({x:40,y:0,z:0},true);s.reserveImpactContacts?.();}
+ // Neutral isolates the collision from the obsolete first-gear overrun bug
+ // at 40 m/s. The new regression exercises the engaged driveline separately.
+ for(const s of [a,b]){s.reset({spawn:{x:0,y:.56,z:0},initialGear:0});s.world.createCollider(R.ColliderDesc.cuboid(.2,3,8).setTranslation(4,2,0));s.body.setLinvel({x:40,y:0,z:0},true);s.reserveImpactContacts?.();}
  let collisions=0;
- for(let i=0;i<16;i++){const actual=a.stepFixed({}),expected=b.stepFixed({});compare(actual,expected);if(expected.impact)collisions++;}
+ // Free wheels keep accumulating their visual rotation after leaving contact.
+ // Every physical velocity, impulse, force and damage value is still compared.
+ for(let i=0;i<16;i++){const actual=a.stepFixed({}),expected=b.stepFixed({});compare(actual,expected,'snapshot',true);if(expected.impact)collisions++;}
  assert.ok(collisions>0,'real static collision must exercise contact-force aggregation');
  a.dispose();b.dispose();a.world.free();b.world.free();
  console.log('physics impacts: 16 real Rapier wall-collision ticks and damage aggregation matched baseline');

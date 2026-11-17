@@ -3,6 +3,7 @@
   'use strict';
 
   const FIXED_DT = 1 / 120;
+  const BRAKE_SETTLE_SECONDS = .06;
   // Session starts share a monotonic identifier even when a track replaces its physics session.
   let nextIgnitionSequence = 0;
   let nextImpactSequence = 0;
@@ -690,7 +691,7 @@
   function createPhysicsScratch(session) {
     const vec=()=>new Float64Array(3), obj=()=>({x:0,y:0,z:0});
     const contactData=createContactStorage(),contacts=contactData.contacts;
-    const wheels=session.wheels.map(w=>({id:w.id,axle:w.axle,angularSpeedRadps:0,normalLoadN:0,contact:false,mu:0,wheelRadiusM:session.spec.wheelRadiusM}));
+    const wheels=session.wheels.map(w=>({id:w.id,axle:w.axle,angularSpeedRadps:0,normalLoadN:0,contact:false,mu:0,wheelRadiusM:session.spec.wheelRadiusM,wheelInertiaKgM2:1.8}));
     const out={...session.core.createDynamicsScratch(),contacts,contactData,powertrainWheels:wheels,environmentOutput:{},controls:{},ackermann:{},ackermannInput:{},coupling:{},couplingInput:{},suspensionInput:{},wheelInput:{},waterInput:{},wear:{},
       translation:[0,0,0],mount:vec(),down:vec(),bodyForward:vec(),bodySide:vec(),wheelForward:vec(),wheelSide:vec(),pointVelocity:vec(),velocity:vec(),angularVelocity:vec(),suspensionForce:vec(),tireForce:vec(),resistance:vec(),sumSuspension:vec(),sumTire:vec(),
       force:obj(),point:obj(),rayOrigin:obj(),rayDirection:obj(),query:{wheelId:null,worldPosition:[0,0,0],speedMps:0,normalLoadN:0},brakeTorques:new Float64Array(4),locked:[false,false,false,false]};
@@ -900,7 +901,7 @@
       controls.engineCoolingCondition=clamp(finite(this.damage?.engine?.coolingCondition,1),0,1);controls.engineFire=this.damage?.engine?.fire===true;
       this._setRequestedGear(controls);
       const contactState=this._collectContacts(controls),contacts=this._prepareWheelLoads(contactState.contacts);
-      for(let i=0;i<4;i++){const pw=s.powertrainWheels[i],w=this.wheels[i],c=contacts[i];pw.angularSpeedRadps=finite(w.angularSpeedRadps,0);pw.normalLoadN=d.normalLoadN[i];pw.contact=(d.contact[i]!==0);pw.wheelRadiusM=spec.wheelRadiusM;}
+      for(let i=0;i<4;i++){const pw=s.powertrainWheels[i],w=this.wheels[i],c=contacts[i];pw.angularSpeedRadps=finite(w.angularSpeedRadps,0);pw.normalLoadN=d.normalLoadN[i];pw.contact=(d.contact[i]!==0);pw.wheelRadiusM=spec.wheelRadiusM;pw.wheelInertiaKgM2=this.chassisDynamics.inertia;}
       const powertrain=this.core.stepPowertrainInto(s.powertrain,this.powertrainState,controls,s.powertrainWheels,FIXED_DT,spec);
       fieldsInto(this.powertrainState,powertrain.state);
       for(let i=0;i<4;i++){
@@ -937,18 +938,21 @@
       for(let i=0;i<4;i++){
         const c=contacts[i],w=this.wheels[i],ws=snapshot.wheels[i],outTire=ws.tire;
         if(d.compressionM[i]>=SUSPENSION.maxTravelM-.002)bottomOut=Math.max(bottomOut,clamp(Math.max(0,finite(d.compressionVelocityMps[i],0)-1)/2,0,2));
+        const drive=clamp(finite(this.damage?.drivetrain?.condition,1),.15,1)*clamp(finite(this.damage?.engine?.powerFactor,1),.2,1);
+        const brake=clamp(finite(this.damage?.brakes?.condition,1),.15,1)*(1-clamp(finite(this.damage?.brakes?.fade,0),0,.8));
+        const inertia=this.chassisDynamics.inertia;
+        // Driveline and brake torque still act on an airborne wheel. Only the
+        // tire's ground reaction disappears when its contact is unloaded.
+        const tireTorque=(d.contact[i]!==0)&&d.normalLoadN[i]>0?finite(w.tire?.fxN,0)*spec.wheelRadiusM:0;
+        const unbraked=finite(w.angularSpeedRadps,0)+(powertrain.wheelDriveTorquesNm[i]*drive-tireTorque)/inertia*FIXED_DT;
+        const angular=Math.sign(unbraked)*Math.max(0,Math.abs(unbraked)-s.brakeTorques[i]*brake/inertia*FIXED_DT);
+        const rotation=(finite(w.rotationRad,0)+angular*FIXED_DT)%(Math.PI*2);
         if((d.contact[i]!==0)&&d.normalLoadN[i]>0){
           const cos=Math.cos(d.steering[i]),sin=Math.sin(d.steering[i]);
           for(let k=0;k<3;k++){s.wheelForward[k]=s.bodyForward[k]*cos+s.bodySide[k]*sin;s.wheelSide[k]=s.bodySide[k]*cos-s.bodyForward[k]*sin;}
           normalizeInto(s.wheelForward,s.bodyForward);normalizeInto(s.wheelSide,s.bodySide);
           fromRapierInto(s.pointVelocity,this.body.velocityAtPoint(rapierInto(s.point,c.point),s.rapierVelocity));
           const longitudinal=dot(s.pointVelocity,s.wheelForward),lateral=dot(s.pointVelocity,s.wheelSide);
-          const drive=clamp(finite(this.damage?.drivetrain?.condition,1),.15,1)*clamp(finite(this.damage?.engine?.powerFactor,1),.2,1);
-          const brake=clamp(finite(this.damage?.brakes?.condition,1),.15,1)*(1-clamp(finite(this.damage?.brakes?.fade,0),0,.8));
-          const inertia=this.chassisDynamics.inertia;
-          const unbraked=finite(w.angularSpeedRadps,0)+(powertrain.wheelDriveTorquesNm[i]*drive-finite(w.tire?.fxN,0)*spec.wheelRadiusM)/inertia*FIXED_DT;
-          const angular=Math.sign(unbraked)*Math.max(0,Math.abs(unbraked)-s.brakeTorques[i]*brake/inertia*FIXED_DT);
-          const rotation=(finite(w.rotationRad,0)+angular*FIXED_DT)%(Math.PI*2);
           const e=this._sampleEnvironment(w.id,c.point,Math.abs(longitudinal),d.normalLoadN[i]),wi=s.waterInput;
           wi.speedMps=Math.abs(longitudinal);wi.waterDepthM=finite(e.waterDepthM,0);wi.normalLoadN=d.normalLoadN[i];
           const damageTire=this.damage?.tires?.[w.id],factor=clamp(.45+.55*finite(damageTire?.condition,1),.35,1)*clamp(.5+.5*finite(damageTire?.pressureRatio,1),.35,1);
@@ -960,11 +964,30 @@
           input.corneringStiffnessNprad=i<2?finite(spec.tires?.frontCorneringStiffnessNprad,50000):finite(spec.tires?.rearCorneringStiffnessNprad,58000);
           input.longitudinalStiffnessN=i<2?finite(spec.tires?.frontLongitudinalStiffnessN,52000):finite(spec.tires?.rearLongitudinalStiffnessN,50000);
           this.core.stepWheelStateInto(w,w,input,FIXED_DT,s.tire);
+          // At a locked, nearly stationary wheel the rolling relaxation model
+          // cannot keep applying its previous braking force through zero speed.
+          // Resolve static longitudinal support within both the tire friction
+          // circle and the actual remaining brake torque. This remains a force
+          // at the contact point: no velocity reset, teleport or infinite grip.
+          if(controls.throttle<=.01&&angular===0&&Math.abs(longitudinal)<1&&s.brakeTorques[i]>0){
+            const brakeCapacity=Math.max(0,(s.brakeTorques[i]*brake-Math.abs(powertrain.wheelDriveTorquesNm[i]*drive))/spec.wheelRadiusM);
+            const tireCapacity=Math.max(0,w.tire.capacityN);
+            const frictionCapacity=Math.sqrt(Math.max(0,tireCapacity**2-w.tire.fyN**2));
+            const capacity=Math.min(brakeCapacity,frictionCapacity);
+            const wheelMass=spec.massKg/4;
+            const support=wheelMass*(9.81*s.wheelForward[1]-longitudinal/BRAKE_SETTLE_SECONDS);
+            w.tire.fxN=clamp(support,-capacity,capacity);
+            w.tire.utilization=tireCapacity>0?clamp(Math.hypot(w.tire.fxN,w.tire.fyN)/tireCapacity,0,1):0;
+            w.tire.saturated=w.tire.utilization>=1;
+            w.tire.warning=w.tire.utilization>=.75;
+            w.slipRatio=Math.abs(support)<capacity?0:input.targetSlipRatio;
+          }
           w.tireGripScale=grip;w.effectiveMu=mu;w.aligningTorqueNm=finite(w.tire.aligningTorqueNm,0);w.combinedUtilization=clamp(finite(w.tire.utilization,0),0,1);
-          w.angularSpeedRadps=angular;w.rotationRad=rotation;w.surface=e.surface||'asphalt';w.waterDepthM=finite(e.waterDepthM,0);
+          w.surface=e.surface||'asphalt';w.waterDepthM=finite(e.waterDepthM,0);
           for(let k=0;k<3;k++){s.tireForce[k]=s.wheelForward[k]*w.tire.fxN+s.wheelSide[k]*w.tire.fyN;s.suspensionForce[k]=c.normal[k]*d.normalLoadN[i];s.sumSuspension[k]+=s.suspensionForce[k];s.sumTire[k]+=s.tireForce[k];}
           this.body.addForceAtPoint(rapierInto(s.force,s.suspensionForce),rapierInto(s.point,c.point),true);this.body.addForceAtPoint(rapierInto(s.force,s.tireForce),s.point,true);
         }
+        w.angularSpeedRadps=angular;w.rotationRad=rotation;
         w.contact=(d.contact[i]!==0)&&d.normalLoadN[i]>0;w.normalLoadN=w.contact?d.normalLoadN[i]:0;w.compressionM=d.compressionM[i];w.compressionVelocityMps=d.compressionVelocityMps[i];w.steerAngleRad=d.steering[i];
         for(const key in w)if(key!=='tire')ws[key]=w[key];ws.tire=outTire;
         if(w.contact)fieldsInto(outTire,w.tire);else{outTire.fxN=0;outTire.fyN=0;outTire.utilization=0;outTire.warning=false;outTire.saturated=false;outTire.capacityN=0;outTire.aligningTorqueNm=0;outTire.muEffective=0;outTire.saturationAngleRad=0;ws.aligningTorqueNm=0;ws.combinedUtilization=0;}

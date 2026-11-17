@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {gunzipSync} from 'node:zlib';
 import {THREE} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import { createCockpitRenderPass, patchCockpitLightStateSource } from '../src/render/cockpit-render-pass.mjs?v=24c5a52d29a2c45b';
+import { createCockpitRenderPass, patchCockpitLightStateSource } from '../src/render/cockpit-render-pass.mjs?v=66e27383b8c79ff6';
 
 function fixture() {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera();

@@ -1,4 +1,4 @@
-import {compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=ae428e3c331b99ce';
+import {compileVisiblePass,prepareBatchedPass} from './pass-preparation.mjs?v=926cddc76a9af3b4';
 // The adjustable interior is a camera-space model. Its lowered floor must not
 // share depth with physical road/terrain. Keep normal depth *within* the cabin,
 // and retain the already-rendered world through windows and transparent glass.

@@ -4,13 +4,13 @@ import { createWaterfallEffects } from './weather-waterfalls.mjs?v=e976f102a3dc9
 import { createRaceAcousticWorld } from '../audio/race-acoustic-world.mjs?v=a9d9ae943f0dbc4b';
 import { weatherEffectsPolicy, createVehicleEmissionState } from './weather-effects-policy.mjs?v=46da8d8e8b960aa3';
 import { createWeatherLayers } from './weather-layers.mjs?v=3739704650e329ef';
-import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=d105a6774e26cd4d';
+import { createWeatherSurfaceController } from './weather-surfaces.mjs?v=187dc979db13ef7e';
 import { createVehicleWeatherParticles } from './vehicle-weather-particles.mjs?v=24710f5e31929cc1';
 import { createSkyMatchedFog } from './sky-matched-fog.mjs?v=4dc1c5e1d3809815';
 import { createWeatherDynamics } from './weather-dynamics.mjs?v=97b633343145b353';
 import { createWeatherWind } from './weather-wind.mjs';
 import { createWeatherLightning } from './weather-lightning.mjs';
-import { createWeatherWindshield } from './weather-windshield.mjs?v=6e7278185b0b3269';
+import { createWeatherWindshield } from './weather-windshield.mjs?v=ab1ed098331deabc';
 import { createVehicleRainSurfaces } from './weather-vehicle-surface.mjs?v=04c089b22a01690a';
 
 /** Visual-only effects in the live renderer's metre-scale scene coordinates. */

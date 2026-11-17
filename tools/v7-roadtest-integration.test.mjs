@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPhysicalRoadTestValidator} from '../src/game/physical-road-tests.mjs?v=9ff50f2b5edd041b';
 import {getEarnedDisplayItems} from '../src/menu/v7-earned-collection.mjs?v=7838748e05ba9177';
-const sessionModule=await import('../src/menu/v7-roadtest-session.mjs?v=22c7b5507d2ba232').catch(()=>({}));
+const sessionModule=await import('../src/menu/v7-roadtest-session.mjs?v=0e7312289c433fbe').catch(()=>({}));
 const profileModule=await import('../src/menu/v7-roadtest-profile.mjs?v=c2364cd5c138589a').catch(()=>({}));
 const receiptModule=await import('../src/menu/v7-roadtest-receipts.mjs?v=dcb56ddf32510097').catch(()=>({}));
 const identity={testId:'vmax',sessionId:'session-1',configurationHash:'a'.repeat(64),trackId:'dos_lagos',vehicleId:'chevy',class:'Histórica',sessionSequence:7};
@@ -12,6 +12,37 @@ function world(){let observer=null;return{getPhysicalObservationState:()=>({sess
 function diskStore(initial={storageRevision:0}){let current=structuredClone(initial),disk=JSON.stringify(initial),writes=0,mode='normal';const storage={getItemPersistent:()=>disk,setItemPersistent(key,text){writes++;if(mode==='drop')return;if(mode==='corrupt'){disk='{}';return;}disk=text;if(mode==='uncertain')throw Error('write completed but acknowledgement lost');}};return{storage,getProfile:()=>current,replaceProfile:p=>current=p,withLock:fn=>fn(),setMode:v=>mode=v,writeDisk:p=>disk=JSON.stringify(p),disk:()=>JSON.parse(disk),writes:()=>writes};}
 test('physical host consumes all substeps and completes once without RAF scoring',()=>{assert.equal(typeof sessionModule.createRoadTestSession,'function');const w=world(),completed=[];const session=sessionModule.createRoadTestSession({...identity,world:w,onCompleted:r=>completed.push(r),now:()=> '2026-09-09T12:00:00.000Z',newId:()=> 'result-1'});for(let tick=1;tick<=400;tick++)w.emit(frame(tick));assert.equal(completed.length,1);assert.equal(completed[0].measurement.value,180);assert.equal(completed[0].evidence.sampleCount,361);assert.equal(completed[0].sessionSequence,7);assert.equal(session.getState().phase,'completed');assert.equal(w.count(),0);});
 test('paused ticks never create active time and resume stays contiguous',()=>{assert.equal(typeof sessionModule.createRoadTestSession,'function');const w=world(),session=sessionModule.createRoadTestSession({...identity,world:w});for(let tick=1;tick<=10;tick++)w.emit(frame(tick,{running:false}));assert.equal(session.getState().sampleCount,0);w.emit(frame(11));assert.equal(session.getState().sampleCount,1);});
+test('reaching the route end without the objective closes each test once and grants no receipt',()=>{
+ const gates=Array.from({length:8},(_,i)=>({id:'slalom-'+i,center:[20+16*i,0,0],forward:[1,0,0],left:[0,0,1],halfWidthM:1.5}));
+ for(const testId of ['vmax','accel100','accel160','m500','m1000','recovery','brake100','slalom','turn','wet','speedo','consumption']){
+  const w=world(),invalid=[],completed=[];
+  const session=sessionModule.createRoadTestSession({...identity,testId,world:w,definition:{gates,displacementLiters:4.097},onInvalidated:s=>invalid.push(s),onCompleted:r=>completed.push(r)});
+  const sample=frame(1,{speed:0,statusBefore:'RUNNING',statusAfter:'FINISHED',environment:{wetness:1,gripMultiplier:.65}});
+  w.emit(sample);w.emit(sample);
+  assert.equal(session.getState().phase,'invalid',testId);
+  assert.deepEqual(session.getState().invalidReasons,['route-ended-objective-incomplete'],testId);
+  assert.equal(session.getState().sampleCount,1,testId);
+  assert.equal(invalid.length,1,testId);assert.equal(completed.length,0,testId);
+  assert.equal(session.getReceipt(),null,testId);assert.equal(w.count(),0,testId);
+  session.cancel();assert.equal(invalid.length,1,testId);
+ }
+});
+test('an objective completed on the final physical step keeps its valid result',()=>{
+ const w=world(),invalid=[],completed=[];
+ const session=sessionModule.createRoadTestSession({...identity,world:w,onInvalidated:s=>invalid.push(s),onCompleted:r=>completed.push(r)});
+ for(let tick=1;tick<=361;tick++)w.emit(frame(tick,{statusAfter:tick===361?'FINISHED':'RUNNING'}));
+ assert.equal(session.getState().phase,'completed');assert.equal(completed.length,1);
+ assert.equal(completed[0].qa,false);assert.equal(invalid.length,0);assert.equal(w.count(),0);
+});
+test('a pause or countdown is not a route ending and cannot invalidate the attempt',()=>{
+ const w=world(),invalid=[];
+ const session=sessionModule.createRoadTestSession({...identity,world:w,onInvalidated:s=>invalid.push(s)});
+ w.emit(frame(1,{running:false,statusAfter:'COUNTDOWN'}));
+ w.emit(frame(2,{running:false,statusAfter:'PAUSED'}));
+ w.emit(frame(3,{statusAfter:'RUNNING'}));
+ assert.equal(session.getState().phase,'running');assert.equal(session.getState().sampleCount,1);
+ assert.equal(invalid.length,0);assert.equal(w.count(),1);session.cancel();
+});
 test('gaps, QA, recovery, lifecycle and rebase invalidate and detach without publication',()=>{assert.equal(typeof sessionModule.createRoadTestSession,'function');for(const fault of ['gap','qa','recovery','sequence','cancel','rebase','host-invalidated']){const w=world(),completed=[],session=sessionModule.createRoadTestSession({...identity,world:w,onCompleted:r=>completed.push(r)});w.emit(frame(1));if(fault==='cancel')session.cancel();else if(fault==='rebase')w.rebase();else if(fault==='host-invalidated')w.invalidate('restart');else w.emit(frame(fault==='gap'?3:2,fault==='qa'?{qa:true}:fault==='recovery'?{recoveries:1}:fault==='sequence'?{sessionSequence:8}:{}));assert.equal(session.getState().phase,'invalid',fault);assert.equal(w.count(),0,fault);assert.equal(completed.length,0,fault);}});
 test('displayed speedometer sample maps physicalTick to instrument sampleTick',()=>{assert.equal(typeof sessionModule.createRoadTestSession,'function');const w=world(),completed=[],session=sessionModule.createRoadTestSession({...identity,testId:'speedo',world:w,getInstrument:()=>({indicatedKph:101,physicalTick:tickNow}),onCompleted:r=>completed.push(r)});let tickNow=0;for(let tick=1;tick<=600;tick++){tickNow=tick;w.emit(frame(tick,{speed:100/3.6}));}assert.equal(session.getState().valid,true);assert.ok(Math.abs(completed[0].measurement.value-1)<1e-9);});
 test('receipt reader rejects old valid sheets and malformed physical thresholds',()=>{assert.equal(typeof receiptModule.validateRoadTestReceipt,'function');const r=receipt();assert.equal(receiptModule.validateRoadTestReceipt(r).testId,'vmax');for(const changed of [{qa:true},{sessionSequence:null},{configurationHash:''},{evidence:{...r.evidence,sampleCount:0}},{measurement:{...r.measurement,value:0}},{measurement:{...r.measurement,stableSeconds:2}},{source:'legacy-sheet'}])assert.throws(()=>receiptModule.validateRoadTestReceipt({...r,...changed}));assert.throws(()=>receiptModule.validateRoadTestReceipt({testId:'vmax',valid:true,main:200}));});

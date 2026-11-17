@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Asfalto Nacional",
+  "short_name": "Asfalto",
+  "description": "Rutas argentinas, taller y conducción clásica.",
+  "lang": "es-AR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090b0e",
+  "theme_color": "#090b0e",
+  "icons": [
+    { "src": "assets/icons/asfalto-app.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

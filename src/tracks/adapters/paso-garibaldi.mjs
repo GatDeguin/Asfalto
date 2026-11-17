@@ -1,6 +1,7 @@
 import { createGlbPointToPointAdapter } from './glb-point-to-point.mjs?v=415303e62dd81052';
 import { prepareTrackVisual } from '../visuals/reference-landscape.mjs?v=3be0eeb74f885ef7';
 import { attachGaribaldiLadera, garibaldiLaderaAsset } from '../visuals/garibaldi-ladera.mjs?v=bb4060bab8241a9c';
+import { attachGaribaldiBordes, garibaldiBordesAsset } from '../visuals/garibaldi-bordes.mjs?v=f7a0695305fe5df8';
 import { loadRegionalBlenderArt } from '../visuals/regional-blender-art.mjs?v=942ba726ff042432';
 
 const MANIFEST = Object.freeze({
@@ -121,6 +122,13 @@ function policy(dependencies) {
         fetchBytes:(...args)=>dependencies.fetchBytes(...args),
         loadGlb:(...args)=>dependencies.completeGlbToObject(...args),
         attach:(target,art)=>attachGaribaldiLadera(target,art,context.query),
+        dispose:art=>dependencies.disposeObjectRoot(art),
+      });
+      await loadRegionalBlenderArt({root,releaseRoot:dependencies.releaseRootUrl,asset:garibaldiBordesAsset,
+        label:'Paso Garibaldi · Banquina continua',signal:context.signal}, {
+        fetchBytes:(...args)=>dependencies.fetchBytes(...args),
+        loadGlb:(...args)=>dependencies.completeGlbToObject(...args),
+        attach:attachGaribaldiBordes,
         dispose:art=>dependencies.disposeObjectRoot(art),
       });
     },

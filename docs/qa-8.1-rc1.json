@@ -1,0 +1,437 @@
+{
+  "schema": "asfalto-release-qa/v1",
+  "recordedAt": "2026-11-17T04:41:46.237Z",
+  "version": "8.1.0-rc1",
+  "status": "candidate-not-final",
+  "environment": {
+    "cpu": "Intel(R) Core(TM) i7-9700K CPU @ 3.60GHz",
+    "os": {
+      "ProductName": "Windows 10 Pro",
+      "DisplayVersion": "22H2",
+      "CurrentBuild": "19045",
+      "UBR": 6466
+    },
+    "node": "v24.20.0",
+    "browser": "157.0.8103.79",
+    "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Ti (0x00002489) Direct3D11 vs_5_0 ps_5_0, D3D11-32.0.16.2101)",
+    "viewport": "1280x800 DPR1",
+    "cache": "Fresh browser context; OS and driver caches not cleared"
+  },
+  "node": {
+    "tests": 717,
+    "passed": 717,
+    "failed": 0,
+    "command": "node --test tools/*.test.mjs"
+  },
+  "workshopLearning": {
+    "method": "Fresh browser; visible workshop navigation, conversion confirmations, appearance/tuning controls, two photo downloads, reload and repeated lessons. No injected progression.",
+    "initialXp": 0,
+    "partsXp": 4,
+    "repeatedPartsXp": 4,
+    "appearanceXp": 7,
+    "tuningXp": 11,
+    "photographyXp": 15,
+    "afterTwoReloadsXp": 15,
+    "photos": 2,
+    "errors": [],
+    "httpErrors": []
+  },
+  "physicallyDrivenRoadTests": {
+    "method": "Physical controls at real time. Fresh browser profile, normal menus and authoritative receipts.",
+    "completed": [
+      {
+        "id": "accel100",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "elapsedSeconds",
+          "value": 17.041666666666668,
+          "unit": "s",
+          "method": "physical-speed-crossing",
+          "targetKph": 100
+        },
+        "receiptSha256": "749d1f4bd3d06a7054dcb2898584fd92b968471df5658b60ab28d6b29eaaf8e1",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "m500",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "elapsedSeconds",
+          "value": 23.675,
+          "unit": "s",
+          "method": "physical-route-distance-gate",
+          "targetMeters": 500,
+          "measuredProgressM": 500.2118468367124
+        },
+        "receiptSha256": "2f8faa93ada007bd8283e804b870e9fe5c12e6b0f717c0b05ae69966aaab9345",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "brake100",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "brakingDistanceM",
+          "value": 48.35817137606159,
+          "unit": "m",
+          "method": "physical-brake-torque-to-supported-stop",
+          "elapsedSeconds": 3.408333333333333
+        },
+        "receiptSha256": "904efeaf135b4f27d994702ab136f3f1797aab2487d25b34727413271247b22f",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "speedo",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "speedometerRmsErrorKph",
+          "value": 0.10686149938579481,
+          "unit": "km/h RMS",
+          "method": "actual-display-versus-physical-velocity",
+          "signedBiasKph": -0.10271049710248431,
+          "stableSeconds": 5
+        },
+        "receiptSha256": "f68c81ccd0a3c5c37ccc7e889aa8474699e01c415d25d3c646fbcd7bbd011c9f",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "slalom",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "physicalGates",
+          "value": 8,
+          "unit": "puertas",
+          "method": "ordered-physical-gate-crossings"
+        },
+        "receiptSha256": "bf768934506a9eb64cebac24f26f152588a9b46d3820e54e32b597c3dfc51e9d",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "recovery",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "elapsedSeconds",
+          "value": 16.591666666666665,
+          "unit": "s",
+          "method": "physical-fourth-gear-speed-crossings"
+        },
+        "receiptSha256": "646b2a53824a02a3c0839d8a8d4ff35acf9a9c1f2ea01b990ef261e63c34cedf",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "consumption",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "modeledLitersPer100Km",
+          "value": 15.461097490865916,
+          "unit": "L/100 km estimados por modelo",
+          "method": "integrated-reference-fuel-model",
+          "modelId": "asfalto-si-reference-accounting/v1",
+          "modeled": true,
+          "speedStdDevKph": 0.7516761423143756,
+          "fuelUsedLiters": 0.37108721534559885,
+          "windowDistanceM": 2400.1350199416906,
+          "windowStartTick": 1155
+        },
+        "receiptSha256": "5ce306348a141d8e3ab240475352fc6e18f87e498c3f26629495c58e7a32bef9",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "accel160",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "elapsedSeconds",
+          "value": 58.49166666666667,
+          "unit": "s",
+          "method": "physical-speed-crossing",
+          "targetKph": 160
+        },
+        "receiptSha256": "31f88df0beab2d0946217f6fd33df64cfc6d7a51b99b67a4a643a52ec701cc0e",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "m1000",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "elapsedSeconds",
+          "value": 38.458333333333336,
+          "unit": "s",
+          "method": "physical-route-distance-gate",
+          "targetMeters": 1000,
+          "measuredProgressM": 1000.241611183216
+        },
+        "receiptSha256": "7aca21682e3384b886c15080820087e07503e5dbb11912cb222e27c4affcae9a",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "wet",
+        "route": "dos_lagos",
+        "vehicleId": "chevrolet_1969",
+        "class": "Histórica",
+        "measurement": {
+          "metric": "wetDistanceM",
+          "value": 1800.1452000535048,
+          "unit": "m",
+          "method": "physical-wet-support-and-braking",
+          "brakeSpeedDropMps": 7.6483857491980185,
+          "peakLateralAccelerationMps2": 3.112180463554782
+        },
+        "receiptSha256": "4665732f83451e72eb24ad39a364f0920064a30297b9940fa0a9b7a78ca9172d",
+        "persistedAfterReload": true
+      },
+      {
+        "id": "vmax",
+        "route": "aconcagua_horcones",
+        "vehicleId": "chevrolet_1969",
+        "class": "Restomod",
+        "measurement": {
+          "metric": "maximumStableSpeedKph",
+          "value": 176.1033770131755,
+          "unit": "km/h",
+          "method": "physical-stable-speed-window",
+          "stableSeconds": 3
+        },
+        "receiptSha256": "c8a890b0b978f4275d9848d5212d1f09c0c5a370c77ad8c403f754ac3dbb62b2",
+        "persistedAfterReload": true
+      }
+    ],
+    "savedTokens": 121,
+    "xp": 144,
+    "level": 2,
+    "allTwelveCompleted": false,
+    "syntheticReceiptTestsAreNotDrivenAttempts": true
+  },
+  "incompleteObjectiveAtFinish": {
+    "route": "aconcagua_horcones",
+    "physicallyDriven": true,
+    "routeFinishM": 21000,
+    "expectedReason": "route-ended-objective-incomplete",
+    "resultScreenShown": true,
+    "receiptsCreated": 0,
+    "returnedToWorkshopAndReloaded": true,
+    "errors": [],
+    "httpErrors": []
+  },
+  "routeReference": {
+    "route": "paso_garibaldi",
+    "release": "published-before-this-change",
+    "manifestSha256": "A55643505C74782A191A54EA5589CE654D3D695E59A1AA4EE0F751F3414505EB",
+    "distanceM": 24000,
+    "durationSeconds": 1949.8415099999997,
+    "frames": {
+      "samples": 114192,
+      "fps": 58.565683424155246,
+      "p95Ms": 20.940000001341105,
+      "p99Ms": 25.85499999858439,
+      "maxMs": 1746.035000000149
+    },
+    "teleports": 0,
+    "recoveries": 0,
+    "impacts": 0,
+    "strictlyIsolated": false,
+    "limitation": "No other browser or Blender render; lightweight source edits, metadata reads, bounded CPU damage-ray regressions. Final isolated comparison must run after all agents idle."
+  },
+  "repeatedLightingVariants": {
+    "switches": 20,
+    "preparationsBefore": 20,
+    "preparationsAfter": 0,
+    "maximumGapAfterMs": 1099.824999999255,
+    "isolatedFpsBenchmark": false
+  },
+  "gpuTools": {
+    "renderdoc": {
+      "captured": true,
+      "pipeline": "GraphicsAPI.D3D11",
+      "draws": 429,
+      "indexedDraws": 328,
+      "textures": 246,
+      "drawGpuMsSum": 5.597887999999999,
+      "limitation": "One replayed frame; sum of draw counters is not full-frame time."
+    },
+    "nsight": {
+      "captured": true,
+      "dxgi": [
+        {
+          "api": "IDXGIOutput::WaitForVBlank",
+          "calls": 9402,
+          "totalCpuMs": 156651.93307,
+          "averageCpuMs": 16.661554251223144,
+          "maximumCpuMs": 88.110931
+        },
+        {
+          "api": "D3DCompile",
+          "calls": 1031,
+          "totalCpuMs": 122612.506496,
+          "averageCpuMs": 118.92580649466537,
+          "maximumCpuMs": 3869.776183
+        },
+        {
+          "api": "IDXGISwapChain1::Present1",
+          "calls": 7978,
+          "totalCpuMs": 765.761311,
+          "averageCpuMs": 0.0959841202055653,
+          "maximumCpuMs": 2.323996
+        },
+        {
+          "api": "IDXGIFactory2::CreateSwapChainForComposition",
+          "calls": 1,
+          "totalCpuMs": 1.156179,
+          "averageCpuMs": 1.156179,
+          "maximumCpuMs": 1.156179
+        },
+        {
+          "api": "IDXGIDevice2::EnqueueSetEvent",
+          "calls": 1,
+          "totalCpuMs": 0.329473,
+          "averageCpuMs": 0.329473,
+          "maximumCpuMs": 0.329473
+        }
+      ],
+      "wddm": false,
+      "limitation": "No WDDM queues or hardware counters. API wall time is not GPU execution time."
+    }
+  },
+  "distribution": {
+    "capturedAt": "2026-11-17T03:56:49.149Z",
+    "publicationByThisAgent": false,
+    "pwa": {
+      "testScope": "Frozen official baseline plus the actual PWA implementation; update fixture B never published",
+      "shellBytes": 10629607,
+      "totalBytesA": 941031198,
+      "firstInstallBulk": false,
+      "mobileDocumentWidth": 390,
+      "mobileViewport": 390,
+      "offlineServerStopped": true,
+      "offlineHttpCacheDisabled": true,
+      "offlineComplete": true,
+      "offlineConsoleErrors": 0,
+      "offlineHttpErrors": 0,
+      "offlineNetworkFailures": [
+        {
+          "requestId": "3708.3309",
+          "timestamp": 20664.853895,
+          "type": "Media",
+          "errorText": "net::ERR_ABORTED",
+          "canceled": true,
+          "url": "http://127.0.0.1:54832/assets/intro/cinematic-v7.mp4"
+        }
+      ],
+      "offlineMediaRange": {
+        "status": 206,
+        "range": "bytes 0-4095/4305622",
+        "bytes": 4096,
+        "sha256": "a49c8e2205541dfd533d5d17da45de09e0634be1dc817410d5039ef3d8110257"
+      },
+      "packBComplete": true,
+      "totalBytesB": 941035913,
+      "progressMinIntervalMs": 1000.394999999553,
+      "multitabPass": true,
+      "unresponsiveQueryMs": 1570,
+      "updatePass": true,
+      "profileAndBinaryRetention": true,
+      "installabilityErrors": [],
+      "standaloneInstallConfirmed": false
+    },
+    "windows": {
+      "version": "8.1.0 provisional",
+      "upgradedFrom": "8.0.0",
+      "realInstalledExecutable": true,
+      "retentionPass": true,
+      "profileSha256": "c19beecdfe98a9f864aa11d1a1a4f0d5ce272e5d1e33ccf085e55ac6242b2140",
+      "installedResourcesVerified": 1012,
+      "installedResourceBytes": 943800500,
+      "installedFilesPass": true,
+      "capabilityChecks": 13,
+      "capabilityPass": true,
+      "sourceInventory": "B9E659ED284E4BE12F3E88B8E73B4FB99534F81F71E5E87C436DFEB77178D38F",
+      "signed": false,
+      "finalArtBuildPending": true
+    },
+    "limitations": [
+      "No physical iPhone test yet; user will test candidate URL",
+      "PWA standalone installation could not be automated: Chrome returned -32601 even with official flag; no CUA retries after interrupted call",
+      "IndexedDB JPEG is a technical retention sentinel, not an earned photo",
+      "Functional concurrent QA; no isolated60FPS claim",
+      "Final Windows build/short physical drive awaits final integrated artifact"
+    ]
+  },
+  "gates": {
+    "sustained60Fps": false,
+    "physicalIphone": false,
+    "physicalAndroid": false,
+    "allFiveRoutesOnFinalCandidate": false,
+    "allCompetitionsAndChampionshipsDriven": false,
+    "all100ArtProposalsComplete": false
+  },
+  "evidence": [
+    {
+      "file": "regresion-integrada-717.log",
+      "sha256": "0ba502c962e2eb7ecad2a5990e4acbaca786c9930dccebe4f8c69d640022bb14"
+    },
+    {
+      "file": "pruebas-integradas/resultados.json",
+      "sha256": "1b2bc0a8cfe71042f9eca894256b807ead19695d91c76f287bb68843fee1256b"
+    },
+    {
+      "file": "prueba-mojado-dos-lagos/resultados.json",
+      "sha256": "686e2c83d12ab891940dcd53188951bf4809da7856abf5c2616ea877b290b824"
+    },
+    {
+      "file": "prueba-vmax-restomod-corregida/resultados.json",
+      "sha256": "07449b5ca16e1563d509b993588c2fdf7f12edc703610171c3bb053dc755065f"
+    },
+    {
+      "file": "prueba-meta-incompleta/resultados.json",
+      "sha256": "88c67444bcb1c7812ad2af223d609ff4dfd6cbd55df9cfcc1b2843ade502737c"
+    },
+    {
+      "file": "taller-aprendizaje/resultado.json",
+      "sha256": "75635213165cfbc4c7f2c90cb683974a41e888c39ef218cb2b3e8a5c1e9bf062"
+    },
+    {
+      "file": "garibaldi-base-resumen.json",
+      "sha256": "df4c9b0bfb5cbb373d9c7abaab14405ec66743c6e942b9974c89b2ccfc498088"
+    },
+    {
+      "file": "variantes-base-repetida/resultado.json",
+      "sha256": "991ced74da8e892fe6b91838ad43a1dddf870cd7d05872a64263b79e64a09d08"
+    },
+    {
+      "file": "variantes-corregida/resultado.json",
+      "sha256": "a0076ee79bfac403a26e4f95060a84e9d051eb574d89fbbb555c863acf691c70"
+    },
+    {
+      "file": "distribucion/QA-CONSOLIDADO.json",
+      "sha256": "1aba6f33851c7f02092aef6773adb2838c2d707ae609fdef59c5deec16aac75a"
+    },
+    {
+      "file": "renderdoc-protocolo-corregido/renderdoc.json",
+      "sha256": "219cc2fff73402249d1b4b86eb9281cba25bd203ae363292f2a56bac4629265d"
+    },
+    {
+      "file": "garibaldi-nsight-resumen.json",
+      "sha256": "c78f5cadc119cbc983b0fb8ab49978418b19ed6905ce7ac20963fd7f18c99621"
+    },
+    {
+      "file": "entorno.json",
+      "sha256": "ef155a0b11448585193e144598277adf22069de71888491135debad3b008c757"
+    }
+  ]
+}

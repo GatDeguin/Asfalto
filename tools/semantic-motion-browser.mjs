@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createRequire} from 'node:module';
-import {startServer} from '../server.mjs?v=9eba410657deb1ea';
+import {startServer} from '../server.mjs?v=2a6036fbd6ef44b2';
 
 const require = createRequire(import.meta.url);
 let chromium;

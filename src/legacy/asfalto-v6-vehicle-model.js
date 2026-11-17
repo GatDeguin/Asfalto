@@ -663,6 +663,45 @@
     }
   }
 
+  function drivelineWheelOmega(wheels,drivetrain,count){
+    let omega=0,grounded=0,groundedOmega=0;
+    for(const wheel of wheels){
+      if(drivetrain.drivenAxle!=='all'&&wheel.axle!==drivetrain.drivenAxle)continue;
+      const speed=finiteNumber(wheel.angularSpeedRadps,0);omega+=speed;
+      if(wheel.contact!==false&&finiteNumber(wheel.normalLoadN,0)>=100){grounded++;groundedOmega+=speed;}
+    }
+    // Match the existing torque split: conjugate speed and torque must use the
+    // same weights so the differential cannot manufacture shaft power.
+    return count===2&&grounded===1&&drivetrain.differential==='limited-slip'
+      ?.75*groundedOmega+.25*(omega-groundedOmega):count?omega/count:0;
+  }
+
+  function constrainClutchTorque(spec,wheels,ratio,engineRpm,engagement,requestedTorque,transmissionFactor,dt){
+    if(ratio===0||engagement<=0)return 0;
+    let count=0,omega=0,inverseWheelInertia=0,grounded=0,groundedInverseInertia=0,groundedOmega=0;
+    for(const wheel of wheels){
+      if(spec.drivetrain.drivenAxle!=='all'&&wheel.axle!==spec.drivetrain.drivenAxle)continue;
+      count++;omega+=finiteNumber(wheel.angularSpeedRadps,0);
+      const inverseInertia=1/Math.max(.05,finiteNumber(wheel.wheelInertiaKgM2,1.8));
+      inverseWheelInertia+=inverseInertia;
+      if(wheel.contact!==false&&finiteNumber(wheel.normalLoadN,0)>=100){grounded++;groundedInverseInertia+=inverseInertia;groundedOmega+=finiteNumber(wheel.angularSpeedRadps,0);}
+    }
+    if(!count)return 0;
+    const gearing=ratio*spec.gearbox.finalDrive;
+    const biased=count===2&&grounded===1&&spec.drivetrain.differential==='limited-slip';
+    const shaftOmega=(biased?.75*groundedOmega+.25*(omega-groundedOmega):omega/count)*gearing;
+    const engineCeiling=(spec.engine.mechanicalLimitRpm+250)*Math.PI*2/60;
+    // The engine already has this speed constraint. Reflect the actual driven
+    // wheel inertia through the gearbox to find its permitted clutch impulse.
+    // Overrunning wheels back-drive the clutch, including on closed throttle;
+    // their angular velocities are still integrated solely from physical torque.
+    const weightedInverseInertia=biased?.75**2*groundedInverseInertia+.25**2*(inverseWheelInertia-groundedInverseInertia):inverseWheelInertia/(count*count);
+    const inverseReflectedInertia=gearing*gearing*transmissionFactor*weightedInverseInertia;
+    const permittedTorque=(engineCeiling-shaftOmega)/(inverseReflectedInertia*dt);
+    const capacity=torqueAtRpmUnchecked(spec,engineRpm,1)*engagement;
+    return Math.max(-capacity,Math.min(requestedTorque,permittedTorque));
+  }
+
   function stepPowertrain(state, controls, wheels, dt, spec) {
     validateVehicleSpec(spec);
     const stepSeconds = finiteNumber(dt, 0);
@@ -676,11 +715,9 @@
     const throttle = clamp(finiteNumber(controls?.throttle, 0), 0, 1);
     const clutchEngagement = clamp(finiteNumber(state?.clutchEngagement, 0), 0, 1);
     const driven = drivenWheelIndexes(spec, wheels);
-    const meanWheelOmega = driven.length
-      ? driven.reduce((sum, index) => sum + Math.abs(finiteNumber(wheels[index].angularSpeedRadps, 0)), 0) / driven.length
-      : 0;
+    const meanWheelOmega = drivelineWheelOmega(wheels,spec.drivetrain,driven.length);
     const drivelineRpm = Math.abs(ratio) > 0
-      ? meanWheelOmega * 60 / (Math.PI * 2) * Math.abs(ratio) * spec.gearbox.finalDrive
+      ? meanWheelOmega * 60 / (Math.PI * 2) * ratio * spec.gearbox.finalDrive
       : spec.engine.idleRpm;
     const previousRpm = clamp(
       finiteNumber(state?.engineRpm, spec.engine.idleRpm),
@@ -701,11 +738,12 @@
     );
     const clutchSlipRadps = ratio === 0 ? 0 : (engineRpm - coupledTargetRpm) * Math.PI * 2 / 60;
     const engineTorqueNm = torqueAtRpm(spec, engineRpm, throttle);
-    const clutchTorqueNm = ratio === 0 ? 0 : engineTorqueNm * clutchEngagement;
-    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const openDiffUnloaded = driven.some((index) => wheels[index].contact === false
       || finiteNumber(wheels[index].normalLoadN, 0) < 100);
     const differentialFactor = openDiffUnloaded && spec.drivetrain.differential === 'open' ? 0.08 : 1;
+    const clutchTorqueNm = constrainClutchTorque(spec,wheels,ratio,engineRpm,clutchEngagement,
+      engineTorqueNm*clutchEngagement,spec.drivetrain.efficiency*differentialFactor,stepSeconds);
+    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const driveTorqueNm = clutchTorqueNm * ratio * spec.gearbox.finalDrive
       * spec.drivetrain.efficiency * differentialFactor;
     const wheelDriveTorquesNm = [0, 0, 0, 0];
@@ -714,7 +752,7 @@
     // opens above 80 C; radiator damage and measured wheel speed affect cooling.
     const engineCooling = clamp(finiteNumber(controls?.engineCoolingCondition, 1), 0.05, 1);
     const previousEngineTemperature = clamp(finiteNumber(state?.engineTemperatureC, 20), -30, 220);
-    const roadSpeedMps = meanWheelOmega * spec.wheelRadiusM;
+    const roadSpeedMps = Math.abs(meanWheelOmega) * spec.wheelRadiusM;
     const thermalLoad = 0.28 + throttle * 0.55 + engineRpm / spec.engine.mechanicalLimitRpm * 0.22;
     const radiatorCooling = Math.max(0, previousEngineTemperature - 80) * 0.042
       * engineCooling * (spec.engine.coolingMultiplier??1) * (1 + Math.min(40, roadSpeedMps) / 45);
@@ -1251,15 +1289,15 @@ scratch.input.normalLoadN = input?.normalLoadN;
         : spec.gearbox.forward[gear - 1];
     const throttle = clamp(finiteNumber(controls?.throttle, 0), 0, 1);
     const clutchEngagement = clamp(finiteNumber(state?.clutchEngagement, 0), 0, 1);
-    let drivenCount = 0, wheelOmegaSum = 0, openDiffUnloaded = false;
+    let drivenCount = 0, openDiffUnloaded = false;
     for (let i = 0; i < wheels.length; i++) {
       if (spec.drivetrain.drivenAxle !== 'all' && wheels[i].axle !== spec.drivetrain.drivenAxle) continue;
-      drivenCount++; wheelOmegaSum += Math.abs(finiteNumber(wheels[i].angularSpeedRadps, 0));
+      drivenCount++;
       if (wheels[i].contact === false || finiteNumber(wheels[i].normalLoadN, 0) < 100) openDiffUnloaded = true;
     }
-    const meanWheelOmega = drivenCount ? wheelOmegaSum / drivenCount : 0;
+    const meanWheelOmega = drivelineWheelOmega(wheels,spec.drivetrain,drivenCount);
     const drivelineRpm = Math.abs(ratio) > 0
-      ? meanWheelOmega * 60 / (Math.PI * 2) * Math.abs(ratio) * spec.gearbox.finalDrive
+      ? meanWheelOmega * 60 / (Math.PI * 2) * ratio * spec.gearbox.finalDrive
       : spec.engine.idleRpm;
     const previousRpm = clamp(
       finiteNumber(state?.engineRpm, spec.engine.idleRpm),
@@ -1280,9 +1318,10 @@ scratch.input.normalLoadN = input?.normalLoadN;
     );
     const clutchSlipRadps = ratio === 0 ? 0 : (engineRpm - coupledTargetRpm) * Math.PI * 2 / 60;
     const engineTorqueNm = torqueAtRpmUnchecked(spec, engineRpm, throttle);
-    const clutchTorqueNm = ratio === 0 ? 0 : engineTorqueNm * clutchEngagement;
-    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const differentialFactor = openDiffUnloaded && spec.drivetrain.differential === 'open' ? 0.08 : 1;
+    const clutchTorqueNm = constrainClutchTorque(spec,wheels,ratio,engineRpm,clutchEngagement,
+      engineTorqueNm*clutchEngagement,spec.drivetrain.efficiency*differentialFactor,stepSeconds);
+    const clutchSlipPowerW = Math.abs(clutchSlipRadps * clutchTorqueNm);
     const driveTorqueNm = clutchTorqueNm * ratio * spec.gearbox.finalDrive
       * spec.drivetrain.efficiency * differentialFactor;
     const wheelDriveTorquesNm = out.wheelDriveTorquesNm;
@@ -1292,7 +1331,7 @@ scratch.input.normalLoadN = input?.normalLoadN;
     // opens above 80 C; radiator damage and measured wheel speed affect cooling.
     const engineCooling = clamp(finiteNumber(controls?.engineCoolingCondition, 1), 0.05, 1);
     const previousEngineTemperature = clamp(finiteNumber(state?.engineTemperatureC, 20), -30, 220);
-    const roadSpeedMps = meanWheelOmega * spec.wheelRadiusM;
+    const roadSpeedMps = Math.abs(meanWheelOmega) * spec.wheelRadiusM;
     const thermalLoad = 0.28 + throttle * 0.55 + engineRpm / spec.engine.mechanicalLimitRpm * 0.22;
     const radiatorCooling = Math.max(0, previousEngineTemperature - 80) * 0.042
       * engineCooling * (spec.engine.coolingMultiplier??1) * (1 + Math.min(40, roadSpeedMps) / 45);

@@ -3,7 +3,7 @@ import {mkdir,writeFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {startServer} from '../server.mjs?v=9eba410657deb1ea';
+import {startServer} from '../server.mjs?v=2a6036fbd6ef44b2';
 
 const output=process.argv[2];
 assert.ok(output,'Indica un directorio externo para la evidencia.');

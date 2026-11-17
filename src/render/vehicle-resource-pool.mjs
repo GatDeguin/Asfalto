@@ -2,7 +2,21 @@
 const pools=new WeakMap(),borrowed=new WeakSet(),resourceEntries=new WeakMap(),roots=new WeakMap();
 export const isBorrowedVehicleResource=resource=>borrowed.has(resource);
 export function releaseVehicleModel(root){let released=false;root?.traverse?.(node=>{const loan=roots.get(node);if(loan){roots.delete(node);loan.release();released=true;}});return released;}
-export function retainVehicleResources(root){const entries=new Set();root?.traverse?.(node=>{const e=resourceEntries.get(node.geometry);if(e)entries.add(e);for(const m of Array.isArray(node.material)?node.material:[node.material])for(const value of Object.values(m||{})){const entry=resourceEntries.get(value);if(entry)entries.add(entry);}});for(const e of entries)e.pins++;return()=>{for(const e of entries){e.pins--;e.evict();}};}
+export function retainVehicleResources(root){
+ const entries=new Set(),materials=new Set();
+ root?.traverse?.(node=>{
+  const e=resourceEntries.get(node.geometry);if(e)entries.add(e);
+  for(const material of Array.isArray(node.material)?node.material:[node.material]){
+   if(!material||materials.has(material))continue;
+   // Copies share materials. Read each once per lease; later leases must see
+   // current texture assignments, so this cache cannot outlive the traversal.
+   materials.add(material);
+   for(const value of Object.values(material)){const entry=resourceEntries.get(value);if(entry)entries.add(entry);}
+  }
+ });
+ for(const e of entries)e.pins++;
+ return()=>{for(const e of entries){e.pins--;e.evict();}};
+}
 export function getVehicleResourcePool(T,{maximumIdle=0}={}){
  if(pools.has(T))return pools.get(T);const entries=new Map();let decodes=0,hits=0;
  function evict(entry){if(entry.refs||entry.pins||entry.waiters||!entry.template)return;const detached=entries.get(entry.key)!==entry;const idle=[...(detached?[entry]:[]),...entries.values()].filter(e=>!e.refs&&!e.pins&&!e.waiters&&e.template);while(idle.length>(detached?0:maximumIdle)){const e=idle.shift();if(entries.get(e.key)===e)entries.delete(e.key);for(const g of e.geometries)g.dispose();for(const t of e.textures){t.dispose();t.image?.close?.();}for(const m of e.materials)m.dispose();e.template=null;}}

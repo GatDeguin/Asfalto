@@ -1,6 +1,6 @@
 import {fxaaShaderDefinitions} from './vendor/fxaa-shader-factory.mjs?v=51c793fad42be72d';
 import {supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=6da4d0d78fe83c9e';
-import {compileVisiblePass} from './pass-preparation.mjs?v=ae428e3c331b99ce';
+import {compileVisiblePass} from './pass-preparation.mjs?v=926cddc76a9af3b4';
 import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 /** Spatial resolve of linear HDR. No history, jitter, motion vectors or physics state.
  * Insert inside grading: destination targets remain linear; only canvas output is tone mapped. */

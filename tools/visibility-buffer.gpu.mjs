@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {writeFile} from 'node:fs/promises';
-import {startServer} from '../server.mjs?v=d5132a06b199d493';
+import {startServer} from '../server.mjs?v=2a6036fbd6ef44b2';
 
 const output = process.argv[2];
 assert.ok(output, 'Indicate an external evidence file.');

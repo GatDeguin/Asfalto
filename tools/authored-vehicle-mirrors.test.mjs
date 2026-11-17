@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {attachAuthoredMirrors} from '../src/render/authored-vehicle-mirrors.mjs?v=ea1dbc028cf6aa77';
+import {attachAuthoredMirrors} from '../src/render/authored-vehicle-mirrors.mjs?v=479c0dd5339a61e7';
 import {loadVehicleGeometry} from './vehicle-cabin-pilot-fixture.mjs?v=d5045cbd1690ebd9';
 
 for (const lod of [0, 1, 2]) {

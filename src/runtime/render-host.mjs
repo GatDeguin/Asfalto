@@ -1,6 +1,6 @@
 // One physical context; view facades own all mutable renderer state. No transaction crosses await.
-import {retainVehicleResources} from '../render/vehicle-resource-pool.mjs?v=564628ad31eed1e7';
-import {compileRendererPrograms} from '../render/pass-preparation.mjs?v=ae428e3c331b99ce';
+import {retainVehicleResources} from '../render/vehicle-resource-pool.mjs?v=b2b341c34f9c8779';
+import {compileRendererPrograms} from '../render/pass-preparation.mjs?v=926cddc76a9af3b4';
 const hosts=new WeakMap();
 const scalar=['autoClear','autoClearColor','autoClearDepth','autoClearStencil','outputColorSpace','toneMapping','toneMappingExposure','localClippingEnabled','clippingPlanes','transmissionResolutionScale','sortObjects'];
 const nested={shadowMap:['enabled','type','autoUpdate','needsUpdate'],xr:['enabled'],info:['autoReset']};

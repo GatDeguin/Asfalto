@@ -46,7 +46,7 @@ const FIELDS=[
 ];
 const axes=['x','y','z'];
 const crushReach=.28;
-function displacement(x,y,z,damage,out,backing=false){
+function displacement(x,y,z,damage,out,backing=false,preserveLowerLip=false){
  out[0]=out[1]=out[2]=0;
  for(let i=0;i<FIELDS.length;i++){
   if(!damage[i])continue;
@@ -76,10 +76,14 @@ function displacement(x,y,z,damage,out,backing=false){
   const clearance=backing?(damage[i]*.038+dent*.26)*weight:0;
   const normal=Math.min(dent+clearance,thickness*.87);
   out[axis]+=normal*inward*depthShare;
+  // The Chevy's thin lower inner lip lies at y ~= -.166. It compresses
+  // inward but cannot droop through the sill. Blend that vertical constraint
+  // into the cabin above it without lifting the lip into the wheel openings.
+  const sagShare=preserveLowerLip&&(i===0||axis===2)?clamp((y+.16)/.12,0,1,0):1;
   if(axis===0){
-   out[1]+=(-.064+.028*Math.sin(cx*20+z*6))*crush*fold*depthShare;
+   out[1]+=(-.064+.028*Math.sin(cx*20+z*6))*crush*fold*depthShare*sagShare;
    out[2]+=.038*Math.sin(y*14+z*4+.8)*crush*fold*depthShare;
-  }else if(axis===2)out[1]+=(.034*Math.sin(x*12)-.036)*crush*fold*depthShare;
+  }else if(axis===2)out[1]+=(.034*Math.sin(x*12)-.036)*crush*fold*depthShare*sagShare;
  }
  return out;
 }
@@ -96,7 +100,7 @@ export function createVehicleConditionAppearance(T){
  }
 
  function apply(surface){
-  const {mesh,original,matrix,inverse,fields,backing}=surface;
+  const {mesh,original,matrix,inverse,fields,backing,preserveLowerLip}=surface;
   const key=fields.map(i=>geometryDamage[i]).join(',');
   if(key===surface.key)return;
   surface.key=key;
@@ -113,7 +117,7 @@ export function createVehicleConditionAppearance(T){
   const {position}=mesh.geometry.attributes;
   for(let i=0;i<position.count;i++){
    p.fromBufferAttribute(original.attributes.position,i).applyMatrix4(matrix);
-   displacement(p.x,p.y,p.z,geometryDamage,delta,backing);
+   displacement(p.x,p.y,p.z,geometryDamage,delta,backing,preserveLowerLip);
    p.set(p.x+delta[0],p.y+delta[1],p.z+delta[2]).applyMatrix4(inverse);
    position.setXYZ(i,p.x,p.y,p.z);
   }
@@ -124,7 +128,7 @@ export function createVehicleConditionAppearance(T){
  }
 
  return {
-  add(mesh,matrix,{backing=false}={}){
+  add(mesh,matrix,{backing=false,preserveLowerLip=false}={}){
    const original=mesh.geometry;
    if(disposed||!original?.attributes.position)return false;
    if(!original.boundingBox)original.computeBoundingBox();
@@ -139,7 +143,7 @@ export function createVehicleConditionAppearance(T){
     },0);
     return distance<2*(1+crushReach)**2?[i]:[];
    });
-   const surface={mesh,original,matrix:matrix.clone(),inverse:matrix.clone().invert(),fields,backing,key:''};
+   const surface={mesh,original,matrix:matrix.clone(),inverse:matrix.clone().invert(),fields,backing,preserveLowerLip,key:''};
    surfaces.push(surface);
    apply(surface);
    return true;
@@ -164,7 +168,9 @@ export function createVehicleConditionAppearance(T){
 export function vehicleConditionSurface(materialName='',objectName=''){
  if(/enginebay|^interior|^cabin|_interior|habitaculo|motor|steeringwheel|instrument/i.test(objectName))return null;
  if(/gauge|instrument|mirror|optical_silver/i.test(materialName))return null;
- if(/headlamp|faro|BrakeLens|LampLens|Optica|Window_seals|Burletes/i.test(materialName)||/_Glass_.*_Gasket/i.test(objectName))return 'mounted';
+ // The Chevy GLB merges glass seals and the front lamp/grille rubber into
+ // this owner. Its primitive name is not available at the owner boundary.
+ if(objectName==='chevy_static_Vehicle_Rubber'||/headlamp|faro|BrakeLens|LampLens|Optica|Window_seals|Burletes/i.test(materialName)||/_Glass_.*_Gasket/i.test(objectName))return 'mounted';
  if(/glass|vidrio/i.test(materialName))return 'glass';
  if(/Paint|StripeAtlas|Black_lacquer|SatinStripe|Franjas_Negro|ReferenceIvoryEnamel|RoofIvory/i.test(materialName))return 'paint';
  if(/Underbody|Underframe|Chassis|Chasis|Bastidor|Inner_fender|Panel_gap|Grille|Bumper|Paragolpe|BodyTrim/i.test(materialName+' '+objectName))return 'structure';
@@ -176,6 +182,7 @@ export function vehicleConditionSurface(materialName='',objectName=''){
 // does not change the original material or participate in the paint shader.
 const BACKING_NODES=[
  /^chevy_(?:static|CabinSeats)_Vehicle_Interior/,
+ /^chevy_EngineBay_(?:(?:Ancillary_)?Vehicle_(?:Chrome|Rubber)|chevy_EngineBlock)$/,
  /^05_Habitaculo__(?:03_Cromo|04_Aluminio|05_Acero|08_Burletes|09_Vinilo|10_Pliegues|11_Costuras|12_Alfombra)/,
  /^Interior__(?:11_Black_leather|13_Carpet)/,
  /^SS250_(?:Driver|Passenger)(?:(?:Front|Rear)Door|SeatCushion|SeatBack|ToeBoardFloor)/,

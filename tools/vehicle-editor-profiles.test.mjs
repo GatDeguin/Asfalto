@@ -11,7 +11,7 @@ import { createLightingPresetStore } from '../src/game/lighting-preset-file.mjs?
 import { installRayTracingSettings } from '../src/render/ray-tracing-settings.mjs?v=f087a0217ed8f9e5';
 import { RAY_TRACING_STORAGE_KEY } from '../src/render/ray-traced-occlusion.mjs?v=bce6dfbce11d570c';
 import { applyPhoneCockpitProjection } from '../src/render/phone-cockpit-projection.mjs?v=c9d3861a0c494f0b';
-import { startServer } from '../server.mjs?v=d5132a06b199d493';
+import { startServer } from '../server.mjs?v=2a6036fbd6ef44b2';
 
 const storage = () => {
   const data = new Map();

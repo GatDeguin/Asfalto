@@ -28,6 +28,9 @@ export function createRoadTestSession(options){
     catch{invalidate('receipt-creation-or-validation-failed');return;}
     detach();onCompleted(receipt);return;
    }
+   // The final running substep still counts. If it did not complete the
+   // objective, the stopped world cannot supply further samples or a timeout.
+   if(frame.running&&frame.statusAfter==='FINISHED'){invalidate('route-ended-objective-incomplete');return;}
    if(frame.tick%12===0)onProgress(state);
   },
   invalidated:invalidate,

@@ -1,6 +1,6 @@
 import {createScreenSpaceTarget,supportsScreenSpaceHDR} from './screen-space-targets.mjs?v=6da4d0d78fe83c9e';
 import {vertexShader,depthGLSL,bounceGLSL,metadataGLSL,metadataMain,bilateralGLSL,compositeMain,volumeMain,historyMain} from './screen-space-lighting.glsl.mjs?v=4f83a6d6ad3191fe';
-import {compileVisiblePass} from './pass-preparation.mjs?v=ae428e3c331b99ce';
+import {compileVisiblePass} from './pass-preparation.mjs?v=926cddc76a9af3b4';
 import {resolveRenderBudget,describeRenderTarget,renderSampleLimit} from './render-budget.mjs?v=cbd3e7911fbec8e0';
 import {supportedHdrSamples} from './render-target-capabilities.mjs?v=f3103d3a8267e6f2';
 import {createOpaqueTransmission} from './opaque-transmission.mjs?v=74188532df76e9a7';

@@ -1,10 +1,12 @@
 {
-  "version": "v8-v7-recovery-20260920",
+  "version": "8.1.0-rc1",
+  "status": "release-candidate",
+  "buildDate": "2026-11-17",
   "source": "Asfalto_Nacional_v8",
-  "v8Baseline": "912b2f8",
-  "v7Features": "3486664",
-  "validatedTests": 189,
-  "targetedTests": 57,
+  "baselineCommit": "f5d3e4a81368120573a44a8d9e3e2630789f47df",
+  "validatedTests": 717,
   "physicalIphoneVerified": false,
-  "introBrandVerified": true
+  "physicalAndroidVerified": false,
+  "sustained60FpsVerified": false,
+  "fullDrivenProgressionVerified": false
 }

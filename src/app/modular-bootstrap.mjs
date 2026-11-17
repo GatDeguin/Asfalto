@@ -2,8 +2,8 @@ import {waitForSignal} from '../runtime/abortable.mjs?v=c91114c944607feb';
 import {createTrackManager} from "../tracks/track-manager.mjs?v=02570a5c5fd67f0a";
 import {createDosLagosAdapter} from "../tracks/adapters/dos-lagos.mjs?v=a39b00127f33abd8";
 import {createAconcaguaHorconesAdapter} from "../tracks/adapters/aconcagua-horcones.mjs?v=384e8b3a80bac81d";
-import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=3d91df7db4ebaff9";
-import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=be275fa2f4b812fe";
+import {createCuestaLipanAdapter} from "../tracks/adapters/cuesta-lipan.mjs?v=3c158983ffd0fa9f";
+import {createPasoGaribaldiAdapter} from "../tracks/adapters/paso-garibaldi.mjs?v=18b784d06faa3beb";
 
 import {createIguazuAdapter} from "../tracks/adapters/cataratas-iguazu.mjs?v=9bd852a53791215f";
 

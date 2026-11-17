@@ -1,4 +1,4 @@
-import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
+import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=b2b341c34f9c8779';
 /** Vehicle-specific wheel, prepared transactionally with the exterior selection.
  * The editable mount and animated steering pivot remain the input/animation contract.
  */

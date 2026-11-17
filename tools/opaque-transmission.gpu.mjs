@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {readFile, writeFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {gunzipSync} from 'node:zlib';
-import {startServer} from '../server.mjs?v=d5132a06b199d493';
+import {startServer} from '../server.mjs?v=2a6036fbd6ef44b2';
 import {patchOpaqueTransmissionSource} from '../src/render/opaque-transmission.mjs?v=74188532df76e9a7';
 
 const output = process.argv[2];

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {THREE as T} from './cinematic-three.mjs?v=1538801f0545ceb6';
-import {compileVisiblePass, registerRenderPreparation, isRenderPreparationPending} from '../src/render/pass-preparation.mjs?v=ae428e3c331b99ce';
+import {compileVisiblePass, registerRenderPreparation, isRenderPreparationPending} from '../src/render/pass-preparation.mjs?v=926cddc76a9af3b4';
 
 function program() {
  const shader = {program:{}, ready:false, checks:0, prepared:0,

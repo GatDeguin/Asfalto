@@ -1,9 +1,9 @@
-import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=564628ad31eed1e7';
+import {isBorrowedVehicleResource,releaseVehicleModel} from './vehicle-resource-pool.mjs?v=b2b341c34f9c8779';
 import {assetByteCache} from '../runtime/asset-byte-cache.mjs?v=ff36157512bb6612';
 import {createDemandVehicleLods} from './demand-vehicle-lods.mjs?v=4a07a2ebe53561d6';
-import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=76e9c5fc6321daf4';
+import {vehicleAssetVersions} from '../runtime/vehicle-asset-versions.mjs?v=dab34d388e34004e';
 import {installVehicleInteriorRig} from './vehicle-interior-rig.mjs?v=f67b304abe73b633';
-import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionBacking,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=9cf02d5ce1fb2de5';
+import {createVehicleConditionAppearance,installVehicleGlassCondition,vehicleConditionBacking,vehicleConditionSurface} from './vehicle-condition-appearance.mjs?v=ae1fb28a7e324226';
 import {createVehicleDamagePanels} from './vehicle-damage-panels.mjs?v=212e81c2b33906ed';
 import {createVehicleRefractionPolicy,thickenVehicleGlass} from './vehicle-glass.mjs?v=d312f5431381b89c';
 import {createVehicleChassis} from './vehicle-chassis.mjs?v=752fa30fc26ab306';
@@ -130,9 +130,11 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
       const surfaceType=m=>wheelId?null:vehicleConditionSurface(m?.name,authoredName);
       const surfaceMaterials=Array.isArray(o.material)?o.material:[o.material];
       const backing=vehicleConditionBacking(authoredName);
+      // This inner skin has a thin lower lip bordering the nose and sills.
+      const preserveLowerLip=authoredName==='chevy_static_Vehicle_Interior';
       const deforms=!wheelId&&(surfaceMaterials.some(surfaceType)||backing);
       const conditionMatrix=deforms?conditionTransform.clone().multiply(model.matrixWorld.clone().invert().multiply(o.matrixWorld)):null;
-      if(conditionMatrix)deformingMeshes.push({mesh:o,matrix:conditionMatrix,backing});
+      if(conditionMatrix)deformingMeshes.push({mesh:o,matrix:conditionMatrix,backing,preserveLowerLip});
       const mapMaterial=m=>{if(!m)return m;
         // Some supplied GLBs share red lens material with cabin controls and
         // passive quarter reflectors. Only rear-facing tail assemblies emit.
@@ -237,7 +239,7 @@ export function installVehiclePresentation(T,{vehicle='chevy',modelRoot,lods,pai
   const interiorRig=installVehicleInteriorRig(T,{root,vehicle,lods,cabinSurfaceDetail});
   // Take ownership of the active geometry after the cabin rig has assigned
   // its upholstery UVs and added fittings to the authored shells.
-  for(const {mesh,matrix,backing} of deformingMeshes)appearance.add(mesh,matrix,{backing});
+  for(const {mesh,matrix,backing,preserveLowerLip} of deformingMeshes)appearance.add(mesh,matrix,{backing,preserveLowerLip});
   for(const model of lods){
     model.updateWorldMatrix(true,true);
     const toCondition=conditionTransform.clone().multiply(model.matrixWorld.clone().invert());
