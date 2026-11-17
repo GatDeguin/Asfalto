@@ -1,0 +1,7 @@
+{
+  "schema": "asfalto-runtime-descriptor/v1",
+  "releaseSchema": "asfalto-nacional-v8-modular-release/v1",
+  "entry": "index.html",
+  "trackRegistry": "../../tracks/registry.json",
+  "releaseInventory": "release.json"
+}

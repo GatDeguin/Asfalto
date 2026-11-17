@@ -52,7 +52,7 @@ test('readiness history stays bounded when many routes or revisions are prepared
  for(let i=48;i<64;i++)assert.equal(hasPreparedVariant(renderer,'revision='+i),true);
 });
 function renderGuardFixture(){
- const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=9000f422d2f58b6c',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/legacy/module-02.mjs?v=8b694389992648b2',import.meta.url),'utf8');
  const begin=source.indexOf('    const shaderVariant=renderPreparationVariant();');
  const end=source.indexOf('    gpuFrameTimer.begin();',begin);
  assert.ok(begin>0&&end>begin);

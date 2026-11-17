@@ -8,7 +8,7 @@ const rootAt = process.argv.indexOf('--root');
 const root = await fs.realpath(rootAt < 0 ? path.resolve(import.meta.dirname, '..') : path.resolve(process.argv[rootAt + 1]));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const files = [], visited = new Set(), icons = new Set();
-const shell = relative => relative === 'index.html' || relative === 'manifest.webmanifest' || relative === 'apple-touch-icon.png' || icons.has(relative) || /\.(?:js|mjs|css|wasm|woff2?|ttf|otf)$/.test(relative) || /^(?:assets\/configuration\/|assets\/icons\/)/.test(relative);
+const shell = relative => relative === 'index.html' || relative === 'manifest.webmanifest' || relative === 'apple-touch-icon.png' || relative === 'assets/manifests/runtime.json' || icons.has(relative) || /\.(?:js|mjs|css|wasm|woff2?|ttf|otf)$/.test(relative) || /^(?:assets\/configuration\/|assets\/icons\/)/.test(relative);
 const within = file => { const relative = path.relative(root, file); return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative); };
 function localReference(value, base = 'index.html') {
   if (!value || /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i.test(value)) return null;

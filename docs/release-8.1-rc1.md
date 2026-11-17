@@ -39,6 +39,11 @@ cierre y las pruebas pendientes se conservan más abajo.
   descarga se pausa al conducir, también si otra pestaña está jugando.
   Actualizar conserva la partida y mantiene coherentes los recursos de una
   carrera abierta.
+- Arranque sin conexión: un descriptor pequeño y conservado en la caché
+  de instalación reemplaza la dependencia del inventario completo de
+  auditoría. La prueba del ejecutable instalado detectó esa omisión al
+  entrar al circuito; abrir solamente el taller no la revelaba. Un descriptor
+  realmente ausente sigue produciendo un diagnóstico, sin ocultar el fallo.
 - Windows: paquete x64 con Electron 45.3.3, perfil persistente y actualización
   manual. El juego se sirve localmente desde un origen fijo; la instalación
   no requiere Node.js. No se añadieron dependencias externas al runtime web.

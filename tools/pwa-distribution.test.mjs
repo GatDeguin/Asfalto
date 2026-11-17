@@ -66,6 +66,18 @@ test('explicit download completes offline content and supports media seeking', a
   const removed = await app.message('REMOVE_DOWNLOADS');
   assert.equal(removed.value.complete, false); assert.equal(removed.value.storedFiles, 2);
 });
+
+test('runtime boot metadata stays available offline after removing optional downloads', async () => {
+  const metadata=await fs.readFile(new URL('../assets/manifests/runtime.json',import.meta.url),'utf8');
+  const descriptor=file('assets/manifests/runtime.json',metadata,true);
+  const app=worker([...baseFiles,descriptor]);await app.install();await app.message('DOWNLOAD');
+  await app.message('REMOVE_DOWNLOADS');
+  const callsBefore=app.fetched.length;
+  const response=await app.fetchEvent('assets/manifests/runtime.json');
+  assert.equal(response.status,200);assert.equal(await response.text(),metadata);
+  assert.equal(app.fetched.length,callsBefore,'Offline metadata must not request the network');
+  assert.equal((await app.message('STATUS')).value.complete,false);
+});
 test('cancel keeps verified files, and retry downloads only missing files', async () => {
   const app = worker(); await app.install();
   let canceled = false;

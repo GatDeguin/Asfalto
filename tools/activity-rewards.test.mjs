@@ -122,7 +122,7 @@ for (const [competitionId,mode] of offers) {
 }
 
 test('routes without authored trap bounds still register a physical speed pass', () => {
-  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=9000f422d2f58b6c', import.meta.url), 'utf8');
+  const source = readFileSync(new URL('../src/legacy/module-02.mjs?v=8b694389992648b2', import.meta.url), 'utf8');
   const method = source.slice(source.indexOf('    _updateSpeedTrap('), source.indexOf('    _recordGhost('));
   const update = new Function(`return ({${method}})._updateSpeedTrap;`)();
   const trap = { active: false, peakMps: 0, attempts: 0, bestKmh: 0 };

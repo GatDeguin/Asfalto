@@ -1,6 +1,6 @@
 {
   "schema": "asfalto-release-qa/v1",
-  "recordedAt": "2026-11-17T04:41:46.237Z",
+  "recordedAt": "2026-11-17T05:12:40.165Z",
   "version": "8.1.0-rc1",
   "status": "candidate-not-final",
   "environment": {
@@ -18,8 +18,8 @@
     "cache": "Fresh browser context; OS and driver caches not cleared"
   },
   "node": {
-    "tests": 717,
-    "passed": 717,
+    "tests": 721,
+    "passed": 721,
     "failed": 0,
     "command": "node --test tools/*.test.mjs"
   },
@@ -35,6 +35,14 @@
     "photos": 2,
     "errors": [],
     "httpErrors": []
+  },
+  "offlineBootRegression": {
+    "originalFailure": "Installed game opened workshop but circuit boot requested omitted full release inventory",
+    "runtimeDescriptor": "assets/manifests/runtime.json",
+    "fullInventoryIsAuditOnly": true,
+    "bootRejectsMissingRuntimeDescriptor": true,
+    "descriptorRetainedAfterRemovingDownloads": true,
+    "browserCircuitValidation": "Recorded separately in final distribution attestation"
   },
   "physicallyDrivenRoadTests": {
     "method": "Physical controls at real time. Fresh browser profile, normal menus and authoritative receipts.",
@@ -309,7 +317,7 @@
     }
   },
   "distribution": {
-    "capturedAt": "2026-11-17T03:56:49.149Z",
+    "capturedAt": "2026-11-17T05:07:52.068Z",
     "publicationByThisAgent": false,
     "pwa": {
       "testScope": "Frozen official baseline plus the actual PWA implementation; update fixture B never published",
@@ -320,7 +328,7 @@
       "mobileViewport": 390,
       "offlineServerStopped": true,
       "offlineHttpCacheDisabled": true,
-      "offlineComplete": true,
+      "offlineComplete": false,
       "offlineConsoleErrors": 0,
       "offlineHttpErrors": 0,
       "offlineNetworkFailures": [
@@ -347,7 +355,10 @@
       "updatePass": true,
       "profileAndBinaryRetention": true,
       "installabilityErrors": [],
-      "standaloneInstallConfirmed": false
+      "standaloneInstallConfirmed": false,
+      "offlineWorkshopComplete": true,
+      "offlineDrivingConfirmed": false,
+      "deliveryBlockingIssue": "The full download and offline workshop were tested, but the first installed drive exposed a release manifest dependency excluded from the PWA inventory. Offline driving needs the corrected runtime descriptor and a real circuit test."
     },
     "windows": {
       "version": "8.1.0 provisional",
@@ -362,14 +373,17 @@
       "capabilityPass": true,
       "sourceInventory": "B9E659ED284E4BE12F3E88B8E73B4FB99534F81F71E5E87C436DFEB77178D38F",
       "signed": false,
-      "finalArtBuildPending": true
+      "finalArtBuildPending": true,
+      "finalBuildRejected": true,
+      "finalBuildRejection": "HTTP 404 for assets/manifests/release.json when entering the cockpit; preserved in WindowsQA/rejected-artifacts.json",
+      "correctedWrapperTests": 8
     },
     "limitations": [
       "No physical iPhone test yet; user will test candidate URL",
       "PWA standalone installation could not be automated: Chrome returned -32601 even with official flag; no CUA retries after interrupted call",
       "IndexedDB JPEG is a technical retention sentinel, not an earned photo",
       "Functional concurrent QA; no isolated60FPS claim",
-      "Final Windows build/short physical drive awaits final integrated artifact"
+      "Corrected final Windows build and PWA offline circuit entry await the replacement sealed web commit. Earlier offline success covers the workshop only."
     ]
   },
   "gates": {
@@ -382,8 +396,8 @@
   },
   "evidence": [
     {
-      "file": "regresion-integrada-717.log",
-      "sha256": "0ba502c962e2eb7ecad2a5990e4acbaca786c9930dccebe4f8c69d640022bb14"
+      "file": "regresion-integrada-721.log",
+      "sha256": "561068b5ecfe2e6d373f38c061ed65d652f71500f948087bea2e323b83d67847"
     },
     {
       "file": "pruebas-integradas/resultados.json",
@@ -419,7 +433,7 @@
     },
     {
       "file": "distribucion/QA-CONSOLIDADO.json",
-      "sha256": "1aba6f33851c7f02092aef6773adb2838c2d707ae609fdef59c5deec16aac75a"
+      "sha256": "85444046a141749cb8eb04a79984682a4df963739e0fb4c0a8ae8ea6a68c1bb9"
     },
     {
       "file": "renderdoc-protocolo-corregido/renderdoc.json",
